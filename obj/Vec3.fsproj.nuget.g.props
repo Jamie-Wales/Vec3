@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <RestoreSuccess Condition=" '$(RestoreSuccess)' == '' ">True</RestoreSuccess>
+    <RestoreTool Condition=" '$(RestoreTool)' == '' ">NuGet</RestoreTool>
+    <ProjectAssetsFile Condition=" '$(ProjectAssetsFile)' == '' ">$(MSBuildThisFileDirectory)project.assets.json</ProjectAssetsFile>
+    <NuGetPackageRoot Condition=" '$(NuGetPackageRoot)' == '' ">/Users/jamie/.nuget/packages/</NuGetPackageRoot>
+    <NuGetPackageFolders Condition=" '$(NuGetPackageFolders)' == '' ">/Users/jamie/.nuget/packages/</NuGetPackageFolders>
+    <NuGetProjectStyle Condition=" '$(NuGetProjectStyle)' == '' ">PackageReference</NuGetProjectStyle>
+    <NuGetToolVersion Condition=" '$(NuGetToolVersion)' == '' ">6.8.1</NuGetToolVersion>
+  </PropertyGroup>
+  <ItemGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <SourceRoot Include="/Users/jamie/.nuget/packages/" />
+  </ItemGroup>
+  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)skiasharp.nativeassets.webassembly/2.88.8/buildTransitive/netstandard1.0/SkiaSharp.NativeAssets.WebAssembly.props" Condition="Exists('$(NuGetPackageRoot)skiasharp.nativeassets.webassembly/2.88.8/buildTransitive/netstandard1.0/SkiaSharp.NativeAssets.WebAssembly.props')" />
+    <Import Project="$(NuGetPackageRoot)harfbuzzsharp.nativeassets.webassembly/7.3.0.2/buildTransitive/netstandard1.0/HarfBuzzSharp.NativeAssets.WebAssembly.props" Condition="Exists('$(NuGetPackageRoot)harfbuzzsharp.nativeassets.webassembly/7.3.0.2/buildTransitive/netstandard1.0/HarfBuzzSharp.NativeAssets.WebAssembly.props')" />
+    <Import Project="$(NuGetPackageRoot)avalonia/11.1.0/buildTransitive/Avalonia.props" Condition="Exists('$(NuGetPackageRoot)avalonia/11.1.0/buildTransitive/Avalonia.props')" />
+  </ImportGroup>
+  <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <PkgFSharp_Core Condition=" '$(PkgFSharp_Core)' == '' ">/Users/jamie/.nuget/packages/fsharp.core/8.0.102</PkgFSharp_Core>
+    <PkgAvalonia_BuildServices Condition=" '$(PkgAvalonia_BuildServices)' == '' ">/Users/jamie/.nuget/packages/avalonia.buildservices/0.0.29</PkgAvalonia_BuildServices>
+    <PkgAvalonia Condition=" '$(PkgAvalonia)' == '' ">/Users/jamie/.nuget/packages/avalonia/11.1.0</PkgAvalonia>
+    <PkgAvalonia_Themes_Fluent Condition=" '$(PkgAvalonia_Themes_Fluent)' == '' ">/Users/jamie/.nuget/packages/avalonia.themes.fluent/11.1.0</PkgAvalonia_Themes_Fluent>
+    <PkgAvalonia_Fonts_Inter Condition=" '$(PkgAvalonia_Fonts_Inter)' == '' ">/Users/jamie/.nuget/packages/avalonia.fonts.inter/11.1.0</PkgAvalonia_Fonts_Inter>
+    <PkgAvalonia_Diagnostics Condition=" '$(PkgAvalonia_Diagnostics)' == '' ">/Users/jamie/.nuget/packages/avalonia.diagnostics/11.1.0</PkgAvalonia_Diagnostics>
+    <PkgAvalonia_Desktop Condition=" '$(PkgAvalonia_Desktop)' == '' ">/Users/jamie/.nuget/packages/avalonia.desktop/11.1.0</PkgAvalonia_Desktop>
+  </PropertyGroup>
+</Project>
