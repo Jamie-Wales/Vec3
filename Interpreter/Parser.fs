@@ -102,11 +102,11 @@ let number state =
     | Some { lexeme = Lexeme.Number n } -> Success(Literal(Literal.Number n), state)
     | _ -> Failure("Expect number.", state)
 
-let ident state =
-    let state = setLabel state "Ident"
-    match previous state with
-    | Some { lexeme = Lexeme.Identifier n } -> Success(Expr.Identifier n, state)
-    | _ -> Failure("Expect identifier.", state)
+// let ident state =
+//     let state = setLabel state "Ident"
+//     match previous state with
+//     | Some { lexeme = Lexeme.Identifier n } -> Success(Expr.Identifier n, state)
+//     | _ -> Failure("Expect identifier.", state)
 
 
 let rec getRule (lexeme: Lexeme) =
@@ -188,12 +188,20 @@ and expression (state: ParserState) (precedence: Precedence) : ParseResult<Expr>
     let state = setLabel state "Expression"
     
     let result = parsePrefix state
-    
-    // bind result (parsePrecedence precedence)
-
     match result with
-    | Success(expr, state) -> parsePrecedence precedence state expr
+    | Success (expr, state) ->  parsePrecedence precedence state expr
     | Failure _ as f -> f
+
+and ident (state: ParserState): ParseResult<Expr> =
+    let name = previous state |> Option.get
+    match peek state with
+    | Some { lexeme = Lexeme.Operator Operator.Equal } ->
+        let state = advance state 
+        match expression state Precedence.Assignment with
+        | Success(value, state) -> Success(Assignment(name, value), state)
+        | Failure _ as f -> f
+    | _ ->
+        Success(Variable(name.lexeme), state)
 
 and parsePrefix (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Prefix"
@@ -257,9 +265,9 @@ let variableDeclaration (state: ParserState) : ParseResult<Stmt> =
         match nextToken state with
         | Some({ lexeme = Lexeme.Operator Operator.Equal }, state) ->
             match expression state Precedence.Assignment with
-            | Success(expr, state) -> Success((Assignment(name, expr), state))
-            | Failure(s1, parserState) -> Failure(s1, parserState)
-        | _ -> Failure("Expect '=' after variable name.", state)
+            | Success(expr, state) -> Success ((VariableDecleration(name, expr), state))
+            | Failure(s1, parserState) -> Failure(s1,parserState)
+        | _ -> Failure ("Expect '=' after variable name.", state)
     | _ -> Failure("Expect variable name.", state)
 
 let parseStatement (state: ParserState) : ParseResult<Stmt> =
