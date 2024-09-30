@@ -1,5 +1,6 @@
 module Vec3.Interpreter.Parser
 
+open System
 open Token
 open Grammar
 
@@ -20,33 +21,27 @@ type ParserState = { Tokens: Token list; Position: int }
 
 let createParserState tokens = { Tokens = tokens; Position = 0 }
 
-let getCurrentToken state =
-    if state.Position < List.length state.Tokens then
-        Some state.Tokens.[state.Position]
-    else
-        None
-
-let advance state =
+let getCurrentToken (state: ParserState) =
+    List.tryItem state.Position state.Tokens
+    
+let advance (state: ParserState): ParserState =
     { state with
         Position = state.Position + 1 }
 
-let peek state = getCurrentToken state
+let peek = getCurrentToken
 
-let previous state =
-    if state.Position > 0 then
-        Some state.Tokens.[state.Position - 1]
-    else
-        None
+let previous (state: ParserState): Token option =
+    List.tryItem (state.Position - 1) state.Tokens
 
-let matchToken state =
-    match peek state with
-    | Some token -> Some(token, advance state)
-    | None -> None
+let matchToken (state: ParserState): (Token * ParserState) option =
+    peek state |> Option.map( fun token -> (token, advance state))
 
 type ParseRule =
     { Prefix: (ParserState -> Expr * ParserState) option
       Infix: (ParserState -> Expr -> Expr * ParserState) option
       Precedence: Precedence }
+
+let nil (state: ParserState): Expr * ParserState = Literal(Nil), state
 
 let rec getRule lexeme =
     match lexeme with
@@ -114,19 +109,22 @@ let rec getRule lexeme =
           Infix = None
           Precedence = Precedence.None }
 
-and parse state = expression state Precedence.None
-and expression state precedence =
+and parse (state: ParserState) = expression state Precedence.None
+
+and expression (state: ParserState) precedence =
     let (prefixExpr, state) = parsePrefix state
     parsePrecedence state precedence prefixExpr
-and parsePrefix state =
+
+and parsePrefix (state: ParserState) =
     match peek state with
     | Some token ->
-        let rule = getRule token.lexeme
-        match rule.Prefix with
+        match (getRule token.lexeme).Prefix with
         | Some prefixFn -> prefixFn (advance state)
         | None -> failwith "Expect expression."
-    | None -> failwith "Unexpected end of input."
-and parsePrecedence state precedence leftExpr =
+    | None -> failwith "Unexpected end of input"
+
+
+and parsePrecedence (state: ParserState) (precedence: Precedence) (leftExpr: Expr) =
     let rec loop state expr =
         match peek state with
         | Some token ->
@@ -134,45 +132,52 @@ and parsePrecedence state precedence leftExpr =
             if int precedence <= int rule.Precedence then
                 match rule.Infix with
                 | Some infixFn ->
-                    let (newExpr, newState) = infixFn (advance state) expr
+                    let newExpr, newState = infixFn (advance state) expr
                     loop newState newExpr
                 | None -> (expr, state)
             else
                 (expr, state)
         | None -> (expr, state)
+    
     loop state leftExpr
-and binary state left =
+
+
+and binary (state: ParserState) (left: Expr) =
     let op = previous state |> Option.get
     let rule = getRule op.lexeme
     let nextPrecedence = enum<Precedence> (int rule.Precedence + 1)
     let right, newState = expression state nextPrecedence
     (Binary(left, op, right), newState)
+
 and unary state =
     let op = previous state |> Option.get
     let right, newState = expression state Precedence.Unary
     (Unary(op, right), newState)
+
 and grouping state =
     let expr, state = expression state Precedence.None
     match matchToken state with
     | Some({ lexeme = Lexeme.Operator RightParen }, newState) -> (Grouping expr, newState)
     | _ -> failwith "Expect ')' after expression."
+
 and number state =
     match previous state with
     | Some { lexeme = Lexeme.Number n } -> (Literal(Number n), state)
     | _ -> failwith "Expect number."
+
 and string state =
     match previous state with
     | Some { lexeme = Lexeme.String s } -> (Literal(String s), state)
     | _ -> failwith "Expect string."
+
 and boolean state =
     match previous state with
     | Some { lexeme = Lexeme.Keyword "true" } -> (Literal(Bool true), state)
     | Some { lexeme = Lexeme.Keyword "false" } -> (Literal(Bool false), state)
     | _ -> failwith "Expect boolean."
-and nil state = (Literal(Nil), state)
+
 
 let parseTokens tokens =
     let initialState = createParserState tokens
     let (expr, _) = parse initialState
     expr
-
