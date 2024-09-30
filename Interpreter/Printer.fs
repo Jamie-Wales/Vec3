@@ -3,9 +3,9 @@ module Vec3.Interpreter.Printer
 open System.Text
 open Vec3.Interpreter.Token
 open Vec3.Interpreter.Grammar
-let rec printAST expr =
+let rec printAST program =
     let sb = StringBuilder()
-    printASTWithIndent expr 0 sb
+    printASTWithIndent program 0 sb
     sb.ToString()
 
 and printASTWithIndent expr indent (sb: StringBuilder) =
@@ -18,10 +18,10 @@ and printASTWithIndent expr indent (sb: StringBuilder) =
 
 and printLiteral (lit: Literal) indentStr (sb: StringBuilder) =
     match lit with
-    | Literal.Number n -> sb.AppendLine($"{indentStr}{numberToString n}") |> ignore
-    | Literal.String s -> sb.AppendLine($"{indentStr}String(\"{s}\")") |> ignore
-    | Literal.Bool b -> sb.AppendLine($"{indentStr}Bool({b})") |> ignore
-    | Literal.Nil -> sb.AppendLine($"{indentStr}Nil") |> ignore
+    | Number n -> sb.AppendLine($"{indentStr}{numberToString n}") |> ignore
+    | String s -> sb.AppendLine($"{indentStr}String(\"{s}\")") |> ignore
+    | Bool b -> sb.AppendLine($"{indentStr}Bool({b})") |> ignore
+    | Unit -> sb.AppendLine($"{indentStr}Nil") |> ignore
 
 and printUnary op expr indentStr indent (sb: StringBuilder) =
     sb.AppendLine($"{indentStr}Unary") |> ignore

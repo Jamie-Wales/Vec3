@@ -45,7 +45,7 @@ type MainWindow () as this =
         try
             this.AppendOutput "Parsed Expression:"
             let expr = parseTokens tokens
-            let astString = printAST expr
+            let astString = $"{expr}"
             this.AppendOutput astString
         with
         | ex -> this.AppendOutput $"Error parsing expression: {ex.Message}"
