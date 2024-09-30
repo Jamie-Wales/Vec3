@@ -1,6 +1,5 @@
 module Vec3.Interpreter.Token
 
-
 type Number =
     | Float of float
     | Integer of int
@@ -32,10 +31,10 @@ type Token = { lexeme: Lexeme; line: int }
 
 let numberToString (n: Number) =
     match n with
-    | Float f -> sprintf "Float(%f)" f
-    | Integer i -> sprintf "Integer(%d)" i
+    | Float f -> $"Float({f})"
+    | Integer i -> $"Integer({i})"
 
-let operatorToString (op: Operator) =
+let operatorToString (op: Operator): string =
     match op with
     | Plus -> "+"
     | Minus -> "-"
@@ -52,7 +51,7 @@ let operatorToString (op: Operator) =
     | RightParen -> ")"
     | Bang -> "!"
 
-let lexemeToString (lex: Lexeme) =
+let lexemeToString (lex: Lexeme): string =
     match lex with
     | Number n -> $"Number(%s{numberToString n})"
     | String s -> $"String(\"%s{s}\")"
@@ -60,5 +59,5 @@ let lexemeToString (lex: Lexeme) =
     | Operator op -> $"Operator(%s{operatorToString op})"
     | Identifier i -> $"Identifier(%s{i})"
 
-let tokenToString (token: Token) =
+let tokenToString (token: Token): string =
     $"{{ lexeme: %s{lexemeToString token.lexeme}; line: %d{token.line} }}"
