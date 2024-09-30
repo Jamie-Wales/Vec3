@@ -3,25 +3,27 @@ module Vec3.Interpreter.Scanner
 open Token
 open System
 open System.Text.RegularExpressions
+open Vec3.Interpreter.Token
 
 let tokenPatterns = [
     ("Float", @"^\d+\.\d+");
-    ("Integer", @"^\d+");
+    ("Integer", @"^\d+")
     ("Plus", @"^\+");
     ("Minus", @"^-");
     ("Star", @"^\*");
     ("Slash", @"^/");
-    ("Equal", @"^==");
+    ("EqualEqual", @"^==");
     ("BangEqual", @"^!=");
     ("Less", @"^<");
     ("LessEqual", @"^<=");
     ("Greater", @"^>");
     ("GreaterEqual", @"^>=");
+    ("Equal", @"^=");
     ("LeftParen", @"^\(");
     ("RightParen", @"^\)");
     ("Bang", @"^!");
     ("String", @"^"".*?""");
-    ("Keyword", @"^(true|false|nil)\b");
+    ("Keyword", @"^(true|false|nil|let)\b");
     ("Identifier", @"^[a-zA-Z_][a-zA-Z0-9_]*");
 ]
 let tokenize (input: string) =
@@ -58,6 +60,7 @@ let tokenize (input: string) =
                                 | "Minus" -> Lexeme.Operator Operator.Minus
                                 | "Star" -> Lexeme.Operator Operator.Star
                                 | "Slash" -> Lexeme.Operator Operator.Slash
+                                | "EqualEqual" -> Lexeme.Operator Operator.EqualEqual
                                 | "Equal" -> Lexeme.Operator Operator.Equal
                                 | "BangEqual" -> Lexeme.Operator Operator.BangEqual
                                 | "Less" -> Lexeme.Operator Operator.Less

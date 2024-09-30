@@ -10,7 +10,7 @@ type Operator =
     | Minus
     | Star
     | Slash
-    | Equal
+    | EqualEqual
     | BangEqual
     | Less
     | LessEqual
@@ -19,6 +19,7 @@ type Operator =
     | LeftParen
     | RightParen
     | Bang
+    | Equal
 
 type Lexeme =
     | Number of Number
@@ -40,7 +41,8 @@ let operatorToString (op: Operator) =
     | Minus -> "-"
     | Star -> "*"
     | Slash -> "/"
-    | Equal -> "=="
+    | Equal -> "="
+    | EqualEqual -> "=="
     | BangEqual -> "!="
     | Less -> "<"
     | LessEqual -> "<="

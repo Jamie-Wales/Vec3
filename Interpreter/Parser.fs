@@ -70,6 +70,7 @@ let rec getRule lexeme =
               Infix = Some binary
               Precedence = Precedence.Factor }
         | BangEqual
+        | EqualEqual
         | Equal ->
             { Prefix = None
               Infix = Some binary
@@ -169,6 +170,7 @@ and boolean state =
     | Some { lexeme = Lexeme.Keyword "false" } -> (Literal(Bool false), state)
     | _ -> failwith "Expect boolean."
 and nil state = (Literal(Nil), state)
+
 let parseTokens tokens =
     let initialState = createParserState tokens
     let (expr, _) = parse initialState
