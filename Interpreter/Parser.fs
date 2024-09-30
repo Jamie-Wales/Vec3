@@ -76,12 +76,6 @@ let number state =
     | Some { lexeme = Lexeme.Number n } -> Success(Literal(Literal.Number n), state)
     | _ -> Failure ("Number", "Expect number.", state)
 
-let ident state =
-    match previous state with
-    | Some { lexeme = Lexeme.Identifier n } -> Success(Expr.Identifier n, state)
-    | _ -> Failure ("Ident", "Expect identifier.", state)
-
-
 let rec getRule (lexeme: Lexeme) =
     match lexeme with
     | Operator op -> operatorRule op
@@ -164,6 +158,17 @@ and expression (state: ParserState) (precedence: Precedence): ParseResult<Expr> 
     | Success (expr, state) ->  parsePrecedence state precedence expr
     | Failure _ as f -> f
 
+and ident (state: ParserState): ParseResult<Expr> =
+    let name = previous state |> Option.get
+    match peek state with
+    | Some { lexeme = Lexeme.Operator Operator.Equal } ->
+        let state = advance state 
+        match expression state Precedence.Assignment with
+        | Success(value, state) -> Success(Assignment(name, value), state)
+        | Failure _ as f -> f
+    | _ ->
+        Success(Variable(name.lexeme), state)
+
 and parsePrefix (state: ParserState): ParseResult<Expr> =
     match peek state with
     | Some token ->
@@ -221,7 +226,7 @@ let variableDeclaration (state: ParserState): ParseResult<Stmt> =
         match nextToken state with
         | Some({ lexeme = Lexeme.Operator Operator.Equal }, state) ->
             match expression state Precedence.Assignment with
-            | Success(expr, state) -> Success ((Assignment(name, expr), state))
+            | Success(expr, state) -> Success ((VariableDecleration(name, expr), state))
             | Failure(s, s1, parserState) -> Failure(s,s1,parserState)
         | _ -> Failure ("Variable", "Expect '=' after variable name.", state)
     | _ -> Failure("Variable", "Expect variable name.", state)
