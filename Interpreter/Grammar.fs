@@ -16,6 +16,7 @@ and Literal =
 
 type Stmt =
     | Expression of Expr
+    | Assign of Token * Expr
     | Print of Expr
 
 type Program = Stmt list
