@@ -1,5 +1,6 @@
 module Vec3.Interpreter.Eval
 
+open Microsoft.FSharp.Core
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open System
@@ -108,9 +109,16 @@ and evalStmt (env: Env) (stmt: Stmt): Expr * Env =
     match stmt with
     | Expression expr -> 
         evalExpr env expr, env
+        
     | VariableDeclaration (name, expr) ->
         let value = evalExpr env expr
-        value, Map.add name value env
+        Literal (Literal.Unit ()), Map.add name value env
+
+let evalStatement (env: Env) (stmt: Stmt): Literal * Env =
+    match evalStmt env stmt with
+    | Literal lit, env -> lit, env
+    | _, env -> Unit (), env
+    
 
 let evalProgram (env: Env) (program: Program): Env =
     for stmt in program do

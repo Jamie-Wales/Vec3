@@ -9,8 +9,8 @@ let rec repl (env: Env) =
     // check for a gnu readline lib
     let input = Console.ReadLine()
     let parsed = parseStmt input
-    printfn $"parsed: {parsed}"
-    let value, env' = evalStmt env parsed
+    // printfn $"parsed: {parsed}"
+    let value, env' = evalStatement env parsed
     printfn $"value: {value}"
     repl env'
 

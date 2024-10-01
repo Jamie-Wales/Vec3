@@ -312,14 +312,16 @@ and leftParenPrefix (state: ParserState) : ParseResult<Expr> =
             | Some { lexeme = Lexeme.Operator Operator.Arrow } -> functionExpr state
             | _ -> grouping state
         | _ -> grouping state
+    | Some { lexeme = Lexeme.Operator Operator.RightParen } ->
+        match peek (advance state) with
+        | Some { lexeme = Lexeme.Operator Operator.Arrow } -> functionExpr state
+        | _ -> Success(Literal(Unit()), state)
     | _ -> grouping state
 
 and functionExpr (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Function"
 
     let rec parseParameters (state: ParserState) (params': Token list) =
-        printfn $"parseParameters: %A{peek state}"
-
         match peek state with
         | Some { lexeme = Lexeme.Operator Operator.RightParen } -> Success(List.rev params', advance state)
         | Some ({ lexeme = Lexeme.Identifier _ } as token) ->
@@ -375,7 +377,7 @@ let parseStatement (state: ParserState) : ParseResult<Stmt> =
             match expression state Precedence.None with
             | Success(expr, state) -> Success(Expression expr, state)
             | Failure(s1, parserState) -> Failure(s1, parserState)
-    | None -> Failure("Unexpected end of input.", state)
+    | None -> Success((Expression(Literal(Unit())), state))
 
 let parseStmt (input: string) =
     let tokens = tokenize input
