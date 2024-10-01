@@ -21,7 +21,7 @@ and printLiteral (lit: Literal) indentStr (sb: StringBuilder) =
     | Number n -> sb.AppendLine($"{indentStr}{numberToString n}") |> ignore
     | String s -> sb.AppendLine($"{indentStr}String(\"{s}\")") |> ignore
     | Bool b -> sb.AppendLine($"{indentStr}Bool({b})") |> ignore
-    | Unit -> sb.AppendLine($"{indentStr}Nil") |> ignore
+    | Unit u -> sb.AppendLine($"{indentStr}Nil") |> ignore
 
 and printUnary op expr indentStr indent (sb: StringBuilder) =
     sb.AppendLine($"{indentStr}Unary") |> ignore
@@ -48,9 +48,9 @@ let printStmt stmt indent =
     | Expression expr ->
         sb.AppendLine($"{indentStr}Expression Statement:") |> ignore
         printASTWithIndent expr (indent + 1) sb
-    | Print expr ->
-        sb.AppendLine($"{indentStr}Print Statement:") |> ignore
-        printASTWithIndent expr (indent + 1) sb
+    // | Print expr ->
+    //     sb.AppendLine($"{indentStr}Print Statement:") |> ignore
+    //     printASTWithIndent expr (indent + 1) sb
     sb.ToString()
 
 let printProgram (program: Program) =

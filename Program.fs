@@ -2,6 +2,8 @@
 
 open System
 open Avalonia
+open Interpreter.Repl
+open Vec3.Interpreter
 
 module Program =
 
@@ -15,4 +17,6 @@ module Program =
 
     [<EntryPoint; STAThread>]
     let main argv =
-        buildAvaloniaApp().StartWithClassicDesktopLifetime(argv)
+        // buildAvaloniaApp().StartWithClassicDesktopLifetime(argv)
+        repl Map.empty
+        0

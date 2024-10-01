@@ -8,6 +8,7 @@ type Operator =
     | Plus
     | Minus
     | Star
+    | StarStar
     | Slash
     | EqualEqual
     | BangEqual
@@ -42,6 +43,7 @@ let operatorToString (op: Operator): string =
     | Plus -> "+"
     | Minus -> "-"
     | Star -> "*"
+    | StarStar -> "**"
     | Slash -> "/"
     | Equal -> "="
     | EqualEqual -> "=="
