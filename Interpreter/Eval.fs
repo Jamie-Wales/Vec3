@@ -56,18 +56,18 @@ let rec evalExpr (env: Env) = function
     | Literal (Unit u) -> Literal (Unit u)
     | Call (name, args) -> 
         match env.TryGetValue name with
-        | true, Lambda (params', body) ->
-            let rec evalParams (env: Env) (params': Token list) (args: Expr list) =
+        | true, Lambda (params', _, body) ->
+            let rec evalParams (env: Env) (params': (Token * Grammar.Type) list) (args: Expr list) =
                 match params', args with
                 | [], [] -> env
-                | p :: ps, a :: as' -> 
+                | (p, _) :: ps, a :: as' -> 
                     let env' = evalParams env ps as'
                     Map.add p (evalExpr env a) env'
                 | _ -> failwith "invalid"
             let env' = evalParams env params' args
             evalExpr env' body
         | _ -> failwith $"function {name} not found"
-     | Lambda (params', body) -> Lambda (params', body)
+     | Lambda (params', t, body) -> Lambda (params', t, body)
     | Expr.Identifier name -> 
         match env.TryGetValue name with
         | true, expr -> expr
@@ -110,7 +110,7 @@ and evalStmt (env: Env) (stmt: Stmt): Expr * Env =
     | Expression expr -> 
         evalExpr env expr, env
         
-    | VariableDeclaration (name, expr) ->
+    | VariableDeclaration (name, _, expr) ->
         let value = evalExpr env expr
         Literal (Literal.Unit ()), Map.add name value env
 

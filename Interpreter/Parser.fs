@@ -301,50 +301,115 @@ and call (state: ParserState) (callee: Expr) : ParseResult<Expr> =
 
     loop state []
 
-// single paraemter funcs arent parsed correct adance too far
 and leftParenPrefix (state: ParserState) : ParseResult<Expr> =
     match peek state with
     | Some { lexeme = Lexeme.Identifier _ } ->
         match peek (advance state) with
         | Some { lexeme = Lexeme.Comma } -> functionExpr state
+        | Some { lexeme = Lexeme.Colon } -> functionExpr state
         | Some { lexeme = Lexeme.Operator Operator.RightParen } ->
             match peek (advance (advance state)) with
             | Some { lexeme = Lexeme.Operator Operator.Arrow } -> functionExpr state
+            | Some { lexeme = Lexeme.Colon } -> functionExpr state
             | _ -> grouping state
         | _ -> grouping state
     | Some { lexeme = Lexeme.Operator Operator.RightParen } ->
         match peek (advance state) with
         | Some { lexeme = Lexeme.Operator Operator.Arrow } -> functionExpr state
+        | Some { lexeme = Lexeme.Colon } -> functionExpr state
         | _ -> Success(Literal(Unit()), state)
     | _ -> grouping state
 
 and functionExpr (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Function"
-
-    let rec parseParameters (state: ParserState) (params': Token list) =
+    
+    let rec parseParameters (state: ParserState) (params': (Token * Grammar.Type) list) =
         match peek state with
         | Some { lexeme = Lexeme.Operator Operator.RightParen } -> Success(List.rev params', advance state)
         | Some ({ lexeme = Lexeme.Identifier _ } as token) ->
             let state = advance state
+            
+            let state, paramType =
+                match peek state with
+                | Some { lexeme = Lexeme.Colon } ->
+                    let state = advance state
+                    match parseType state with
+                    | Success(paramType, state) -> state, paramType
+                    | Failure(s1, parserState) -> state, Infer
+                | _ -> state, Infer
 
             match peek state with
-            | Some { lexeme = Lexeme.Operator Operator.RightParen } -> Success(List.rev (token :: params'), advance state)
-            | Some { lexeme = Lexeme.Comma } -> parseParameters (advance state) (token :: params')
+            | Some { lexeme = Lexeme.Operator Operator.RightParen } -> Success(List.rev ((token, paramType) :: params'), 
+            advance state)
+            | Some { lexeme = Lexeme.Comma } -> parseParameters (advance state) ((token, paramType) :: params')
             | _ -> Failure("Expected ',' or ')'.", state)
         | _ -> Failure("Expected parameter name or ')'.", state)
 
     match parseParameters state [] with
     | Success(params', state) ->
         match peek state with
+        | Some { lexeme = Lexeme.Colon } ->
+            let state = advance state
+            match parseType state with
+            | Success(returnType, state) ->
+                match peek state with
+                | Some { lexeme = Lexeme.Operator Operator.Arrow } ->
+                    let state = advance state
+
+                    match expression state Precedence.Assignment with
+                    | Success(body, state) -> Success(Lambda(params', returnType, body), state)
+                    | Failure _ as f -> f
+                | _ -> Failure("Expected '->' after return type.", state)
+            | Failure(s1, parserState) -> Failure(s1, parserState)
+        
         | Some { lexeme = Lexeme.Operator Operator.Arrow } ->
             let state = advance state
 
             match expression state Precedence.Assignment with
-            | Success(body, state) -> Success(Lambda(params', body), state)
+            | Success(body, state) -> Success(Lambda(params', Infer, body), state)
             | Failure _ as f -> f
         | _ -> Failure("Expected '->' after parameter list.", state)
     | Failure(s, parserState) -> Failure(s, parserState)
+    
+and parseFunctionType (state: ParserState) : ParseResult<Grammar.Type> =
+    let state = setLabel state "FunctionType"
 
+    match peek state with
+    | Some { lexeme = Lexeme.Operator Operator.LeftParen } ->
+        let state = advance state
+        let rec parseParams (state: ParserState) (paramList: Grammar.Type list) =
+            match peek state with
+            | Some { lexeme = Lexeme.Operator Operator.RightParen } -> Success(List.rev paramList, advance state)
+            | _ ->
+                match parseType state with
+                | Success(param, state) ->
+                    match peek state with
+                    | Some { lexeme = Lexeme.Comma } -> parseParams (advance state) (param :: paramList)
+                    | Some { lexeme = Lexeme.Operator Operator.RightParen } -> Success(List.rev (param :: paramList), advance state)
+                    | _ -> Failure("Expected ',' or ')'.", state)
+                | Failure(s1, parserState) -> Failure(s1, parserState)
+
+        match parseParams state [] with
+        | Success(paramList, state) ->
+            match peek state with
+            | Some { lexeme = Lexeme.Colon } ->
+                let state = advance state
+                match parseType state with
+                | Success(returnType, state) -> Success(Function(paramList, returnType), state)
+                | Failure(s1, parserState) -> Failure(s1, parserState)
+            | _ -> Failure("Expected ':' after parameter list.", state)
+        | Failure(s1, parserState) -> Failure(s1, parserState)
+    | _ -> Failure("Expected '(' before function type.", state)
+
+and parseType (state: ParserState) : ParseResult<Grammar.Type> =
+    match peek state with
+    | Some { lexeme = Lexeme.Identifier "int" } -> Success(Grammar.Type.Integer, advance state)
+    | Some { lexeme = Lexeme.Identifier "float" } -> Success(Grammar.Type.Float, advance state)
+    | Some { lexeme = Lexeme.Identifier "bool" } -> Success(Grammar.Type.Bool, advance state)
+    | Some { lexeme = Lexeme.Identifier "string" } -> Success(Grammar.Type.String, advance state)
+    | Some { lexeme = Lexeme.Identifier "unit" } -> Success(Grammar.Type.Unit, advance state)
+    | Some { lexeme = Lexeme.Identifier name } -> Success(Grammar.Type.UserDefined name, advance state)
+    | _ -> Failure("Expected a type after colon.", state)
 
 
 let variableDeclaration (state: ParserState) : ParseResult<Stmt> =
@@ -352,10 +417,19 @@ let variableDeclaration (state: ParserState) : ParseResult<Stmt> =
 
     match nextToken state with
     | Some({ lexeme = Lexeme.Identifier _ } as name, state) ->
+        let state, varType =
+            match peek state with
+            | Some { lexeme = Lexeme.Colon } ->
+                let state = advance state
+                match parseType state with
+                | Success(varType, state) -> state, varType
+                | Failure(s1, parserState) -> state, Infer // should this be a failure
+            | _ -> state, Infer
+        
         match nextToken state with
         | Some({ lexeme = Lexeme.Operator Operator.Equal }, state) ->
             match expression state Precedence.Assignment with
-            | Success(expr, state) -> Success((VariableDeclaration(name, expr), state))
+            | Success(expr, state) -> Success((VariableDeclaration(name, varType, expr), state))
             | Failure(s1, parserState) -> Failure(s1, parserState)
         | _ -> Failure("Expect '=' after variable name.", state)
     | _ -> Failure("Expect variable name.", state)

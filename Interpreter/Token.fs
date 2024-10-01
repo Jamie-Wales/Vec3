@@ -30,6 +30,7 @@ type Lexeme =
     | Identifier of string
     | Comma
     | Semicolon
+    | Colon
 
 type Token = { lexeme: Lexeme; line: int }
 

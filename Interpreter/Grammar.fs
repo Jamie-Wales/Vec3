@@ -2,6 +2,16 @@ module Vec3.Interpreter.Grammar
 
 open Token
 
+type Type =
+    | Infer
+    | Integer
+    | Float
+    | String
+    | Bool
+    | Unit
+    | Function of Type list * Type
+    | UserDefined of string
+
 type Literal =
     | Number of Number 
     | String of string
@@ -10,20 +20,19 @@ type Literal =
 
 type Expr =
     | Literal of Literal
-    | Identifier of Token 
+    | Identifier of Token
     | Unary of Token * Expr
     | Binary of Expr * Token * Expr
     | Grouping of Expr
-    | Assignment of Token * Expr
+    | Assignment of Token * Expr 
     
-    // change this
     | Call of Token * Expr list
-    | Lambda of Token list * Expr
+    | Lambda of (Token * Type) list * Type * Expr
     | Block of Stmt list
     
 and Stmt =
     | Expression of Expr
-    | VariableDeclaration of Token * Expr
+    | VariableDeclaration of Token * Type * Expr // option
 
 type Program = Stmt list
 
