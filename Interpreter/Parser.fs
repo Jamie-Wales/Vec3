@@ -98,7 +98,7 @@ let string state =
     | _ -> Failure("Expect string.", state)
 
 let number state =
-    let state = setLabel state "Number"
+    let state = setLabel state "number"
 
     match previous state with
     | Some { lexeme = Lexeme.Number n } -> Success(Literal(Literal.Number n), state)
