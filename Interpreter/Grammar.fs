@@ -5,7 +5,6 @@ open Token
 type Literal =
     | Number of Number 
     | String of string
-    | Identifier of string
     | Bool of bool
     | Unit
 
@@ -17,10 +16,13 @@ type Expr =
     | Grouping of Expr
     | Assignment of Token * Expr
     
-
-type Stmt =
+    | FunctionCall of Expr * Expr list
+    | Function of string list * Expr
+    | Block of Stmt list
+    
+and Stmt =
     | Expression of Expr
-    | VariableDecleration of Token * Expr
+    | VariableDeclaration of Token * Expr
     | Print of Expr
 
 type Program = Stmt list

@@ -24,10 +24,14 @@ type TokenPattern =
     | String
     | Keyword
     | Identifier
+    | Comma
+    | Semicolon
+    | Arrow
 
 let tokenPatterns : (TokenPattern * Regex) list = [
     (Float, Regex(@"^\d+\.\d+", RegexOptions.Compiled));
     (Integer, Regex(@"^\d+", RegexOptions.Compiled));
+    (Arrow, Regex(@"^->", RegexOptions.Compiled))
     (Plus, Regex(@"^\+", RegexOptions.Compiled));
     (Minus, Regex(@"^-", RegexOptions.Compiled));
     (Star, Regex(@"^\*", RegexOptions.Compiled));
@@ -45,6 +49,8 @@ let tokenPatterns : (TokenPattern * Regex) list = [
     (String, Regex(@"^"".*?""", RegexOptions.Compiled));
     (Keyword, Regex(@"^(true|false|nil|let)\b", RegexOptions.Compiled));
     (Identifier, Regex(@"^[a-zA-Z_][a-zA-Z0-9_]*", RegexOptions.Compiled))
+    (Comma, Regex(@"^,", RegexOptions.Compiled))
+    (Semicolon, Regex(@"^;", RegexOptions.Compiled))
 ]
 
 let whitespace = Regex(@"^\s+", RegexOptions.Compiled)
@@ -70,6 +76,9 @@ let lexemeFromPattern (pattern: TokenPattern) (value: string) =
     | String -> Lexeme.String (value.Substring(1, value.Length - 2))
     | Keyword -> Lexeme.Keyword value
     | Identifier -> Lexeme.Identifier value
+    | Comma -> Lexeme.Comma
+    | Semicolon -> Lexeme.Semicolon
+    | Arrow -> Lexeme.Operator Operator.Arrow
 
 let tokenize (input: string) =
     let rec tokenize' (input: string) (line: int) (tokens: Token list) =

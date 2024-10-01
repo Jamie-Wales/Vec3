@@ -19,13 +19,16 @@ type Operator =
     | RightParen
     | Bang
     | Equal
+    | Arrow
 
 type Lexeme =
     | Number of Number
     | String of string
     | Keyword of string
     | Operator of Operator
-    | Identifier of string 
+    | Identifier of string
+    | Comma
+    | Semicolon
 
 type Token = { lexeme: Lexeme; line: int }
 
@@ -50,6 +53,7 @@ let operatorToString (op: Operator): string =
     | LeftParen -> "("
     | RightParen -> ")"
     | Bang -> "!"
+    | Arrow -> "->"
 
 let lexemeToString (lex: Lexeme): string =
     match lex with
@@ -58,6 +62,8 @@ let lexemeToString (lex: Lexeme): string =
     | Keyword k -> $"Keyword(%s{k})"
     | Operator op -> $"Operator(%s{operatorToString op})"
     | Identifier i -> $"Identifier(%s{i})"
+    | Comma -> ","
+    | Semicolon -> ";"
 
 let tokenToString (token: Token): string =
     $"{{ lexeme: %s{lexemeToString token.lexeme}; line: %d{token.line} }}"
