@@ -18,10 +18,10 @@ and printASTWithIndent expr indent (sb: StringBuilder) =
 
 and printLiteral (lit: Literal) indentStr (sb: StringBuilder) =
     match lit with
-    | Number n -> sb.AppendLine($"{indentStr}{numberToString n}") |> ignore
+    | TNumber n -> sb.AppendLine($"{indentStr}{numberToString n}") |> ignore
     | String s -> sb.AppendLine($"{indentStr}String(\"{s}\")") |> ignore
     | Bool b -> sb.AppendLine($"{indentStr}Bool({b})") |> ignore
-    | Unit u -> sb.AppendLine($"{indentStr}Nil") |> ignore
+    | Unit _ -> sb.AppendLine($"{indentStr}Nil") |> ignore
 
 and printUnary op expr indentStr indent (sb: StringBuilder) =
     sb.AppendLine($"{indentStr}Unary") |> ignore

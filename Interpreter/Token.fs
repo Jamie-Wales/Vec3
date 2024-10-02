@@ -34,11 +34,6 @@ type Lexeme =
 
 type Token = { lexeme: Lexeme; line: int }
 
-let numberToString (n: Number) =
-    match n with
-    | Float f -> $"Float({f})"
-    | Integer i -> $"Integer({i})"
-
 let operatorToString (op: Operator): string =
     match op with
     | Plus -> "+"
@@ -57,6 +52,11 @@ let operatorToString (op: Operator): string =
     | RightParen -> ")"
     | Bang -> "!"
     | Arrow -> "->"
+
+let numberToString (n: Number) =
+    match n with
+    | Float f -> $"Float({f})"
+    | Integer i -> $"Integer({i})"
 
 let lexemeToString (lex: Lexeme): string =
     match lex with
