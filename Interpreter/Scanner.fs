@@ -10,7 +10,9 @@ type TokenPattern =
     | Plus
     | Minus
     | Star
+    | Colon
     | Slash
+    | StarStar
     | EqualEqual
     | BangEqual
     | Less
@@ -33,7 +35,9 @@ let tokenPatterns : (TokenPattern * Regex) list = [
     (Integer, Regex(@"^\d+", RegexOptions.Compiled));
     (Arrow, Regex(@"^->", RegexOptions.Compiled))
     (Plus, Regex(@"^\+", RegexOptions.Compiled));
-    (Minus, Regex(@"^-", RegexOptions.Compiled));
+    (Minus, Regex(@"^-", RegexOptions.Compiled))
+    (StarStar, Regex(@"^\*\*", RegexOptions.Compiled))
+    (Colon, Regex(@"^:", RegexOptions.Compiled))
     (Star, Regex(@"^\*", RegexOptions.Compiled));
     (Slash, Regex(@"^/", RegexOptions.Compiled));
     (EqualEqual, Regex(@"^==", RegexOptions.Compiled));
@@ -79,6 +83,8 @@ let lexemeFromPattern (pattern: TokenPattern) (value: string) =
     | Comma -> Lexeme.Comma
     | Semicolon -> Lexeme.Semicolon
     | Arrow -> Lexeme.Operator Operator.Arrow
+    | StarStar -> Lexeme.Operator Operator.StarStar
+    | Colon -> Lexeme.Colon
 
 let tokenize (input: string) =
     let rec tokenize' (input: string) (line: int) (tokens: Token list) =

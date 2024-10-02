@@ -8,6 +8,7 @@ type Operator =
     | Plus
     | Minus
     | Star
+    | StarStar
     | Slash
     | EqualEqual
     | BangEqual
@@ -29,6 +30,7 @@ type Lexeme =
     | Identifier of string
     | Comma
     | Semicolon
+    | Colon
 
 type Token = { lexeme: Lexeme; line: int }
 
@@ -42,6 +44,7 @@ let operatorToString (op: Operator): string =
     | Plus -> "+"
     | Minus -> "-"
     | Star -> "*"
+    | StarStar -> "**"
     | Slash -> "/"
     | Equal -> "="
     | EqualEqual -> "=="

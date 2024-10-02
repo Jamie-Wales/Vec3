@@ -18,6 +18,9 @@
         <Compile Include="Interpreter\Backend\Chunk.fs"/>
         <Compile Include="Interpreter\Backend\VM.fs"/>
         <Compile Include="Interpreter\Backend\Compiler.fs"/>
+        <Compile Include="Interpreter\Eval.fs" />
+        <Compile Include="Interpreter\TypeChecker.fs" />
+        <Compile Include="Interpreter\Repl.fs" />
         <Compile Include="MainWindow.axaml.fs"/>
         <Compile Include="App.axaml.fs"/>
         <Compile Include="Program.fs"/>
