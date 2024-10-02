@@ -104,6 +104,8 @@ let number (state: ParserState) =
         match n with
         | Number.Integer i -> Success(Literal(TNumber(TNumber.Integer(i))), state)
         | Number.Float  f-> Success(Literal(TNumber(TNumber.Float(f))), state)
+        | Number.Rational (n, d) -> Success(Literal(TNumber(TNumber.Rational(n, d))), state)
+        | Number.Complex (r, i) -> Success(Literal(TNumber(TNumber.Complex(r, i))), state)
     | _ -> Failure("Expect number.", state)
 // let ident state =
 //     let state = setLabel state "Ident"

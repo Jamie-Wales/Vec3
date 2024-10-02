@@ -105,29 +105,29 @@ let whitespace = Regex(@"^\s+", RegexOptions.Compiled)
 
 let parseComplex (value: string) =
     let parseImaginary (part: string) =
-        if part = "i" then 1M
-        elif part = "-i" then -1M
+        if part = "i" then 1
+        elif part = "-i" then -1
         else
-            decimal (part.Replace("i", ""))
+            int (part.Replace("i", ""))
 
     let parseReal (part: string) =
-        decimal part
+        float part
 
     let parts = value.Replace(" ", "").Split([|'i'|], StringSplitOptions.RemoveEmptyEntries)
 
     match parts with
     | [||] ->
-        Lexeme.Number (Number.Complex (0M, 0M))
+        Lexeme.Number (Number.Complex (0, 0))
     | [|""|] ->
-        Lexeme.Number (Number.Complex (0M, parseImaginary "i"))
+        Lexeme.Number (Number.Complex (0, parseImaginary "i"))
 
     | [|rPart|] when value.EndsWith("i") ->
         let i = parseImaginary rPart
-        Lexeme.Number (Number.Complex (0M, i))
+        Lexeme.Number (Number.Complex (0, i))
 
     | [|rPart|] ->
         let r = parseReal rPart
-        Lexeme.Number (Number.Complex (r, 0M))
+        Lexeme.Number (Number.Complex (r, 0))
 
     | [|rPart; iPart|] ->
         let r = parseReal rPart
@@ -148,9 +148,9 @@ let lexemeFromPattern (pattern: TokenPattern) (value: string) =
     | Rational -> let parts = value.Split('/')
                   let n = bigint.Parse parts[0]
                   let d = bigint.Parse parts[1]
-                  Lexeme.Number (Number.Rational (n, d))
-    | Float -> Lexeme.Number (Number.Float (decimal value))
-    | Integer -> Lexeme.Number (Number.Integer (bigint.Parse value))
+                  Lexeme.Number (Number.Rational (int n, int d))
+    | Float -> Lexeme.Number (Number.Float (float value))
+    | Integer -> Lexeme.Number (Number.Integer (int value))
     | Plus -> Lexeme.Operator Operator.Plus
     | Minus -> Lexeme.Operator Operator.Minus
     | Star -> Lexeme.Operator Operator.Star
