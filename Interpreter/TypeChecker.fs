@@ -60,6 +60,9 @@ let checkLiteral (lit: Literal): Grammar.Type =
     match lit with
     | Literal.Number (Integer _) -> Type.Integer
     | Literal.Number (Float _) -> Type.Float
+    | Literal.Number (Rational _) -> Type.Rational
+    | Literal.Number (Complex _) -> Type.Complex
+    
     | Literal.String _ -> Type.String
     | Literal.Bool _ -> Type.Bool
     | Literal.Unit _ -> Type.Unit
@@ -81,7 +84,17 @@ let rec checkExpr (env: TypeEnv) (expr: Expr): Result<Grammar.Type> =
         match exprType with
         | Ok Type.Integer when op.lexeme = Operator Minus -> Ok Type.Integer
         | Ok Type.Float when op.lexeme = Operator Minus -> Ok Type.Float
+        | Ok Type.Rational when op.lexeme = Operator Minus -> Ok Type.Rational
+        
+        | Ok Type.Integer when op.lexeme = Operator Plus -> Ok Type.Integer
+        | Ok Type.Float when op.lexeme = Operator Plus -> Ok Type.Float
+        | Ok Type.Rational when op.lexeme = Operator Plus -> Ok Type.Rational
+        
         | Ok Type.Bool when op.lexeme = Operator Bang -> Ok Type.Bool
+        | Ok Type.Integer when op.lexeme = Operator Bang -> Ok Type.Integer
+        | Ok Type.Float when op.lexeme = Operator Bang -> Ok Type.Float
+        | Ok Type.Rational when op.lexeme = Operator Bang -> Ok Type.Rational
+        
         | Errors errors -> Errors errors
         | Ok t -> Errors [TypeError.InvalidOperator(op, t)]
     | Expr.Binary (lhs, op, rhs) ->
@@ -90,24 +103,55 @@ let rec checkExpr (env: TypeEnv) (expr: Expr): Result<Grammar.Type> =
         match lhsType, rhsType with
         | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Plus -> Ok Type.Integer
         | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Plus -> Ok Type.Float
+        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator Plus -> Ok Type.Rational
+        | Ok Type.Rational, Ok Type.Integer when op.lexeme = Operator Plus -> Ok Type.Rational
+        
         | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Minus -> Ok Type.Integer
         | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Minus -> Ok Type.Float
+        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator Minus -> Ok Type.Rational
+        | Ok Type.Rational, Ok Type.Integer when op.lexeme = Operator Minus -> Ok Type.Rational
+        
         | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Star -> Ok Type.Integer
         | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Star -> Ok Type.Float
+        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator Star -> Ok Type.Rational
+        | Ok Type.Rational, Ok Type.Integer when op.lexeme = Operator Star -> Ok Type.Rational
+        
         | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Slash -> Ok Type.Integer
         | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Slash -> Ok Type.Float
+        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator Slash -> Ok Type.Rational
+        | Ok Type.Rational, Ok Type.Integer when op.lexeme = Operator Slash -> Ok Type.Rational
+        
+        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator StarStar -> Ok Type.Integer
+        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator StarStar -> Ok Type.Float
+        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator StarStar -> Ok Type.Rational
+        | Ok Type.Rational, Ok Type.Integer when op.lexeme = Operator StarStar -> Ok Type.Rational
+        
         | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator EqualEqual -> Ok Type.Bool
         | Ok Type.Float, Ok Type.Float when op.lexeme = Operator EqualEqual -> Ok Type.Bool
+        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator EqualEqual -> Ok Type.Bool
+        | Ok Type.Bool, Ok Type.Bool when op.lexeme = Operator EqualEqual -> Ok Type.Bool
+        
         | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator BangEqual -> Ok Type.Bool
         | Ok Type.Float, Ok Type.Float when op.lexeme = Operator BangEqual -> Ok Type.Bool
+        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator BangEqual -> Ok Type.Bool
+        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Less -> Ok Type.Bool
+        
         | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Less -> Ok Type.Bool
         | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Less -> Ok Type.Bool
+        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator Less -> Ok Type.Bool
+        
         | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator LessEqual -> Ok Type.Bool
         | Ok Type.Float, Ok Type.Float when op.lexeme = Operator LessEqual -> Ok Type.Bool
+        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator LessEqual -> Ok Type.Bool
+        
         | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Greater -> Ok Type.Bool
         | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Greater -> Ok Type.Bool
+        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator Greater -> Ok Type.Bool
+        
         | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator GreaterEqual -> Ok Type.Bool
         | Ok Type.Float, Ok Type.Float when op.lexeme = Operator GreaterEqual -> Ok Type.Bool
+        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator GreaterEqual -> Ok Type.Bool
+        
         | Errors errors, Errors errors' -> Errors (errors @ errors')
         | Errors errors, Ok _ -> Errors errors
         | Ok _, Errors errors -> Errors errors

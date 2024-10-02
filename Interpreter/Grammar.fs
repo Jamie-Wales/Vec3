@@ -6,6 +6,8 @@ type Type =
     | Infer
     | Integer
     | Float
+    | Rational
+    | Complex
     | String
     | Bool
     | Unit
