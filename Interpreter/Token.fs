@@ -1,10 +1,10 @@
 module Vec3.Interpreter.Token
 
 type Number =
-    | Float of decimal
-    | Integer of bigint
-    | Rational of bigint * bigint
-    | Complex of decimal * decimal
+    | Float of float
+    | Integer of int
+    | Rational of int * int
+    | Complex of float * float
 
 type Operator =
     | Plus
@@ -39,6 +39,15 @@ type Keyword =
     | False
     | Nil
 
+type BuiltInFunction =
+    | Print
+    | Input
+    | Exit
+    | Cos
+    | Sin
+    | Tan
+    
+
 type Lexeme =
     | Number of Number
     | String of string
@@ -52,12 +61,14 @@ type Lexeme =
 
 type Token = { lexeme: Lexeme; line: int }
 
-let numberToString (n: Number) =
+
+let numberToString (n: Number): string =
     match n with
     | Float f -> $"Float({f})"
     | Integer i -> $"Integer({i})"
     | Rational (n, d) -> $"Rational({n}/{d})"
     | Complex (r, i) -> $"Complex({r}i{i})"
+
 
 let operatorToString (op: Operator): string =
     match op with
