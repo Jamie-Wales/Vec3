@@ -41,6 +41,7 @@ type MainWindow () as this =
     member private this.ClearOutput() =
         outputBlock.Text <- ""
 
+    
     member private this.ParseAndPrintExpression(tokens: Token list) =
         try
             this.AppendOutput "Parsed Expression:"

@@ -69,10 +69,10 @@ let defaultTypeEnv =
 
 let checkLiteral (lit: Literal) : Grammar.Type =
     match lit with
-    | Literal.Number(Integer _) -> Type.Integer
-    | Literal.Number(Float _) -> Type.Float
-    | Literal.Number(Rational _) -> Type.Rational
-    | Literal.Number(Complex _) -> Type.Complex
+    | Literal.TNumber (TNumber.Integer _) -> Type.Integer
+    | Literal.TNumber (TNumber.Float _) -> Type.Float
+    | Literal.Number(TNumber.Rational _) -> Type.Rational
+    | Literal.Number(TNumber.Complex _) -> Type.Complex
 
     | Literal.String _ -> Type.String
     | Literal.Bool _ -> Type.Bool
