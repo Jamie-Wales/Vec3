@@ -8,17 +8,14 @@ type VM = {
     Chunk: Chunk
     IP: int
     Stack: ResizeArray<Value>
+    ScopeDepth: int  
 }
 
 let createVM chunk =
     { Chunk = chunk
       IP = 0
-      (* 
-       it may be worth actually making this a static array, so we can
-       stack overflow but for now, I like resize array.
-       *)
-      Stack = ResizeArray<Value>(256) }  
-
+      Stack = ResizeArray<Value>(256)
+      ScopeDepth = 0 }  
 let push (vm: VM) (value: Value) =
     vm.Stack.Add(value)
     vm
@@ -35,32 +32,47 @@ let readByte (vm: VM) =
     let byte = vm.Chunk.Code[vm.IP]
     ({ vm with IP = vm.IP + 1 }, byte)
 
+
 let readConstant (vm: VM) =
     let vm, byte = readByte vm
-    vm.Chunk.ConstantPool[int byte]
+    printfn $"Reading constant at index {int byte}"
+    if int byte >= vm.Chunk.ConstantPool.Count then
+        failwithf "Constant index out of range: %d (pool size: %d)" (int byte) vm.Chunk.ConstantPool.Count
+    let constant = vm.Chunk.ConstantPool[int byte]
+    printfn $"Constant value: {constant}"
+    (constant, vm)
 
 let readConstantLong (vm: VM) =
     let vm, byte1 = readByte vm
     let vm, byte2 = readByte vm
     let vm, byte3 = readByte vm
     let index = (int byte1) ||| ((int byte2) <<< 8) ||| ((int byte3) <<< 16)
-    vm.Chunk.ConstantPool[index]
+    printfn $"Reading long constant at index {index}"
+    if index >= vm.Chunk.ConstantPool.Count then
+        failwithf "Long constant index out of range: %d (pool size: %d)" index vm.Chunk.ConstantPool.Count
+    let constant = vm.Chunk.ConstantPool[index]
+    printfn $"Long constant value: {constant}"
+    (constant, vm)
 
-let binaryOp (vm: VM) op =
+let binaryOp (vm: VM) (op: Value -> Value -> Value) =
+    printfn $"Performing binary operation. Stack size: {vm.Stack.Count}"
     let b, vm = pop vm
     let a, vm = pop vm
-    match (a, b) with
-    | VNumber x, VNumber y -> push vm (op (VNumber x) (VNumber y))
-    | _ -> failwith "Operands must be numbers"
+    printfn $"Operands: a = {a}, b = {b}"
+    let result = op a b
+    printfn $"Result: {result}"
+    push vm result
 
 let rec run (vm: VM) =
+    printfn $"IP: {vm.IP}, Stack: {vm.Stack |> Seq.toList}"
     let vm, instruction = readByte vm
+    printfn $"Executing instruction: {byteToOpCode instruction}"
     match byteToOpCode instruction with
     | CONSTANT ->
-        let constant = readConstant vm
+        let constant, vm = readConstant vm
         run (push vm constant)
     | CONSTANT_LONG ->
-        let constant = readConstantLong vm
+        let constant, vm = readConstantLong vm
         run (push vm constant)
     | ADD -> run (binaryOp vm add)
     | SUBTRACT -> run (binaryOp vm subtract)
@@ -68,18 +80,7 @@ let rec run (vm: VM) =
     | DIVIDE -> run (binaryOp vm divide)
     | NEGATE ->
         let value, vm = pop vm
-        match value with
-        | VNumber n -> run (push vm (negate (VNumber n)))
-        | _ -> failwith "Operand must be a number"
-    | RETURN ->
-        let result, vm = pop vm
-        printfn "Return value: %s" (valueToString result)
-        vm  
-    | TRUE -> run (push vm (Boolean true))
-    | FALSE -> run (push vm (Boolean false))
-    | NOT ->
-        let value, vm = pop vm
-        run (push vm (Boolean (not (isTruthy value))))
+        run (push vm (negate value))
     | EQUAL ->
         let b, vm = pop vm
         let a, vm = pop vm
@@ -88,14 +89,19 @@ let rec run (vm: VM) =
         let b, vm = pop vm
         let a, vm = pop vm
         match (a, b) with
-        | VNumber x, VNumber y -> run (push vm (Boolean (compare (VNumber x) (VNumber y) > 0)))
+        | VNumber x, VNumber y -> run (push vm (Boolean (x > y)))
         | _ -> failwith "Operands must be numbers"
     | LESS ->
         let b, vm = pop vm
         let a, vm = pop vm
         match (a, b) with
-        | VNumber x, VNumber y -> run (push vm (Boolean (compare (VNumber x) (VNumber y) < 0)))
+        | VNumber x, VNumber y -> run (push vm (Boolean (x < y)))
         | _ -> failwith "Operands must be numbers"
+    | TRUE -> run (push vm (Boolean true))
+    | FALSE -> run (push vm (Boolean false))
+    | NOT ->
+        let value, vm = pop vm
+        run (push vm (Boolean (not (isTruthy value))))
     | PRINT ->
         let value, vm = pop vm
         printValue value
@@ -103,8 +109,22 @@ let rec run (vm: VM) =
     | POP ->
         let _, vm = pop vm
         run vm
+    | RETURN ->
+       if vm.Stack.Count > 0 then
+        let result, vm = pop vm in 
+            let () = printfn "Return value: %A" result;
+            vm 
+        else
+            vm
     | _ -> failwith $"Unimplemented opcode: {instruction}"
 
+
 let interpret (chunk: Chunk) =
+    printfn "=== Constant Pool ==="
+    for i, value in chunk.ConstantPool |> Seq.indexed do
+        printfn $"[{i}] {value}"
+    printfn "\n=== Disassembled Chunk ==="
+    disassembleChunk chunk "program"
+    printfn "\n=== Program Execution ==="
     let vm = createVM chunk
     run vm
