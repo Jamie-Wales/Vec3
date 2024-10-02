@@ -25,8 +25,34 @@ type TypeError =
     | InvalidCallType of Grammar.Type * Grammar.Type
     | InvalidCallReturn of Grammar.Type * Grammar.Type
     | InvalidCallBody of Grammar.Type * Grammar.Type
+    | TypeErrors of TypeError list
 
 exception TypeException of TypeError
+
+type Result<'T> =
+    | Ok of 'T
+    | Errors of TypeError list
+    
+// result is monadic, can extract out common code later
+let bindR (result: Result<'T>) (f: 'T -> Result<'U>) =
+    match result with
+    | Ok t -> f t
+    | Errors errors -> Errors errors
+
+let mapR (f: 'T -> 'U) (result: Result<'T>) =
+    match result with
+    | Ok t -> Ok (f t)
+    | Errors errors -> Errors errors
+    
+let (>>=) = bindR
+let (>>|) = mapR
+
+let combine (result: Result<'T>) (result': Result<'T>) =
+    match result, result' with
+    | Ok _, Errors errors -> Errors errors
+    | Errors errors, Ok _ -> Errors errors
+    | Ok _, Ok _ -> result
+    | Errors errors, Errors errors' -> Errors (errors @ errors')
 
 type TypeEnv = Map<string, Grammar.Type>
 
@@ -38,103 +64,152 @@ let checkLiteral (lit: Literal): Grammar.Type =
     | Literal.Bool _ -> Type.Bool
     | Literal.Unit _ -> Type.Unit
 
-let checkIdentifier (env: TypeEnv) (token: Token): Grammar.Type =
+let checkIdentifier (env: TypeEnv) (token: Token): Result<Grammar.Type> =
     match token.lexeme with
     | Identifier name ->
         match Map.tryFind name env with
-        | Some t -> t
-        | None -> raise (TypeException (TypeError.UndefinedVariable token))
-    | _ -> raise (TypeException (TypeError.UndefinedVariable token))
+        | Some t -> Ok t
+        | None -> Errors [TypeError.UndefinedVariable token]
+    | _ -> Errors [TypeError.UndefinedVariable token]
 
-let rec checkExpr (env: TypeEnv) (expr: Expr): Grammar.Type =
+let rec checkExpr (env: TypeEnv) (expr: Expr): Result<Grammar.Type> =
     match expr with
-    | Expr.Literal lit -> checkLiteral lit
+    | Expr.Literal lit -> Ok <| checkLiteral lit
     | Expr.Identifier token -> checkIdentifier env token
     | Expr.Unary (op, expr) ->
         let exprType = checkExpr env expr
-        match op.lexeme with
-        | Operator Minus when exprType = Type.Integer -> Type.Integer
-        | Operator Minus when exprType = Type.Float -> Type.Float
-        | Operator Bang when exprType = Type.Bool -> Type.Bool
-        | _ -> raise (TypeException (TypeError.InvalidOperator(op, exprType)))
+        match exprType with
+        | Ok Type.Integer when op.lexeme = Operator Minus -> Ok Type.Integer
+        | Ok Type.Float when op.lexeme = Operator Minus -> Ok Type.Float
+        | Ok Type.Bool when op.lexeme = Operator Bang -> Ok Type.Bool
+        | Errors errors -> Errors errors
+        | Ok t -> Errors [TypeError.InvalidOperator(op, t)]
     | Expr.Binary (lhs, op, rhs) ->
         let lhsType = checkExpr env lhs
         let rhsType = checkExpr env rhs
-        match op.lexeme with
-        | Operator Plus when lhsType = Type.Integer && rhsType = Type.Integer -> Type.Integer
-        | Operator Plus when lhsType = Type.Float && rhsType = Type.Float -> Type.Float
-        | Operator Minus when lhsType = Type.Integer && rhsType = Type.Integer -> Type.Integer
-        | Operator Minus when lhsType = Type.Float && rhsType = Type.Float -> Type.Float
-        | Operator Star when lhsType = Type.Integer && rhsType = Type.Integer -> Type.Integer
-        | Operator Star when lhsType = Type.Float && rhsType = Type.Float -> Type.Float
-        | Operator Slash when lhsType = Type.Integer && rhsType = Type.Integer -> Type.Integer
-        | Operator Slash when lhsType = Type.Float && rhsType = Type.Float -> Type.Float
-        | Operator EqualEqual when lhsType = rhsType -> Type.Bool
-        | Operator BangEqual when lhsType = rhsType -> Type.Bool
-        | Operator Less when lhsType = Type.Integer && rhsType = Type.Integer -> Type.Bool
-        | Operator Less when lhsType = Type.Float && rhsType = Type.Float -> Type.Bool
-        | Operator LessEqual when lhsType = Type.Integer && rhsType = Type.Integer -> Type.Bool
-        | Operator LessEqual when lhsType = Type.Float && rhsType = Type.Float -> Type.Bool
-        | Operator Greater when lhsType = Type.Integer && rhsType = Type.Integer -> Type.Bool
-        | Operator Greater when lhsType = Type.Float && rhsType = Type.Float -> Type.Bool
-        | Operator GreaterEqual when lhsType = Type.Integer && rhsType = Type.Integer -> Type.Bool
-        | Operator GreaterEqual when lhsType = Type.Float && rhsType = Type.Float -> Type.Bool
-        | _ -> raise (TypeException (TypeError.InvalidOperandType(op, lhsType, rhsType)))
+        match lhsType, rhsType with
+        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Plus -> Ok Type.Integer
+        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Plus -> Ok Type.Float
+        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Minus -> Ok Type.Integer
+        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Minus -> Ok Type.Float
+        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Star -> Ok Type.Integer
+        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Star -> Ok Type.Float
+        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Slash -> Ok Type.Integer
+        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Slash -> Ok Type.Float
+        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator EqualEqual -> Ok Type.Bool
+        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator EqualEqual -> Ok Type.Bool
+        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator BangEqual -> Ok Type.Bool
+        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator BangEqual -> Ok Type.Bool
+        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Less -> Ok Type.Bool
+        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Less -> Ok Type.Bool
+        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator LessEqual -> Ok Type.Bool
+        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator LessEqual -> Ok Type.Bool
+        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Greater -> Ok Type.Bool
+        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Greater -> Ok Type.Bool
+        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator GreaterEqual -> Ok Type.Bool
+        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator GreaterEqual -> Ok Type.Bool
+        | Errors errors, Errors errors' -> Errors (errors @ errors')
+        | Errors errors, Ok _ -> Errors errors
+        | Ok _, Errors errors -> Errors errors
+        | Ok t, Ok t' -> Errors [TypeError.InvalidOperandType(op, t, t')]
     | Expr.Grouping expr -> checkExpr env expr
     | Expr.Assignment (token, expr) ->
         let exprType = checkExpr env expr
         match token.lexeme with
         | Identifier name ->
             match Map.tryFind name env with
-            | Some t when t = exprType -> t
-            | Some t -> raise (TypeException (TypeError.InvalidAssignment(t, exprType)))
-            | None -> raise (TypeException (TypeError.UndefinedVariable token))
-        | _ -> raise (TypeException (TypeError.UndefinedVariable token))
+            | Some t ->
+                match exprType with
+                | Ok t' when t = t' -> Ok t
+                | Ok t' -> Errors [TypeError.InvalidAssignment(t, t')]
+                | Errors errors -> Errors errors
+            | None -> Errors [TypeError.UndefinedVariable token]
+        | _ -> Errors [TypeError.UndefinedVariable token]
     | Expr.Call (callee, args) ->
         let calleeType = checkExpr env (Expr.Identifier callee)
         match calleeType with
-        | Function (paramList, returnType) ->
+        | Ok (Function (paramList, returnType)) ->
+            let argResults = List.map (checkExpr env) args
+            let validArgs = List.forall (function Ok _ -> true | _ -> false) argResults
             if List.length paramList <> List.length args then
-                raise (TypeException (TypeError.InvalidArgumentCount(List.length paramList, List.length args)))
+                 Errors [TypeError.InvalidArgumentCount(List.length paramList, List.length args)]
+            else if not validArgs then
+                let errors = List.choose (function Errors errs -> Some errs | _ -> None) argResults |> List.concat
+                Errors errors
             else
-                let argTypes = List.map (checkExpr env) args
+                let argTypes = List.map (fun t -> match t with | Ok t -> t | _ -> Type.Infer) argResults
                 let valid = List.forall2 (fun expected actual -> expected = actual) paramList argTypes
-                if valid then returnType
-                else raise (TypeException (TypeError.InvalidArgumentType(paramList.Head, argTypes.Head)))
-        | _ -> raise (TypeException (TypeError.InvalidCall calleeType))
+                if valid then Ok returnType
+                else Errors [TypeError.InvalidArgumentType(paramList.Head, argTypes.Head)]
+        | Errors errors -> Errors errors
+        | _ -> Errors [TypeError.InvalidCallType(Type.Infer, Type.Infer)] // fix
         
+    // need better type inference here for params, unless params must be typed
     | Expr.Lambda (paramList, returnType, body) ->
         let newEnv = List.fold (fun acc (param, typ) ->
             match param.lexeme with
             | Identifier name -> Map.add name typ acc
             | _ -> raise (TypeException (TypeError.UndefinedVariable param))) env paramList
         let bodyType = checkExpr newEnv body
-        if bodyType = returnType then Function (List.map snd paramList, returnType)
-        else raise (TypeException (TypeError.InvalidFunctionBody(bodyType, returnType)))
+        match bodyType with
+        | Ok bodyType ->
+            if bodyType = returnType then Ok <| Function (List.map snd paramList, returnType)
+            else if returnType = Type.Infer then Ok <| Function (List.map snd paramList, bodyType)
+            else Errors [TypeError.InvalidFunctionReturn(returnType, bodyType)]
+        | Errors errors -> Errors errors
     | Expr.Block stmts ->
-        failwith "not implemented"
+        let rec checkBlock (env: TypeEnv) (stmts: Stmt list): Result<Grammar.Type> =
+            match stmts with
+            | [] -> Ok Type.Unit
+            | [stmt] ->
+                match stmt with
+                | Stmt.Expression expr -> checkExpr env expr
+                | Stmt.VariableDeclaration _ -> Ok Type.Unit
+            | stmt :: rest -> 
+                let env', _ = checkStmt env stmt
+                checkBlock env' rest
+                
+        checkBlock env stmts
 
-and checkStmt (env: TypeEnv) (stmt: Stmt): TypeEnv =
+and checkStmt (env: TypeEnv) (stmt: Stmt): TypeEnv * Result<Grammar.Type> =
     match stmt with
-    | Stmt.Expression expr -> ignore (checkExpr env expr); env
+    | Stmt.Expression expr ->
+        let exprType = checkExpr env expr
+        match exprType with
+        | Errors errors -> env, Errors errors
+        | Ok exprType -> env, Ok exprType
     
     | Stmt.VariableDeclaration (token, typ, expr) ->
         let exprType = checkExpr env expr
-        // fix this
-        if typ = exprType then
-            match token.lexeme with
-            | Identifier name -> Map.add name typ env
-            | _ -> raise (TypeException (TypeError.UndefinedVariable token))
-        else if typ = Type.Infer then
-            match token.lexeme with
-            | Identifier name -> Map.add name exprType env
-            | _ -> raise (TypeException (TypeError.UndefinedVariable token))
-        else raise (TypeException (TypeError.TypeMismatch(typ, exprType)))
+        match exprType with
+        | Errors errors -> env,  Errors errors
+        | Ok exprType ->
+            if typ = exprType then
+                match token.lexeme with
+                | Identifier name -> Map.add name typ env, Ok Type.Unit
+                | _ -> env, Errors [TypeError.UndefinedVariable token]
+            else if typ = Type.Infer then
+                match token.lexeme with
+                | Identifier name -> Map.add name exprType env, Ok Type.Unit
+                | _ -> env, Errors [TypeError.UndefinedVariable token]
+            else env, Errors [TypeError.TypeMismatch(typ, exprType)]
+
+let rec checkStmts (env: TypeEnv) (stmts: Stmt list) =
+    let rec helper env accErrors stmts =
+        match stmts with
+        | [] -> if accErrors = [] then Ok env else Errors accErrors
+        | stmt :: rest ->
+            let env', result = checkStmt env stmt
+            match result with
+            | Errors errors -> helper env' (accErrors @ errors) rest
+            | Ok _ -> helper env' accErrors rest
+            
+    helper env [] stmts
+        
         
 let checkProgram (program: Program) =
-    let rec checkStmts (env: TypeEnv) (stmts: Stmt list) =
-        List.fold checkStmt env stmts
+    match checkStmts Map.empty program with
+    | Ok _ -> ()
+    | Errors errors -> raise (TypeException (TypeError.TypeErrors errors))
     
-    let _ = checkStmts Map.empty program
-    ()
  
