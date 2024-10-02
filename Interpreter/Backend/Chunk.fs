@@ -43,14 +43,12 @@ let getLineNumber (chunk: Chunk) (offset: int) =
     |> Option.defaultValue -1
 
 let private simpleInstruction name offset =
-    printfn $"%s{name}"
+    printfn $"{name}"
     offset + 1
 
 let private constantInstruction (chunk: Chunk) name offset =
     let constant = int chunk.Code[offset + 1]
-    printf $"%16s{name} %4d{constant} '"
-    printValue chunk.ConstantPool[constant]
-    printfn "'"
+    printfn $"{name,-16} {constant,4} '{valueToString chunk.ConstantPool[constant]}'"
     offset + 2
 
 let private constantLongInstruction (chunk: Chunk) name offset =
@@ -58,17 +56,15 @@ let private constantLongInstruction (chunk: Chunk) name offset =
         (int chunk.Code[offset + 1]) ||| 
         ((int chunk.Code[offset + 2]) <<< 8) ||| 
         ((int chunk.Code[offset + 3]) <<< 16)
-    printf $"%16s{name} %4d{constant} '"
-    printValue chunk.ConstantPool[constant]
-    printfn "'"
+    printfn $"{name,-16} {constant,4} '{valueToString chunk.ConstantPool[constant]}'"
     offset + 4
 
 let disassembleInstruction (chunk: Chunk) offset =
-    printf $"%04d{offset} "
+    printf $"{offset:D4} "
     if offset > 0 && getLineNumber chunk offset = getLineNumber chunk (offset - 1) then
         printf "   | "
     else
-        printf $"%4d{getLineNumber chunk offset} "
+        printf $"{getLineNumber chunk offset,4} "
     
     match byteToOpCode chunk.Code[offset] with
     | OP_CODE.RETURN -> simpleInstruction "OP_RETURN" offset
@@ -88,7 +84,7 @@ let disassembleInstruction (chunk: Chunk) offset =
     | OP_CODE.PRINT -> simpleInstruction "OP_PRINT" offset
     | OP_CODE.POP -> simpleInstruction "OP_POP" offset
     | _ ->
-        printfn $"Unknown opcode %d{chunk.Code[offset]}"
+        printfn $"Unknown opcode {chunk.Code[offset]}"
         offset + 1
 
 let disassembleChunk (chunk: Chunk) name =
