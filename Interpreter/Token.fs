@@ -1,10 +1,10 @@
 module Vec3.Interpreter.Token
 
 type Number =
-    | Float of decimal
-    | Integer of bigint
-    | Rational of bigint * bigint
-    | Complex of decimal * decimal
+    | Float of float
+    | Integer of int
+    | Rational of int * int
+    | Complex of float * float
 
 type Operator =
     | Plus
@@ -93,11 +93,6 @@ let operatorToString (op: Operator): string =
     | LeftBracket -> "["
     | RightBracket -> "]"
     | Dot -> "."
-
-let numberToString (n: Number) =
-    match n with
-    | Float f -> $"Float({f})"
-    | Integer i -> $"Integer({i})"
 
 let lexemeToString (lex: Lexeme): string =
     match lex with

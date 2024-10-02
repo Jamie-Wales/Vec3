@@ -10,21 +10,29 @@ type Env = Map<Token, Expr>
 let evalNumber = function 
     | TNumber.Integer x -> TNumber.Integer x
     | TNumber.Float x -> TNumber.Float x
+    | TNumber.Rational (n, d) -> TNumber.Rational (n, d)
+    | TNumber.Complex (r, i) -> TNumber.Complex (r, i)
                              
                              
 let rec evalAddition = function
     | TNumber.Integer x, TNumber.Integer y -> TNumber.Integer (x + y)
     | TNumber.Float x, TNumber.Float y -> TNumber.Float (x + y)
+    | TNumber.Rational (n1, d1), TNumber.Rational (n2, d2) -> TNumber.Rational (n1 * d2 + n2 * d1, d1 * d2)
+    | TNumber.Complex (r1, i1), TNumber.Complex (r2, i2) -> TNumber.Complex (r1 + r2, i1 + i2)
     | _ -> failwith "invalid"
 
 let evalSubtraction = function
     | TNumber.Integer x, TNumber.Integer y -> TNumber.Integer (x - y)
     | TNumber.Float x, TNumber.Float y -> TNumber.Float (x - y)
+    | TNumber.Rational (n1, d1), TNumber.Rational (n2, d2) -> TNumber.Rational (n1 * d2 - n2 * d1, d1 * d2)
+    | TNumber.Complex (r1, i1), TNumber.Complex (r2, i2) -> TNumber.Complex (r1 - r2, i1 - i2)
     | _ -> failwith "invlaid"
     
 let evalMultiplication = function
     | TNumber.Integer x, TNumber.Integer y -> TNumber.Integer (x * y)
     | TNumber.Float x, TNumber.Float y -> TNumber.Float (x * y)
+    | TNumber.Rational (n1, d1), TNumber.Rational (n2, d2) -> TNumber.Rational (n1 * n2, d1 * d2)
+    | TNumber.Complex (r1, i1), TNumber.Complex (r2, i2) -> TNumber.Complex (r1 * r2 - i1 * i2, r1 * i2 + r2 * i1)
     | _ -> failwith "invalid"
 
 let evalDivision =
@@ -32,6 +40,7 @@ let evalDivision =
     // this must be integer division as per requirement, not return floating point
     | TNumber.Integer x, TNumber.Integer y -> TNumber.Integer (x / y)
     | TNumber.Float x, TNumber.Float y -> TNumber.Float (x / y)
+    | TNumber.Rational (n1, d1), TNumber.Rational (n2, d2) -> TNumber.Rational (n1 * d2, d1 * n2)
     | _ -> failwith "invalid"
     
 let evalPower = function
@@ -77,7 +86,7 @@ let rec evalExpr (env: Env) =
                 | "print" ->
                     let args = List.map (evalExpr env) args
                     printfn $"{String.Join(' ', args)}"
-                    Literal(Unit())
+                    Literal(Unit)
                 | "input" ->
                     let args = List.map (evalExpr env) args
                     let input = Console.ReadLine()
@@ -85,17 +94,17 @@ let rec evalExpr (env: Env) =
                 | "cos" ->
                     let args = List.map (evalExpr env) args
                     match args with
-                    | [ Literal(Literal.Number(Float x)) ] -> Literal(Literal.Number(Float(decimal (Math.Cos(double x)))))
+                    | [ Literal(Literal.TNumber(TNumber.Float x)) ] -> Literal(Literal.TNumber(TNumber.Float(Math.Cos(double x))))
                     | _ -> failwith "invalid"
                 | "sin" ->
                     let args = List.map (evalExpr env) args
                     match args with
-                    | [ Literal(Literal.Number(Float x)) ] -> Literal(Literal.Number(Float(decimal (Math.Sin(double x)))))
+                    | [ Literal(Literal.TNumber(TNumber.Float x)) ] -> Literal(Literal.TNumber(TNumber.Float(Math.Sin(double x))))
                     | _ -> failwith "invalid"
                 | "tan" ->
                     let args = List.map (evalExpr env) args
                     match args with
-                    | [ Literal(Literal.Number(Float x)) ] -> Literal(Literal.Number(Float(decimal (Math.Tan(double x)))))
+                    | [ Literal(Literal.TNumber(TNumber.Float x)) ] -> Literal(Literal.TNumber(TNumber.Float(Math.Tan(double x))))
                     | _ -> failwith "invalid"
                 | _ -> failwith $"function {name} not found"
             | _ -> failwith $"function {name} not found"
@@ -134,26 +143,26 @@ let rec evalExpr (env: Env) =
             match op with
             | Bang ->
                 match value with
-                | Literal.Number(Integer x) ->
-                    Literal(Literal.Number(Integer(if x = bigint 0 then bigint 1 else bigint 0)))
-                | Literal.Number(Float x) ->
-                    Literal(Literal.Number(Float(if x = decimal 0.0 then decimal 1.0 else decimal 0.0)))
+                | Literal.TNumber(TNumber.Integer x) ->
+                    Literal(Literal.TNumber(TNumber.Integer(if x = 0 then 1 else 0)))
+                | Literal.TNumber(TNumber.Float x) ->
+                    Literal(Literal.TNumber(TNumber.Float(if x = 0.0 then 1.0 else 0.0)))
                 | Literal.Bool b -> Literal(Literal.Bool(not b))
                 | _ -> failwith "invalid"
             | Minus ->
                 match value with
-                | Literal (Literal.TNumber (TNumber.Integer x)) -> Literal (Literal.TNumber (TNumber.Integer (if x = 0 then 1 else 0)))
-                | Literal (Literal.TNumber (TNumber.Float x)) -> Literal (Literal.TNumber (TNumber.Float (if x = 0.0 then 1 else 0)))
+                | Literal.TNumber (TNumber.Integer x) -> Literal (Literal.TNumber (TNumber.Integer (if x = 0 then 1 else 0)))
+                | Literal.TNumber (TNumber.Float x) -> Literal (Literal.TNumber (TNumber.Float (if x = 0.0 then 1 else 0)))
                 | _ -> failwith "invalid"
 
             | Plus ->
                 match value with
-                | Literal.Number(Integer x) ->
-                    Literal(Literal.TNumber(TNumber.Integer(if x < bigint 0 then bigint 0 - x else x)))
-                | Literal.Number(Float x) ->
-                    Literal(Literal.TNumber(TNumber.Float(if x < decimal 0.0 then decimal 0.0 - x else x)))
-                | Literal.Number(Rational(n, d)) ->
-                    Literal(Literal.TNumber(TNumber.Rational(if n < bigint 0 then bigint 0 - n, d else n, d)))
+                | Literal.TNumber(TNumber.Integer x) ->
+                    Literal(Literal.TNumber(TNumber.Integer(if x < 0 then 0 - x else x)))
+                | Literal.TNumber(TNumber.Float x) ->
+                    Literal(Literal.TNumber(TNumber.Float(if x < 0.0 then 0.0 - x else x)))
+                | Literal.TNumber(TNumber.Rational(n, d)) ->
+                    Literal(Literal.TNumber(TNumber.Rational(if n < 0 then 0 - n, d else n, d)))
                 | _ -> failwith "invalid"
             | _ -> failwith "invalid"
         | _ -> failwith "invalid"

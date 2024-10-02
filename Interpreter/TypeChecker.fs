@@ -29,6 +29,14 @@ type TypeError =
 
 exception TypeException of TypeError
 
+// issue:
+// let x = (x) -> x
+// Literal Unit
+// >> x(5) 
+// Invalid argument type at Line: 1, expected Infer, got Integer
+// need to infer type of lambda params
+
+
 let BuiltinFunctions =
     [ "print", Function([ Type.Any ], Type.Unit)
       "input", Function([], Type.String)
@@ -71,12 +79,12 @@ let checkLiteral (lit: Literal) : Grammar.Type =
     match lit with
     | Literal.TNumber (TNumber.Integer _) -> Type.Integer
     | Literal.TNumber (TNumber.Float _) -> Type.Float
-    | Literal.Number(TNumber.Rational _) -> Type.Rational
-    | Literal.Number(TNumber.Complex _) -> Type.Complex
+    | Literal.TNumber(TNumber.Rational _) -> Type.Rational
+    | Literal.TNumber(TNumber.Complex _) -> Type.Complex
 
     | Literal.String _ -> Type.String
     | Literal.Bool _ -> Type.Bool
-    | Literal.Unit _ -> Type.Unit
+    | Literal.Unit -> Type.Unit
 
 let checkIdentifier (env: TypeEnv) (token: Token) : Result<Grammar.Type> =
     match token.lexeme with
@@ -344,5 +352,5 @@ let rec formatTypeError (error: TypeError) : string =
         $"Invalid call body at Line: {token.line}, expected {expected}, got {actual}"
     | TypeErrors errors -> String.concat "\n" (List.map formatTypeError errors)
 
-let formatTypeErrors (errors: TypeError list) =
+let formatTypeErrors (errors: TypeError list): string =
     String.concat "\n" (List.map formatTypeError errors)

@@ -15,9 +15,12 @@ type Type =
     | Any
     | Function of Type list * Type
     | UserDefined of string
+    
 type TNumber =
     | Integer of int
     | Float of float
+    | Rational of int * int
+    | Complex of float * float
     
 type Literal =
     | TNumber of TNumber 
@@ -47,4 +50,6 @@ let numberToString (n: TNumber) =
     match n with
     | Float f -> $"Float({f})"
     | Integer i -> $"Integer({i})"
+    | Rational (n, d) -> $"Rational({n}/{d})"
+    | Complex (r, i) -> $"Complex({r}i{i})"
 
