@@ -77,7 +77,6 @@ type ParseRule =
       Precedence: Precedence }
 
 // sort of like combinators, maybe move to monadic approach to avoid nesting
-
 // lots of nested maps -> make the result a functor ? or at least extract out common patterns
 
 let nil (state: ParserState) : ParseResult<Expr> = Success(Literal(Unit()), state)

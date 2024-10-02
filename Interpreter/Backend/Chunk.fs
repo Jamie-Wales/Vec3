@@ -17,7 +17,6 @@ let emptyChunk =
 
 let writeChunk (chunk: Chunk) (byte: byte) (line: int) =
     let newOffset = List.length chunk.code
-
     { chunk with
         code = chunk.code @ [ byte ]
         lines =
@@ -36,7 +35,6 @@ let addConstant (chunk: Chunk) (value: Value) =
 
 let writeConstant (chunk: Chunk) (value: Value) (line: int) =
     let chunkWithConstant, index = addConstant chunk value
-
     if index < 256 then
         chunkWithConstant
         |> fun c -> writeChunk c (opCodeToByte OP_CODE.CONSTANT) line
@@ -51,7 +49,7 @@ let writeConstant (chunk: Chunk) (value: Value) (line: int) =
 let getLineNumber (chunk: Chunk) (offset: int) =
     chunk.lines
     |> List.tryFind (fun li -> li.offset = offset)
-    |> Option.map (fun li -> li.lineNumber)
+    |> Option.map (_.lineNumber)
     |> Option.defaultValue -1
 
 let simpleInstruction name offset =
