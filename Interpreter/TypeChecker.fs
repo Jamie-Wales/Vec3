@@ -4,6 +4,8 @@ open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open System
 
+type TypeEnv = Map<string, Grammar.Type>
+
 type TypeError =
     | UndefinedVariable of Token
     | UndefinedFunction of Token
@@ -32,7 +34,7 @@ exception TypeException of TypeError
 // issue:
 // let x = (x) -> x
 // Literal Unit
-// >> x(5) 
+// >> x(5)
 // Invalid argument type at Line: 1, expected Infer, got Integer
 // need to infer type of lambda params
 
@@ -44,41 +46,17 @@ let BuiltinFunctions =
       "sin", Function([ Type.Float ], Type.Float)
       "tan", Function([ Type.Float ], Type.Float) ]
 
-
 type Result<'T> =
     | Ok of 'T
     | Errors of TypeError list
-
-// result is monadic, can extract out common code later
-let bindR (result: Result<'T>) (f: 'T -> Result<'U>) =
-    match result with
-    | Ok t -> f t
-    | Errors errors -> Errors errors
-
-let mapR (f: 'T -> 'U) (result: Result<'T>) =
-    match result with
-    | Ok t -> Ok(f t)
-    | Errors errors -> Errors errors
-
-let (>>=) = bindR
-let (>>|) = mapR
-
-let combine (result: Result<'T>) (result': Result<'T>) =
-    match result, result' with
-    | Ok _, Errors errors -> Errors errors
-    | Errors errors, Ok _ -> Errors errors
-    | Ok _, Ok _ -> result
-    | Errors errors, Errors errors' -> Errors(errors @ errors')
-
-type TypeEnv = Map<string, Grammar.Type>
 
 let defaultTypeEnv =
     List.fold (fun acc (name, typ) -> Map.add name typ acc) Map.empty BuiltinFunctions
 
 let checkLiteral (lit: Literal) : Grammar.Type =
     match lit with
-    | Literal.TNumber (TNumber.Integer _) -> Type.Integer
-    | Literal.TNumber (TNumber.Float _) -> Type.Float
+    | Literal.TNumber(TNumber.Integer _) -> Type.Integer
+    | Literal.TNumber(TNumber.Float _) -> Type.Float
     | Literal.TNumber(TNumber.Rational _) -> Type.Rational
     | Literal.TNumber(TNumber.Complex _) -> Type.Complex
 
@@ -352,5 +330,5 @@ let rec formatTypeError (error: TypeError) : string =
         $"Invalid call body at Line: {token.line}, expected {expected}, got {actual}"
     | TypeErrors errors -> String.concat "\n" (List.map formatTypeError errors)
 
-let formatTypeErrors (errors: TypeError list): string =
-    String.concat "\n" (List.map formatTypeError errors)
+let formatTypeErrors (errors: TypeError list) : string =
+    List.map formatTypeError errors |> String.concat "\n"
