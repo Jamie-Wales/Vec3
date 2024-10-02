@@ -89,6 +89,35 @@ let rec evalExpr (env: Env) =
 
             let env' = evalParams env params' args
             evalExpr env' body
+        | false, _ ->
+            match name.lexeme with
+            | Identifier name ->
+                match name with
+                | "print" ->
+                    let args = List.map (evalExpr env) args
+                    printfn $"{String.Join(' ', args)}"
+                    Literal(Unit())
+                | "input" ->
+                    let args = List.map (evalExpr env) args
+                    let input = Console.ReadLine()
+                    Literal(Literal.String input)
+                | "cos" ->
+                    let args = List.map (evalExpr env) args
+                    match args with
+                    | [ Literal(Literal.Number(Float x)) ] -> Literal(Literal.Number(Float(decimal (Math.Cos(double x)))))
+                    | _ -> failwith "invalid"
+                | "sin" ->
+                    let args = List.map (evalExpr env) args
+                    match args with
+                    | [ Literal(Literal.Number(Float x)) ] -> Literal(Literal.Number(Float(decimal (Math.Sin(double x)))))
+                    | _ -> failwith "invalid"
+                | "tan" ->
+                    let args = List.map (evalExpr env) args
+                    match args with
+                    | [ Literal(Literal.Number(Float x)) ] -> Literal(Literal.Number(Float(decimal (Math.Tan(double x)))))
+                    | _ -> failwith "invalid"
+                | _ -> failwith $"function {name} not found"
+            | _ -> failwith $"function {name} not found"
         | _ -> failwith $"function {name} not found"
     | Lambda(params', t, body) -> Lambda(params', t, body)
     | Expr.Identifier name ->

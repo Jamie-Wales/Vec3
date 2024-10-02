@@ -39,6 +39,15 @@ type Keyword =
     | False
     | Nil
 
+type BuiltInFunction =
+    | Print
+    | Input
+    | Exit
+    | Cos
+    | Sin
+    | Tan
+    
+
 type Lexeme =
     | Number of Number
     | String of string
@@ -52,7 +61,7 @@ type Lexeme =
 
 type Token = { lexeme: Lexeme; line: int }
 
-let numberToString (n: Number) =
+let numberToString (n: Number): string =
     match n with
     | Float f -> $"Float({f})"
     | Integer i -> $"Integer({i})"

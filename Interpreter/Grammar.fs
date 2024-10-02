@@ -12,6 +12,7 @@ type Type =
     | Bool
     | Unit
     | Never
+    | Any
     | Function of Type list * Type
     | UserDefined of string
 

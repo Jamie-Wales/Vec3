@@ -6,6 +6,7 @@ open Interpreter.Repl
 open Vec3.Interpreter
 open Vec3.Interpreter.Parser
 open Vec3.Interpreter.Eval
+open Vec3.Interpreter.TypeChecker
 
 module Program =
     
@@ -26,10 +27,10 @@ module Program =
         
         if argv.Length = 0 then
             // buildAvaloniaApp().StartWithClassicDesktopLifetime(argv)
-            repl Map.empty Map.empty |> ignore
+            repl |> ignore
             0
         else if argv.[0] = "-r" then
-            repl Map.empty Map.empty |> ignore
+            repl |> ignore
             0
         else if argv.[0] = "-f" then
             if argv.Length < 2 then
