@@ -2,19 +2,35 @@ module Vec3.Interpreter.Grammar
 
 open Token
 
+type TypeVar = int
+
 type Type =
     | Infer
+    
     | Integer
     | Float
     | Rational
     | Complex
-    | String
+    
     | Bool
+    
+    | String
+    
     | Unit
     | Never
+    
     | Any
+    
     | Function of Type list * Type
-    | UserDefined of string
+    
+    | TypeVariable of TypeVar
+    
+    // todo
+    | Tuple of Type list
+    | List of Type
+    
+    | Vector of Type * int
+    | Matrix of Type * int * int
     
 type TNumber =
     | Integer of int

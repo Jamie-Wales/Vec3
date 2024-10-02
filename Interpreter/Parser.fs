@@ -415,12 +415,12 @@ and parseType (state: ParserState) : ParseResult<Grammar.Type> =
     | Some { lexeme = Lexeme.Identifier "int" } -> Success(Grammar.Type.Integer, advance state)
     | Some { lexeme = Lexeme.Identifier "float" } -> Success(Grammar.Type.Float, advance state)
     | Some { lexeme = Lexeme.Identifier "rational" } -> Success(Grammar.Type.Rational, advance state)
+    | Some { lexeme = Lexeme.Identifier "complex" } -> Success(Grammar.Type.Complex, advance state)
     | Some { lexeme = Lexeme.Identifier "bool" } -> Success(Grammar.Type.Bool, advance state)
     | Some { lexeme = Lexeme.Identifier "string" } -> Success(Grammar.Type.String, advance state)
     | Some { lexeme = Lexeme.Identifier "unit" } -> Success(Grammar.Type.Unit, advance state)
     | Some { lexeme = Lexeme.Identifier "never" } -> Success(Grammar.Type.Never, advance state)
     | Some { lexeme = Lexeme.Operator Operator.LeftParen } -> parseFunctionType state
-    | Some { lexeme = Lexeme.Identifier name } -> Success(Grammar.Type.UserDefined name, advance state)
     | _ -> Failure("Expected a type after colon.", state)
 
 

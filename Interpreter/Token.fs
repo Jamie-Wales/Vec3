@@ -61,6 +61,7 @@ type Lexeme =
 
 type Token = { lexeme: Lexeme; line: int }
 
+let Empty = { lexeme = Identifier ""; line = 0 }
 
 let numberToString (n: Number): string =
     match n with
