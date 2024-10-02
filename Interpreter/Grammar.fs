@@ -6,9 +6,12 @@ type Type =
     | Infer
     | Integer
     | Float
+    | Rational
+    | Complex
     | String
     | Bool
     | Unit
+    | Never
     | Function of Type list * Type
     | UserDefined of string
 

@@ -9,9 +9,15 @@ let rec repl (env: Env) (typeEnv: TypeEnv) : Env * TypeEnv =
     Console.Write ">> "
     let input = Console.ReadLine()
     let parsed = parseStmt input
-    let typeEnv = checkStmt typeEnv parsed
-    let value, env = evalStatement env parsed
-    printfn $"{value}"
-    repl env typeEnv
+    // printfn $"{parsed}"
+    let typeCheck = checkStmt typeEnv parsed
+    match typeCheck with
+    | typeEnv, Errors errors ->
+        printfn $"Type Errors: {errors}"
+        repl env typeEnv
+    | typeEnv, Ok _ ->
+        let value, env = evalStmt env parsed
+        printfn $"{value}"
+        repl env typeEnv
 
 
