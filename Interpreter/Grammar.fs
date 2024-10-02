@@ -6,9 +6,13 @@ type Type =
     | Infer
     | Integer
     | Float
+    | Rational
+    | Complex
     | String
     | Bool
     | Unit
+    | Never
+    | Any
     | Function of Type list * Type
     | UserDefined of string
 type TNumber =
