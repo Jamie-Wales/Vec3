@@ -32,8 +32,8 @@ type TypeEnv = Map<string, Grammar.Type>
 
 let checkLiteral (lit: Literal): Grammar.Type =
     match lit with
-    | Literal.Number (Integer _) -> Type.Integer
-    | Literal.Number (Float _) -> Type.Float
+    | Literal.TNumber (TNumber.Integer _) -> Type.Integer
+    | Literal.TNumber (TNumber.Float _) -> Type.Float
     | Literal.String _ -> Type.String
     | Literal.Bool _ -> Type.Bool
     | Literal.Unit _ -> Type.Unit

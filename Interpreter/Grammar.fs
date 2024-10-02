@@ -11,12 +11,15 @@ type Type =
     | Unit
     | Function of Type list * Type
     | UserDefined of string
-
+type TNumber =
+    | Integer of int
+    | Float of float
+    
 type Literal =
-    | Number of Number 
+    | TNumber of TNumber 
     | String of string
     | Bool of bool
-    | Unit of unit
+    | Unit
 
 type Expr =
     | Literal of Literal
@@ -35,4 +38,9 @@ and Stmt =
     | VariableDeclaration of Token * Type * Expr // option
 
 type Program = Stmt list
+
+let numberToString (n: TNumber) =
+    match n with
+    | Float f -> $"Float({f})"
+    | Integer i -> $"Integer({i})"
 

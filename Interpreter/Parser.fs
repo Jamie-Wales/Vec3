@@ -79,7 +79,8 @@ type ParseRule =
 // sort of like combinators, maybe move to monadic approach to avoid nesting
 // lots of nested maps -> make the result a functor ? or at least extract out common patterns
 
-let nil (state: ParserState) : ParseResult<Expr> = Success(Literal(Unit()), state)
+let nil (state: ParserState) : ParseResult<Expr> = Success(Literal(Unit), state)
+
 
 let boolean (state: ParserState) =
     let state = setLabel state "Boolean"
@@ -100,9 +101,11 @@ let number (state: ParserState) =
     let state = setLabel state "number"
 
     match previous state with
-    | Some { lexeme = Lexeme.Number n } -> Success(Literal(Literal.Number n), state)
+    | Some { lexeme = Lexeme.Number n } ->
+        match n with
+        | Number.Integer i -> Success(Literal(TNumber(TNumber.Integer(i))), state)
+        | Number.Float  f-> Success(Literal(TNumber(TNumber.Float(f))), state)
     | _ -> Failure("Expect number.", state)
-
 // let ident state =
 //     let state = setLabel state "Ident"
 //     match previous state with
@@ -316,7 +319,7 @@ and leftParenPrefix (state: ParserState) : ParseResult<Expr> =
         match peek (advance state) with
         | Some { lexeme = Lexeme.Operator Operator.Arrow } -> functionExpr state
         | Some { lexeme = Lexeme.Colon } -> functionExpr state
-        | _ -> Success(Literal(Unit()), state)
+        | _ -> Success(Literal(Unit), state)
     | _ -> grouping state
 
 and functionExpr (state: ParserState) : ParseResult<Expr> =
@@ -450,7 +453,7 @@ let parseStatement (state: ParserState) : ParseResult<Stmt> =
             match expression state Precedence.None with
             | Success(expr, state) -> Success(Expression expr, state)
             | Failure(s1, parserState) -> Failure(s1, parserState)
-    | None -> Success((Expression(Literal(Unit())), state))
+    | None -> Success((Expression(Literal(Unit)), state))
 
 let parseStmt (input: string) =
     let tokens = tokenize input

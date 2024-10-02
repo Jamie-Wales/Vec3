@@ -8,8 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Interpreter\Token.fs"/>
-        <Compile Include="Interpreter\Grammar.fs"/>
+        <Compile Include="Interpreter\Token.fs" />
+        <Compile Include="Interpreter\Grammar.fs" />
         <Compile Include="Interpreter\Printer.fs"/>
         <Compile Include="Interpreter\Scanner.fs"/>
         <Compile Include="Interpreter\Parser.fs"/>
