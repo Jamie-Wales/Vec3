@@ -340,8 +340,8 @@ and functionExpr (state: ParserState) : ParseResult<Expr> =
 
                     match parseType state with
                     | Success(paramType, state) -> state, paramType
-                    | Failure _ -> state, Infer
-                | _ -> state, Infer
+                    | Failure _ -> state, TInfer
+                | _ -> state, TInfer
 
             match peek state with
             | Some { lexeme = Lexeme.Operator Operator.RightParen } ->
@@ -372,7 +372,7 @@ and functionExpr (state: ParserState) : ParseResult<Expr> =
             let state = advance state
 
             match expression state Precedence.Assignment with
-            | Success(body, state) -> Success(Lambda(params', Infer, body), state)
+            | Success(body, state) -> Success(Lambda(params', TInfer, body), state)
             | Failure _ as f -> f
         | _ -> Failure("Expected '->' after parameter list.", state)
     | Failure(s, parserState) -> Failure(s, parserState)
@@ -404,22 +404,23 @@ and parseFunctionType (state: ParserState) : ParseResult<Grammar.Type> =
                 let state = advance state
 
                 match parseType state with
-                | Success(returnType, state) -> Success(Function(paramList, returnType), state)
+                | Success(returnType, state) -> Success(TFunction(paramList, returnType), state)
                 | Failure(s1, parserState) -> Failure(s1, parserState)
             | _ -> Failure("Expected ':' after parameter list.", state)
         | Failure(s1, parserState) -> Failure(s1, parserState)
     | _ -> Failure("Expected '(' before function type.", state)
 
+// sumish types ? int | float etc with constrain type
 and parseType (state: ParserState) : ParseResult<Grammar.Type> =
     match peek state with
-    | Some { lexeme = Lexeme.Identifier "int" } -> Success(Grammar.Type.Integer, advance state)
-    | Some { lexeme = Lexeme.Identifier "float" } -> Success(Grammar.Type.Float, advance state)
-    | Some { lexeme = Lexeme.Identifier "rational" } -> Success(Grammar.Type.Rational, advance state)
-    | Some { lexeme = Lexeme.Identifier "complex" } -> Success(Grammar.Type.Complex, advance state)
-    | Some { lexeme = Lexeme.Identifier "bool" } -> Success(Grammar.Type.Bool, advance state)
-    | Some { lexeme = Lexeme.Identifier "string" } -> Success(Grammar.Type.String, advance state)
-    | Some { lexeme = Lexeme.Identifier "unit" } -> Success(Grammar.Type.Unit, advance state)
-    | Some { lexeme = Lexeme.Identifier "never" } -> Success(Grammar.Type.Never, advance state)
+    | Some { lexeme = Lexeme.Identifier "int" } -> Success(TInteger, advance state)
+    | Some { lexeme = Lexeme.Identifier "float" } -> Success(TFloat, advance state)
+    | Some { lexeme = Lexeme.Identifier "rational" } -> Success(TRational, advance state)
+    | Some { lexeme = Lexeme.Identifier "complex" } -> Success(TComplex, advance state)
+    | Some { lexeme = Lexeme.Identifier "bool" } -> Success(TBool, advance state)
+    | Some { lexeme = Lexeme.Identifier "string" } -> Success(TString, advance state)
+    | Some { lexeme = Lexeme.Identifier "unit" } -> Success(TUnit, advance state)
+    | Some { lexeme = Lexeme.Identifier "never" } -> Success(TNever, advance state)
     | Some { lexeme = Lexeme.Operator Operator.LeftParen } -> parseFunctionType state
     | _ -> Failure("Expected a type after colon.", state)
 
@@ -434,7 +435,7 @@ let variableDeclaration (state: ParserState) : ParseResult<Stmt> =
             | Some { lexeme = Lexeme.Colon } ->
                 let state = advance state
                 parseType state
-            | _ -> Success(Infer, state)
+            | _ -> Success(TInfer, state)
 
         match typeResult with
         | Success(varType, state) ->
@@ -447,6 +448,13 @@ let variableDeclaration (state: ParserState) : ParseResult<Stmt> =
         | Failure(s1, parserState) -> Failure(s1, parserState)
     | _ -> Failure("Expect variable name.", state)
 
+let printStatement (state: ParserState) : ParseResult<Stmt> =
+    let state = setLabel state "Print"
+    
+    match expression state Precedence.Assignment with 
+    | Success(expr, state) -> Success((PrintStatement(expr), state))
+    | Failure(s1, parserState) -> Failure(s1, parserState)
+
 let parseStatement (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Statement"
 
@@ -456,6 +464,7 @@ let parseStatement (state: ParserState) : ParseResult<Stmt> =
         | Lexeme.Keyword kw ->
             match kw with
             | Let -> variableDeclaration (advance state)
+            | Keyword.Print -> printStatement (advance state)
             | _ ->
                 match expression state Precedence.None with
                 | Success(expr, state) -> Success(Expression expr, state)

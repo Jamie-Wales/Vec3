@@ -38,6 +38,7 @@ type Keyword =
     | True
     | False
     | Nil
+    | Print
 
 type BuiltInFunction =
     | Print
