@@ -187,6 +187,13 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
                                 | Error errors -> Error errors
     | ELambda(paramList, returnType, body) ->
         let paramTypes = List.map snd paramList
+        if List.length (List.filter (fun t -> t = TInfer) paramTypes) > 1 then
+            let token = List.tryFind (fun (_, typ) -> typ = TInfer) paramList
+            match token with
+            | Some (t, _) ->
+                Error [ TypeError.NotEnoughInformation(t) ]
+            | None -> Error [ TypeError.NotEnoughInformation(Empty) ]
+        else
         let paramTypes = List.map (fun t -> match t with | TInfer -> freshTypeVar() | _ -> t) paramTypes
         
         let newEnv = List.fold2 (fun acc (param, _) typ -> match param.lexeme with
