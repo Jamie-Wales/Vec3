@@ -187,7 +187,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
                                 | Error errors -> Error errors
     | ELambda(paramList, returnType, body) ->
         let paramTypes = List.map snd paramList
-        if List.length (List.filter (fun t -> t = TInfer) paramTypes) > 1 then
+        if List.length paramList > 1 && List.length (List.filter (fun t -> t = TInfer) paramTypes) = List.length paramList then
             let token = List.tryFind (fun (_, typ) -> typ = TInfer) paramList
             match token with
             | Some (t, _) ->
@@ -220,6 +220,9 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
             | Some t ->
                 match t with
                 | TFunction(paramTypes, ret) ->
+                    if List.length paramTypes <> List.length args then
+                        Error [ TypeError.InvalidArgumentCount(callee, List.length paramTypes, List.length args) ]
+                    else
                     let argResults = List.map (infer env) args
                     if List.exists (fun result -> match result with | Error _ -> true | _ -> false) argResults then
                         let errors = List.collect (fun result -> match result with | Error errors -> errors | _ -> []) argResults

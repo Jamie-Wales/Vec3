@@ -327,6 +327,7 @@ let rec formatTypeError (error: TypeError) : string =
         $"Invalid call return at Line: {token.line}, expected {expected}, got {actual}"
     | InvalidCallBody(token, expected, actual) ->
         $"Invalid call body at Line: {token.line}, expected {expected}, got {actual}"
+    | NotEnoughInformation(token) -> $"Not enough information at Line: {token.line}"
 
 let formatTypeErrors (errors: TypeError list) : string =
     List.map formatTypeError errors |> String.concat "\n"

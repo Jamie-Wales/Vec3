@@ -363,7 +363,7 @@ and functionExpr (state: ParserState) : ParseResult<Expr> =
                     let state = advance state
 
                     match expression state Precedence.Assignment with
-                    | Ok(body, state) -> Ok(ELambda(params', returnType, body), state)
+                    | Ok(body, state) -> Ok(ELambda(List.rev params', returnType, body), state)
                     | Error _ as f -> f
                 | _ -> Error("Expected '->' after return type.", state)
             | Error(s1, parserState) -> Error(s1, parserState)
@@ -372,7 +372,7 @@ and functionExpr (state: ParserState) : ParseResult<Expr> =
             let state = advance state
 
             match expression state Precedence.Assignment with
-            | Ok(body, state) -> Ok(ELambda(params', TInfer, body), state)
+            | Ok(body, state) -> Ok(ELambda(List.rev params', TInfer, body), state)
             | Error _ as f -> f
         | _ -> Error("Expected '->' after parameter list.", state)
     | Error(s, parserState) -> Error(s, parserState)
