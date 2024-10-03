@@ -44,6 +44,7 @@ type TokenPattern =
     | Dot
     
     | Identifier
+    
 
 let tokenPatterns : (TokenPattern * Regex) list = [
     (Complex, Regex(@"^([+-]?\d*\.?\d*)i\s*([+-]\s*\d*\.?\d+)?$", RegexOptions.Compiled));
@@ -95,7 +96,9 @@ let keywordMap =
       "for", Keyword.For
       "true", Keyword.True
       "false", Keyword.False
-      "nil", Keyword.Nil ]
+      "nil", Keyword.Nil
+      "print", Keyword.Print
+       ]
     |> Map.ofList
 
 let isKeyword (value: string) =

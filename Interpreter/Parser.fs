@@ -448,6 +448,13 @@ let variableDeclaration (state: ParserState) : ParseResult<Stmt> =
         | Failure(s1, parserState) -> Failure(s1, parserState)
     | _ -> Failure("Expect variable name.", state)
 
+let printStatement (state: ParserState) : ParseResult<Stmt> =
+    let state = setLabel state "Print"
+    
+    match expression state Precedence.Assignment with 
+    | Success(expr, state) -> Success((PrintStatement(expr), state))
+    | Failure(s1, parserState) -> Failure(s1, parserState)
+
 let parseStatement (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Statement"
 
@@ -457,6 +464,7 @@ let parseStatement (state: ParserState) : ParseResult<Stmt> =
         | Lexeme.Keyword kw ->
             match kw with
             | Let -> variableDeclaration (advance state)
+            | Keyword.Print -> printStatement (advance state)
             | _ ->
                 match expression state Precedence.None with
                 | Success(expr, state) -> Success(Expression expr, state)

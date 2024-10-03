@@ -67,6 +67,7 @@ type Expr =
 and Stmt =
     | Expression of Expr
     | VariableDeclaration of Token * Type * Expr // option
+    | PrintStatement of Expr
 
 type Program = Stmt list
 
