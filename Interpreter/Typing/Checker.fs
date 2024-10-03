@@ -25,9 +25,9 @@ open System
 
 let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
     match expr with
-    | Expr.Literal lit -> Ok <| checkLiteral lit
-    | Expr.Identifier token -> checkIdentifier env token
-    | Expr.Unary(op, expr) ->
+    | ELiteral lit -> Ok <| checkLiteral lit
+    | EIdentifier token -> checkIdentifier env token
+    | EUnary(op, expr) ->
         let exprType = checkExpr env expr
 
         match exprType with
@@ -46,36 +46,75 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
 
         | Ok t -> Error [ TypeError.InvalidOperator(op, t) ]
         | Error errors -> Error errors
-    | Expr.Binary(lhs, op, rhs) ->
+    | EBinary(lhs, op, rhs) ->
         let lhsType = checkExpr env lhs
         let rhsType = checkExpr env rhs
 
         match lhsType, rhsType with
         | Ok TInteger, Ok TInteger when op.lexeme = Operator Plus -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.lexeme = Operator Plus -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.lexeme = Operator Plus -> Ok TInteger
+        
         | Ok TFloat, Ok TFloat when op.lexeme = Operator Plus -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.lexeme = Operator Plus -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.lexeme = Operator Plus -> Ok TFloat
+        
         | Ok TRational, Ok TRational when op.lexeme = Operator Plus -> Ok TRational
-        | Ok TRational, Ok TInteger when op.lexeme = Operator Plus -> Ok TRational
+        // | Ok TInfer, Ok TRational when op.lexeme = Operator Plus -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.lexeme = Operator Plus -> Ok TRational
 
+        
         | Ok TInteger, Ok TInteger when op.lexeme = Operator Minus -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.lexeme = Operator Minus -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.lexeme = Operator Minus -> Ok TInteger
+        
         | Ok TFloat, Ok TFloat when op.lexeme = Operator Minus -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.lexeme = Operator Minus -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.lexeme = Operator Minus -> Ok TFloat
+        
         | Ok TRational, Ok TRational when op.lexeme = Operator Minus -> Ok TRational
-        | Ok TRational, Ok TInteger when op.lexeme = Operator Minus -> Ok TRational
+        // | Ok TInfer, Ok TRational when op.lexeme = Operator Minus -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.lexeme = Operator Minus -> Ok TRational
+        
 
         | Ok TInteger, Ok TInteger when op.lexeme = Operator Star -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.lexeme = Operator Star -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.lexeme = Operator Star -> Ok TInteger
+        
         | Ok TFloat, Ok TFloat when op.lexeme = Operator Star -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.lexeme = Operator Star -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.lexeme = Operator Star -> Ok TFloat
+        
         | Ok TRational, Ok TRational when op.lexeme = Operator Star -> Ok TRational
-        | Ok TRational, Ok TInteger when op.lexeme = Operator Star -> Ok TRational
+        // | Ok TInfer, Ok TRational when op.lexeme = Operator Star -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.lexeme = Operator Star -> Ok TRational
+        
 
         | Ok TInteger, Ok TInteger when op.lexeme = Operator Slash -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.lexeme = Operator Slash -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.lexeme = Operator Slash -> Ok TInteger
+        
         | Ok TFloat, Ok TFloat when op.lexeme = Operator Slash -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.lexeme = Operator Slash -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.lexeme = Operator Slash -> Ok TFloat
+        
         | Ok TRational, Ok TRational when op.lexeme = Operator Slash -> Ok TRational
-        | Ok TRational, Ok TInteger when op.lexeme = Operator Slash -> Ok TRational
-
+        // | Ok TInfer, Ok TRational when op.lexeme = Operator Slash -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.lexeme = Operator Slash -> Ok TRational
+        
+        
         | Ok TInteger, Ok TInteger when op.lexeme = Operator StarStar -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.lexeme = Operator StarStar -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.lexeme = Operator StarStar -> Ok TInteger
+        
         | Ok TFloat, Ok TFloat when op.lexeme = Operator StarStar -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.lexeme = Operator StarStar -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.lexeme = Operator StarStar -> Ok TFloat
+        
         | Ok TRational, Ok TRational when op.lexeme = Operator StarStar -> Ok TRational
-        | Ok TRational, Ok TInteger when op.lexeme = Operator StarStar -> Ok TRational
-
+        // | Ok TInfer, Ok TRational when op.lexeme = Operator StarStar -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.lexeme = Operator StarStar -> Ok TRational
+        
         | Ok TInteger, Ok TInteger when op.lexeme = Operator EqualEqual -> Ok TBool
         | Ok TFloat, Ok TFloat when op.lexeme = Operator EqualEqual -> Ok TBool
         | Ok TRational, Ok TRational when op.lexeme = Operator EqualEqual -> Ok TBool
@@ -106,8 +145,8 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         | Error errors, Ok _ -> Error errors
         | Ok _, Error errors -> Error errors
         | Ok t, Ok t' -> Error [ TypeError.InvalidOperandType(op, t, t') ]
-    | Expr.Grouping expr -> checkExpr env expr
-    | Expr.Assignment(token, expr) ->
+    | EGrouping expr -> checkExpr env expr
+    | EAssignment(token, expr) ->
         let exprType = checkExpr env expr
 
         match token.lexeme with
@@ -120,8 +159,8 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
                 | Error errors -> Error errors
             | None -> Error [ TypeError.UndefinedVariable token ]
         | _ -> Error [ TypeError.UndefinedVariable token ]
-    | Expr.Call(callee, args) ->
-        let calleeType = checkExpr env (Expr.Identifier callee)
+    | ECall(callee, args) ->
+        let calleeType = checkExpr env (EIdentifier callee)
 
         match calleeType with
         | Ok(TFunction(paramList, returnType)) ->
@@ -166,7 +205,7 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         | _ -> Error [ TypeError.InvalidCallType(callee, TInfer, TInfer) ] // fix
 
     // need better type inference here for params, unless params must be typed
-    | Expr.Lambda(paramList, returnType, body) ->
+    | ELambda(paramList, returnType, body) ->
         let newEnv =
             List.fold
                 (fun acc (param, typ) ->
@@ -187,15 +226,15 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
             else
                 Error [ TypeError.InvalidFunctionReturn(fst paramList.Head, returnType, bodyType) ]
         | Error errors -> Error errors
-    | Expr.Block stmts ->
+    | EBlock stmts ->
         let rec checkBlock (env: TypeEnv) (stmts: Stmt list) : Result<TType, TypeErrors> =
             match stmts with
             | [] -> Ok TUnit
             | [ stmt ] ->
                 match stmt with
-                | Stmt.Expression expr -> checkExpr env expr
-                | Stmt.VariableDeclaration _ -> Ok TUnit
-                | Stmt.PrintStatement _ -> Ok TUnit
+                | SExpression expr -> checkExpr env expr
+                | SVariableDeclaration _ -> Ok TUnit
+                | SPrintStatement _ -> Ok TUnit
             | stmt :: rest ->
                 let env', _ = checkStmt env stmt
                 checkBlock env' rest
@@ -204,14 +243,14 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
 
 and checkStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv * Result<TType, TypeErrors> =
     match stmt with
-    | Stmt.Expression expr ->
+    | SExpression expr ->
         let exprType = checkExpr env expr
 
         match exprType with
         | Error errors -> env, Error errors
         | Ok exprType -> env, Ok exprType
 
-    | Stmt.VariableDeclaration(token, typ, expr) ->
+    | SVariableDeclaration(token, typ, expr) ->
         let exprType = checkExpr env expr
 
         match exprType with
@@ -227,9 +266,9 @@ and checkStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv * Result<TType, TypeErrors> 
                 | _ -> env, Error [ TypeError.UndefinedVariable token ]
             else
                 env, Error [ TypeError.TypeMismatch(token, typ, exprType) ]
-    | PrintStatement(expr) -> (env, checkExpr env expr)
+    | SPrintStatement(expr) -> (env, checkExpr env expr)
 
-let rec checkStmts (env: TypeEnv) (stmts: Stmt list) =
+let rec checkStmts (env: TypeEnv) (stmts: Stmt list): Result<TypeEnv, TypeErrors> =
     let rec helper env accErrors stmts =
         match stmts with
         | [] -> if accErrors = [] then Ok env else Error accErrors

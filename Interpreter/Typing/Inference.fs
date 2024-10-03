@@ -50,14 +50,14 @@ let freshTypeVar =
 
 let checkLiteral (lit: Literal) : TType =
     match lit with
-    | Literal.TNumber(TNumber.Integer _) -> TInteger
-    | Literal.TNumber(TNumber.Float _) -> TFloat
-    | Literal.TNumber(TNumber.Rational _) -> TRational
-    | Literal.TNumber(TNumber.Complex _) -> TComplex
+    | LNumber(LInteger _) -> TInteger
+    | LNumber(LFloat _) -> TFloat
+    | LNumber(LRational _) -> TRational
+    | LNumber(LComplex _) -> TComplex
 
-    | Literal.String _ -> TString
-    | Literal.Bool _ -> TBool
-    | Literal.Unit -> TUnit
+    | LString _ -> TString
+    | LBool _ -> TBool
+    | LUnit -> TUnit
 
 let checkIdentifier (env: TypeEnv) (token: Token) : Result<TType, TypeErrors> =
     match token.lexeme with
@@ -176,11 +176,11 @@ let generalise (env: TypeEnv) (typ: TType) : Scheme =
 
 let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErrors> =
     match expr with
-    | Expr.Literal lit -> Ok (checkLiteral lit, Map.empty)
-    | Expr.Identifier token -> match checkIdentifier env token with
+    | ELiteral lit -> Ok (checkLiteral lit, Map.empty)
+    | EIdentifier token -> match checkIdentifier env token with
                                 | Ok t -> Ok (t, Map.empty)
                                 | Error errors -> Error errors
-    | Expr.Lambda(paramList, returnType, body) ->
+    | ELambda(paramList, returnType, body) ->
         let paramTypes = List.map snd paramList
         let paramTypes = List.map (fun t -> match t with | TInfer -> freshTypeVar() | _ -> t) paramTypes
         
@@ -194,7 +194,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
             let paramTypes = List.map (applySubstitution sub) paramTypes
             Ok (TFunction(paramTypes, bodyType), sub)
         | Error errors -> Error errors
-    | Expr.Call(callee, args) -> failwith "todo!!!"
+    | ECall(callee, args) -> failwith "todo!!!"
         
     | _ -> failwith "todo"
 
