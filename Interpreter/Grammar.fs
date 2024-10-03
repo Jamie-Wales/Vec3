@@ -2,6 +2,8 @@ module Vec3.Interpreter.Grammar
 
 open Token
 
+// what if i make type variables a tuple of TypeVar * Constraint list
+// therefore (x, y) -> x + y, x and y could be a type variable of constraint list
 type TypeVar = int
 
 type Type =
@@ -39,6 +41,8 @@ type Type =
     
     | TVector of Type * int
     | TMatrix of Type * int * int
+
+type Constraint = Constraint of Type list
     
 type Number =
     | LInteger of int

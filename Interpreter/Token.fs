@@ -12,16 +12,18 @@ type Operator =
     | Star
     | StarStar
     | Slash
+    
     | EqualEqual
     | BangEqual
     | Less
     | LessEqual
     | Greater
     | GreaterEqual
+    | Equal
+    | Bang
+    
     | LeftParen
     | RightParen
-    | Bang
-    | Equal
     | Arrow
     | LeftBrace
     | RightBrace

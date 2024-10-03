@@ -14,15 +14,25 @@ let evalRepl =
         Console.Write ">> "
         let input = Console.ReadLine()
         let parsed = parseStmt input
-        let typeCheck = checkStmt typeEnv parsed
+        let typeCheck = inferStmt typeEnv parsed
         match typeCheck with
-        | typeEnv, Error errors ->
-            printfn $"{formatTypeErrors errors}"
-            repl' env typeEnv
-        | typeEnv, Ok _ ->
+        | Ok (typeEnv, _) ->
             let value, env = evalStmt env parsed
             printfn $"{value}"
             repl' env typeEnv
+        | Error errors ->
+            printfn $"{formatTypeErrors errors}"
+            repl' env typeEnv
+            
+        // let typeCheck = checkStmt typeEnv parsed
+        // match typeCheck with
+        // | typeEnv, Error errors ->
+        //     printfn $"{formatTypeErrors errors}"
+        //     repl' env typeEnv
+        // | typeEnv, Ok _ ->
+        //     let value, env = evalStmt env parsed
+        //     printfn $"{value}"
+        //     repl' env typeEnv
     
     repl' Map.empty defaultTypeEnv
     ()

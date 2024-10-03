@@ -18,6 +18,7 @@
         <Compile Include="Interpreter\Backend\Chunk.fs"/>
         <Compile Include="Interpreter\Backend\VM.fs"/>
         <Compile Include="Interpreter\Backend\Compiler.fs"/>
+        <Compile Include="Interpreter\Typing\Exceptions.fs" />
         <Compile Include="Interpreter\Typing\Builtins.fs" />
         <Compile Include="Interpreter\Typing\Inference.fs" />
         <Compile Include="Interpreter\Typing\Checker.fs" />

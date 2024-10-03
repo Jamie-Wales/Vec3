@@ -3,6 +3,7 @@ module Vec3.Interpreter.Typing.Checker
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open Inference
+open Exceptions
 open System
 
 // TODO
@@ -20,8 +21,14 @@ open System
 // but ONLY params should be able to be union types, not return types
 // also how to check for any ?
 
-
+let rec checkExpression (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
+    // type env holds all of the infered types
+    // expr is the expression to check
+    match expr with
+    | ELiteral lit -> Ok <| checkLiteral lit
+    | EIdentifier token -> checkIdentifier env token
     
+
 
 let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
     match expr with
@@ -140,7 +147,7 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         | Ok TInteger, Ok TInteger when op.lexeme = Operator GreaterEqual -> Ok TBool
         | Ok TFloat, Ok TFloat when op.lexeme = Operator GreaterEqual -> Ok TBool
         | Ok TRational, Ok TRational when op.lexeme = Operator GreaterEqual -> Ok TBool
-
+        
         | Error errors, Error errors' -> Error(errors @ errors')
         | Error errors, Ok _ -> Error errors
         | Ok _, Error errors -> Error errors
@@ -320,6 +327,7 @@ let rec formatTypeError (error: TypeError) : string =
         $"Invalid call return at Line: {token.line}, expected {expected}, got {actual}"
     | InvalidCallBody(token, expected, actual) ->
         $"Invalid call body at Line: {token.line}, expected {expected}, got {actual}"
+    | NotEnoughInformation(token) -> $"Not enough information at Line: {token.line}"
 
 let formatTypeErrors (errors: TypeError list) : string =
     List.map formatTypeError errors |> String.concat "\n"
