@@ -4,6 +4,28 @@ open System
 open Vec3.Interpreter.Parser
 open Vec3.Interpreter.Backend.Compiler
 open Vec3.Interpreter.Backend.VM
+open Vec3.Interpreter.Typing.Checker
+open Vec3.Interpreter.Typing.Inference
+open Vec3.Interpreter.Eval
+
+
+let evalRepl =
+    let rec repl' (env: Env) (typeEnv: TypeEnv) =
+        Console.Write ">> "
+        let input = Console.ReadLine()
+        let parsed = parseStmt input
+        let typeCheck = checkStmt typeEnv parsed
+        match typeCheck with
+        | typeEnv, Error errors ->
+            printfn $"{formatTypeErrors errors}"
+            repl' env typeEnv
+        | typeEnv, Ok _ ->
+            let value, env = evalStmt env parsed
+            printfn $"{value}"
+            repl' env typeEnv
+    
+    repl' Map.empty defaultTypeEnv
+    ()
 
 let rec repl =
     let rec repl' () =
@@ -27,7 +49,6 @@ let rec repl =
             | e ->
                 printfn $"An error occurred: {e.Message}"
             
-            // Continue the REPL
             repl' ()
     
     repl' ()

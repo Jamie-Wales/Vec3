@@ -11,17 +11,23 @@ let rec printAST program =
 and printASTWithIndent expr indent (sb: StringBuilder) =
     let indentStr = String.replicate indent "  "
     match expr with
-    | Literal lit -> printLiteral lit indentStr sb
-    | Unary (op, expr) -> printUnary op expr indentStr indent sb
-    | Binary (left, op, right) -> printBinary left op right indentStr indent sb
-    | Grouping expr -> printGrouping expr indentStr indent sb
+    | ELiteral lit -> printLiteral lit indentStr sb
+    | EUnary (op, expr) -> printUnary op expr indentStr indent sb
+    | EBinary (left, op, right) -> printBinary left op right indentStr indent sb
+    | EGrouping expr -> printGrouping expr indentStr indent sb
+    | EAssignment (name, expr) -> 
+        sb.AppendLine($"{indentStr}Assignment") |> ignore
+        sb.AppendLine($"{indentStr}Name: {name.lexeme}") |> ignore
+        sb.AppendLine($"{indentStr}Expression:") |> ignore
+        printASTWithIndent expr (indent + 1) sb
+        
 
 and printLiteral (lit: Literal) indentStr (sb: StringBuilder) =
     match lit with
-    | TNumber n -> sb.AppendLine($"{indentStr}{numberToString n}") |> ignore
-    | String s -> sb.AppendLine($"{indentStr}String(\"{s}\")") |> ignore
-    | Bool b -> sb.AppendLine($"{indentStr}Bool({b})") |> ignore
-    | Unit _ -> sb.AppendLine($"{indentStr}Nil") |> ignore
+    | LNumber n -> sb.AppendLine($"{indentStr}{numberToString n}") |> ignore
+    | LString s -> sb.AppendLine($"{indentStr}String(\"{s}\")") |> ignore
+    | LBool b -> sb.AppendLine($"{indentStr}Bool({b})") |> ignore
+    | LUnit -> sb.AppendLine($"{indentStr}Nil") |> ignore
 
 and printUnary op expr indentStr indent (sb: StringBuilder) =
     sb.AppendLine($"{indentStr}Unary") |> ignore
@@ -45,12 +51,15 @@ let printStmt stmt indent =
     let sb = StringBuilder()
     let indentStr = String.replicate indent "  "
     match stmt with
-    | Expression expr ->
+    | SExpression expr ->
         sb.AppendLine($"{indentStr}Expression Statement:") |> ignore
         printASTWithIndent expr (indent + 1) sb
-    // | Print expr ->
-    //     sb.AppendLine($"{indentStr}Print Statement:") |> ignore
-    //     printASTWithIndent expr (indent + 1) sb
+    | SPrintStatement expr ->
+        sb.AppendLine($"{indentStr}Print Statement:") |> ignore
+        printASTWithIndent expr (indent + 1) sb
+    | SVariableDeclaration (name, _, expr) ->
+        sb.AppendLine($"{indentStr}Variable Declaration:") |> ignore
+        sb.AppendLine($"{indentStr}Name: {name.lexeme}") |> ignore
     sb.ToString()
 
 let printProgram (program: Program) =

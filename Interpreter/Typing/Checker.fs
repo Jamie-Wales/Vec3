@@ -1,7 +1,8 @@
-module Vec3.Interpreter.TypeChecker
+module Vec3.Interpreter.Typing.Checker
 
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
+open Inference
 open System
 
 // TODO
@@ -19,84 +20,14 @@ open System
 // but ONLY params should be able to be union types, not return types
 // also how to check for any ?
 
-// type Scheme = Forall of TypeVar list * Grammar.Type
 
-// let combineMaps map1 map2 =
-//     Map.fold (fun acc key value -> Map.add key value acc) map2 map1
-
-// let freshTypeVar =
-//     let counter = ref 0
-//     fun () ->
-//         counter.Value <- counter.Value + 1
-//         TTypeVariable counter.Value
-
-type TypeEnv = Map<string, Grammar.Type>
-
-type TypeError =
-    | UndefinedVariable of Token
-    | UndefinedFunction of Token
-    | UndefinedType of Token
-    | TypeMismatch of Token * Grammar.Type * Grammar.Type
-    | InvalidAssignment of Token * Grammar.Type * Grammar.Type
-    | InvalidArgumentCount of Token * int * int
-    | InvalidArgumentType of Token * Grammar.Type * Grammar.Type
-    | InvalidReturnType of Token * Grammar.Type * Grammar.Type
-    | InvalidOperandType of Token * Grammar.Type * Grammar.Type
-    | InvalidOperator of Token * Grammar.Type
-    | InvalidFunctionType of Token * Grammar.Type
-    | InvalidFunction of Token * Grammar.Type
-    | InvalidFunctionArgument of Token * Grammar.Type * Grammar.Type
-    | InvalidFunctionReturn of Token * Grammar.Type * Grammar.Type
-    | InvalidFunctionBody of Token * Grammar.Type * Grammar.Type
-    | InvalidBlock of Token * Grammar.Type * Grammar.Type
-    | InvalidCall of Token * Grammar.Type
-    | InvalidCallType of Token * Grammar.Type * Grammar.Type
-    | InvalidCallReturn of Token * Grammar.Type * Grammar.Type
-    | InvalidCallBody of Token * Grammar.Type * Grammar.Type
-    | TypeErrors of TypeError list
-
-exception TypeException of TypeError
-
-let BuiltinFunctions =
-    [ "print", TFunction([ TAny ], TUnit)
-      "input", TFunction([], TString)
-      "cos", TFunction([ TFloat ], TFloat)
-      "sin", TFunction([ TFloat ], TFloat)
-      "tan", TFunction([ TFloat ], TFloat) ]
-      
-
-type Result<'T> =
-    | Ok of 'T
-    | Errors of TypeError list
     
 
-let defaultTypeEnv =
-    List.fold (fun acc (name, typ) -> Map.add name typ acc) Map.empty BuiltinFunctions
-
-let checkLiteral (lit: Literal) : Grammar.Type =
-    match lit with
-    | Literal.TNumber(TNumber.Integer _) -> TInteger
-    | Literal.TNumber(TNumber.Float _) -> TFloat
-    | Literal.TNumber(TNumber.Rational _) -> TRational
-    | Literal.TNumber(TNumber.Complex _) -> TComplex
-
-    | Literal.String _ -> TString
-    | Literal.Bool _ -> TBool
-    | Literal.Unit -> TUnit
-
-let checkIdentifier (env: TypeEnv) (token: Token) : Result<Grammar.Type> =
-    match token.lexeme with
-    | Identifier name ->
-        match Map.tryFind name env with
-        | Some t -> Ok t
-        | None -> Errors [ TypeError.UndefinedVariable token ]
-    | _ -> Errors [ TypeError.UndefinedVariable token ]
-
-let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<Grammar.Type> =
+let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
     match expr with
-    | Expr.Literal lit -> Ok <| checkLiteral lit
-    | Expr.Identifier token -> checkIdentifier env token
-    | Expr.Unary(op, expr) ->
+    | ELiteral lit -> Ok <| checkLiteral lit
+    | EIdentifier token -> checkIdentifier env token
+    | EUnary(op, expr) ->
         let exprType = checkExpr env expr
 
         match exprType with
@@ -113,38 +44,77 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<Grammar.Type> =
         | Ok TFloat when op.lexeme = Operator Bang -> Ok TFloat
         | Ok TRational when op.lexeme = Operator Bang -> Ok TRational
 
-        | Ok t -> Errors [ TypeError.InvalidOperator(op, t) ]
-        | Errors errors -> Errors errors
-    | Expr.Binary(lhs, op, rhs) ->
+        | Ok t -> Error [ TypeError.InvalidOperator(op, t) ]
+        | Error errors -> Error errors
+    | EBinary(lhs, op, rhs) ->
         let lhsType = checkExpr env lhs
         let rhsType = checkExpr env rhs
 
         match lhsType, rhsType with
         | Ok TInteger, Ok TInteger when op.lexeme = Operator Plus -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.lexeme = Operator Plus -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.lexeme = Operator Plus -> Ok TInteger
+        
         | Ok TFloat, Ok TFloat when op.lexeme = Operator Plus -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.lexeme = Operator Plus -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.lexeme = Operator Plus -> Ok TFloat
+        
         | Ok TRational, Ok TRational when op.lexeme = Operator Plus -> Ok TRational
-        | Ok TRational, Ok TInteger when op.lexeme = Operator Plus -> Ok TRational
+        // | Ok TInfer, Ok TRational when op.lexeme = Operator Plus -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.lexeme = Operator Plus -> Ok TRational
 
+        
         | Ok TInteger, Ok TInteger when op.lexeme = Operator Minus -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.lexeme = Operator Minus -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.lexeme = Operator Minus -> Ok TInteger
+        
         | Ok TFloat, Ok TFloat when op.lexeme = Operator Minus -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.lexeme = Operator Minus -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.lexeme = Operator Minus -> Ok TFloat
+        
         | Ok TRational, Ok TRational when op.lexeme = Operator Minus -> Ok TRational
-        | Ok TRational, Ok TInteger when op.lexeme = Operator Minus -> Ok TRational
+        // | Ok TInfer, Ok TRational when op.lexeme = Operator Minus -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.lexeme = Operator Minus -> Ok TRational
+        
 
         | Ok TInteger, Ok TInteger when op.lexeme = Operator Star -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.lexeme = Operator Star -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.lexeme = Operator Star -> Ok TInteger
+        
         | Ok TFloat, Ok TFloat when op.lexeme = Operator Star -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.lexeme = Operator Star -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.lexeme = Operator Star -> Ok TFloat
+        
         | Ok TRational, Ok TRational when op.lexeme = Operator Star -> Ok TRational
-        | Ok TRational, Ok TInteger when op.lexeme = Operator Star -> Ok TRational
+        // | Ok TInfer, Ok TRational when op.lexeme = Operator Star -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.lexeme = Operator Star -> Ok TRational
+        
 
         | Ok TInteger, Ok TInteger when op.lexeme = Operator Slash -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.lexeme = Operator Slash -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.lexeme = Operator Slash -> Ok TInteger
+        
         | Ok TFloat, Ok TFloat when op.lexeme = Operator Slash -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.lexeme = Operator Slash -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.lexeme = Operator Slash -> Ok TFloat
+        
         | Ok TRational, Ok TRational when op.lexeme = Operator Slash -> Ok TRational
-        | Ok TRational, Ok TInteger when op.lexeme = Operator Slash -> Ok TRational
-
+        // | Ok TInfer, Ok TRational when op.lexeme = Operator Slash -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.lexeme = Operator Slash -> Ok TRational
+        
+        
         | Ok TInteger, Ok TInteger when op.lexeme = Operator StarStar -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.lexeme = Operator StarStar -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.lexeme = Operator StarStar -> Ok TInteger
+        
         | Ok TFloat, Ok TFloat when op.lexeme = Operator StarStar -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.lexeme = Operator StarStar -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.lexeme = Operator StarStar -> Ok TFloat
+        
         | Ok TRational, Ok TRational when op.lexeme = Operator StarStar -> Ok TRational
-        | Ok TRational, Ok TInteger when op.lexeme = Operator StarStar -> Ok TRational
-
+        // | Ok TInfer, Ok TRational when op.lexeme = Operator StarStar -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.lexeme = Operator StarStar -> Ok TRational
+        
         | Ok TInteger, Ok TInteger when op.lexeme = Operator EqualEqual -> Ok TBool
         | Ok TFloat, Ok TFloat when op.lexeme = Operator EqualEqual -> Ok TBool
         | Ok TRational, Ok TRational when op.lexeme = Operator EqualEqual -> Ok TBool
@@ -171,12 +141,12 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<Grammar.Type> =
         | Ok TFloat, Ok TFloat when op.lexeme = Operator GreaterEqual -> Ok TBool
         | Ok TRational, Ok TRational when op.lexeme = Operator GreaterEqual -> Ok TBool
 
-        | Errors errors, Errors errors' -> Errors(errors @ errors')
-        | Errors errors, Ok _ -> Errors errors
-        | Ok _, Errors errors -> Errors errors
-        | Ok t, Ok t' -> Errors [ TypeError.InvalidOperandType(op, t, t') ]
-    | Expr.Grouping expr -> checkExpr env expr
-    | Expr.Assignment(token, expr) ->
+        | Error errors, Error errors' -> Error(errors @ errors')
+        | Error errors, Ok _ -> Error errors
+        | Ok _, Error errors -> Error errors
+        | Ok t, Ok t' -> Error [ TypeError.InvalidOperandType(op, t, t') ]
+    | EGrouping expr -> checkExpr env expr
+    | EAssignment(token, expr) ->
         let exprType = checkExpr env expr
 
         match token.lexeme with
@@ -185,12 +155,12 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<Grammar.Type> =
             | Some t ->
                 match exprType with
                 | Ok t' when t = t' -> Ok t
-                | Ok t' -> Errors [ TypeError.InvalidAssignment(token, t, t') ]
-                | Errors errors -> Errors errors
-            | None -> Errors [ TypeError.UndefinedVariable token ]
-        | _ -> Errors [ TypeError.UndefinedVariable token ]
-    | Expr.Call(callee, args) ->
-        let calleeType = checkExpr env (Expr.Identifier callee)
+                | Ok t' -> Error [ TypeError.InvalidAssignment(token, t, t') ]
+                | Error errors -> Error errors
+            | None -> Error [ TypeError.UndefinedVariable token ]
+        | _ -> Error [ TypeError.UndefinedVariable token ]
+    | ECall(callee, args) ->
+        let calleeType = checkExpr env (EIdentifier callee)
 
         match calleeType with
         | Ok(TFunction(paramList, returnType)) ->
@@ -204,17 +174,17 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<Grammar.Type> =
                     argResults
 
             if List.length paramList <> List.length args then
-                Errors [ TypeError.InvalidArgumentCount(callee, List.length paramList, List.length args) ]
+                Error [ TypeError.InvalidArgumentCount(callee, List.length paramList, List.length args) ]
             else if not validArgs then
                 let errors =
                     List.choose
                         (function
-                        | Errors errs -> Some errs
+                        | Error errs -> Some errs
                         | _ -> None)
                         argResults
                     |> List.concat
 
-                Errors errors
+                Error errors
             else
                 let argTypes =
                     List.map
@@ -230,18 +200,18 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<Grammar.Type> =
                 if valid then
                     Ok returnType
                 else
-                    Errors [ TypeError.InvalidArgumentType(callee, paramList.Head, argTypes.Head) ]
-        | Errors errors -> Errors errors
-        | _ -> Errors [ TypeError.InvalidCallType(callee, TInfer, TInfer) ] // fix
+                    Error [ TypeError.InvalidArgumentType(callee, paramList.Head, argTypes.Head) ]
+        | Error errors -> Error errors
+        | _ -> Error [ TypeError.InvalidCallType(callee, TInfer, TInfer) ] // fix
 
     // need better type inference here for params, unless params must be typed
-    | Expr.Lambda(paramList, returnType, body) ->
+    | ELambda(paramList, returnType, body) ->
         let newEnv =
             List.fold
                 (fun acc (param, typ) ->
                     match param.lexeme with
                     | Identifier name -> Map.add name typ acc
-                    | _ -> raise (TypeException(TypeError.UndefinedVariable param)))
+                    | _ -> raise (TypeException([TypeError.UndefinedVariable param])))
                 env
                 paramList
 
@@ -254,59 +224,59 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<Grammar.Type> =
             else if returnType = TInfer then
                 Ok <| TFunction(List.map snd paramList, bodyType)
             else
-                Errors [ TypeError.InvalidFunctionReturn(fst paramList.Head, returnType, bodyType) ]
-        | Errors errors -> Errors errors
-    | Expr.Block stmts ->
-        let rec checkBlock (env: TypeEnv) (stmts: Stmt list) : Result<Grammar.Type> =
+                Error [ TypeError.InvalidFunctionReturn(fst paramList.Head, returnType, bodyType) ]
+        | Error errors -> Error errors
+    | EBlock stmts ->
+        let rec checkBlock (env: TypeEnv) (stmts: Stmt list) : Result<TType, TypeErrors> =
             match stmts with
             | [] -> Ok TUnit
             | [ stmt ] ->
                 match stmt with
-                | Stmt.Expression expr -> checkExpr env expr
-                | Stmt.VariableDeclaration _ -> Ok TUnit
-                | Stmt.PrintStatement _ -> Ok TUnit
+                | SExpression expr -> checkExpr env expr
+                | SVariableDeclaration _ -> Ok TUnit
+                | SPrintStatement _ -> Ok TUnit
             | stmt :: rest ->
                 let env', _ = checkStmt env stmt
                 checkBlock env' rest
 
         checkBlock env stmts
 
-and checkStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv * Result<Grammar.Type> =
+and checkStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv * Result<TType, TypeErrors> =
     match stmt with
-    | Stmt.Expression expr ->
+    | SExpression expr ->
         let exprType = checkExpr env expr
 
         match exprType with
-        | Errors errors -> env, Errors errors
+        | Error errors -> env, Error errors
         | Ok exprType -> env, Ok exprType
 
-    | Stmt.VariableDeclaration(token, typ, expr) ->
+    | SVariableDeclaration(token, typ, expr) ->
         let exprType = checkExpr env expr
 
         match exprType with
-        | Errors errors -> env, Errors errors
+        | Error errors -> env, Error errors
         | Ok exprType ->
             if typ = exprType then
                 match token.lexeme with
                 | Identifier name -> Map.add name typ env, Ok TUnit
-                | _ -> env, Errors [ TypeError.UndefinedVariable token ]
+                | _ -> env, Error [ TypeError.UndefinedVariable token ]
             else if typ = TInfer then
                 match token.lexeme with
                 | Identifier name -> Map.add name exprType env, Ok TUnit
-                | _ -> env, Errors [ TypeError.UndefinedVariable token ]
+                | _ -> env, Error [ TypeError.UndefinedVariable token ]
             else
-                env, Errors [ TypeError.TypeMismatch(token, typ, exprType) ]
-    | PrintStatement(expr) -> (env, checkExpr env expr)
+                env, Error [ TypeError.TypeMismatch(token, typ, exprType) ]
+    | SPrintStatement(expr) -> (env, checkExpr env expr)
 
-let rec checkStmts (env: TypeEnv) (stmts: Stmt list) =
+let rec checkStmts (env: TypeEnv) (stmts: Stmt list): Result<TypeEnv, TypeErrors> =
     let rec helper env accErrors stmts =
         match stmts with
-        | [] -> if accErrors = [] then Ok env else Errors accErrors
+        | [] -> if accErrors = [] then Ok env else Error accErrors
         | stmt :: rest ->
             let env', result = checkStmt env stmt
 
             match result with
-            | Errors errors -> helper env' (accErrors @ errors) rest
+            | Error errors -> helper env' (accErrors @ errors) rest
             | Ok _ -> helper env' accErrors rest
 
     helper env [] stmts
@@ -314,7 +284,7 @@ let rec checkStmts (env: TypeEnv) (stmts: Stmt list) =
 let checkProgram (program: Program) =
     match checkStmts defaultTypeEnv program with
     | Ok _ -> ()
-    | Errors errors -> raise (TypeException(TypeErrors errors))
+    | Error errors -> raise (TypeException errors)
 
 
 let rec formatTypeError (error: TypeError) : string =
@@ -350,7 +320,6 @@ let rec formatTypeError (error: TypeError) : string =
         $"Invalid call return at Line: {token.line}, expected {expected}, got {actual}"
     | InvalidCallBody(token, expected, actual) ->
         $"Invalid call body at Line: {token.line}, expected {expected}, got {actual}"
-    | TypeErrors errors -> String.concat "\n" (List.map formatTypeError errors)
 
 let formatTypeErrors (errors: TypeError list) : string =
     List.map formatTypeError errors |> String.concat "\n"

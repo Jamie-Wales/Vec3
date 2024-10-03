@@ -40,41 +40,41 @@ type Type =
     | TVector of Type * int
     | TMatrix of Type * int * int
     
-type TNumber =
-    | Integer of int
-    | Float of float
-    | Rational of int * int
-    | Complex of float * float
+type Number =
+    | LInteger of int
+    | LFloat of float
+    | LRational of int * int
+    | LComplex of float * float
     
 type Literal =
-    | TNumber of TNumber 
-    | String of string
-    | Bool of bool
-    | Unit
+    | LNumber of Number 
+    | LString of string
+    | LBool of bool
+    | LUnit
 
 type Expr =
-    | Literal of Literal
-    | Identifier of Token
-    | Unary of Token * Expr
-    | Binary of Expr * Token * Expr
-    | Grouping of Expr
-    | Assignment of Token * Expr 
+    | ELiteral of Literal
+    | EIdentifier of Token
+    | EUnary of Token * Expr
+    | EBinary of Expr * Token * Expr
+    | EGrouping of Expr
+    | EAssignment of Token * Expr 
     
-    | Call of Token * Expr list
-    | Lambda of (Token * Type) list * Type * Expr
-    | Block of Stmt list
+    | ECall of Token * Expr list
+    | ELambda of (Token * Type) list * Type * Expr
+    | EBlock of Stmt list
     
 and Stmt =
-    | Expression of Expr
-    | VariableDeclaration of Token * Type * Expr // option
-    | PrintStatement of Expr
+    | SExpression of Expr
+    | SVariableDeclaration of Token * Type * Expr // option
+    | SPrintStatement of Expr
 
 type Program = Stmt list
 
-let numberToString (n: TNumber) =
+let numberToString (n: Number) =
     match n with
-    | Float f -> $"Float({f})"
-    | Integer i -> $"Integer({i})"
-    | Rational (n, d) -> $"Rational({n}/{d})"
-    | Complex (r, i) -> $"Complex({r}i{i})"
+    | LFloat f -> $"Float({f})"
+    | LInteger i -> $"Integer({i})"
+    | LRational (n, d) -> $"Rational({n}/{d})"
+    | LComplex (r, i) -> $"Complex({r}i{i})"
 

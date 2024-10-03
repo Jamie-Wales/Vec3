@@ -32,26 +32,26 @@ let emitOpCode (opCode: OP_CODE) (state: CompilerState) : CompilerResult<unit> =
    emitByte (opCodeToByte opCode) state
 
 let rec compileLiteral (lit: Literal) : Compiler<unit> =
-    let compileNumber (n: TNumber) state =
+    let compileNumber (n: Vec3.Interpreter.Grammar.Number) state =
         match n with
-        | TNumber.Integer i -> emitConstant (VNumber(VInteger i)) state
-        | TNumber.Float f -> emitConstant (VNumber(VFloat f)) state
-        | TNumber.Rational (n, d) -> emitConstant (VNumber(VRational(n, d))) state
-        | TNumber.Complex (r, i) -> emitConstant (VNumber(VComplex(r, i))) state
+        | LInteger i -> emitConstant (VNumber(VInteger i)) state
+        | LFloat f -> emitConstant (VNumber(VFloat f)) state
+        | LRational (n, d) -> emitConstant (VNumber(VRational(n, d))) state
+        | LComplex (r, i) -> emitConstant (VNumber(VComplex(r, i))) state
     fun state ->
         match lit with
-        | TNumber n -> compileNumber n state
-        | Literal.String s -> emitConstant (Value.String s) state
-        | Bool b ->
+        | LNumber n -> compileNumber n state
+        | LString s -> emitConstant (Value.String s) state
+        | LBool b ->
             if b then emitOpCode OP_CODE.TRUE state
             else emitOpCode OP_CODE.FALSE state
-        | Unit -> emitConstant Value.Nil state
+        | LUnit -> emitConstant Value.Nil state
 
 let rec compileExpr (expr: Expr) : Compiler<unit> =
     fun state ->
         match expr with
-        | Literal lit -> compileLiteral lit state
-        | Binary (left, op, right) -> compileBinary left op right state
+        | ELiteral lit -> compileLiteral lit state
+        | EBinary (left, op, right) -> compileBinary left op right state
         | _ -> Error ("Unsupported expression type", state)
 and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
     fun state ->
@@ -85,12 +85,12 @@ and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
 let rec compileStmt (stmt: Stmt) : Compiler<unit> =
     fun state ->
         match stmt with
-        | Expression expr ->
+        | SExpression expr ->
             compileExpr expr state
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.POP state)
-        | VariableDeclaration (name, _, initializer) ->
+        | SVariableDeclaration (name, _, initializer) ->
             compileVariableDeclaration name initializer state
-        | PrintStatement expr ->
+        | SPrintStatement expr ->
             compileExpr expr state
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.PRINT state)
 
