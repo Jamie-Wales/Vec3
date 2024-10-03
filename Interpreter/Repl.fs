@@ -6,7 +6,7 @@ open System
 open Vec3.Interpreter.TypeChecker
 
 
-let rec repl =
+let repl () =
     let rec repl' (env: Env) (typeEnv: TypeEnv) =
         Console.Write ">> "
         let input = Console.ReadLine()

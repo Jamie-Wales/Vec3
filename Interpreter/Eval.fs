@@ -119,7 +119,6 @@ let rec evalExpr (env: Env) =
         let rhs = evalExpr env rhs
 
         match op, lhs, rhs with
-
         | { lexeme = Operator op } , Expr.Literal (Literal.TNumber lhs), Expr.Literal (Literal.TNumber rhs) ->
             match op with
             | Operator.Plus -> Literal (Literal.TNumber (evalAddition (lhs, rhs)))

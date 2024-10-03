@@ -5,32 +5,40 @@ open Token
 type TypeVar = int
 
 type Type =
-    | Infer
+    | TInfer
     
-    | Integer
-    | Float
-    | Rational
-    | Complex
+    | TInteger
+    | TFloat
+    | TRational
+    | TComplex
     
-    | Bool
+    | TBool
     
-    | String
+    | TString
     
-    | Unit
-    | Never
+    | TUnit
+    | TNever
     
-    | Any
+    | TAny
     
-    | Function of Type list * Type
+    | TFunction of Type list * Type
+    // maybe instead
+    // | Function of (Type list) list * Type
+    // so that functions can be unionized, but of course need to check whether body is valid
     
-    | TypeVariable of TypeVar
+    | TTypeVariable of TypeVar
+    
+    // contrains a type to an allowed set of types
+    // i have ideas that this will allow hidler miller inference without type classes
+    // gonna take quite a bit of trial and error
+    | TConstrain of Type list
     
     // todo
-    | Tuple of Type list
-    | List of Type
+    | TTuple of Type list
+    | TList of Type
     
-    | Vector of Type * int
-    | Matrix of Type * int * int
+    | TVector of Type * int
+    | TMatrix of Type * int * int
     
 type TNumber =
     | Integer of int
