@@ -2,7 +2,6 @@ module Vec3.Interpreter.Typing.Inference
 
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
-open System
 open Builtins
 
 type TType = Vec3.Interpreter.Grammar.Type
@@ -34,13 +33,11 @@ type TypeError =
     | InvalidCallType of Token * TType * TType
     | InvalidCallReturn of Token * TType * TType
     | InvalidCallBody of Token * TType * TType
-    | TypeErrors of TypeError list
 
-exception TypeException of TypeError
 
-type Result<'T> =
-    | Ok of 'T
-    | Errors of TypeError list
+type TypeErrors = TypeError list
+
+exception TypeException of TypeErrors
 
 let combineMaps map1 map2 =
      Map.fold (fun acc key value -> Map.add key value acc) map2 map1
@@ -62,13 +59,13 @@ let checkLiteral (lit: Literal) : TType =
     | Literal.Bool _ -> TBool
     | Literal.Unit -> TUnit
 
-let checkIdentifier (env: TypeEnv) (token: Token) : Result<TType> =
+let checkIdentifier (env: TypeEnv) (token: Token) : Result<TType, TypeErrors> =
     match token.lexeme with
     | Identifier name ->
         match Map.tryFind name env with
         | Some t -> Ok t
-        | None -> Errors [ TypeError.UndefinedVariable token ]
-    | _ -> Errors [ TypeError.UndefinedVariable token ]
+        | None -> Error [ TypeError.UndefinedVariable token ]
+    | _ -> Error [ TypeError.UndefinedVariable token ]
 
 let rec applySubstitution (sub: Substitution) (t: TType) : TType =
     match t with
@@ -89,7 +86,7 @@ let rec applySubstitution (sub: Substitution) (t: TType) : TType =
 let applySubstitutionToEnv (sub: Substitution) (env: TypeEnv) : TypeEnv =
     Map.map (fun _ t -> applySubstitution sub t) env
 
-let rec unify (t1: TType) (t2: TType): Result<Substitution> =
+let rec unify (t1: TType) (t2: TType): Result<Substitution, TypeErrors> =
     match t1, t2 with
     | TInteger, TInteger
     | TFloat, TFloat
@@ -108,13 +105,13 @@ let rec unify (t1: TType) (t2: TType): Result<Substitution> =
         if t = TTypeVariable tv then
             Ok Map.empty
          else if occursCheck tv t then
-            Errors [ TypeError.TypeMismatch(Empty, TTypeVariable tv, t) ]
+            Error [ TypeError.TypeMismatch(Empty, TTypeVariable tv, t) ]
         else
             Ok <| Map.add tv t Map.empty
     
     | TFunction(params1, ret1), TFunction(params2, ret2) ->
         if List.length params1 <> List.length params2 then
-            Errors [ TypeError.TypeMismatch(Empty, t1, t2) ]
+            Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
         else
             let paramResults = List.map2 unify params1 params2
             let retResult = unify ret1 ret2
@@ -124,16 +121,16 @@ let rec unify (t1: TType) (t2: TType): Result<Substitution> =
                 List.fold(fun acc result ->
                     match acc, result with
                     | Ok sub1, Ok sub2 -> Ok (combineMaps sub1 sub2)
-                    | Errors errors, Ok _ -> Errors errors
-                    | Ok _, Errors errors -> Errors errors
-                    | Errors errors1, Errors errors2 -> Errors(errors1 @ errors2)) (Ok Map.empty) paramResults
+                    | Error errors, Ok _ -> Error errors
+                    | Ok _, Error errors -> Error errors
+                    | Error errors1, Error errors2 -> Error(errors1 @ errors2)) (Ok Map.empty) paramResults
                     
             match combinedResults, retResult with
             | Ok sub1, Ok sub2 -> Ok (combineMaps sub1 sub2)
-            | Errors errors, Ok _ -> Errors errors
-            | Ok _, Errors errors -> Errors errors
-            | Errors errors1, Errors errors2 -> Errors(errors1 @ errors2)
-    | _ -> Errors [ TypeError.TypeMismatch(Empty, t1, t2) ]
+            | Error errors, Ok _ -> Error errors
+            | Ok _, Error errors -> Error errors
+            | Error errors1, Error errors2 -> Error(errors1 @ errors2)
+    | _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 
 and occursCheck (tv: TypeVar) (t: TType) : bool =
     match t with
@@ -177,12 +174,12 @@ let generalise (env: TypeEnv) (typ: TType) : Scheme =
 //     List.fold (fun acc (name, typ) -> Map.add name (Forall([] ,typ)) acc) Map.empty BuiltinFunctions
 
 
-let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution> =
+let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErrors> =
     match expr with
     | Expr.Literal lit -> Ok (checkLiteral lit, Map.empty)
     | Expr.Identifier token -> match checkIdentifier env token with
                                 | Ok t -> Ok (t, Map.empty)
-                                | Errors errors -> Errors errors
+                                | Error errors -> Error errors
     | Expr.Lambda(paramList, returnType, body) ->
         let paramTypes = List.map snd paramList
         let paramTypes = List.map (fun t -> match t with | TInfer -> freshTypeVar() | _ -> t) paramTypes
@@ -196,7 +193,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution> =
         | Ok (bodyType, sub) ->
             let paramTypes = List.map (applySubstitution sub) paramTypes
             Ok (TFunction(paramTypes, bodyType), sub)
-        | Errors errors -> Errors errors
+        | Error errors -> Error errors
     | Expr.Call(callee, args) -> failwith "todo!!!"
         
     | _ -> failwith "todo"
