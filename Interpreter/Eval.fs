@@ -119,7 +119,6 @@ let rec evalExpr (env: Env) =
         let rhs = evalExpr env rhs
 
         match op, lhs, rhs with
-
         | { lexeme = Operator op } , Expr.Literal (Literal.TNumber lhs), Expr.Literal (Literal.TNumber rhs) ->
             match op with
             | Operator.Plus -> Literal (Literal.TNumber (evalAddition (lhs, rhs)))
@@ -174,12 +173,18 @@ and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
 
     | VariableDeclaration(name, _, expr) ->
         let value = evalExpr env expr
-        Literal (Literal.Unit ), Map.add name value env
+        Literal Literal.Unit, Map.add name value env
+    
+    | PrintStatement expr ->
+        let value = evalExpr env expr
+        printfn $"{value}"
+        Literal Literal.Unit, env
 
 let evalStatement (env: Env) (stmt: Stmt) : Literal * Env =
     match evalStmt env stmt with
     | Literal lit, env -> lit, env
     | _, env -> Unit , env
+    
     
 
 let evalProgram (env: Env) (program: Program) : Env =

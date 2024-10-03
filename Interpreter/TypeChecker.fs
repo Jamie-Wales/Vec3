@@ -4,6 +4,32 @@ open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open System
 
+// TODO
+// - Type inference for params
+// - to do that i need union types
+// - as plus operator can be used for int, float, rational, complex etc, therefore:
+// (x) -> x + x
+// x: int | float | rational | complex
+// but
+// (x) -> x + 5
+// 5: int
+// therefore, x: int
+// union types i need to parse etc and work out how to validate, i suppose i need to type operators or treat them as
+// funcs
+// but ONLY params should be able to be union types, not return types
+// also how to check for any ?
+
+// type Scheme = Forall of TypeVar list * Grammar.Type
+
+// let combineMaps map1 map2 =
+//     Map.fold (fun acc key value -> Map.add key value acc) map2 map1
+
+// let freshTypeVar =
+//     let counter = ref 0
+//     fun () ->
+//         counter.Value <- counter.Value + 1
+//         TTypeVariable counter.Value
+
 type TypeEnv = Map<string, Grammar.Type>
 
 type TypeError =
@@ -31,38 +57,32 @@ type TypeError =
 
 exception TypeException of TypeError
 
-// issue:
-// let x = (x) -> x
-// Literal Unit
-// >> x(5)
-// Invalid argument type at Line: 1, expected Infer, got Integer
-// need to infer type of lambda params
-
-
 let BuiltinFunctions =
-    [ "print", Function([ Type.Any ], Type.Unit)
-      "input", Function([], Type.String)
-      "cos", Function([ Type.Float ], Type.Float)
-      "sin", Function([ Type.Float ], Type.Float)
-      "tan", Function([ Type.Float ], Type.Float) ]
+    [ "print", TFunction([ TAny ], TUnit)
+      "input", TFunction([], TString)
+      "cos", TFunction([ TFloat ], TFloat)
+      "sin", TFunction([ TFloat ], TFloat)
+      "tan", TFunction([ TFloat ], TFloat) ]
+      
 
 type Result<'T> =
     | Ok of 'T
     | Errors of TypeError list
+    
 
 let defaultTypeEnv =
     List.fold (fun acc (name, typ) -> Map.add name typ acc) Map.empty BuiltinFunctions
 
 let checkLiteral (lit: Literal) : Grammar.Type =
     match lit with
-    | Literal.TNumber(TNumber.Integer _) -> Type.Integer
-    | Literal.TNumber(TNumber.Float _) -> Type.Float
-    | Literal.TNumber(TNumber.Rational _) -> Type.Rational
-    | Literal.TNumber(TNumber.Complex _) -> Type.Complex
+    | Literal.TNumber(TNumber.Integer _) -> TInteger
+    | Literal.TNumber(TNumber.Float _) -> TFloat
+    | Literal.TNumber(TNumber.Rational _) -> TRational
+    | Literal.TNumber(TNumber.Complex _) -> TComplex
 
-    | Literal.String _ -> Type.String
-    | Literal.Bool _ -> Type.Bool
-    | Literal.Unit -> Type.Unit
+    | Literal.String _ -> TString
+    | Literal.Bool _ -> TBool
+    | Literal.Unit -> TUnit
 
 let checkIdentifier (env: TypeEnv) (token: Token) : Result<Grammar.Type> =
     match token.lexeme with
@@ -80,18 +100,18 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<Grammar.Type> =
         let exprType = checkExpr env expr
 
         match exprType with
-        | Ok Type.Integer when op.lexeme = Operator Minus -> Ok Type.Integer
-        | Ok Type.Float when op.lexeme = Operator Minus -> Ok Type.Float
-        | Ok Type.Rational when op.lexeme = Operator Minus -> Ok Type.Rational
+        | Ok TInteger when op.lexeme = Operator Minus -> Ok TInteger
+        | Ok TFloat when op.lexeme = Operator Minus -> Ok TFloat
+        | Ok TRational when op.lexeme = Operator Minus -> Ok TRational
 
-        | Ok Type.Integer when op.lexeme = Operator Plus -> Ok Type.Integer
-        | Ok Type.Float when op.lexeme = Operator Plus -> Ok Type.Float
-        | Ok Type.Rational when op.lexeme = Operator Plus -> Ok Type.Rational
+        | Ok TInteger when op.lexeme = Operator Plus -> Ok TInteger
+        | Ok TFloat when op.lexeme = Operator Plus -> Ok TFloat
+        | Ok TRational when op.lexeme = Operator Plus -> Ok TRational
 
-        | Ok Type.Bool when op.lexeme = Operator Bang -> Ok Type.Bool
-        | Ok Type.Integer when op.lexeme = Operator Bang -> Ok Type.Integer
-        | Ok Type.Float when op.lexeme = Operator Bang -> Ok Type.Float
-        | Ok Type.Rational when op.lexeme = Operator Bang -> Ok Type.Rational
+        | Ok TBool when op.lexeme = Operator Bang -> Ok TBool
+        | Ok TInteger when op.lexeme = Operator Bang -> Ok TInteger
+        | Ok TFloat when op.lexeme = Operator Bang -> Ok TFloat
+        | Ok TRational when op.lexeme = Operator Bang -> Ok TRational
 
         | Ok t -> Errors [ TypeError.InvalidOperator(op, t) ]
         | Errors errors -> Errors errors
@@ -100,56 +120,56 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<Grammar.Type> =
         let rhsType = checkExpr env rhs
 
         match lhsType, rhsType with
-        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Plus -> Ok Type.Integer
-        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Plus -> Ok Type.Float
-        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator Plus -> Ok Type.Rational
-        | Ok Type.Rational, Ok Type.Integer when op.lexeme = Operator Plus -> Ok Type.Rational
+        | Ok TInteger, Ok TInteger when op.lexeme = Operator Plus -> Ok TInteger
+        | Ok TFloat, Ok TFloat when op.lexeme = Operator Plus -> Ok TFloat
+        | Ok TRational, Ok TRational when op.lexeme = Operator Plus -> Ok TRational
+        | Ok TRational, Ok TInteger when op.lexeme = Operator Plus -> Ok TRational
 
-        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Minus -> Ok Type.Integer
-        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Minus -> Ok Type.Float
-        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator Minus -> Ok Type.Rational
-        | Ok Type.Rational, Ok Type.Integer when op.lexeme = Operator Minus -> Ok Type.Rational
+        | Ok TInteger, Ok TInteger when op.lexeme = Operator Minus -> Ok TInteger
+        | Ok TFloat, Ok TFloat when op.lexeme = Operator Minus -> Ok TFloat
+        | Ok TRational, Ok TRational when op.lexeme = Operator Minus -> Ok TRational
+        | Ok TRational, Ok TInteger when op.lexeme = Operator Minus -> Ok TRational
 
-        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Star -> Ok Type.Integer
-        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Star -> Ok Type.Float
-        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator Star -> Ok Type.Rational
-        | Ok Type.Rational, Ok Type.Integer when op.lexeme = Operator Star -> Ok Type.Rational
+        | Ok TInteger, Ok TInteger when op.lexeme = Operator Star -> Ok TInteger
+        | Ok TFloat, Ok TFloat when op.lexeme = Operator Star -> Ok TFloat
+        | Ok TRational, Ok TRational when op.lexeme = Operator Star -> Ok TRational
+        | Ok TRational, Ok TInteger when op.lexeme = Operator Star -> Ok TRational
 
-        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Slash -> Ok Type.Integer
-        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Slash -> Ok Type.Float
-        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator Slash -> Ok Type.Rational
-        | Ok Type.Rational, Ok Type.Integer when op.lexeme = Operator Slash -> Ok Type.Rational
+        | Ok TInteger, Ok TInteger when op.lexeme = Operator Slash -> Ok TInteger
+        | Ok TFloat, Ok TFloat when op.lexeme = Operator Slash -> Ok TFloat
+        | Ok TRational, Ok TRational when op.lexeme = Operator Slash -> Ok TRational
+        | Ok TRational, Ok TInteger when op.lexeme = Operator Slash -> Ok TRational
 
-        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator StarStar -> Ok Type.Integer
-        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator StarStar -> Ok Type.Float
-        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator StarStar -> Ok Type.Rational
-        | Ok Type.Rational, Ok Type.Integer when op.lexeme = Operator StarStar -> Ok Type.Rational
+        | Ok TInteger, Ok TInteger when op.lexeme = Operator StarStar -> Ok TInteger
+        | Ok TFloat, Ok TFloat when op.lexeme = Operator StarStar -> Ok TFloat
+        | Ok TRational, Ok TRational when op.lexeme = Operator StarStar -> Ok TRational
+        | Ok TRational, Ok TInteger when op.lexeme = Operator StarStar -> Ok TRational
 
-        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator EqualEqual -> Ok Type.Bool
-        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator EqualEqual -> Ok Type.Bool
-        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator EqualEqual -> Ok Type.Bool
-        | Ok Type.Bool, Ok Type.Bool when op.lexeme = Operator EqualEqual -> Ok Type.Bool
+        | Ok TInteger, Ok TInteger when op.lexeme = Operator EqualEqual -> Ok TBool
+        | Ok TFloat, Ok TFloat when op.lexeme = Operator EqualEqual -> Ok TBool
+        | Ok TRational, Ok TRational when op.lexeme = Operator EqualEqual -> Ok TBool
+        | Ok TBool, Ok TBool when op.lexeme = Operator EqualEqual -> Ok TBool
 
-        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator BangEqual -> Ok Type.Bool
-        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator BangEqual -> Ok Type.Bool
-        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator BangEqual -> Ok Type.Bool
-        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Less -> Ok Type.Bool
+        | Ok TInteger, Ok TInteger when op.lexeme = Operator BangEqual -> Ok TBool
+        | Ok TFloat, Ok TFloat when op.lexeme = Operator BangEqual -> Ok TBool
+        | Ok TRational, Ok TRational when op.lexeme = Operator BangEqual -> Ok TBool
+        | Ok TInteger, Ok TInteger when op.lexeme = Operator Less -> Ok TBool
 
-        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Less -> Ok Type.Bool
-        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Less -> Ok Type.Bool
-        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator Less -> Ok Type.Bool
+        | Ok TInteger, Ok TInteger when op.lexeme = Operator Less -> Ok TBool
+        | Ok TFloat, Ok TFloat when op.lexeme = Operator Less -> Ok TBool
+        | Ok TRational, Ok TRational when op.lexeme = Operator Less -> Ok TBool
 
-        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator LessEqual -> Ok Type.Bool
-        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator LessEqual -> Ok Type.Bool
-        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator LessEqual -> Ok Type.Bool
+        | Ok TInteger, Ok TInteger when op.lexeme = Operator LessEqual -> Ok TBool
+        | Ok TFloat, Ok TFloat when op.lexeme = Operator LessEqual -> Ok TBool
+        | Ok TRational, Ok TRational when op.lexeme = Operator LessEqual -> Ok TBool
 
-        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator Greater -> Ok Type.Bool
-        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator Greater -> Ok Type.Bool
-        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator Greater -> Ok Type.Bool
+        | Ok TInteger, Ok TInteger when op.lexeme = Operator Greater -> Ok TBool
+        | Ok TFloat, Ok TFloat when op.lexeme = Operator Greater -> Ok TBool
+        | Ok TRational, Ok TRational when op.lexeme = Operator Greater -> Ok TBool
 
-        | Ok Type.Integer, Ok Type.Integer when op.lexeme = Operator GreaterEqual -> Ok Type.Bool
-        | Ok Type.Float, Ok Type.Float when op.lexeme = Operator GreaterEqual -> Ok Type.Bool
-        | Ok Type.Rational, Ok Type.Rational when op.lexeme = Operator GreaterEqual -> Ok Type.Bool
+        | Ok TInteger, Ok TInteger when op.lexeme = Operator GreaterEqual -> Ok TBool
+        | Ok TFloat, Ok TFloat when op.lexeme = Operator GreaterEqual -> Ok TBool
+        | Ok TRational, Ok TRational when op.lexeme = Operator GreaterEqual -> Ok TBool
 
         | Errors errors, Errors errors' -> Errors(errors @ errors')
         | Errors errors, Ok _ -> Errors errors
@@ -173,7 +193,7 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<Grammar.Type> =
         let calleeType = checkExpr env (Expr.Identifier callee)
 
         match calleeType with
-        | Ok(Function(paramList, returnType)) ->
+        | Ok(TFunction(paramList, returnType)) ->
             let argResults = List.map (checkExpr env) args
 
             let validArgs =
@@ -201,18 +221,18 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<Grammar.Type> =
                         (fun t ->
                             match t with
                             | Ok t -> t
-                            | _ -> Type.Infer)
+                            | _ -> TInfer)
                         argResults
 
                 let valid =
-                    List.forall2 (fun expected actual -> expected = actual || expected = Type.Any) paramList argTypes
+                    List.forall2 (fun expected actual -> expected = actual || expected = TAny) paramList argTypes
 
                 if valid then
                     Ok returnType
                 else
                     Errors [ TypeError.InvalidArgumentType(callee, paramList.Head, argTypes.Head) ]
         | Errors errors -> Errors errors
-        | _ -> Errors [ TypeError.InvalidCallType(callee, Type.Infer, Type.Infer) ] // fix
+        | _ -> Errors [ TypeError.InvalidCallType(callee, TInfer, TInfer) ] // fix
 
     // need better type inference here for params, unless params must be typed
     | Expr.Lambda(paramList, returnType, body) ->
@@ -230,20 +250,21 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<Grammar.Type> =
         match bodyType with
         | Ok bodyType ->
             if bodyType = returnType then
-                Ok <| Function(List.map snd paramList, returnType)
-            else if returnType = Type.Infer then
-                Ok <| Function(List.map snd paramList, bodyType)
+                Ok <| TFunction(List.map snd paramList, returnType)
+            else if returnType = TInfer then
+                Ok <| TFunction(List.map snd paramList, bodyType)
             else
                 Errors [ TypeError.InvalidFunctionReturn(fst paramList.Head, returnType, bodyType) ]
         | Errors errors -> Errors errors
     | Expr.Block stmts ->
         let rec checkBlock (env: TypeEnv) (stmts: Stmt list) : Result<Grammar.Type> =
             match stmts with
-            | [] -> Ok Type.Unit
+            | [] -> Ok TUnit
             | [ stmt ] ->
                 match stmt with
                 | Stmt.Expression expr -> checkExpr env expr
-                | Stmt.VariableDeclaration _ -> Ok Type.Unit
+                | Stmt.VariableDeclaration _ -> Ok TUnit
+                | Stmt.PrintStatement _ -> Ok TUnit
             | stmt :: rest ->
                 let env', _ = checkStmt env stmt
                 checkBlock env' rest
@@ -267,14 +288,15 @@ and checkStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv * Result<Grammar.Type> =
         | Ok exprType ->
             if typ = exprType then
                 match token.lexeme with
-                | Identifier name -> Map.add name typ env, Ok Type.Unit
+                | Identifier name -> Map.add name typ env, Ok TUnit
                 | _ -> env, Errors [ TypeError.UndefinedVariable token ]
-            else if typ = Type.Infer then
+            else if typ = TInfer then
                 match token.lexeme with
-                | Identifier name -> Map.add name exprType env, Ok Type.Unit
+                | Identifier name -> Map.add name exprType env, Ok TUnit
                 | _ -> env, Errors [ TypeError.UndefinedVariable token ]
             else
                 env, Errors [ TypeError.TypeMismatch(token, typ, exprType) ]
+    | PrintStatement(expr) -> (env, checkExpr env expr)
 
 let rec checkStmts (env: TypeEnv) (stmts: Stmt list) =
     let rec helper env accErrors stmts =
@@ -292,7 +314,7 @@ let rec checkStmts (env: TypeEnv) (stmts: Stmt list) =
 let checkProgram (program: Program) =
     match checkStmts defaultTypeEnv program with
     | Ok _ -> ()
-    | Errors errors -> raise (TypeException(TypeError.TypeErrors errors))
+    | Errors errors -> raise (TypeException(TypeErrors errors))
 
 
 let rec formatTypeError (error: TypeError) : string =

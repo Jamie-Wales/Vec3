@@ -27,10 +27,10 @@ module Program =
         
         if argv.Length = 0 then
             // buildAvaloniaApp().StartWithClassicDesktopLifetime(argv)
-            repl |> ignore
+            repl ()
             0
         else if argv.[0] = "-r" then
-            repl |> ignore
+            repl ()
             0
         else if argv.[0] = "-f" then
             if argv.Length < 2 then
