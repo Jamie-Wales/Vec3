@@ -90,7 +90,9 @@ let rec compileStmt (stmt: Stmt) : Compiler<unit> =
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.POP state)
         | VariableDeclaration (name, _, initializer) ->
             compileVariableDeclaration name initializer state
-        | _ -> Error ("Unsupported statement type", state)
+        | PrintStatement expr ->
+            compileExpr expr state
+            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.PRINT state)
 
 and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit> =
     fun state ->
