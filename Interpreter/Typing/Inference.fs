@@ -179,6 +179,7 @@ let freeTypeVarsInEnv (env: TypeEnv) : TypeVar list =
 // let defaultTypeEnv =
 //     List.fold (fun acc (name, typ) -> Map.add name (Forall([] ,typ)) acc) Map.empty BuiltinFunctions
 
+
 let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErrors> =
     match expr with
     | ELiteral lit -> Ok (checkLiteral lit, Map.empty)
@@ -202,19 +203,14 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
         match bodyResult with
         | Ok (bodyType, sub) ->
             let paramTypes = List.map (applySubstitution sub) paramTypes
-            printfn $"paramTypes: {paramTypes}"
-            let returnType = match returnType with
-                                | TInfer -> freshTypeVar()
-                                | _ -> returnType
-                                
-            let returnResult = unify bodyType returnType
-            match returnResult with
-                | Ok sub' ->
-                    let sub = combineMaps sub sub'
-                    let sub = List.fold (fun acc tv -> Map.remove tv acc) sub (freeTypeVarsInEnv newEnv)
-                    Ok (TFunction(paramTypes, returnType), sub)
-                | Error errors -> Error errors
 
+            if returnType = TInfer then
+                Ok (TFunction(paramTypes, bodyType), sub)
+            else
+                let returnResult = unify bodyType returnType
+                match returnResult with
+                | Ok sub -> Ok (TFunction(paramTypes, returnType), sub)
+                | Error errors -> Error errors
         | Error errors -> Error errors
         
     | ECall(callee, args) ->
