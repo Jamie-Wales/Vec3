@@ -33,7 +33,7 @@ type Type =
     // contrains a type to an allowed set of types
     // i have ideas that this will allow hidler miller inference without type classes
     // gonna take quite a bit of trial and error
-    | TConstrain of Type list
+    | TConstrain of TypeVar * Type list
     
     // todo
     | TTuple of Type list
