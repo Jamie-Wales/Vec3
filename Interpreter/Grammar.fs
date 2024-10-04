@@ -64,7 +64,7 @@ type Expr =
     | EGrouping of Expr
     | EAssignment of Token * Expr 
     
-    | ECall of Token * Expr list
+    | ECall of Expr * Expr list
     | ELambda of (Token * Type) list * Type * Expr
     | EBlock of Stmt list
     

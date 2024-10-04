@@ -215,40 +215,40 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
         | Error errors -> Error errors
         
     | ECall(callee, args) ->
-        match callee with
-        | { lexeme = Identifier name } ->
-            match Map.tryFind name env with
-            | Some t ->
-                match t with
-                | TFunction(paramTypes, ret) ->
-                    if List.length paramTypes <> List.length args then
-                        Error [ TypeError.InvalidArgumentCount(callee, List.length paramTypes, List.length args) ]
-                    else
-                    let argResults = List.map (infer env) args
-                    if List.exists (fun result -> match result with | Error _ -> true | _ -> false) argResults then
-                        let errors = List.collect (fun result -> match result with | Error errors -> errors | _ -> []) argResults
+        let calleeResult = infer env callee
+        
+        match calleeResult with
+        | Error errors -> Error errors
+        | Ok (t, sub) ->
+            let t = applySubstitution sub t
+            match t with
+            | TFunction(paramTypes, ret) ->
+                if List.length paramTypes <> List.length args then
+                    Error [ TypeError.InvalidArgumentCount(callee, List.length paramTypes, List.length args) ]
+                else
+                let argResults = List.map (infer env) args
+                if List.exists (fun result -> match result with | Error _ -> true | _ -> false) argResults then
+                    let errors = List.collect (fun result -> match result with | Error errors -> errors | _ -> []) argResults
+                    Error errors
+                else
+                    let argResults = List.map (fun result -> match result with | Ok (t, sub) -> (t, sub) | _ -> failwith "Impossible") argResults
+                    let argTypes = List.map fst argResults
+                    let argSubs = List.map snd argResults
+                    
+                    let paramResults = List.map2 unify paramTypes argTypes
+                    if List.exists (fun result -> match result with | Error _ -> true | _ -> false) paramResults then
+                        let errors = List.collect (fun result -> match result with | Error errors -> errors | _ -> []) paramResults
                         Error errors
                     else
-                        let argResults = List.map (fun result -> match result with | Ok (t, sub) -> (t, sub) | _ -> failwith "Impossible") argResults
-                        let argTypes = List.map fst argResults
-                        let argSubs = List.map snd argResults
-                        
-                        let paramResults = List.map2 unify paramTypes argTypes
-                        if List.exists (fun result -> match result with | Error _ -> true | _ -> false) paramResults then
-                            let errors = List.collect (fun result -> match result with | Error errors -> errors | _ -> []) paramResults
-                            Error errors
-                        else
-                            let paramResults = List.map (fun result -> match result with | Ok sub -> sub | _ -> failwith "Impossible") paramResults
-                        
-                            let combinedSubs = List.fold combineMaps Map.empty paramResults
-                            let combinedSubs = List.fold combineMaps combinedSubs argSubs
-                        
-                            let returnType = applySubstitution combinedSubs ret
-                            Ok (returnType, combinedSubs)
-                | _ -> Error [ TypeError.InvalidCall(callee, t) ]
-            | None -> Error [ TypeError.UndefinedVariable callee ]
-        | _ -> Error [ TypeError.InvalidCall(callee, TInfer) ]
+                        let paramResults = List.map (fun result -> match result with | Ok sub -> sub | _ -> failwith "Impossible") paramResults
                     
+                        let combinedSubs = List.fold combineMaps Map.empty paramResults
+                        let combinedSubs = List.fold combineMaps combinedSubs argSubs
+                    
+                        let returnType = applySubstitution combinedSubs ret
+                        Ok (returnType, combinedSubs)
+            | _ -> Error [ TypeError.InvalidCall(callee, t) ]
+        
     | EBinary(expr1, op, expr2) ->
         let expr1Result = infer env expr1
         let expr2Result = infer env expr2

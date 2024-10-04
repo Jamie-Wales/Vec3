@@ -73,11 +73,10 @@ let rec evalExpr (env: Env) =
     | EGrouping expr -> evalExpr env expr
 
     | ELiteral lit -> ELiteral (evalLiteral lit)
-    | ECall (name, args) ->
-        let name = name.lexeme
-        
-        match env.TryGetValue name with
-        | true, ELambda(params', _, body) ->
+    | ECall (expr, args) ->
+        let expr = evalExpr env expr
+        match expr with
+        | ELambda(params', _, body) ->
             let rec evalParams (env: Env) (params': (Token * Grammar.Type) list) (args: Expr list) =
                 match params', args with
                 | [], [] -> env
@@ -88,44 +87,52 @@ let rec evalExpr (env: Env) =
 
             let env' = evalParams env params' args
             evalExpr env' body
-        | false, _ ->
+        | EIdentifier { lexeme = name } ->
             match name with
-                | Identifier name ->
-                    match name with
-                    | "env" ->
-                        Map.iter (fun k v -> printfn $"{k}: {v}") env
-                        ELiteral(LUnit)
-                    | "print" ->
-                        let args = List.map (evalExpr env) args
-                        printfn $"{String.Join(' ', args)}"
-                        ELiteral(LUnit)
-                    | "input" ->
-                        let args = List.map (evalExpr env) args
-                        let input = Console.ReadLine()
-                        ELiteral(LString input)
-                    | "cos" ->
-                        let args = List.map (evalExpr env) args
-                        match args with
-                        | [ ELiteral(LNumber(LFloat x)) ] -> ELiteral(LNumber(LFloat(Math.Cos(double x))))
-                        | _ -> failwith "invalid"
-                    | "sin" ->
-                        let args = List.map (evalExpr env) args
-                        match args with
-                        | [ ELiteral(LNumber(LFloat x)) ] -> ELiteral(LNumber(LFloat(Math.Sin(double x))))
-                        | _ -> failwith "invalid"
-                    | "tan" ->
-                        let args = List.map (evalExpr env) args
-                        match args with
-                        | [ ELiteral(LNumber(LFloat x)) ] -> ELiteral(LNumber(LFloat(Math.Tan(double x))))
-                        | _ -> failwith "invalid"
-                    | _ -> failwith $"function {name} not found"
+            | Identifier name ->
+                match name with
+                | "env" ->
+                    Map.iter (fun k v -> printfn $"{k}: {v}") env
+                    ELiteral(LUnit)
+                | "print" ->
+                    let args = List.map (evalExpr env) args
+                    printfn $"{String.Join(' ', args)}"
+                    ELiteral(LUnit)
+                | "input" ->
+                    let args = List.map (evalExpr env) args
+                    let input = Console.ReadLine()
+                    ELiteral(LString input)
+                | "cos" ->
+                    let args = List.map (evalExpr env) args
+                    match args with
+                    | [ ELiteral(LNumber(LFloat x)) ] -> ELiteral(LNumber(LFloat(Math.Cos(double x))))
+                    | _ -> failwith "invalid"
+                | "sin" ->
+                    let args = List.map (evalExpr env) args
+                    match args with
+                    | [ ELiteral(LNumber(LFloat x)) ] -> ELiteral(LNumber(LFloat(Math.Sin(double x))))
+                    | _ -> failwith "invalid"
+                | "tan" ->
+                    let args = List.map (evalExpr env) args
+                    match args with
+                    | [ ELiteral(LNumber(LFloat x)) ] -> ELiteral(LNumber(LFloat(Math.Tan(double x))))
+                    | _ -> failwith "invalid"
                 | _ -> failwith $"function {name} not found"
             | _ -> failwith $"function {name} not found"
+        | _ -> failwith "invalid"
     | ELambda(params', t, body) -> ELambda(params', t, body)
     | EIdentifier name ->
         match env.TryGetValue name.lexeme with
         | true, expr -> expr
-        | _ -> failwith $"variable {name} not found"
+        | false, _ ->
+            match name.lexeme with
+            | Identifier "print"
+            | Identifier "input"
+            | Identifier "cos"
+            | Identifier "sin"
+            | Identifier "tan"
+            | Identifier "env" -> EIdentifier name
+            | _ -> failwith $"variable {name} not found"
     | EBinary(lhs, op, rhs) ->
         let lhs = evalExpr env lhs
         let rhs = evalExpr env rhs

@@ -31,12 +31,12 @@ type ParserState =
     { Tokens: Token list
       Position: int
       Label: ParserLabel }
-    
+
 exception ParserException of ParserError * ParserState
 
 type ParseResult<'a> = Result<'a * ParserState, ParserError * ParserState>
-    // | Ok of 'a * ParserState
-    // | Error of ParserError * ParserState
+// | Ok of 'a * ParserState
+// | Error of ParserError * ParserState
 
 
 let bind (result: ParseResult<'a>) (fn: ParserState -> 'a -> ParseResult<'b>) =
@@ -106,9 +106,9 @@ let number (state: ParserState) =
     | Some { lexeme = Lexeme.Number n } ->
         match n with
         | Number.Integer i -> Ok(ELiteral(LNumber(LInteger(i))), state)
-        | Number.Float  f-> Ok(ELiteral(LNumber(LFloat(f))), state)
-        | Number.Rational (n, d) -> Ok(ELiteral(LNumber(LRational(n, d))), state)
-        | Number.Complex (r, i) -> Ok(ELiteral(LNumber(LComplex(r, i))), state)
+        | Number.Float f -> Ok(ELiteral(LNumber(LFloat(f))), state)
+        | Number.Rational(n, d) -> Ok(ELiteral(LNumber(LRational(n, d))), state)
+        | Number.Complex(r, i) -> Ok(ELiteral(LNumber(LComplex(r, i))), state)
     | _ -> Error("Expect number.", state)
 // let ident state =
 //     let state = setLabel state "Ident"
@@ -285,10 +285,10 @@ and call (state: ParserState) (callee: Expr) : ParseResult<Expr> =
         match peek state with
         | Some { lexeme = Lexeme.Operator Operator.RightParen } ->
             let state = advance state
-
-            match callee with
-            | EIdentifier name -> Ok(ECall(name, args), state)
-            | _ -> Error("Can only call functions and variables.", state)
+            Ok(ECall(callee, args), state)
+        // match callee with
+        // | EIdentifier name -> Ok(ECall(name, args), state)
+        // | _ -> Error("Can only call functions and variables.", state)
         | _ ->
             match expression state Precedence.None with
             | Ok(arg, state) ->
@@ -300,11 +300,11 @@ and call (state: ParserState) (callee: Expr) : ParseResult<Expr> =
                     match peek state with
                     | Some { lexeme = Lexeme.Operator Operator.RightParen } ->
                         let state = advance state
+                        Ok(ECall(callee, arg :: args), state)
 
-                        match callee with
-                        | EIdentifier name -> Ok(ECall(name, arg :: args), state)
-                        | _ -> Error("Can only call functions and variables.", state) // should epxressions be callable ? yes
-                    | _ -> Error("Expect ')' after arguments.", state)
+                    // match callee with
+                    // | EIdentifier name -> Ok(ECall(name, arg :: args), state)
+                    | _ -> Error("Can only call functions and variables.", state) // should epxressions be callable ? yes
             | Error _ as f -> f
 
     loop state []
@@ -454,8 +454,8 @@ let variableDeclaration (state: ParserState) : ParseResult<Stmt> =
 
 let printStatement (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Print"
-    
-    match expression state Precedence.Assignment with 
+
+    match expression state Precedence.Assignment with
     | Ok(expr, state) -> Ok((SPrintStatement(expr), state))
     | Error(s1, parserState) -> Error(s1, parserState)
 
@@ -491,7 +491,7 @@ let parseStmtUnsafe (input: string) =
 
 let parseStmt (input: string) =
     let tokens = tokenize input
-    
+
     let initialState = createParserState tokens
     parseStatement initialState
 
@@ -526,7 +526,7 @@ let parseFile (file: string) =
 
 let formatParserError (error: ParserError) (state: ParserState) =
     let token = getCurrentToken state
+
     match token with
-    | Some { lexeme = name; line=l } ->
-        $"Error: {error} at line {l}, token {name}"
+    | Some { lexeme = name; line = l } -> $"Error: {error} at line {l}, token {name}"
     | _ -> $"Error: {error}"

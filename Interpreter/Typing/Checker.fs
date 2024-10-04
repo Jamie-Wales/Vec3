@@ -27,7 +27,6 @@ let rec checkExpression (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> 
     match expr with
     | ELiteral lit -> Ok <| checkLiteral lit
     | EIdentifier token -> checkIdentifier env token
-    
 
 
 let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
@@ -167,7 +166,7 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
             | None -> Error [ TypeError.UndefinedVariable token ]
         | _ -> Error [ TypeError.UndefinedVariable token ]
     | ECall(callee, args) ->
-        let calleeType = checkExpr env (EIdentifier callee)
+        let calleeType = checkExpr env callee
 
         match calleeType with
         | Ok(TFunction(paramList, returnType)) ->
@@ -302,10 +301,10 @@ let rec formatTypeError (error: TypeError) : string =
     | TypeMismatch(token, expected, actual) -> $"Type mismatch at Line: {token.line}, expected {expected}, got {actual}"
     | InvalidAssignment(token, expected, actual) ->
         $"Invalid assignment at Line: {token.line}, expected {expected}, got {actual}"
-    | InvalidArgumentCount(token, expected, actual) ->
-        $"Invalid argument count at Line: {token.line}, expected {expected}, got {actual}"
-    | InvalidArgumentType(token, expected, actual) ->
-        $"Invalid argument type at Line: {token.line}, expected {expected}, got {actual}"
+    | InvalidArgumentCount(expr, expected, actual) ->
+        $"Invalid argument count at expr: {expr}, expected {expected}, got {actual}"
+    | InvalidArgumentType(expr, expected, actual) ->
+        $"Invalid argument type at expr: {expr}, expected {expected}, got {actual}"
     | InvalidReturnType(token, expected, actual) ->
         $"Invalid return type at Line: {token.line}, expected {expected}, got {actual}"
     | InvalidOperandType(token, expected, actual) ->
@@ -320,9 +319,9 @@ let rec formatTypeError (error: TypeError) : string =
     | InvalidFunctionBody(token, expected, actual) ->
         $"Invalid function body at Line: {token.line}, expected {expected}, got {actual}"
     | InvalidBlock(token, expected, actual) -> $"Invalid block at Line: {token.line}, expected {expected}, got {actual}"
-    | InvalidCall(token, typ) -> $"Invalid call at Line: {token.line}, got {typ}"
-    | InvalidCallType(token, expected, actual) ->
-        $"Invalid call type at Line: {token.line}, expected {expected}, got {actual}"
+    | InvalidCall(expr, typ) -> $"Invalid call at expr: {expr}, got {typ}"
+    | InvalidCallType(expr, expected, actual) ->
+        $"Invalid call type at expr: {expr}, expected {expected}, got {actual}"
     | InvalidCallReturn(token, expected, actual) ->
         $"Invalid call return at Line: {token.line}, expected {expected}, got {actual}"
     | InvalidCallBody(token, expected, actual) ->
