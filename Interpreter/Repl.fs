@@ -20,6 +20,7 @@ let evalRepl =
             let typeCheck = inferProgram typeEnv program
             match typeCheck with
             | Ok (typeEnv, _) ->
+                Map.iter (fun k v -> printfn $"{k} -> {v}") typeEnv
                 let value, env = evalProgram env program
                 printfn $"{value}"
                 repl' env typeEnv

@@ -15,3 +15,19 @@ let double = (a) -> a + a
 
 // the type of x is inferred to be a (type variable), therefore generic to all types
 let id = (x) -> x
+
+// any type is available, but at the cost of type safety
+let unsafe = (a: any, b: any) -> a + b
+
+// future !!!!! once type inference is improved, this will be possible (hopefully)
+// let addT = (x: a: (int, float)], x: a: (int, float)) -> a + b
+
+// functions can also be defined as so
+let add2 = (a: int, b: int) -> {
+    a + b
+}
+
+// or more consice (no arrow)
+let add2 = (a: int, b: int) {
+    a + b
+}

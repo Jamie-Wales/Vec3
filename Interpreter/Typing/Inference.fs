@@ -179,7 +179,6 @@ let freeTypeVarsInEnv (env: TypeEnv) : TypeVar list =
 // let defaultTypeEnv =
 //     List.fold (fun acc (name, typ) -> Map.add name (Forall([] ,typ)) acc) Map.empty BuiltinFunctions
 
-
 let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErrors> =
     match expr with
     | ELiteral lit -> Ok (checkLiteral lit, Map.empty)
@@ -196,7 +195,6 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
             | None -> Error [ TypeError.NotEnoughInformation(Empty) ]
         else
         let paramTypes = List.map (fun t -> match t with | TInfer -> freshTypeVar() | _ -> t) paramTypes
-        
         let newEnv = List.fold2 (fun acc (param, _) typ -> match param.lexeme with
                                                             | Identifier name -> Map.add name typ acc
                                                             | _ -> acc) env paramList paramTypes
@@ -204,14 +202,19 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
         match bodyResult with
         | Ok (bodyType, sub) ->
             let paramTypes = List.map (applySubstitution sub) paramTypes
-            
-            if returnType = TInfer then
-                Ok (TFunction(paramTypes, bodyType), sub)
-            else
-                let returnResult = unify bodyType returnType
-                match returnResult with
-                | Ok sub -> Ok (TFunction(paramTypes, returnType), sub)
+            printfn $"paramTypes: {paramTypes}"
+            let returnType = match returnType with
+                                | TInfer -> freshTypeVar()
+                                | _ -> returnType
+                                
+            let returnResult = unify bodyType returnType
+            match returnResult with
+                | Ok sub' ->
+                    let sub = combineMaps sub sub'
+                    let sub = List.fold (fun acc tv -> Map.remove tv acc) sub (freeTypeVarsInEnv newEnv)
+                    Ok (TFunction(paramTypes, returnType), sub)
                 | Error errors -> Error errors
+
         | Error errors -> Error errors
         
     | ECall(callee, args) ->
@@ -329,7 +332,26 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
             | Error errors -> Error errors
         | Error errors -> Error errors
     
-    | EBlock(stmts) -> failwith "todo!!!"
+    | EBlock(stmts) ->
+        // infer whole block, return type of last statement
+        let result = inferProgram env stmts
+        match result with
+        | Ok (env, sub) ->
+            let lastStmt = List.last stmts
+            let lastStmtResult = inferStmt env lastStmt
+            match lastStmtResult with
+            | Ok (env, sub') ->
+                let sub = combineMaps sub sub'
+                let lastStmtType = match lastStmt with
+                                    | SExpression expr -> match infer env expr with
+                                                            | Ok (t, _) -> t
+                                                            | Error errors -> TNever
+                                    | SVariableDeclaration _ -> TUnit
+                                    | SPrintStatement _ -> TUnit
+                Ok (lastStmtType, sub)
+            | Error errors -> Error errors
+        | Error errors -> Error errors
+        
     | EGrouping(expr) ->
         infer env expr
     | EIf(cond, thenBranch, elseBranch) ->

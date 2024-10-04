@@ -144,6 +144,10 @@ and operatorRule (op: Operator) : ParseRule =
         { Prefix = Some leftParenPrefix
           Infix = Some call
           Precedence = Precedence.Call }
+    | Operator.LeftBrace ->
+        { Prefix = Some parseBlock
+          Infix = None
+          Precedence = Precedence.None }
     | Operator.Minus ->
         { Prefix = Some unary
           Infix = Some binary
@@ -362,12 +366,14 @@ and leftParenPrefix (state: ParserState) : ParseResult<Expr> =
             match peek (advance (advance state)) with
             | Some { lexeme = Lexeme.Operator Operator.Arrow } -> functionExpr state
             | Some { lexeme = Lexeme.Colon } -> functionExpr state
+            | Some { lexeme = Lexeme.Operator Operator.LeftBrace } -> functionExpr state
             | _ -> grouping state
         | _ -> grouping state
     | Some { lexeme = Lexeme.Operator Operator.RightParen } ->
         match peek (advance state) with
         | Some { lexeme = Lexeme.Operator Operator.Arrow } -> functionExpr state
         | Some { lexeme = Lexeme.Colon } -> functionExpr state
+        | Some { lexeme = Lexeme.Operator Operator.LeftBrace } -> functionExpr state
         | _ -> Ok(ELiteral(LUnit), state)
     | _ -> grouping state
 
@@ -412,6 +418,10 @@ and functionExpr (state: ParserState) : ParseResult<Expr> =
                     match expression state Precedence.Assignment with
                     | Ok(body, state) -> Ok(ELambda(List.rev params', returnType, body), state)
                     | Error _ as f -> f
+                | Some { lexeme = Lexeme.Operator Operator.LeftBrace } ->
+                    match parseBlock (advance state) with
+                    | Ok(body, state) -> Ok(ELambda(List.rev params', returnType, body), state)
+                    | Error _ as f -> f
                 | _ -> Error("Expected '->' after return type.", state)
             | Error(s1, parserState) -> Error(s1, parserState)
 
@@ -421,6 +431,12 @@ and functionExpr (state: ParserState) : ParseResult<Expr> =
             match expression state Precedence.Assignment with
             | Ok(body, state) -> Ok(ELambda(List.rev params', TInfer, body), state)
             | Error _ as f -> f
+        | Some { lexeme = Lexeme.Operator Operator.LeftBrace } ->
+            let state = advance state
+            match parseBlock state with
+            | Ok(body, state) -> Ok(ELambda(List.rev params', TInfer, body), state)
+            | Error _ as f -> f
+            
         | _ -> Error("Expected '->' after parameter list.", state)
     | Error(s, parserState) -> Error(s, parserState)
 
@@ -471,8 +487,22 @@ and parseType (state: ParserState) : ParseResult<Grammar.Type> =
     | Some { lexeme = Lexeme.Operator Operator.LeftParen } -> parseFunctionType state
     | _ -> Error("Expected a type after colon.", state)
 
+and parseBlock (state : ParserState) : ParseResult<Expr> =
+    let state = setLabel state "Block"
 
-let variableDeclaration (state: ParserState) : ParseResult<Stmt> =
+    let rec loop state stmts =
+        match peek state with
+        | Some { lexeme = Lexeme.Operator Operator.RightBrace } ->
+            let state = advance state
+            Ok(EBlock(List.rev stmts), state)
+        | _ ->
+            match parseStatement state with
+            | Ok(stmt, state) -> loop state (stmt :: stmts)
+            | Error(s1, parserState) -> Error(s1, parserState)
+
+    loop state []
+
+and variableDeclaration (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Variable"
 
     match nextToken state with
@@ -495,14 +525,14 @@ let variableDeclaration (state: ParserState) : ParseResult<Stmt> =
         | Error(s1, parserState) -> Error(s1, parserState)
     | _ -> Error("Expect variable name.", state)
 
-let printStatement (state: ParserState) : ParseResult<Stmt> =
+and printStatement (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Print"
 
     match expression state Precedence.Assignment with
     | Ok(expr, state) -> Ok((SPrintStatement(expr), state))
     | Error(s1, parserState) -> Error(s1, parserState)
 
-let parseStatement (state: ParserState) : ParseResult<Stmt> =
+and parseStatement (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Statement"
 
     match peek state with
