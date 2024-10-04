@@ -68,10 +68,8 @@ let applySubstitutionToEnv (sub: Substitution) (env: TypeEnv) : TypeEnv =
 
 type ResolvedType = Map<TypeVar, TType>
 
-let resolvedTypes: Ref<ResolvedType> = ref Map.empty
-
 // attempts to unify two types
-let rec unify (t1: TType) (t2: TType) : Result<Substitution, TypeErrors> =
+let rec unify (resolved: ResolvedType) (t1: TType) (t2: TType) : Result<Substitution * ResolvedType, TypeErrors> =
     match t1, t2 with
     | TInteger, TInteger
     | TFloat, TFloat
@@ -83,16 +81,16 @@ let rec unify (t1: TType) (t2: TType) : Result<Substitution, TypeErrors> =
     | TUnit, TUnit
 
     | TNever, TNever
-    | TAny, TAny -> Ok Map.empty
+    | TAny, TAny -> Ok (Map.empty, resolved)
 
     | TTypeVariable tv, t
     | t, TTypeVariable tv ->
         if t = TTypeVariable tv then
-            Ok Map.empty
+            Ok (Map.empty, resolved)
         else if occursCheck tv t then
             Error [ TypeError.TypeMismatch(Empty, TTypeVariable tv, t) ]
         else
-            Ok <| Map.add tv t Map.empty
+            Ok <| (Map.add tv t Map.empty, resolved)
 
     | TConstrain(var1, types1), TConstrain(var2, types2) ->
         if var1 <> var2 then
@@ -100,16 +98,16 @@ let rec unify (t1: TType) (t2: TType) : Result<Substitution, TypeErrors> =
         else if List.length types1 <> List.length types2 then
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
         else
-            let results = List.map2 unify types1 types2 // assumes that the constraints are in the same order is this correct? and same length
+            let results = List.map2 (unify resolved) types1 types2 // assumes that the constraints are in the same order is // this correct? and same length
 
             List.fold
                 (fun acc result ->
                     match acc, result with
-                    | Ok sub1, Ok sub2 -> Ok(combineMaps sub1 sub2)
+                    | Ok (res1, sub1), Ok (res2, sub2) -> Ok(combineMaps sub1 sub2, combineMaps res1 res2)
                     | Error errors, Ok _ -> Error errors
                     | Ok _, Error errors -> Error errors
                     | Error errors1, Error errors2 -> Error(errors1 @ errors2))
-                (Ok Map.empty)
+                (Ok (Map.empty, resolved))
                 results
 
     | TConstrain(var, types), t
@@ -117,17 +115,17 @@ let rec unify (t1: TType) (t2: TType) : Result<Substitution, TypeErrors> =
         if occursCheck var t then
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
         else
-            match Map.tryFind var resolvedTypes.Value with
+            match Map.tryFind var resolved with
             | Some t' when t' <> t -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
             | _ ->
-                let resolvedType = List.tryFind (fun ty -> unify t ty |> Result.isOk) types
-                
-                
+                let resolvedType = List.tryFind (fun ty -> unify resolved t ty |> Result.isOk) types
                 match resolvedType with
                 | Some ty ->
-                    let sub = unify t ty
-                    resolvedTypes.Value <- Map.add var ty resolvedTypes.Value
-                    sub
+                    let resolved = Map.add var ty resolved
+                    let sub = unify resolved t ty
+                    match sub with
+                    | Ok (sub, resolved) -> Ok(sub, resolved)
+                    | Error errors -> Error errors
                 | None -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
             
             
@@ -138,49 +136,49 @@ let rec unify (t1: TType) (t2: TType) : Result<Substitution, TypeErrors> =
         if List.length params1 <> List.length params2 then
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
         else
-            let paramResults = List.map2 unify params1 params2
-            let retResult = unify ret1 ret2
+            let paramResults = List.map2 (unify resolved) params1 params2
+            let retResult = unify resolved ret1 ret2
 
 
             let combinedResults =
                 List.fold
                     (fun acc result ->
                         match acc, result with
-                        | Ok sub1, Ok sub2 -> Ok(combineMaps sub1 sub2)
+                        | Ok (res1, sub1), Ok (res2, sub2) -> Ok(combineMaps sub1 sub2, combineMaps res1 res2)
                         | Error errors, Ok _ -> Error errors
                         | Ok _, Error errors -> Error errors
                         | Error errors1, Error errors2 -> Error(errors1 @ errors2))
-                    (Ok Map.empty)
+                    (Ok (Map.empty, resolved))
                     paramResults
 
             match combinedResults, retResult with
-            | Ok sub1, Ok sub2 -> Ok(combineMaps sub1 sub2)
+            | Ok (res1, sub1), Ok (res2, sub2) -> Ok(combineMaps sub1 sub2, combineMaps res1 res2)
             | Error errors, Ok _ -> Error errors
             | Ok _, Error errors -> Error errors
             | Error errors1, Error errors2 -> Error(errors1 @ errors2)
 
     | TTuple types1, TTuple types2 ->
-        let results = List.map2 unify types1 types2
+        let results = List.map2 (unify resolved) types1 types2
 
         List.fold
             (fun acc result ->
                 match acc, result with
-                | Ok sub1, Ok sub2 -> Ok(combineMaps sub1 sub2)
+                | Ok (res1, sub1), Ok (res2, sub2) -> Ok(combineMaps sub1 sub2, combineMaps res1 res2)
                 | Error errors, Ok _ -> Error errors
                 | Ok _, Error errors -> Error errors
                 | Error errors1, Error errors2 -> Error(errors1 @ errors2))
-            (Ok Map.empty)
+            (Ok (Map.empty, resolved))
             results
 
-    | TList typ1, TList typ2 -> unify typ1 typ2
+    | TList typ1, TList typ2 -> unify resolved typ1 typ2
     | TVector(typ1, size1), TVector(typ2, size2) ->
         if size1 = size2 then
-            unify typ1 typ2
+            unify resolved typ1 typ2
         else
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
     | TMatrix(typ1, rows1, cols1), TMatrix(typ2, rows2, cols2) ->
         if rows1 = rows2 && cols1 = cols2 then
-            unify typ1 typ2
+            unify resolved typ1 typ2
         else
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
     | _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
@@ -214,12 +212,12 @@ let freeTypeVarsInEnv (env: TypeEnv) : TypeVar list =
 //     List.fold (fun acc (name, typ) -> Map.add name (Forall([] ,typ)) acc) Map.empty BuiltinFunctions
 
 
-let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErrors> =
+let rec infer (env: TypeEnv) (expr: Expr) (resolved: ResolvedType) : Result<TType * Substitution * ResolvedType, TypeErrors> =
     match expr with
-    | ELiteral lit -> Ok(checkLiteral lit, Map.empty)
+    | ELiteral lit -> Ok(checkLiteral lit, Map.empty, resolved)
     | EIdentifier token ->
         match checkIdentifier env token with
-        | Ok t -> Ok(t, Map.empty)
+        | Ok t -> Ok(t, Map.empty, resolved)
         | Error errors -> Error errors
     | ELambda(paramList, returnType, body) ->
         let paramTypes = List.map snd paramList
@@ -248,28 +246,28 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
                 paramList
                 paramTypes
 
-        let bodyResult = infer newEnv body
+        let bodyResult = infer newEnv body resolved
 
         match bodyResult with
-        | Ok(bodyType, sub) ->
+        | Ok(bodyType, sub, resolved) ->
             let paramTypes = List.map (applySubstitution sub) paramTypes
 
             if returnType = TInfer then
-                Ok(TFunction(paramTypes, bodyType), sub)
+                Ok(TFunction(paramTypes, bodyType), sub, resolved)
             else
-                let returnResult = unify bodyType returnType
+                let returnResult = unify resolved bodyType returnType
 
                 match returnResult with
-                | Ok sub -> Ok(TFunction(paramTypes, returnType), sub)
+                | Ok (sub, resolved) -> Ok(TFunction(paramTypes, returnType), sub, resolved)
                 | Error errors -> Error errors
         | Error errors -> Error errors
 
     | ECall(callee, args) ->
-        let calleeResult = infer env callee
+        let calleeResult = infer env callee resolved
 
         match calleeResult with
         | Error errors -> Error errors
-        | Ok(t, sub) ->
+        | Ok(t, sub, resolved) ->
             let t = applySubstitution sub t
 
             match t with
@@ -277,7 +275,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
                 if List.length paramTypes <> List.length args then
                     Error [ TypeError.InvalidArgumentCount(callee, List.length paramTypes, List.length args) ]
                 else
-                    let argResults = List.map (infer env) args
+                    let argResults = List.map (fun arg -> infer env arg resolved) args
 
                     if
                         List.exists
@@ -301,14 +299,20 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
                             List.map
                                 (fun result ->
                                     match result with
-                                    | Ok(t, sub) -> (t, sub)
+                                    | Ok(t, sub, resolved) -> (t, sub, resolved)
                                     | _ -> failwith "Impossible")
                                 argResults
+                        
+                        let argTypes = List.map (fun (t, _, _) -> t) argResults
+                        let argSubs = List.map (fun (_, sub, _) -> sub) argResults
+                        let argResolved = List.map (fun (_, _, resolved) -> resolved) argResults
+                        
+                        let resolved = List.fold combineMaps resolved argResolved
 
-                        let argTypes = List.map fst argResults
-                        let argSubs = List.map snd argResults
-
-                        let paramResults = List.map2 unify paramTypes argTypes
+                        // let paramResults = List.map2 (unify resolved) paramTypes argTypes
+                        
+                        // need to maintain resolved, built the map up
+                        let paramResults = List.map2 (unify resolved) paramTypes argTypes
 
                         if
                             List.exists
@@ -337,37 +341,38 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
                                         | _ -> failwith "Impossible")
                                     paramResults
                             
-                            printfn $"paramResults: {paramResults}"
-
-                            let combinedSubs = List.fold combineMaps Map.empty paramResults
+                            let combinedSubs = List.fold combineMaps Map.empty (List.map fst paramResults)
                             let combinedSubs = List.fold combineMaps combinedSubs argSubs
+                            
+                            let resolved = List.fold combineMaps resolved (List.map snd paramResults)
                             
                             let returnType = applySubstitution combinedSubs ret
                             
                             match returnType with
                             | TConstrain(var, types) ->
-                                let resolvedType = List.tryFind (fun ty -> unify returnType ty |> Result.isOk) types
+                                let resolvedType = List.tryFind (fun ty -> unify resolved returnType ty |> Result.isOk) types
                                 
                                 match resolvedType with
                                 | Some ty ->
-                                    let sub = unify returnType ty
+                                    let sub = unify resolved returnType ty
                                     match sub with
-                                    | Ok sub' ->
+                                    | Ok (sub', resolved) ->
                                         let combinedSubs = combineMaps combinedSubs sub'
                                         let returnType = applySubstitution combinedSubs ty
-                                        Ok(returnType, combinedSubs)
+                                        Ok(returnType, combinedSubs, resolved)
                                     | Error errors -> Error errors
                                 | None -> Error [ TypeError.InvalidCall(callee, t) ]
-                            | _ -> Ok(returnType, combinedSubs)
+                            | _ -> Ok(returnType, combinedSubs, resolved)
                             
             | _ -> Error [ TypeError.InvalidCall(callee, t) ]
 
     | EBinary(expr1, op, expr2) ->
-        let expr1Result = infer env expr1
-        let expr2Result = infer env expr2
+        let expr1Result = infer env expr1 resolved
+        let expr2Result = infer env expr2 resolved
 
         match expr1Result, expr2Result with
-        | Ok(t1, sub1), Ok(t2, sub2) ->
+        | Ok(t1, sub1, res1), Ok(t2, sub2, res2) ->
+            let resolved = combineMaps res1 res2
             let sub = combineMaps sub1 sub2
             let typeVar = freshTypeVar ()
 
@@ -433,23 +438,23 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
 
                 | _ -> TNever
 
-            let opResult = unify opType t1
+            let opResult = unify resolved opType t1
 
             match opResult with
-            | Ok sub' ->
+            | Ok (sub', resolved) ->
                 let sub = combineMaps sub sub'
-                let opResult = unify opType t2
+                let opResult = unify resolved opType t2
 
                 match opResult with
-                | Ok sub'' ->
+                | Ok (sub'', res') ->
                     let sub = combineMaps sub'' sub
-                    let opResult = unify opType returnType
+                    let opResult = unify res' opType returnType
 
                     match opResult with
-                    | Ok sub''' ->
+                    | Ok (sub''', resolved) ->
                         let sub = combineMaps sub sub'''
                         let returnT = applySubstitution sub returnType
-                        Ok(returnT, sub)
+                        Ok(returnT, sub, resolved)
                     | Error errors -> Error errors
                 | Error errors -> Error errors
             | Error errors -> Error errors
@@ -457,10 +462,10 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
         | _, Error errors -> Error errors
 
     | EUnary(op, expr) ->
-        let exprResult = infer env expr
+        let exprResult = infer env expr resolved
 
         match exprResult with
-        | Ok(t, sub) ->
+        | Ok(t, sub, resolved) ->
             let typeVar = freshTypeVar ()
 
             let opType =
@@ -472,13 +477,13 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
                 | Operator Bang -> TBool
                 | _ -> failwith "todo!!!"
 
-            let opResult = unify opType t
+            let opResult = unify resolved opType t
 
             match opResult with
-            | Ok sub' ->
+            | Ok (sub', resolved) ->
                 let sub = combineMaps sub sub'
                 let returnT = applySubstitution sub t
-                Ok(returnT, sub)
+                Ok(returnT, sub, resolved)
             | Error errors -> Error errors
         | Error errors -> Error errors
 
@@ -498,63 +503,65 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
                 let lastStmtType =
                     match lastStmt with
                     | SExpression expr ->
-                        match infer env expr with
-                        | Ok(t, _) -> t
+                        match infer env expr resolved with
+                        | Ok(t, _, _) -> t
                         | Error errors -> TNever
                     | SVariableDeclaration _ -> TUnit
                     | SPrintStatement _ -> TUnit
 
-                Ok(lastStmtType, sub)
+                Ok(lastStmtType, sub, resolved)
             | Error errors -> Error errors
         | Error errors -> Error errors
 
-    | EGrouping(expr) -> infer env expr
+    | EGrouping(expr) -> infer env expr resolved
     | EIf(cond, thenBranch, elseBranch) ->
-        let condResult = infer env cond
-        let thenResult = infer env thenBranch
-        let elseResult = infer env elseBranch
+        let condResult = infer env cond resolved
+        let thenResult = infer env thenBranch resolved
+        let elseResult = infer env elseBranch resolved
 
         match condResult, thenResult, elseResult with
-        | Ok(TBool, sub1), Ok(t1, sub2), Ok(t2, sub3) ->
+        | Ok(TBool, sub1, res1), Ok(t1, sub2, res2), Ok(t2, sub3, res3) ->
+            let resolved = combineMaps res1 res2
+            let resolved = combineMaps resolved res3
             let sub = combineMaps sub1 sub2
             let sub = combineMaps sub sub3
-            let result = unify t1 t2
+            let result = unify resolved t1 t2 
 
             match result with
-            | Ok sub' ->
+            | Ok (sub', resolved) ->
                 let sub = combineMaps sub sub'
                 let returnT = applySubstitution sub t1
-                Ok(returnT, sub)
+                Ok(returnT, sub, resolved)
             | Error errors -> Error errors
         | Error errors, _, _ -> Error errors
         | _, Error errors, _ -> Error errors
         | _, _, Error errors -> Error errors
         | _ -> Error [ TypeError.InvalidIf(cond) ]
-    | ETernary(cond, trueBranch, falseBranch) -> infer env (EIf(cond, trueBranch, falseBranch))
+    | ETernary(cond, trueBranch, falseBranch) -> infer env (EIf(cond, trueBranch, falseBranch)) resolved
     | _ -> failwith "todo"
 
 and inferStmt (env: TypeEnv) (stmt: Stmt) : Result<TypeEnv * Substitution, TypeErrors> =
     match stmt with
     | SExpression expr ->
-        let result = infer env expr
+        let result = infer env expr Map.empty
 
         match result with
-        | Ok(_, sub) -> Ok(env, sub)
+        | Ok(_, sub, resolved) -> Ok(env, sub)
         | Error errors -> Error errors
     | SVariableDeclaration(name, typ, expr) ->
-        let result = infer env expr
+        let result = infer env expr Map.empty
 
         match result with
-        | Ok(t, sub) ->
+        | Ok(t, sub, resolved) ->
             let typ =
                 match typ with
                 | TInfer -> t
                 | _ -> typ
 
-            let subResult = unify t typ
+            let subResult = unify Map.empty t typ
 
             match subResult with
-            | Ok sub' ->
+            | Ok (sub', resolved) ->
                 let sub = combineMaps sub sub'
 
                 let newEnv =
