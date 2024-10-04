@@ -2,6 +2,7 @@ module Vec3.Interpreter.Typing.Inference
 
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
+open Vec3.Interpreter.Parser
 open Builtins
 open Exceptions
 
@@ -261,6 +262,8 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
                             | Operator Star -> TConstrain([TInteger; TFloat; TRational; TComplex])
                             | Operator Slash -> TConstrain([TInteger; TFloat; TRational; TComplex])
                             | Operator StarStar -> TConstrain([TInteger; TFloat; TRational; TComplex])
+                            
+                            | Operator Percent -> TInteger
                             
                             | Operator EqualEqual -> TConstrain([TInteger; TFloat; TRational; TComplex; TString; TBool; TUnit])
                             | Operator BangEqual -> TConstrain([TInteger; TFloat; TRational; TComplex; TString; TBool; TUnit])

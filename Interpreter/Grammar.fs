@@ -42,7 +42,7 @@ type Type =
     | TVector of Type * int
     | TMatrix of Type * int * int
 
-type Constraint = Constraint of Type list
+and Constraint = Constraint of Type list
     
 type Number =
     | LInteger of int

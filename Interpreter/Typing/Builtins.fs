@@ -9,5 +9,6 @@ let BuiltinFunctions: Map<string, TType> =
       "input", TFunction([], TString)
       "cos", TFunction([ TFloat ], TFloat)
       "sin", TFunction([ TFloat ], TFloat)
-      "tan", TFunction([ TFloat ], TFloat) ]
+      "tan", TFunction([ TFloat ], TFloat)
+      "env", TFunction([], TUnit) ]
     |> Map.ofList

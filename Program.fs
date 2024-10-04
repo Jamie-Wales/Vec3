@@ -39,12 +39,6 @@ module Program =
                 printfn $"{usg_msg}"
                 1
             else
-                let filename = argv.[1]
-                let lines = System.IO.File.ReadAllLines(filename)
-                let env = Map.empty
-                let parsed = parse (String.Join("\n", lines))
-                let env = evalProgram env parsed
-                printfn $"{env}"
                 0
         else
             1
