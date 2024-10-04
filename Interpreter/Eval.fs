@@ -5,7 +5,7 @@ open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open System
 
-type Env = Map<Token, Expr>
+type Env = Map<Lexeme, Expr>
 
 let evalNumber = function 
     | LInteger x -> LInteger x
@@ -48,6 +48,16 @@ let evalPower = function
     | LFloat x, LFloat y -> LFloat (Math.Pow (x, y))
     | _ -> failwith "invalid"
 
+let evalModulo = function
+    | LInteger x, LInteger y -> LInteger (x % y)
+    | _ -> failwith "invalid"
+
+let evalLiteral = function
+    | LNumber x -> LNumber <| evalNumber x
+    | LString s -> LString s
+    | LBool b -> LBool b
+    | LUnit -> LUnit
+
 let rec evalExpr (env: Env) =
     function
     | EBlock stmts ->
@@ -62,11 +72,10 @@ let rec evalExpr (env: Env) =
     | EAssignment(_, expr) -> evalExpr env expr
     | EGrouping expr -> evalExpr env expr
 
-    | ELiteral (LString s) -> ELiteral (LString s)
-    | ELiteral (LBool b) -> ELiteral (LBool b)
-    | ELiteral (LNumber n) -> ELiteral (LNumber (evalNumber n))
-    | ELiteral LUnit -> ELiteral LUnit
-    | ECall (name, args) -> 
+    | ELiteral lit -> ELiteral (evalLiteral lit)
+    | ECall (name, args) ->
+        let name = name.lexeme
+        
         match env.TryGetValue name with
         | true, ELambda(params', _, body) ->
             let rec evalParams (env: Env) (params': (Token * Grammar.Type) list) (args: Expr list) =
@@ -74,44 +83,47 @@ let rec evalExpr (env: Env) =
                 | [], [] -> env
                 | (p, _) :: ps, a :: as' ->
                     let env' = evalParams env ps as'
-                    Map.add p (evalExpr env a) env'
+                    Map.add p.lexeme (evalExpr env a) env'
                 | _ -> failwith "invalid"
 
             let env' = evalParams env params' args
             evalExpr env' body
         | false, _ ->
-            match name.lexeme with
-            | Identifier name ->
-                match name with
-                | "print" ->
-                    let args = List.map (evalExpr env) args
-                    printfn $"{String.Join(' ', args)}"
-                    ELiteral(LUnit)
-                | "input" ->
-                    let args = List.map (evalExpr env) args
-                    let input = Console.ReadLine()
-                    ELiteral(LString input)
-                | "cos" ->
-                    let args = List.map (evalExpr env) args
-                    match args with
-                    | [ ELiteral(LNumber(LFloat x)) ] -> ELiteral(LNumber(LFloat(Math.Cos(double x))))
-                    | _ -> failwith "invalid"
-                | "sin" ->
-                    let args = List.map (evalExpr env) args
-                    match args with
-                    | [ ELiteral(LNumber(LFloat x)) ] -> ELiteral(LNumber(LFloat(Math.Sin(double x))))
-                    | _ -> failwith "invalid"
-                | "tan" ->
-                    let args = List.map (evalExpr env) args
-                    match args with
-                    | [ ELiteral(LNumber(LFloat x)) ] -> ELiteral(LNumber(LFloat(Math.Tan(double x))))
-                    | _ -> failwith "invalid"
+            match name with
+                | Identifier name ->
+                    match name with
+                    | "env" ->
+                        Map.iter (fun k v -> printfn $"{k}: {v}") env
+                        ELiteral(LUnit)
+                    | "print" ->
+                        let args = List.map (evalExpr env) args
+                        printfn $"{String.Join(' ', args)}"
+                        ELiteral(LUnit)
+                    | "input" ->
+                        let args = List.map (evalExpr env) args
+                        let input = Console.ReadLine()
+                        ELiteral(LString input)
+                    | "cos" ->
+                        let args = List.map (evalExpr env) args
+                        match args with
+                        | [ ELiteral(LNumber(LFloat x)) ] -> ELiteral(LNumber(LFloat(Math.Cos(double x))))
+                        | _ -> failwith "invalid"
+                    | "sin" ->
+                        let args = List.map (evalExpr env) args
+                        match args with
+                        | [ ELiteral(LNumber(LFloat x)) ] -> ELiteral(LNumber(LFloat(Math.Sin(double x))))
+                        | _ -> failwith "invalid"
+                    | "tan" ->
+                        let args = List.map (evalExpr env) args
+                        match args with
+                        | [ ELiteral(LNumber(LFloat x)) ] -> ELiteral(LNumber(LFloat(Math.Tan(double x))))
+                        | _ -> failwith "invalid"
+                    | _ -> failwith $"function {name} not found"
                 | _ -> failwith $"function {name} not found"
             | _ -> failwith $"function {name} not found"
-        | _ -> failwith $"function {name} not found"
     | ELambda(params', t, body) -> ELambda(params', t, body)
     | EIdentifier name ->
-        match env.TryGetValue name with
+        match env.TryGetValue name.lexeme with
         | true, expr -> expr
         | _ -> failwith $"variable {name} not found"
     | EBinary(lhs, op, rhs) ->
@@ -126,6 +138,7 @@ let rec evalExpr (env: Env) =
             | Operator.Star -> ELiteral (LNumber (evalMultiplication (lhs, rhs)))
             | Operator.Slash -> ELiteral (LNumber (evalDivision (lhs, rhs)))
             | Operator.StarStar -> ELiteral (LNumber (evalPower (lhs, rhs)))
+            | Operator.Percent -> ELiteral (LNumber (evalModulo (lhs, rhs)))
             | Operator.EqualEqual -> ELiteral (LBool (lhs = rhs))
             | Operator.BangEqual -> ELiteral (LBool (lhs <> rhs))
             | Operator.Less -> ELiteral (LBool (lhs < rhs))
@@ -173,7 +186,7 @@ and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
 
     | SVariableDeclaration(name, _, expr) ->
         let value = evalExpr env expr
-        ELiteral LUnit, Map.add name value env
+        ELiteral LUnit, Map.add name.lexeme value env
     
     | SPrintStatement expr ->
         let value = evalExpr env expr
@@ -187,8 +200,8 @@ let evalStatement (env: Env) (stmt: Stmt) : Literal * Env =
     
     
 
-let evalProgram (env: Env) (program: Program) : Env =
-    for stmt in program do
-        evalStmt env stmt |> ignore
-
-    env
+let evalProgram (env: Env) (program: Program) : Literal * Env =
+    // return last staement and update env
+    match List.fold (fun (lit, env) stmt -> evalStatement env stmt) (LUnit, env) program with
+    | lit, env -> lit, env
+    | _ -> failwith "invalid"

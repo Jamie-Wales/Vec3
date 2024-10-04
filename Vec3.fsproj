@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Interpreter\Preprocessor.fs" />
         <Compile Include="Interpreter\Token.fs" />
         <Compile Include="Interpreter\Grammar.fs" />
         <Compile Include="Interpreter\Printer.fs"/>
@@ -28,6 +29,7 @@
         <Compile Include="App.axaml.fs"/>
         <Compile Include="Program.fs"/>
         <Content Include=".gitignore"/>
+        <Content Include="test.vec3" />
     </ItemGroup>
 
     <ItemGroup>

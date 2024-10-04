@@ -5,87 +5,89 @@ open System
 open System.Text.RegularExpressions
 
 type TokenPattern =
-    | Complex
-    | Rational
-    | Float
-    | Integer
-    | String
+    | PComplex
+    | PRational
+    | PFloat
+    | PInteger
+    | PString
     
-    | Arrow
+    | PArrow
     
-    | Plus
-    | Minus
-    | Star
-    | StarStar
-    | Slash
+    | PPlus
+    | PMinus
+    | PStar
+    | PStarStar
+    | PSlash
+    | PPercent
     
-    | EqualEqual
-    | BangEqual
-    | Less
-    | LessEqual
-    | Greater
-    | GreaterEqual
-    | Equal
+    | PEqualEqual
+    | PBangEqual
+    | PLess
+    | PLessEqual
+    | PGreater
+    | PGreaterEqual
+    | PEqual
     
-    | Bang
+    | PBang
     
-    | LeftParen
-    | RightParen
+    | PLeftParen
+    | PRightParen
     
-    | LeftBrace
-    | RightBrace
+    | PLeftBrace
+    | PRightBrace
     
-    | LeftBracket
-    | RightBracket
+    | PLeftBracket
+    | PRightBracket
     
-    | Colon
-    | Comma
-    | Semicolon
-    | Dot
+    | PColon
+    | PComma
+    | PSemicolon
+    | PDot
     
-    | Identifier
+    | PIdentifier
     
 
 let tokenPatterns : (TokenPattern * Regex) list = [
-    (Complex, Regex(@"^([+-]?\d*\.?\d*)i\s*([+-]\s*\d*\.?\d+)?$", RegexOptions.Compiled));
-    (Rational, Regex(@"^\d+/\d+", RegexOptions.Compiled));
-    (Float, Regex(@"^\d+\.\d+", RegexOptions.Compiled));
-    (Integer, Regex(@"^\d+", RegexOptions.Compiled))
-    (String, Regex(@"^"".*?""", RegexOptions.Compiled))
+    (PComplex, Regex(@"^([+-]?\d*\.?\d*)i\s*([+-]\s*\d*\.?\d+)?$", RegexOptions.Compiled));
+    (PRational, Regex(@"^\d+/\d+", RegexOptions.Compiled));
+    (PFloat, Regex(@"^\d+\.\d+", RegexOptions.Compiled));
+    (PInteger, Regex(@"^\d+", RegexOptions.Compiled))
+    (PString, Regex(@"^"".*?""", RegexOptions.Compiled))
     
-    (Arrow, Regex(@"^->", RegexOptions.Compiled))
+    (PArrow, Regex(@"^->", RegexOptions.Compiled))
     
-    (Plus, Regex(@"^\+", RegexOptions.Compiled));
-    (Minus, Regex(@"^-", RegexOptions.Compiled))
-    (StarStar, Regex(@"^\*\*", RegexOptions.Compiled))
-    (Star, Regex(@"^\*", RegexOptions.Compiled));
-    (Slash, Regex(@"^/", RegexOptions.Compiled))
+    (PPlus, Regex(@"^\+", RegexOptions.Compiled));
+    (PMinus, Regex(@"^-", RegexOptions.Compiled))
+    (PStarStar, Regex(@"^\*\*", RegexOptions.Compiled))
+    (PStar, Regex(@"^\*", RegexOptions.Compiled));
+    (PSlash, Regex(@"^/", RegexOptions.Compiled))
+    (PPercent, Regex(@"^%", RegexOptions.Compiled))
     
-    (EqualEqual, Regex(@"^==", RegexOptions.Compiled));
-    (BangEqual, Regex(@"^!=", RegexOptions.Compiled));
-    (Less, Regex(@"^<", RegexOptions.Compiled));
-    (LessEqual, Regex(@"^<=", RegexOptions.Compiled));
-    (Greater, Regex(@"^>", RegexOptions.Compiled));
-    (GreaterEqual, Regex(@"^>=", RegexOptions.Compiled));
-    (Equal, Regex(@"^=", RegexOptions.Compiled))
+    (PEqualEqual, Regex(@"^==", RegexOptions.Compiled));
+    (PBangEqual, Regex(@"^!=", RegexOptions.Compiled));
+    (PLess, Regex(@"^<", RegexOptions.Compiled));
+    (PLessEqual, Regex(@"^<=", RegexOptions.Compiled));
+    (PGreater, Regex(@"^>", RegexOptions.Compiled));
+    (PGreaterEqual, Regex(@"^>=", RegexOptions.Compiled));
+    (PEqual, Regex(@"^=", RegexOptions.Compiled))
     
-    (Bang, Regex(@"^!", RegexOptions.Compiled));
+    (PBang, Regex(@"^!", RegexOptions.Compiled));
     
-    (LeftParen, Regex(@"^\(", RegexOptions.Compiled));
-    (RightParen, Regex(@"^\)", RegexOptions.Compiled))
+    (PLeftParen, Regex(@"^\(", RegexOptions.Compiled));
+    (PRightParen, Regex(@"^\)", RegexOptions.Compiled))
     
-    (LeftBrace, Regex(@"^{", RegexOptions.Compiled))
-    (RightBrace, Regex(@"^}", RegexOptions.Compiled))
+    (PLeftBrace, Regex(@"^{", RegexOptions.Compiled))
+    (PRightBrace, Regex(@"^}", RegexOptions.Compiled))
     
-    (LeftBracket, Regex(@"^\[", RegexOptions.Compiled))
-    (RightBracket, Regex(@"^\]", RegexOptions.Compiled))
+    (PLeftBracket, Regex(@"^\[", RegexOptions.Compiled))
+    (PRightBracket, Regex(@"^\]", RegexOptions.Compiled))
     
-    (Colon, Regex(@"^:", RegexOptions.Compiled))
-    (Comma, Regex(@"^,", RegexOptions.Compiled))
-    (Semicolon, Regex(@"^;", RegexOptions.Compiled))
-    (Dot, Regex(@"^\.", RegexOptions.Compiled))
+    (PColon, Regex(@"^:", RegexOptions.Compiled))
+    (PComma, Regex(@"^,", RegexOptions.Compiled))
+    (PSemicolon, Regex(@"^;", RegexOptions.Compiled))
+    (PDot, Regex(@"^\.", RegexOptions.Compiled))
     
-    (Identifier, Regex(@"^[a-zA-Z_][a-zA-Z0-9_]*", RegexOptions.Compiled))
+    (PIdentifier, Regex(@"^[a-zA-Z_][a-zA-Z0-9_]*", RegexOptions.Compiled))
 ]
 
 let keywordMap = 
@@ -147,39 +149,48 @@ let lexemeFromIndent (value: string) =
 
 let lexemeFromPattern (pattern: TokenPattern) (value: string) =
     match pattern with
-    | Complex -> parseComplex value
-    | Rational -> let parts = value.Split('/')
-                  let n = bigint.Parse parts[0]
-                  let d = bigint.Parse parts[1]
-                  Lexeme.Number (Number.Rational (int n, int d))
-    | Float -> Lexeme.Number (Number.Float (float value))
-    | Integer -> Lexeme.Number (Number.Integer (int value))
-    | Plus -> Lexeme.Operator Operator.Plus
-    | Minus -> Lexeme.Operator Operator.Minus
-    | Star -> Lexeme.Operator Operator.Star
-    | Slash -> Lexeme.Operator Operator.Slash
-    | EqualEqual -> Lexeme.Operator Operator.EqualEqual
-    | BangEqual -> Lexeme.Operator Operator.BangEqual
-    | Less -> Lexeme.Operator Operator.Less
-    | LessEqual -> Lexeme.Operator Operator.LessEqual
-    | Greater -> Lexeme.Operator Operator.Greater
-    | GreaterEqual -> Lexeme.Operator Operator.GreaterEqual
-    | Equal -> Lexeme.Operator Operator.Equal
-    | LeftParen -> Lexeme.Operator Operator.LeftParen
-    | RightParen -> Lexeme.Operator Operator.RightParen
-    | Bang -> Lexeme.Operator Operator.Bang
-    | String -> Lexeme.String (value.Substring(1, value.Length - 2))
-    | Identifier -> lexemeFromIndent value
-    | Comma -> Lexeme.Comma
-    | Semicolon -> Lexeme.Semicolon
-    | Arrow -> Lexeme.Operator Operator.Arrow
-    | StarStar -> Lexeme.Operator Operator.StarStar
-    | Colon -> Lexeme.Colon
-    | Dot -> Lexeme.Operator Operator.Dot
-    | LeftBrace -> Lexeme.Operator Operator.LeftBrace
-    | RightBrace -> Lexeme.Operator Operator.RightBrace
-    | LeftBracket -> Lexeme.Operator Operator.LeftBracket
-    | RightBracket -> Lexeme.Operator Operator.RightBracket
+    | PComplex -> parseComplex value
+    | PRational -> let parts = value.Split('/')
+                   let n = bigint.Parse parts[0]
+                   let d = bigint.Parse parts[1]
+                   Lexeme.Number (Number.Rational (int n, int d))
+    | PFloat -> Lexeme.Number (Number.Float (float value))
+    | PInteger -> Lexeme.Number (Number.Integer (int value))
+    | PString -> Lexeme.String (value.Substring(1, value.Length - 2))
+    
+    | PPlus -> Lexeme.Operator Operator.Plus
+    | PMinus -> Lexeme.Operator Operator.Minus
+    | PStar -> Lexeme.Operator Operator.Star
+    | PSlash -> Lexeme.Operator Operator.Slash
+    | PStarStar -> Lexeme.Operator Operator.StarStar
+    | PPercent -> Lexeme.Operator Operator.Percent
+    
+    | PEqualEqual -> Lexeme.Operator Operator.EqualEqual
+    | PBangEqual -> Lexeme.Operator Operator.BangEqual
+    | PLess -> Lexeme.Operator Operator.Less
+    | PLessEqual -> Lexeme.Operator Operator.LessEqual
+    | PGreater -> Lexeme.Operator Operator.Greater
+    | PGreaterEqual -> Lexeme.Operator Operator.GreaterEqual
+    | PEqual -> Lexeme.Operator Operator.Equal
+    
+    | PBang -> Lexeme.Operator Operator.Bang
+    
+    | PLeftParen -> Lexeme.Operator Operator.LeftParen
+    | PRightParen -> Lexeme.Operator Operator.RightParen
+    
+    | PLeftBrace -> Lexeme.Operator Operator.LeftBrace
+    | PRightBrace -> Lexeme.Operator Operator.RightBrace
+    
+    | PLeftBracket -> Lexeme.Operator Operator.LeftBracket
+    | PRightBracket -> Lexeme.Operator Operator.RightBracket
+    
+    | PComma -> Lexeme.Comma
+    | PSemicolon -> Lexeme.Semicolon
+    | PArrow -> Lexeme.Operator Operator.Arrow
+    | PColon -> Lexeme.Colon
+    | PDot -> Lexeme.Operator Operator.Dot
+    
+    | PIdentifier -> lexemeFromIndent value
 
 let tokenize (input: string) =
     let rec tokenize' (input: string) (line: int) (tokens: Token list) =

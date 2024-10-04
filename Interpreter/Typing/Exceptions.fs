@@ -26,6 +26,7 @@ type TypeError =
     | InvalidCallReturn of Token * TType * TType
     | InvalidCallBody of Token * TType * TType
     | NotEnoughInformation of Token
+    | InvalidOpen of Token
 
 type TypeErrors = TypeError list
 exception TypeException of TypeErrors

@@ -12,6 +12,7 @@ type Operator =
     | Star
     | StarStar
     | Slash
+    | Percent
     
     | EqualEqual
     | BangEqual
@@ -97,6 +98,7 @@ let operatorToString (op: Operator): string =
     | LeftBracket -> "["
     | RightBracket -> "]"
     | Dot -> "."
+    | Percent -> "%"
 
 let lexemeToString (lex: Lexeme): string =
     match lex with

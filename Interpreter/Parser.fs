@@ -21,6 +21,7 @@ type Precedence =
 type ParserLabel = string
 type ParserError = string
 
+
 type ParserPosition =
     { CurrentLine: string
       Line: int
@@ -30,6 +31,8 @@ type ParserState =
     { Tokens: Token list
       Position: int
       Label: ParserLabel }
+    
+exception ParserException of ParserError * ParserState
 
 type ParseResult<'a> = Result<'a * ParserState, ParserError * ParserState>
     // | Ok of 'a * ParserState
@@ -150,6 +153,7 @@ and operatorRule (op: Operator) : ParseRule =
           Infix = Some binary
           Precedence = Precedence.Term }
     | Operator.Slash
+    | Operator.Percent
     | Operator.StarStar
     | Operator.Star ->
         { Prefix = None
@@ -463,7 +467,7 @@ let parseStatement (state: ParserState) : ParseResult<Stmt> =
         match token.lexeme with
         | Lexeme.Keyword kw ->
             match kw with
-            | Let -> variableDeclaration (advance state)
+            | Keyword.Let -> variableDeclaration (advance state)
             | Keyword.Print -> printStatement (advance state)
             | _ ->
                 match expression state Precedence.None with
@@ -475,7 +479,7 @@ let parseStatement (state: ParserState) : ParseResult<Stmt> =
             | Error(s1, parserState) -> Error(s1, parserState)
     | None -> Ok((SExpression(ELiteral(LUnit)), state))
 
-let parseStmt (input: string) =
+let parseStmtUnsafe (input: string) =
     let tokens = tokenize input
 
     let initialState = createParserState tokens
@@ -483,7 +487,14 @@ let parseStmt (input: string) =
 
     match stmt with
     | Ok(stmt, _) -> stmt
-    | Error _ as f -> failwith $"{f}"
+    | Error f -> raise (ParserException(f))
+
+let parseStmt (input: string) =
+    let tokens = tokenize input
+    
+    let initialState = createParserState tokens
+    parseStatement initialState
+
 
 let parseProgram (state: ParserState) : ParseResult<Program> =
     let rec loop state stmts =
@@ -504,6 +515,18 @@ let parseTokens (tokens: Token list) =
 let parse (input: string) =
     let tokens = tokenize input
 
-    match parseTokens tokens with
-    | Ok(program, _) -> program
-    | Error _ as f -> failwith $"{f}"
+    // match parseTokens tokens with
+    // | Ok(program, _) -> program
+    // | Error _ as f -> failwith $"{f}"
+    parseTokens tokens
+
+let parseFile (file: string) =
+    let input = System.IO.File.ReadAllText(file)
+    parse input
+
+let formatParserError (error: ParserError) (state: ParserState) =
+    let token = getCurrentToken state
+    match token with
+    | Some { lexeme = name; line=l } ->
+        $"Error: {error} at line {l}, token {name}"
+    | _ -> $"Error: {error}"
