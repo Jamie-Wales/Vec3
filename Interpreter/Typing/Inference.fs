@@ -117,7 +117,7 @@ let rec unify (t1: TType) (t2: TType): Result<Substitution, TypeErrors> =
                 | Error errors, Ok _ -> Error errors
                 | Ok _, Error errors -> Error errors
                 | Error errors1, Error errors2 -> Error(errors1 @ errors2)) (Ok Map.empty) results
-        
+    
     | TConstrain(types), t
     | t, TConstrain(types) ->
         let validTypes = List.filter (fun typ -> unify typ t = Ok Map.empty) types
@@ -248,7 +248,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
                         let returnType = applySubstitution combinedSubs ret
                         Ok (returnType, combinedSubs)
             | _ -> Error [ TypeError.InvalidCall(callee, t) ]
-        
+    
     | EBinary(expr1, op, expr2) ->
         let expr1Result = infer env expr1
         let expr2Result = infer env expr2
@@ -272,8 +272,26 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
                             | Operator LessEqual -> TConstrain([TInteger; TFloat; TRational; TComplex])
                             | Operator Greater -> TConstrain([TInteger; TFloat; TRational; TComplex])
                             | Operator GreaterEqual -> TConstrain([TInteger; TFloat; TRational; TComplex])
+                            | _ -> TNever
+            
+            let returnType = match op.lexeme with
+                                | Operator Plus
+                                | Operator Minus
+                                | Operator Star
+                                | Operator Slash
+                                | Operator StarStar -> TConstrain([TInteger; TFloat; TRational; TComplex])
                             
-                            | _ -> failwith "Invalid operator type"
+                                | Operator Percent -> TInteger
+                            
+                                | Operator EqualEqual
+                                | Operator BangEqual -> TBool
+                            
+                                | Operator Less
+                                | Operator LessEqual
+                                | Operator Greater
+                                | Operator GreaterEqual -> TBool
+                            
+                                | _ -> TNever
             
             let opResult = unify opType t1
             
@@ -284,7 +302,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
                 match opResult with
                 | Ok sub'' ->
                     let sub = combineMaps sub'' sub
-                    let returnT = applySubstitution sub t1
+                    let returnT = applySubstitution sub returnType
                     Ok (returnT, sub)
                 | Error errors -> Error errors
             | Error errors -> Error errors
@@ -314,7 +332,28 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution, TypeErr
     | EBlock(stmts) -> failwith "todo!!!"
     | EGrouping(expr) ->
         infer env expr
+    | EIf(cond, thenBranch, elseBranch) ->
+        let condResult = infer env cond
+        let thenResult = infer env thenBranch
+        let elseResult = infer env elseBranch
         
+        match condResult, thenResult, elseResult with
+        | Ok (TBool, sub1), Ok (t1, sub2), Ok (t2, sub3) ->
+            let sub = combineMaps sub1 sub2
+            let sub = combineMaps sub sub3
+            let result = unify t1 t2
+            match result with
+            | Ok sub' ->
+                let sub = combineMaps sub sub'
+                let returnT = applySubstitution sub t1
+                Ok (returnT, sub)
+            | Error errors -> Error errors
+        | Error errors, _, _ -> Error errors
+        | _, Error errors, _ -> Error errors
+        | _, _, Error errors -> Error errors
+        | _ -> Error [ TypeError.InvalidIf(cond) ]
+    | ETernary(cond, trueBranch, falseBranch) ->
+        infer env (EIf(cond, trueBranch, falseBranch))
     | _ -> failwith "todo"
 
 and inferStmt (env: TypeEnv) (stmt: Stmt) : Result<TypeEnv * Substitution, TypeErrors> =

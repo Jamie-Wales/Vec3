@@ -185,7 +185,14 @@ let rec evalExpr (env: Env) =
                 | _ -> failwith "invalid"
             | _ -> failwith "invalid"
         | _ -> failwith "invalid"
-
+    | EIf(cond, then', else') ->
+        let cond = evalExpr env cond
+        match cond with
+        | ELiteral(LBool true) -> evalExpr env then'
+        | ELiteral(LBool false) -> evalExpr env else'
+        | _ -> failwith "invalid"
+    | ETernary(cond, then', else') ->
+        evalExpr env (EIf(cond, then', else'))
 
 and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
     match stmt with

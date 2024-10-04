@@ -62,7 +62,9 @@ type Expr =
     | EUnary of Token * Expr
     | EBinary of Expr * Token * Expr
     | EGrouping of Expr
-    | EAssignment of Token * Expr 
+    | EAssignment of Token * Expr
+    | EIf of Expr * Expr * Expr
+    | ETernary of Expr * Expr * Expr
     
     | ECall of Expr * Expr list
     | ELambda of (Token * Type) list * Type * Expr

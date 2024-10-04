@@ -19,6 +19,8 @@ let rec preprocess (filename: string): string =
                 let includeFile = line.Substring(5).Trim()
                 let includeContent = preprocess includeFile
                 preprocess' rest (acc + includeContent)
+            else if line.StartsWith "//" then
+                preprocess' rest acc
             else
                 preprocess' rest (acc + line + "\n")
     
@@ -28,6 +30,8 @@ let rec preprocessLine (line: string): string =
     if line.StartsWith "open" then
         let includeFile = line.Substring(5).Trim()
         preprocess includeFile
+    else if line.StartsWith "//" then
+        ""
     else
         line
 
@@ -42,6 +46,8 @@ let rec preprocessContent (content: string): string =
                 let includeFile = line.Substring(5).Trim()
                 let includeContent = preprocess includeFile
                 preprocess' rest (acc + includeContent)
+            else if line.StartsWith "//" then
+                preprocess' rest acc
             else
                 preprocess' rest (acc + line + "\n")
     

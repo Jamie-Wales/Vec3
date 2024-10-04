@@ -1,4 +1,17 @@
 
+// multi param functions must be typed, due to inference limitations (may change in future)
 let add = (a: int, b: int) -> a + b
 
+// return type is inferred, but can be typed if desired
+let addInts = (a: int, b: int): int -> a + b
+
+// single param functions can be inferred
+// for example, as 1 is an int, and + is of type TConstrain[int, float, ...]
+// the type of a is inferred to be int
+let add1 = (a) -> a + 1
+
+// a is inferred to be TConstrain[int, float, ...], as plus operator is of type TConstrain[int, float, ...]
+let double = (a) -> a + a
+
+// the type of x is inferred to be a (type variable), therefore generic to all types
 let id = (x) -> x

@@ -193,6 +193,10 @@ and keywordRule (kw: Keyword) : ParseRule =
         { Prefix = Some nil
           Infix = None
           Precedence = Precedence.None }
+    | If ->
+        { Prefix = Some ifExpr
+          Infix = Some ternary
+          Precedence = Precedence.None }
     | _ ->
         { Prefix = None
           Infix = None
@@ -276,6 +280,45 @@ and grouping (state: ParserState) : ParseResult<Expr> =
         match nextToken state with
         | Some({ lexeme = Lexeme.Operator Operator.RightParen }, state) -> Ok(EGrouping expr, state)
         | _ -> Error("Expect ')' after expression.", state)
+    | Error _ as f -> f
+
+and ifExpr (state: ParserState) : ParseResult<Expr> =
+    let state = setLabel state "If"
+
+    match expression state Precedence.None with
+    | Ok(condition, state) ->
+        match peek state with
+        | Some { lexeme = Lexeme.Keyword Keyword.Then } ->
+            let state = advance state
+
+            match expression state Precedence.None with
+            | Ok(thenBranch, state) ->
+                match peek state with
+                | Some { lexeme = Lexeme.Keyword Keyword.Else } ->
+                    let state = advance state
+
+                    match expression state Precedence.None with
+                    | Ok(elseBranch, state) -> Ok(EIf(condition, thenBranch, elseBranch), state)
+                    | Error _ as f -> f
+                    // single if, need to fix type checker if this is allowed
+                | _ -> Ok(EIf(condition, thenBranch, ELiteral(LUnit)), state)
+            | Error _ as f -> f
+        | _ -> Error("Expect 'then' after condition.", state)
+    | Error _ as f -> f
+
+// let x = a if 1 < 2 else b
+and ternary (state: ParserState) (trueBranch: Expr) : ParseResult<Expr> =
+    match expression state Precedence.None with
+    | Ok(condition, state) ->
+        match peek state with
+        | Some { lexeme = Lexeme.Keyword Keyword.Else } ->
+            let state = advance state
+
+            match expression state Precedence.None with
+            | Ok(falseBranch, state) ->
+                Ok(EIf(condition, trueBranch, falseBranch), state)
+            | Error _ as f -> f
+        | _ -> Error("Expect 'then' after condition.", state)
     | Error _ as f -> f
 
 and call (state: ParserState) (callee: Expr) : ParseResult<Expr> =
