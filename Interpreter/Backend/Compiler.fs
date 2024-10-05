@@ -50,8 +50,8 @@ let rec compileLiteral (lit: Literal) : Compiler<unit> =
 let rec compileExpr (expr: Expr) : Compiler<unit> =
     fun state ->
         match expr with
-        | ELiteral lit -> compileLiteral lit state
-        | EBinary (left, op, right) -> compileBinary left op right state
+        | ELiteral (lit, _) -> compileLiteral lit state
+        | EBinary (left, op, right, _) -> compileBinary left op right state
         | _ -> Error ("Unsupported expression type", state)
 and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
     fun state ->
@@ -85,12 +85,12 @@ and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
 let rec compileStmt (stmt: Stmt) : Compiler<unit> =
     fun state ->
         match stmt with
-        | SExpression expr ->
+        | SExpression (expr, _) ->
             compileExpr expr state
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.POP state)
-        | SVariableDeclaration (name, _, initializer) ->
+        | SVariableDeclaration (name, _, initializer, _) ->
             compileVariableDeclaration name initializer state
-        | SPrintStatement expr ->
+        | SPrintStatement (expr, _) ->
             compileExpr expr state
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.PRINT state)
 

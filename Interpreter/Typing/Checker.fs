@@ -25,15 +25,15 @@ let rec checkExpression (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> 
     // type env holds all of the infered types
     // expr is the expression to check
     match expr with
-    | ELiteral lit -> Ok <| checkLiteral lit
-    | EIdentifier token -> checkIdentifier env token
+    | ELiteral (lit, _) -> Ok <| checkLiteral lit
+    | EIdentifier (token, _) -> checkIdentifier env token
 
 
 let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
     match expr with
-    | ELiteral lit -> Ok <| checkLiteral lit
-    | EIdentifier token -> checkIdentifier env token
-    | EUnary(op, expr) ->
+    | ELiteral (lit, _) -> Ok <| checkLiteral lit
+    | EIdentifier (token, _) -> checkIdentifier env token
+    | EUnary(op, expr, _) ->
         let exprType = checkExpr env expr
 
         match exprType with
@@ -52,7 +52,7 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
 
         | Ok t -> Error [ TypeError.InvalidOperator(op, t) ]
         | Error errors -> Error errors
-    | EBinary(lhs, op, rhs) ->
+    | EBinary(lhs, op, rhs, _) ->
         let lhsType = checkExpr env lhs
         let rhsType = checkExpr env rhs
 
@@ -151,8 +151,8 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         | Error errors, Ok _ -> Error errors
         | Ok _, Error errors -> Error errors
         | Ok t, Ok t' -> Error [ TypeError.InvalidOperandType(op, t, t') ]
-    | EGrouping expr -> checkExpr env expr
-    | EAssignment(token, expr) ->
+    | EGrouping (expr, _) -> checkExpr env expr
+    | EAssignment(token, expr, _) ->
         let exprType = checkExpr env expr
 
         match token.lexeme with
@@ -165,7 +165,7 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
                 | Error errors -> Error errors
             | None -> Error [ TypeError.UndefinedVariable token ]
         | _ -> Error [ TypeError.UndefinedVariable token ]
-    | ECall(callee, args) ->
+    | ECall(callee, args, _) ->
         let calleeType = checkExpr env callee
 
         match calleeType with
@@ -211,7 +211,7 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         | _ -> Error [ TypeError.InvalidCallType(callee, TInfer, TInfer) ] // fix
 
     // need better type inference here for params, unless params must be typed
-    | ELambda(paramList, returnType, body) ->
+    | ELambda(paramList, returnType, body, _) ->
         let newEnv =
             List.fold
                 (fun acc (param, typ) ->
@@ -232,15 +232,15 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
             else
                 Error [ TypeError.InvalidFunctionReturn(fst paramList.Head, returnType, bodyType) ]
         | Error errors -> Error errors
-    | EBlock stmts ->
+    | EBlock (stmts, _) ->
         let rec checkBlock (env: TypeEnv) (stmts: Stmt list) : Result<TType, TypeErrors> =
             match stmts with
             | [] -> Ok TUnit
             | [ stmt ] ->
                 match stmt with
-                | SExpression expr -> checkExpr env expr
-                | SVariableDeclaration _ -> Ok TUnit
-                | SPrintStatement _ -> Ok TUnit
+                | SExpression (expr, _) -> checkExpr env expr
+                | SVariableDeclaration(_, _, expr, _) -> checkExpr env expr
+                | SPrintStatement (expr, _) -> checkExpr env expr
             | stmt :: rest ->
                 let env', _ = checkStmt env stmt
                 checkBlock env' rest
@@ -249,14 +249,14 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
 
 and checkStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv * Result<TType, TypeErrors> =
     match stmt with
-    | SExpression expr ->
+    | SExpression (expr, _) ->
         let exprType = checkExpr env expr
 
         match exprType with
         | Error errors -> env, Error errors
         | Ok exprType -> env, Ok exprType
 
-    | SVariableDeclaration(token, typ, expr) ->
+    | SVariableDeclaration(token, typ, expr, t) ->
         let exprType = checkExpr env expr
 
         match exprType with
@@ -272,7 +272,7 @@ and checkStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv * Result<TType, TypeErrors> 
                 | _ -> env, Error [ TypeError.UndefinedVariable token ]
             else
                 env, Error [ TypeError.TypeMismatch(token, typ, exprType) ]
-    | SPrintStatement(expr) -> (env, checkExpr env expr)
+    | SPrintStatement(expr, t) -> (env, checkExpr env expr)
 
 let rec checkStmts (env: TypeEnv) (stmts: Stmt list): Result<TypeEnv, TypeErrors> =
     let rec helper env accErrors stmts =
