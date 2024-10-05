@@ -10,8 +10,8 @@ open Vec3.Interpreter.Typing.Checker
 
 module Program =
     
-    // args, -r to repl, -f to file, standard input otherwise
-    let usg_msg = "Usage: vec3 [-r | -f l<filename>]"
+    // args, -r to repl, -f to file, -g or no args for GUI
+    let usg_msg = "Usage: vec3 [-r | -f <filename> | -g]"
     
     [<CompiledName "BuildAvaloniaApp">] 
     let buildAvaloniaApp () = 
@@ -23,21 +23,18 @@ module Program =
 
     [<EntryPoint; STAThread>]
     let main argv =
-        if argv.Length = 0 then
-            // Start the REPL
-            startRepl ()
-            0
-        else if argv.[0] = "-r" then
+        match argv with
+        | [||] | [|"-g"|] ->
+            // Start the GUI
+            buildAvaloniaApp().StartWithClassicDesktopLifetime(argv)
+        | [|"-r"|] ->
             // Explicit REPL mode
             startRepl ()
             0
-        else if argv.[0] = "-f" then
-            if argv.Length < 2 then
-                printfn $"{usg_msg}"
-                1
-            else
-                let _ = NotImplementedException "File execution not implemented yet."
-                0
-        else
+        | [|"-f"; filename|] ->
+            // File execution mode
+            let _ = NotImplementedException "File execution not implemented yet."
+            0
+        | _ ->
             printfn $"{usg_msg}"
             1

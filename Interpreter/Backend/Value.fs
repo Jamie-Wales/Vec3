@@ -16,13 +16,13 @@ let valueToString =
     function
     | VNumber(VInteger n) -> string n
     | VNumber(VFloat f) -> string f
-    | VNumber(VRational(n, d)) -> sprintf "%d/%d" n d
-    | VNumber(VComplex(r, i)) -> sprintf "%f + %fi" r i
+    | VNumber(VRational(n, d)) -> $"%d{n}/%d{d}"
+    | VNumber(VComplex(r, i)) -> $"%f{r} + %f{i}i"
     | Boolean b -> string b
     | String s -> s
     | Nil -> "nil"
 
-let printValue value = printfn "%s" (valueToString value)
+let printValue value = printfn $"Printed value: {valueToString value}"
 
 let isTruthy =
     function

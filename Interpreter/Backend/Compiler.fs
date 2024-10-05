@@ -50,9 +50,9 @@ let rec compileLiteral (lit: Literal) : Compiler<unit> =
 let rec compileExpr (expr: Expr) : Compiler<unit> =
     fun state ->
         match expr with
-        | ELiteral lit -> compileLiteral lit state
-        | EBinary (left, op, right) -> compileBinary left op right state
-        | EIdentifier e -> compileIdentifier e state
+        | ELiteral (lit, _) -> compileLiteral lit state
+        | EBinary (left, op, right, _) -> compileBinary left op right state
+        | EIdentifier (e, _)-> compileIdentifier e state
         | _ -> Error ("Unsupported expression type", state)
 and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
     fun state ->

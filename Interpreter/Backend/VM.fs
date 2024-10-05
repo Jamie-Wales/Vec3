@@ -1,16 +1,17 @@
 module Vec3.Interpreter.Backend.VM
 
 open System
+open System.Text
 open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Value
-
 type VM = {
     Chunk: Chunk
     IP: int
     Stack: ResizeArray<Value>
     ScopeDepth: int
-    Globals:Map<String, Value>
+    Globals: Map<String, Value>
+    Output: StringBuilder
 }
 
 let createVM chunk =
@@ -19,7 +20,11 @@ let createVM chunk =
       Stack = ResizeArray<Value>(256)
       ScopeDepth = 0
       Globals = Map.empty
-      }
+      Output = StringBuilder() }
+
+let appendOutput (vm: VM) (str: string) =
+    vm.Output.AppendLine(str) |> ignore
+    vm
     
 let push (vm: VM) (value: Value) =
     vm.Stack.Add(value)
@@ -77,9 +82,9 @@ let binaryOp (vm: VM) (op: Value -> Value -> Value) =
     push vm result
 
 let rec run (vm: VM) =
-    printfn $"IP: {vm.IP}, Stack: {vm.Stack |> Seq.toList}"
+    let vm = appendOutput vm $"IP: {vm.IP}, Stack: {vm.Stack |> Seq.toList}"
     let vm, instruction = readByte vm
-    printfn $"Executing instruction: {byteToOpCode instruction}"
+    let vm = appendOutput vm $"Executing instruction: {byteToOpCode instruction}"
     match byteToOpCode instruction with
     | CONSTANT ->
         let constant, vm = readConstant vm
@@ -117,8 +122,8 @@ let rec run (vm: VM) =
         run (push vm (Boolean (not (isTruthy value))))
     | PRINT ->
         let value, vm = pop vm
-        printValue value
-        run vm
+        printfn "Printing"
+        run (appendOutput vm $"Printed value: {valueToString value}")
     | POP ->
         let _, vm = pop vm
         run vm
@@ -127,37 +132,51 @@ let rec run (vm: VM) =
         match vm.Chunk.ConstantPool[int nameIndex] with
         | Value.String name ->
             let value, vm = pop vm
-            printfn $"Defining global variable: {name} = {value}"
-            run (defineGlobal vm name value)
-         | _ -> failwith "Expected string constant for variable name"
-
+            let vm = appendOutput vm $"Defining global variable: {name} = {valueToString value}"
+            run { vm with Globals = Map.add name value vm.Globals }
+        | _ -> failwith "Expected string constant for variable name"
     | GET_GLOBAL ->
         let vm, nameIndex = readByte vm
         match vm.Chunk.ConstantPool[int nameIndex] with
         | Value.String name ->
-            match getGlobal vm name with
+            match Map.tryFind name vm.Globals with
             | Some value -> 
                 run (push vm value)
             | None -> 
                 failwith $"Undefined variable '{name}'"
         | _ -> failwith "Expected string constant for variable name"
     | RETURN ->
-           if vm.Stack.Count > 0 then
+        if vm.Stack.Count > 0 then
             let result, vm = pop vm
-            printfn "Return value: %A" result
-            printGlobals vm
-            vm 
-           else
-            printGlobals vm
-            vm
-        | _ -> failwith $"Unimplemented opcode: {instruction}"
+            let vm = appendOutput vm $"Return value: {valueToString result}"
+            let vm = appendOutput vm "\n=== Globals ==="
+            let vm = 
+                vm.Globals
+                |> Map.fold (fun vm name value -> 
+                    appendOutput vm $"{name} = {valueToString value}") vm
+            vm  // Return the updated VM
+        else
+            let vm = appendOutput vm "\n=== Globals ==="
+            let vm = 
+                vm.Globals
+                |> Map.fold (fun vm name value -> 
+                    appendOutput vm $"{name} = {valueToString value}") vm
+            vm  // Return the updated VM
+    | _ -> failwith $"Unimplemented opcode: {instruction}"
 
 let interpret (chunk: Chunk) =
-    printfn "=== Constant Pool ==="
-    for i, value in chunk.ConstantPool |> Seq.indexed do
-        printfn $"[{i}] {value}"
-    printfn "\n=== Disassembled Chunk ==="
-    disassembleChunk chunk "program"
-    printfn "\n=== Program Execution ==="
     let vm = createVM chunk
-    run vm
+    let vm = appendOutput vm "=== Constant Pool ==="
+    let vm = 
+        chunk.ConstantPool 
+        |> Seq.indexed 
+        |> Seq.fold (fun vm (i, value) -> 
+            appendOutput vm $"[{i}] {valueToString value}") vm
+    
+    let vm = appendOutput vm "\n=== Disassembled Chunk ==="
+    let disassembledChunk = disassembleChunkToString chunk "program"
+    let vm = appendOutput vm disassembledChunk
+    
+    let vm = appendOutput vm "\n=== Program Execution ==="
+    let finalVm = run vm
+    finalVm.Output.ToString()
