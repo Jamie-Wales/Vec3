@@ -58,7 +58,6 @@ let private constantLongInstruction (chunk: Chunk) name offset =
         ((int chunk.Code[offset + 3]) <<< 16)
     printfn $"{name,-16} {constant,4} '{valueToString chunk.ConstantPool[constant]}'"
     offset + 4
-
 let disassembleInstruction (chunk: Chunk) offset =
     printf $"{offset:D4} "
     if offset > 0 && getLineNumber chunk offset = getLineNumber chunk (offset - 1) then
@@ -83,6 +82,8 @@ let disassembleInstruction (chunk: Chunk) offset =
     | OP_CODE.NOT -> simpleInstruction "OP_NOT" offset
     | OP_CODE.PRINT -> simpleInstruction "OP_PRINT" offset
     | OP_CODE.POP -> simpleInstruction "OP_POP" offset
+    | OP_CODE.DEFINE_GLOBAL -> constantInstruction chunk "OP_DEFINE_GLOBAL" offset
+    | OP_CODE.GET_GLOBAL -> constantInstruction chunk "OP_GET_GLOBAL" offset
     | _ ->
         printfn $"Unknown opcode {chunk.Code[offset]}"
         offset + 1

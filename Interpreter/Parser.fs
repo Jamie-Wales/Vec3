@@ -21,7 +21,6 @@ type Precedence =
 type ParserLabel = string
 type ParserError = string
 
-
 type ParserPosition =
     { CurrentLine: string
       Line: int

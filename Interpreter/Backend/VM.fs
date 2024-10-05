@@ -1,5 +1,6 @@
 module Vec3.Interpreter.Backend.VM
 
+open System
 open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Value
@@ -8,14 +9,18 @@ type VM = {
     Chunk: Chunk
     IP: int
     Stack: ResizeArray<Value>
-    ScopeDepth: int  
+    ScopeDepth: int
+    Globals:Map<String, Value>
 }
 
 let createVM chunk =
     { Chunk = chunk
       IP = 0
       Stack = ResizeArray<Value>(256)
-      ScopeDepth = 0 }  
+      ScopeDepth = 0
+      Globals = Map.empty
+      }
+    
 let push (vm: VM) (value: Value) =
     vm.Stack.Add(value)
     vm
@@ -28,6 +33,10 @@ let pop (vm: VM) =
 let peek (vm: VM) offset =
     vm.Stack[vm.Stack.Count - 1 - offset]
 
+let printGlobals (vm: VM) =
+    printfn "\n=== Globals ==="
+    for KeyValue(name, value) in vm.Globals do
+        printfn $"{name} = {valueToString value}"
 let readByte (vm: VM) =
     let byte = vm.Chunk.Code[vm.IP]
     ({ vm with IP = vm.IP + 1 }, byte)
@@ -53,7 +62,11 @@ let readConstantLong (vm: VM) =
     let constant = vm.Chunk.ConstantPool[index]
     printfn $"Long constant value: {constant}"
     (constant, vm)
+let defineGlobal (vm: VM) (name: string) (value: Value) =
+    { vm with Globals = Map.add name value vm.Globals }
 
+let getGlobal (vm: VM) (name: string) =
+    Map.tryFind name vm.Globals
 let binaryOp (vm: VM) (op: Value -> Value -> Value) =
     printfn $"Performing binary operation. Stack size: {vm.Stack.Count}"
     let b, vm = pop vm
@@ -109,15 +122,35 @@ let rec run (vm: VM) =
     | POP ->
         let _, vm = pop vm
         run vm
-    | RETURN ->
-       if vm.Stack.Count > 0 then
-        let result, vm = pop vm in 
-            let () = printfn "Return value: %A" result;
-            vm 
-        else
-            vm
-    | _ -> failwith $"Unimplemented opcode: {instruction}"
+    | DEFINE_GLOBAL ->
+        let vm, nameIndex = readByte vm
+        match vm.Chunk.ConstantPool[int nameIndex] with
+        | Value.String name ->
+            let value, vm = pop vm
+            printfn $"Defining global variable: {name} = {value}"
+            run (defineGlobal vm name value)
+         | _ -> failwith "Expected string constant for variable name"
 
+    | GET_GLOBAL ->
+        let vm, nameIndex = readByte vm
+        match vm.Chunk.ConstantPool[int nameIndex] with
+        | Value.String name ->
+            match getGlobal vm name with
+            | Some value -> 
+                run (push vm value)
+            | None -> 
+                failwith $"Undefined variable '{name}'"
+        | _ -> failwith "Expected string constant for variable name"
+    | RETURN ->
+           if vm.Stack.Count > 0 then
+            let result, vm = pop vm
+            printfn "Return value: %A" result
+            printGlobals vm
+            vm 
+           else
+            printGlobals vm
+            vm
+        | _ -> failwith $"Unimplemented opcode: {instruction}"
 
 let interpret (chunk: Chunk) =
     printfn "=== Constant Pool ==="
