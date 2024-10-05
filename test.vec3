@@ -31,3 +31,5 @@ let add2 = (a: int, b: int) -> {
 let add2 = (a: int, b: int) {
     a + b
 }
+
+// where { stmts } denotes a block 

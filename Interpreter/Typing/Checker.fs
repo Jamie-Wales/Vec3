@@ -333,6 +333,7 @@ let rec formatTypeError (error: TypeError) : string =
     | NotEnoughInformation(token) -> $"Not enough information at Line: {token.line}"
     | InvalidOpen(token) -> $"Invalid open statement at Line: {token.line}"
     | InvalidIf(expr) -> $"Invalid if statement at expr: {expr}"
+    | InvalidIndex(expr, typ) -> $"Invalid index at expr: {expr}, got {typ}"
 
 let formatTypeErrors (errors: TypeError list) : string =
     List.map formatTypeError errors |> String.concat "\n"

@@ -30,6 +30,7 @@ type Operator =
     | RightBrace
     | LeftBracket
     | RightBracket
+    | DotDot
     | Dot
     
 type Keyword =
@@ -42,6 +43,7 @@ type Keyword =
     | False
     | Nil
     | Print
+    | In
 
 type BuiltInFunction =
     | Print

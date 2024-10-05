@@ -25,17 +25,14 @@ type Type =
     
     | TTypeVariable of TypeVar
     
-    // contrains a type to an allowed set of types
-    // i have ideas that this will allow hidler miller inference without type classes
-    // gonna take quite a bit of trial and error
     | TConstrain of TypeVar * Type list
     
     // todo
     | TTuple of Type list
-    | TList of Type
     
-    | TVector of Type * int
-    | TMatrix of Type * int * int
+    | TTensor of Type * (int list)
+    // | TVector of Type * int
+    // | TMatrix of Type * int * int
 
 and Constraint = Constraint of Type list
     
@@ -61,7 +58,12 @@ type Expr =
     | EIf of Expr * Expr * Expr * Type
     | ETernary of Expr * Expr * Expr * Type
     
+    | EList of Expr list * Type
+    | ETuple of Expr list * Type
+    
     | ECall of Expr * Expr list * Type
+    | EIndex of Expr * Expr * Type
+    
     | ELambda of Token list * Expr * Type
     | EBlock of Stmt list * Type
     

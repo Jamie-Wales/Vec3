@@ -8,7 +8,25 @@ open Vec3.Interpreter.Typing.Checker
 open Vec3.Interpreter.Typing.Inference
 open Vec3.Interpreter.Eval
 open Vec3.Interpreter.Preprocessor
+open Vec3.Interpreter.Grammar
+open Vec3.Interpreter.Token
 
+let rec exprToString  = function
+    | ELiteral (lit, _) -> litToString lit
+    | EList (exprs, _) -> $"""[{String.concat ", " (List.map exprToString exprs)}]"""
+    | _ -> "()"
+
+and litToString = function
+    | LNumber n -> numberToString n
+    | LString s -> $"\"{s}\""
+    | LBool b -> $"{b}"
+    | LUnit -> "()"
+
+and numberToString = function
+    | LInteger x -> $"{x}"
+    | LFloat x -> $"{x}"
+    | LRational (n, d) -> $"{n}/{d}"
+    | LComplex (r, i) -> $"{r} + {i}i"
 
 let evalRepl =
     let rec repl' (env: Env) (typeEnv: TypeEnv) =
@@ -20,11 +38,8 @@ let evalRepl =
             let typeCheck = inferProgram typeEnv program
             match typeCheck with
             | Ok (typeEnv, _, program) ->
-                Map.iter (fun k v -> printfn $"{k} -> {v}") typeEnv
-                printfn $"{program}"
-                
                 let value, env = evalProgram env program
-                printfn $"{value}"
+                printfn $"{exprToString value}"
                 repl' env typeEnv
             | Error errors ->
                 printfn $"{formatTypeErrors errors}"
