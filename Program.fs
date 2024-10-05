@@ -6,7 +6,7 @@ open Interpreter.Repl
 open Vec3.Interpreter
 open Vec3.Interpreter.Parser
 open Vec3.Interpreter.Eval
-open Vec3.Interpreter.TypeChecker
+open Vec3.Interpreter.Typing.Checker
 
 module Program =
     
@@ -27,22 +27,18 @@ module Program =
         
         if argv.Length = 0 then
             // buildAvaloniaApp().StartWithClassicDesktopLifetime(argv)
-            repl |> ignore
+            // repl
+            // 0
+            evalRepl
             0
         else if argv.[0] = "-r" then
-            repl |> ignore
+            repl
             0
         else if argv.[0] = "-f" then
             if argv.Length < 2 then
                 printfn $"{usg_msg}"
                 1
             else
-                let filename = argv.[1]
-                let lines = System.IO.File.ReadAllLines(filename)
-                let env = Map.empty
-                let parsed = parse (String.Join("\n", lines))
-                let env = evalProgram env parsed
-                printfn $"{env}"
                 0
         else
             1

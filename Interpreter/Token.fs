@@ -12,16 +12,19 @@ type Operator =
     | Star
     | StarStar
     | Slash
+    | Percent
+    
     | EqualEqual
     | BangEqual
     | Less
     | LessEqual
     | Greater
     | GreaterEqual
+    | Equal
+    | Bang
+    
     | LeftParen
     | RightParen
-    | Bang
-    | Equal
     | Arrow
     | LeftBrace
     | RightBrace
@@ -38,6 +41,7 @@ type Keyword =
     | True
     | False
     | Nil
+    | Print
 
 type BuiltInFunction =
     | Print
@@ -61,6 +65,7 @@ type Lexeme =
 
 type Token = { lexeme: Lexeme; line: int }
 
+let Empty = { lexeme = Identifier ""; line = 0 }
 
 let numberToString (n: Number): string =
     match n with
@@ -93,6 +98,7 @@ let operatorToString (op: Operator): string =
     | LeftBracket -> "["
     | RightBracket -> "]"
     | Dot -> "."
+    | Percent -> "%"
 
 let lexemeToString (lex: Lexeme): string =
     match lex with

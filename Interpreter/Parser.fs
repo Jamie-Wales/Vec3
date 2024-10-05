@@ -21,6 +21,7 @@ type Precedence =
 type ParserLabel = string
 type ParserError = string
 
+
 type ParserPosition =
     { CurrentLine: string
       Line: int
@@ -31,20 +32,22 @@ type ParserState =
       Position: int
       Label: ParserLabel }
 
-type ParseResult<'a> =
-    | Success of 'a * ParserState
-    | Failure of ParserError * ParserState
+exception ParserException of ParserError * ParserState
+
+type ParseResult<'a> = Result<'a * ParserState, ParserError * ParserState>
+// | Ok of 'a * ParserState
+// | Error of ParserError * ParserState
 
 
 let bind (result: ParseResult<'a>) (fn: ParserState -> 'a -> ParseResult<'b>) =
     match result with
-    | Success(value, state) -> fn state value
-    | Failure(s1, parserState) -> Failure(s1, parserState)
+    | Ok(value, state) -> fn state value
+    | Error(s1, parserState) -> Error(s1, parserState)
 
 let map (result: ParseResult<'a>) (fn: 'a -> 'b) =
     match result with
-    | Success(value, state) -> Success(fn value, state)
-    | Failure(s1, parserState) -> Failure(s1, parserState)
+    | Ok(value, state) -> Ok(fn value, state)
+    | Error(s1, parserState) -> Error(s1, parserState)
 
 
 
@@ -79,22 +82,22 @@ type ParseRule =
 // sort of like combinators, maybe move to monadic approach to avoid nesting
 // lots of nested maps -> make the result a functor ? or at least extract out common patterns
 
-let nil (state: ParserState) : ParseResult<Expr> = Success(Literal(Unit), state)
+let nil (state: ParserState) : ParseResult<Expr> = Ok(ELiteral(LUnit, TUnit), state)
 
 let boolean (state: ParserState) =
     let state = setLabel state "Boolean"
 
     match previous state with
-    | Some { lexeme = Lexeme.Keyword True } -> Success((Literal(Bool true), state))
-    | Some { lexeme = Lexeme.Keyword False } -> Success((Literal(Bool false), state))
-    | _ -> Failure("Expect boolean.", state)
+    | Some { lexeme = Lexeme.Keyword True } -> Ok((ELiteral(LBool true, TBool), state))
+    | Some { lexeme = Lexeme.Keyword False } -> Ok((ELiteral(LBool false, TBool), state))
+    | _ -> Error("Expect boolean.", state)
 
 let string (state: ParserState) =
     let state = setLabel state "String"
 
     match previous state with
-    | Some { lexeme = Lexeme.String s } -> Success(Literal(Literal.String s), state)
-    | _ -> Failure("Expect string.", state)
+    | Some { lexeme = Lexeme.String s } -> Ok(ELiteral(LString s, TString), state)
+    | _ -> Error("Expect string.", state)
 
 let number (state: ParserState) =
     let state = setLabel state "number"
@@ -102,16 +105,16 @@ let number (state: ParserState) =
     match previous state with
     | Some { lexeme = Lexeme.Number n } ->
         match n with
-        | Number.Integer i -> Success(Literal(TNumber(TNumber.Integer(i))), state)
-        | Number.Float  f-> Success(Literal(TNumber(TNumber.Float(f))), state)
-        | Number.Rational (n, d) -> Success(Literal(TNumber(TNumber.Rational(n, d))), state)
-        | Number.Complex (r, i) -> Success(Literal(TNumber(TNumber.Complex(r, i))), state)
-    | _ -> Failure("Expect number.", state)
+        | Number.Integer i -> Ok(ELiteral(LNumber(LInteger(i)), TInteger), state)
+        | Number.Float f -> Ok(ELiteral(LNumber(LFloat(f)), TFloat), state)
+        | Number.Rational(n, d) -> Ok(ELiteral(LNumber(LRational(n, d)), TRational), state)
+        | Number.Complex(r, i) -> Ok(ELiteral(LNumber(LComplex(r, i)), TFloat), state)
+    | _ -> Error("Expect number.", state)
 // let ident state =
 //     let state = setLabel state "Ident"
 //     match previous state with
-//     | Some { lexeme = Lexeme.Identifier n } -> Success(Expr.Identifier n, state)
-//     | _ -> Failure("Expect identifier.", state)
+//     | Some { lexeme = Lexeme.Identifier n } -> Ok(Expr.Identifier n, state)
+//     | _ -> Error("Expect identifier.", state)
 
 
 let rec getRule (lexeme: Lexeme) : ParseRule =
@@ -141,6 +144,10 @@ and operatorRule (op: Operator) : ParseRule =
         { Prefix = Some leftParenPrefix
           Infix = Some call
           Precedence = Precedence.Call }
+    | Operator.LeftBrace ->
+        { Prefix = Some parseBlock
+          Infix = None
+          Precedence = Precedence.None }
     | Operator.Minus ->
         { Prefix = Some unary
           Infix = Some binary
@@ -150,6 +157,7 @@ and operatorRule (op: Operator) : ParseRule =
           Infix = Some binary
           Precedence = Precedence.Term }
     | Operator.Slash
+    | Operator.Percent
     | Operator.StarStar
     | Operator.Star ->
         { Prefix = None
@@ -189,6 +197,10 @@ and keywordRule (kw: Keyword) : ParseRule =
         { Prefix = Some nil
           Infix = None
           Precedence = Precedence.None }
+    | If ->
+        { Prefix = Some ifExpr
+          Infix = Some ternary
+          Precedence = Precedence.None }
     | _ ->
         { Prefix = None
           Infix = None
@@ -201,8 +213,8 @@ and expression (state: ParserState) (precedence: Precedence) : ParseResult<Expr>
     let result = parsePrefix state
 
     match result with
-    | Success(expr, state) -> parsePrecedence precedence state expr
-    | Failure _ as f -> f
+    | Ok(expr, state) -> parsePrecedence precedence state expr
+    | Error _ as f -> f
 
 and ident (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Ident"
@@ -214,9 +226,9 @@ and ident (state: ParserState) : ParseResult<Expr> =
         let state = advance state
 
         match expression state Precedence.Assignment with
-        | Success(value, state) -> Success(Assignment(name, value), state)
-        | Failure _ as f -> f
-    | _ -> Success(Expr.Identifier(name), state)
+        | Ok(value, state) -> Ok(EAssignment(name, value, TInfer), state)
+        | Error _ as f -> f
+    | _ -> Ok(EIdentifier(name, TInfer), state)
 
 and parsePrefix (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Prefix"
@@ -225,8 +237,8 @@ and parsePrefix (state: ParserState) : ParseResult<Expr> =
     | Some token ->
         match (getRule token.lexeme).Prefix with
         | Some prefixFn -> prefixFn <| advance state
-        | None -> Failure("Prefix function not parsed", state)
-    | None -> Failure("Unexpected end of input", state)
+        | None -> Error("Prefix function not parsed", state)
+    | None -> Error("Unexpected end of input", state)
 
 
 and parsePrecedence (precedence: Precedence) (state: ParserState) (leftExpr: Expr) : ParseResult<Expr> =
@@ -239,12 +251,12 @@ and parsePrecedence (precedence: Precedence) (state: ParserState) (leftExpr: Exp
                 match rule.Infix with
                 | Some infixFn ->
                     match infixFn (advance state) expr with
-                    | Success(expr, state) -> loop state expr
-                    | Failure _ as f -> f
-                | None -> Success(expr, state)
+                    | Ok(expr, state) -> loop state expr
+                    | Error _ as f -> f
+                | None -> Ok(expr, state)
             else
-                Success(expr, state)
-        | None -> Success(expr, state)
+                Ok(expr, state)
+        | None -> Ok(expr, state)
 
     loop state leftExpr
 
@@ -254,25 +266,64 @@ and binary (state: ParserState) (left: Expr) : ParseResult<Expr> =
     let nextPrecedence: Precedence = enum (int rule.Precedence + 1)
 
     match expression state nextPrecedence with
-    | Success(right, state) -> Success(Binary(left, op, right), state)
-    | Failure _ as f -> f
+    | Ok(right, state) -> Ok(EBinary(left, op, right, TInfer), state)
+    | Error _ as f -> f
 
 and unary (state: ParserState) : ParseResult<Expr> =
     let op = previous state |> Option.get
 
     match expression state Precedence.Unary with
-    | Success(right, state) -> Success(Unary(op, right), state)
-    | Failure _ as f -> f
+    | Ok(right, state) -> Ok(EUnary(op, right, TInfer), state)
+    | Error _ as f -> f
 
 and grouping (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Grouping"
 
     match expression state Precedence.None with
-    | Success(expr, state) ->
+    | Ok(expr, state) ->
         match nextToken state with
-        | Some({ lexeme = Lexeme.Operator Operator.RightParen }, state) -> Success(Grouping expr, state)
-        | _ -> Failure("Expect ')' after expression.", state)
-    | Failure _ as f -> f
+        | Some({ lexeme = Lexeme.Operator Operator.RightParen }, state) -> Ok(EGrouping (expr, TInfer), state)
+        | _ -> Error("Expect ')' after expression.", state)
+    | Error _ as f -> f
+
+and ifExpr (state: ParserState) : ParseResult<Expr> =
+    let state = setLabel state "If"
+
+    match expression state Precedence.None with
+    | Ok(condition, state) ->
+        match peek state with
+        | Some { lexeme = Lexeme.Keyword Keyword.Then } ->
+            let state = advance state
+
+            match expression state Precedence.None with
+            | Ok(thenBranch, state) ->
+                match peek state with
+                | Some { lexeme = Lexeme.Keyword Keyword.Else } ->
+                    let state = advance state
+
+                    match expression state Precedence.None with
+                    | Ok(elseBranch, state) -> Ok(EIf(condition, thenBranch, elseBranch, TInfer), state)
+                    | Error _ as f -> f
+                    // single if, need to fix type checker if this is allowed
+                | _ -> Ok(EIf(condition, thenBranch, ELiteral(LUnit, TUnit), TUnit), state)
+            | Error _ as f -> f
+        | _ -> Error("Expect 'then' after condition.", state)
+    | Error _ as f -> f
+
+// let x = a if 1 < 2 else b
+and ternary (state: ParserState) (trueBranch: Expr) : ParseResult<Expr> =
+    match expression state Precedence.None with
+    | Ok(condition, state) ->
+        match peek state with
+        | Some { lexeme = Lexeme.Keyword Keyword.Else } ->
+            let state = advance state
+
+            match expression state Precedence.None with
+            | Ok(falseBranch, state) ->
+                Ok(EIf(condition, trueBranch, falseBranch, TInfer), state)
+            | Error _ as f -> f
+        | _ -> Error("Expect 'then' after condition.", state)
+    | Error _ as f -> f
 
 and call (state: ParserState) (callee: Expr) : ParseResult<Expr> =
     let state = setLabel state "Call"
@@ -281,13 +332,13 @@ and call (state: ParserState) (callee: Expr) : ParseResult<Expr> =
         match peek state with
         | Some { lexeme = Lexeme.Operator Operator.RightParen } ->
             let state = advance state
-
-            match callee with
-            | Expr.Identifier name -> Success(Call(name, args), state)
-            | _ -> Failure("Can only call functions and variables.", state)
+            Ok(ECall(callee, args, TInfer), state)
+        // match callee with
+        // | EIdentifier name -> Ok(ECall(name, args), state)
+        // | _ -> Error("Can only call functions and variables.", state)
         | _ ->
             match expression state Precedence.None with
-            | Success(arg, state) ->
+            | Ok(arg, state) ->
                 match peek state with
                 | Some { lexeme = Lexeme.Comma } ->
                     let state = advance state
@@ -296,12 +347,12 @@ and call (state: ParserState) (callee: Expr) : ParseResult<Expr> =
                     match peek state with
                     | Some { lexeme = Lexeme.Operator Operator.RightParen } ->
                         let state = advance state
+                        Ok(ECall(callee, arg :: args, TInfer), state)
 
-                        match callee with
-                        | Expr.Identifier name -> Success(Call(name, arg :: args), state)
-                        | _ -> Failure("Can only call functions and variables.", state) // should epxressions be callable ? yes
-                    | _ -> Failure("Expect ')' after arguments.", state)
-            | Failure _ as f -> f
+                    // match callee with
+                    // | EIdentifier name -> Ok(ECall(name, arg :: args), state)
+                    | _ -> Error("Can only call functions and variables.", state) // should epxressions be callable ? yes
+            | Error _ as f -> f
 
     loop state []
 
@@ -315,13 +366,15 @@ and leftParenPrefix (state: ParserState) : ParseResult<Expr> =
             match peek (advance (advance state)) with
             | Some { lexeme = Lexeme.Operator Operator.Arrow } -> functionExpr state
             | Some { lexeme = Lexeme.Colon } -> functionExpr state
+            | Some { lexeme = Lexeme.Operator Operator.LeftBrace } -> functionExpr state
             | _ -> grouping state
         | _ -> grouping state
     | Some { lexeme = Lexeme.Operator Operator.RightParen } ->
         match peek (advance state) with
         | Some { lexeme = Lexeme.Operator Operator.Arrow } -> functionExpr state
         | Some { lexeme = Lexeme.Colon } -> functionExpr state
-        | _ -> Success(Literal(Unit), state)
+        | Some { lexeme = Lexeme.Operator Operator.LeftBrace } -> functionExpr state
+        | _ -> Ok(ELiteral(LUnit, TUnit), state)
     | _ -> grouping state
 
 and functionExpr (state: ParserState) : ParseResult<Expr> =
@@ -329,7 +382,7 @@ and functionExpr (state: ParserState) : ParseResult<Expr> =
 
     let rec parseParameters (state: ParserState) (params': (Token * Grammar.Type) list) =
         match peek state with
-        | Some { lexeme = Lexeme.Operator Operator.RightParen } -> Success(List.rev params', advance state)
+        | Some { lexeme = Lexeme.Operator Operator.RightParen } -> Ok(List.rev params', advance state)
         | Some({ lexeme = Lexeme.Identifier _ } as token) ->
             let state = advance state
 
@@ -339,43 +392,65 @@ and functionExpr (state: ParserState) : ParseResult<Expr> =
                     let state = advance state
 
                     match parseType state with
-                    | Success(paramType, state) -> state, paramType
-                    | Failure _ -> state, Infer
-                | _ -> state, Infer
+                    | Ok(paramType, state) -> state, paramType
+                    | Error _ -> state, TInfer
+                | _ -> state, TInfer
 
             match peek state with
             | Some { lexeme = Lexeme.Operator Operator.RightParen } ->
-                Success(List.rev ((token, paramType) :: params'), advance state)
+                Ok(List.rev ((token, paramType) :: params'), advance state)
             | Some { lexeme = Lexeme.Comma } -> parseParameters (advance state) ((token, paramType) :: params')
-            | _ -> Failure("Expected ',' or ')'.", state)
-        | _ -> Failure("Expected parameter name or ')'.", state)
+            | _ -> Error("Expected ',' or ')'.", state)
+        | _ -> Error("Expected parameter name or ')'.", state)
 
     match parseParameters state [] with
-    | Success(params', state) ->
+    | Ok(params', state) ->
         match peek state with
         | Some { lexeme = Lexeme.Colon } ->
             let state = advance state
 
             match parseType state with
-            | Success(returnType, state) ->
+            | Ok(returnType, state) ->
                 match peek state with
                 | Some { lexeme = Lexeme.Operator Operator.Arrow } ->
                     let state = advance state
 
                     match expression state Precedence.Assignment with
-                    | Success(body, state) -> Success(Lambda(params', returnType, body), state)
-                    | Failure _ as f -> f
-                | _ -> Failure("Expected '->' after return type.", state)
-            | Failure(s1, parserState) -> Failure(s1, parserState)
+                    | Ok(body, state) ->
+                        let paramTypes = List.rev <| List.map snd params'
+                        let paramNames = List.rev <| List.map fst params'
+                        Ok(ELambda(paramNames, body, TFunction(paramTypes, returnType)), state)
+                    | Error _ as f -> f
+                | Some { lexeme = Lexeme.Operator Operator.LeftBrace } ->
+                    match parseBlock (advance state) with
+                    | Ok(body, state) ->
+                        let paramTypes = List.rev <| List.map snd params'
+                        let paramNames = List.rev <| List.map fst params'
+                        Ok(ELambda(paramNames, body, TFunction(paramTypes, returnType)), state)
+                    | Error _ as f -> f
+                | _ -> Error("Expected '->' after return type.", state)
+            | Error(s1, parserState) -> Error(s1, parserState)
 
         | Some { lexeme = Lexeme.Operator Operator.Arrow } ->
             let state = advance state
 
             match expression state Precedence.Assignment with
-            | Success(body, state) -> Success(Lambda(params', Infer, body), state)
-            | Failure _ as f -> f
-        | _ -> Failure("Expected '->' after parameter list.", state)
-    | Failure(s, parserState) -> Failure(s, parserState)
+            | Ok(body, state) ->
+                let paramTypes = List.rev <| List.map snd params'
+                let paramNames = List.rev <| List.map fst params'
+                Ok(ELambda(paramNames, body, TFunction(paramTypes, TInfer)), state)
+            | Error _ as f -> f
+        | Some { lexeme = Lexeme.Operator Operator.LeftBrace } ->
+            let state = advance state
+            match parseBlock state with
+            | Ok(body, state) ->
+                let paramTypes = List.rev <| List.map snd params'
+                let paramNames = List.rev <| List.map fst params'
+                Ok(ELambda(paramNames, body, TFunction(paramTypes, TInfer)), state)
+            | Error _ as f -> f
+            
+        | _ -> Error("Expected '->' after parameter list.", state)
+    | Error(s, parserState) -> Error(s, parserState)
 
 and parseFunctionType (state: ParserState) : ParseResult<Grammar.Type> =
     let state = setLabel state "FunctionType"
@@ -386,45 +461,60 @@ and parseFunctionType (state: ParserState) : ParseResult<Grammar.Type> =
 
         let rec parseParams (state: ParserState) (paramList: Grammar.Type list) =
             match peek state with
-            | Some { lexeme = Lexeme.Operator Operator.RightParen } -> Success(List.rev paramList, advance state)
+            | Some { lexeme = Lexeme.Operator Operator.RightParen } -> Ok(List.rev paramList, advance state)
             | _ ->
                 match parseType state with
-                | Success(param, state) ->
+                | Ok(param, state) ->
                     match peek state with
                     | Some { lexeme = Lexeme.Comma } -> parseParams (advance state) (param :: paramList)
                     | Some { lexeme = Lexeme.Operator Operator.RightParen } ->
-                        Success(List.rev (param :: paramList), advance state)
-                    | _ -> Failure("Expected ',' or ')'.", state)
-                | Failure(s1, parserState) -> Failure(s1, parserState)
+                        Ok(List.rev (param :: paramList), advance state)
+                    | _ -> Error("Expected ',' or ')'.", state)
+                | Error(s1, parserState) -> Error(s1, parserState)
 
         match parseParams state [] with
-        | Success(paramList, state) ->
+        | Ok(paramList, state) ->
             match peek state with
             | Some { lexeme = Lexeme.Colon } ->
                 let state = advance state
 
                 match parseType state with
-                | Success(returnType, state) -> Success(Function(paramList, returnType), state)
-                | Failure(s1, parserState) -> Failure(s1, parserState)
-            | _ -> Failure("Expected ':' after parameter list.", state)
-        | Failure(s1, parserState) -> Failure(s1, parserState)
-    | _ -> Failure("Expected '(' before function type.", state)
+                | Ok(returnType, state) -> Ok(TFunction(paramList, returnType), state)
+                | Error(s1, parserState) -> Error(s1, parserState)
+            | _ -> Error("Expected ':' after parameter list.", state)
+        | Error(s1, parserState) -> Error(s1, parserState)
+    | _ -> Error("Expected '(' before function type.", state)
 
+// sumish types ? int | float etc with constrain type
 and parseType (state: ParserState) : ParseResult<Grammar.Type> =
     match peek state with
-    | Some { lexeme = Lexeme.Identifier "int" } -> Success(Grammar.Type.Integer, advance state)
-    | Some { lexeme = Lexeme.Identifier "float" } -> Success(Grammar.Type.Float, advance state)
-    | Some { lexeme = Lexeme.Identifier "rational" } -> Success(Grammar.Type.Rational, advance state)
-    | Some { lexeme = Lexeme.Identifier "bool" } -> Success(Grammar.Type.Bool, advance state)
-    | Some { lexeme = Lexeme.Identifier "string" } -> Success(Grammar.Type.String, advance state)
-    | Some { lexeme = Lexeme.Identifier "unit" } -> Success(Grammar.Type.Unit, advance state)
-    | Some { lexeme = Lexeme.Identifier "never" } -> Success(Grammar.Type.Never, advance state)
+    | Some { lexeme = Lexeme.Identifier "int" } -> Ok(TInteger, advance state)
+    | Some { lexeme = Lexeme.Identifier "float" } -> Ok(TFloat, advance state)
+    | Some { lexeme = Lexeme.Identifier "rational" } -> Ok(TRational, advance state)
+    | Some { lexeme = Lexeme.Identifier "complex" } -> Ok(TComplex, advance state)
+    | Some { lexeme = Lexeme.Identifier "bool" } -> Ok(TBool, advance state)
+    | Some { lexeme = Lexeme.Identifier "string" } -> Ok(TString, advance state)
+    | Some { lexeme = Lexeme.Identifier "unit" } -> Ok(TUnit, advance state)
+    | Some { lexeme = Lexeme.Identifier "never" } -> Ok(TNever, advance state)
     | Some { lexeme = Lexeme.Operator Operator.LeftParen } -> parseFunctionType state
-    | Some { lexeme = Lexeme.Identifier name } -> Success(Grammar.Type.UserDefined name, advance state)
-    | _ -> Failure("Expected a type after colon.", state)
+    | _ -> Error("Expected a type after colon.", state)
 
+and parseBlock (state : ParserState) : ParseResult<Expr> =
+    let state = setLabel state "Block"
 
-let variableDeclaration (state: ParserState) : ParseResult<Stmt> =
+    let rec loop state stmts =
+        match peek state with
+        | Some { lexeme = Lexeme.Operator Operator.RightBrace } ->
+            let state = advance state
+            Ok(EBlock(List.rev stmts, TInfer), state)
+        | _ ->
+            match parseStatement state with
+            | Ok(stmt, state) -> loop state (stmt :: stmts)
+            | Error(s1, parserState) -> Error(s1, parserState)
+
+    loop state []
+
+and variableDeclaration (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Variable"
 
     match nextToken state with
@@ -434,20 +524,27 @@ let variableDeclaration (state: ParserState) : ParseResult<Stmt> =
             | Some { lexeme = Lexeme.Colon } ->
                 let state = advance state
                 parseType state
-            | _ -> Success(Infer, state)
+            | _ -> Ok(TInfer, state)
 
         match typeResult with
-        | Success(varType, state) ->
+        | Ok(varType, state) ->
             match nextToken state with
             | Some({ lexeme = Lexeme.Operator Operator.Equal }, state) ->
                 match expression state Precedence.Assignment with
-                | Success(expr, state) -> Success((VariableDeclaration(name, varType, expr), state))
-                | Failure(s1, parserState) -> Failure(s1, parserState)
-            | _ -> Failure("Expect '=' after variable name.", state)
-        | Failure(s1, parserState) -> Failure(s1, parserState)
-    | _ -> Failure("Expect variable name.", state)
+                | Ok(expr, state) -> Ok((SVariableDeclaration(name, expr, varType), state))
+                | Error(s1, parserState) -> Error(s1, parserState)
+            | _ -> Error("Expect '=' after variable name.", state)
+        | Error(s1, parserState) -> Error(s1, parserState)
+    | _ -> Error("Expect variable name.", state)
 
-let parseStatement (state: ParserState) : ParseResult<Stmt> =
+and printStatement (state: ParserState) : ParseResult<Stmt> =
+    let state = setLabel state "Print"
+
+    match expression state Precedence.Assignment with
+    | Ok(expr, state) -> Ok((SPrintStatement(expr, TUnit), state))
+    | Error(s1, parserState) -> Error(s1, parserState)
+
+and parseStatement (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Statement"
 
     match peek state with
@@ -455,35 +552,43 @@ let parseStatement (state: ParserState) : ParseResult<Stmt> =
         match token.lexeme with
         | Lexeme.Keyword kw ->
             match kw with
-            | Let -> variableDeclaration (advance state)
+            | Keyword.Let -> variableDeclaration (advance state)
+            | Keyword.Print -> printStatement (advance state)
             | _ ->
                 match expression state Precedence.None with
-                | Success(expr, state) -> Success(Expression expr, state)
-                | Failure(s1, parserState) -> Failure(s1, parserState)
+                | Ok(expr, state) -> Ok(SExpression (expr, TInfer), state)
+                | Error(s1, parserState) -> Error(s1, parserState)
         | _ ->
             match expression state Precedence.None with
-            | Success(expr, state) -> Success(Expression expr, state)
-            | Failure(s1, parserState) -> Failure(s1, parserState)
-    | None -> Success((Expression(Literal(Unit)), state))
+            | Ok(expr, state) -> Ok(SExpression (expr, TInfer), state)
+            | Error(s1, parserState) -> Error(s1, parserState)
+    | None -> Ok((SExpression(ELiteral(LUnit, TUnit), TInfer), state))
 
-let parseStmt (input: string) =
+let parseStmtUnsafe (input: string) =
     let tokens = tokenize input
 
     let initialState = createParserState tokens
     let stmt = parseStatement initialState
 
     match stmt with
-    | Success(stmt, _) -> stmt
-    | Failure _ as f -> failwith $"{f}"
+    | Ok(stmt, _) -> stmt
+    | Error f -> raise (ParserException(f))
+
+let parseStmt (input: string) =
+    let tokens = tokenize input
+
+    let initialState = createParserState tokens
+    parseStatement initialState
+
 
 let parseProgram (state: ParserState) : ParseResult<Program> =
     let rec loop state stmts =
         match peek state with
         | Some _ ->
             match parseStatement state with
-            | Success(stmt, state) -> loop state (stmt :: stmts)
-            | Failure(s1, parserState) -> Failure(s1, parserState)
-        | None -> Success(List.rev stmts, state)
+            | Ok(stmt, state) -> loop state (stmt :: stmts)
+            | Error(s1, parserState) -> Error(s1, parserState)
+        | None -> Ok(List.rev stmts, state)
 
     loop state []
 
@@ -495,6 +600,18 @@ let parseTokens (tokens: Token list) =
 let parse (input: string) =
     let tokens = tokenize input
 
-    match parseTokens tokens with
-    | Success(program, _) -> program
-    | Failure _ as f -> failwith $"{f}"
+    // match parseTokens tokens with
+    // | Ok(program, _) -> program
+    // | Error _ as f -> failwith $"{f}"
+    parseTokens tokens
+
+let parseFile (file: string) =
+    let input = System.IO.File.ReadAllText(file)
+    parse input
+
+let formatParserError (error: ParserError) (state: ParserState) =
+    let token = getCurrentToken state
+
+    match token with
+    | Some { lexeme = name; line = l } -> $"Error: {error} at line {l}, token {name}"
+    | _ -> $"Error: {error}"

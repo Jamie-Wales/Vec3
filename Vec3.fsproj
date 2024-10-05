@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Interpreter\Preprocessor.fs" />
         <Compile Include="Interpreter\Token.fs" />
         <Compile Include="Interpreter\Grammar.fs" />
         <Compile Include="Interpreter\Printer.fs"/>
@@ -18,13 +19,17 @@
         <Compile Include="Interpreter\Backend\Chunk.fs"/>
         <Compile Include="Interpreter\Backend\VM.fs"/>
         <Compile Include="Interpreter\Backend\Compiler.fs"/>
+        <Compile Include="Interpreter\Typing\Exceptions.fs" />
+        <Compile Include="Interpreter\Typing\Builtins.fs" />
+        <Compile Include="Interpreter\Typing\Inference.fs" />
+        <Compile Include="Interpreter\Typing\Checker.fs" />
         <Compile Include="Interpreter\Eval.fs" />
-        <Compile Include="Interpreter\TypeChecker.fs" />
         <Compile Include="Interpreter\Repl.fs" />
         <Compile Include="MainWindow.axaml.fs"/>
         <Compile Include="App.axaml.fs"/>
         <Compile Include="Program.fs"/>
         <Content Include=".gitignore"/>
+        <Content Include="test.vec3" />
     </ItemGroup>
 
     <ItemGroup>
