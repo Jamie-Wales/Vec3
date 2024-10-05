@@ -88,7 +88,7 @@ let rec compileStmt (stmt: Stmt) : Compiler<unit> =
         | SExpression (expr, _) ->
             compileExpr expr state
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.POP state)
-        | SVariableDeclaration (name, _, initializer, _) ->
+        | SVariableDeclaration (name, initializer, _) ->
             compileVariableDeclaration name initializer state
         | SPrintStatement (expr, _) ->
             compileExpr expr state

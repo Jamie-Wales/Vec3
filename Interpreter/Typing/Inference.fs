@@ -224,15 +224,11 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
         match checkIdentifier env token with
         | Ok t -> Ok(t, Map.empty, EIdentifier(token, t))
         | Error errors -> Error errors
-    | ELambda(paramList, returnType, body, _) ->
-        let paramTypes = List.map snd paramList
-        // if List.length paramList > 1 && List.length (List.filter (fun t -> t = TInfer) paramTypes) = List.length paramList then
-        //     let token = List.tryFind (fun (_, typ) -> typ = TInfer) paramList
-        //     match token with
-        //     | Some (t, _) ->
-        //         Error [ TypeError.NotEnoughInformation(t) ]
-        //     | None -> Error [ TypeError.NotEnoughInformation(Empty) ]
-        // else
+    | ELambda(paramList, body, typ) ->
+        let returnT, paramTypes = match typ with
+                                    | TFunction(parameters, ret) -> ret, parameters
+                                    | _ -> TInfer, List.map (fun _ -> TInfer) paramList
+                                    
         let paramTypes =
             List.map
                 (fun t ->
@@ -240,10 +236,11 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
                     | TInfer -> TTypeVariable(freshTypeVar ())
                     | _ -> t)
                 paramTypes
+        
 
         let newEnv =
             List.fold2
-                (fun acc (param, _) typ ->
+                (fun acc param typ ->
                     match param.lexeme with
                     | Identifier name -> Map.add name typ acc
                     | _ -> acc)
@@ -257,16 +254,16 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
         | Ok(bodyType, sub, expr) ->
             let paramTypes = List.map (applySubstitution sub) paramTypes
 
-            if returnType = TInfer then
-                Ok(TFunction(paramTypes, bodyType), sub, ELambda(paramList, bodyType, expr, TFunction(paramTypes, bodyType)))
+            if returnT = TInfer then
+                Ok(TFunction(paramTypes, bodyType), sub, ELambda(paramList, expr, TFunction(paramTypes, bodyType)))
             else
-                let returnResult = unify bodyType returnType
+                let returnResult = unify bodyType returnT
 
                 match returnResult with
                 | Ok sub' ->
                     let sub = combineMaps sub sub'
-                    let returnType = applySubstitution sub returnType
-                    Ok(TFunction(paramTypes, returnType), sub, ELambda(paramList, returnType, expr, TFunction(paramTypes, returnType)))
+                    let returnType = applySubstitution sub returnT
+                    Ok(TFunction(paramTypes, returnType), sub, ELambda(paramList, expr, TFunction(paramTypes, returnType)))
                 | Error errors -> Error errors
         | Error errors -> Error errors
 
@@ -539,7 +536,11 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
     | _ -> failwith "todo"
 
 and inferStmt (env: TypeEnv) (stmt: Stmt) : Result<TypeEnv * Substitution * Stmt, TypeErrors> =
+    // THIS WILL FAIL
+    // COMPLEX ARGS SUCH AS f(6.0, {1})
+    // AS RESOLVED TYPES ARE RESET AFTER EACH STATEMENT
     resolvedTypes.Value <- Map.empty
+    
     match stmt with
     | SExpression (expr, typ) ->
         let result = infer env expr
@@ -547,7 +548,7 @@ and inferStmt (env: TypeEnv) (stmt: Stmt) : Result<TypeEnv * Substitution * Stmt
         match result with
         | Ok(_, sub, expr) -> Ok(env, sub, SExpression(expr, typ))
         | Error errors -> Error errors
-    | SVariableDeclaration(name, typ, expr, _) ->
+    | SVariableDeclaration(name, expr, typ) ->
         let result = infer env expr
 
         match result with
@@ -568,7 +569,7 @@ and inferStmt (env: TypeEnv) (stmt: Stmt) : Result<TypeEnv * Substitution * Stmt
                     | { lexeme = Identifier name } -> Map.add name (applySubstitution sub typ) env
                     | _ -> env
 
-                Ok(newEnv, sub, SVariableDeclaration(name, typ, expr, typ))
+                Ok(newEnv, sub, SVariableDeclaration(name, expr, typ))
             | Error errors -> Error errors
 
         | Error errors -> Error errors

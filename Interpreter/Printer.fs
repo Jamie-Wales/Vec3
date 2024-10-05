@@ -57,7 +57,7 @@ let printStmt stmt indent =
     | SPrintStatement (expr, _) ->
         sb.AppendLine($"{indentStr}Print Statement:") |> ignore
         printASTWithIndent expr (indent + 1) sb
-    | SVariableDeclaration (name, _, expr, _) ->
+    | SVariableDeclaration (name, _, expr) ->
         sb.AppendLine($"{indentStr}Variable Declaration:") |> ignore
         sb.AppendLine($"{indentStr}Name: {name.lexeme}") |> ignore
     sb.ToString()

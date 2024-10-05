@@ -416,11 +416,17 @@ and functionExpr (state: ParserState) : ParseResult<Expr> =
                     let state = advance state
 
                     match expression state Precedence.Assignment with
-                    | Ok(body, state) -> Ok(ELambda(List.rev params', returnType, body, returnType), state)
+                    | Ok(body, state) ->
+                        let paramTypes = List.rev <| List.map snd params'
+                        let paramNames = List.rev <| List.map fst params'
+                        Ok(ELambda(paramNames, body, TFunction(paramTypes, returnType)), state)
                     | Error _ as f -> f
                 | Some { lexeme = Lexeme.Operator Operator.LeftBrace } ->
                     match parseBlock (advance state) with
-                    | Ok(body, state) -> Ok(ELambda(List.rev params', returnType, body, returnType), state)
+                    | Ok(body, state) ->
+                        let paramTypes = List.rev <| List.map snd params'
+                        let paramNames = List.rev <| List.map fst params'
+                        Ok(ELambda(paramNames, body, TFunction(paramTypes, returnType)), state)
                     | Error _ as f -> f
                 | _ -> Error("Expected '->' after return type.", state)
             | Error(s1, parserState) -> Error(s1, parserState)
@@ -429,12 +435,18 @@ and functionExpr (state: ParserState) : ParseResult<Expr> =
             let state = advance state
 
             match expression state Precedence.Assignment with
-            | Ok(body, state) -> Ok(ELambda(List.rev params', TInfer, body, TInfer), state)
+            | Ok(body, state) ->
+                let paramTypes = List.rev <| List.map snd params'
+                let paramNames = List.rev <| List.map fst params'
+                Ok(ELambda(paramNames, body, TFunction(paramTypes, TInfer)), state)
             | Error _ as f -> f
         | Some { lexeme = Lexeme.Operator Operator.LeftBrace } ->
             let state = advance state
             match parseBlock state with
-            | Ok(body, state) -> Ok(ELambda(List.rev params', TInfer, body, TInfer), state)
+            | Ok(body, state) ->
+                let paramTypes = List.rev <| List.map snd params'
+                let paramNames = List.rev <| List.map fst params'
+                Ok(ELambda(paramNames, body, TFunction(paramTypes, TInfer)), state)
             | Error _ as f -> f
             
         | _ -> Error("Expected '->' after parameter list.", state)
@@ -519,7 +531,7 @@ and variableDeclaration (state: ParserState) : ParseResult<Stmt> =
             match nextToken state with
             | Some({ lexeme = Lexeme.Operator Operator.Equal }, state) ->
                 match expression state Precedence.Assignment with
-                | Ok(expr, state) -> Ok((SVariableDeclaration(name, varType, expr, varType), state))
+                | Ok(expr, state) -> Ok((SVariableDeclaration(name, expr, varType), state))
                 | Error(s1, parserState) -> Error(s1, parserState)
             | _ -> Error("Expect '=' after variable name.", state)
         | Error(s1, parserState) -> Error(s1, parserState)

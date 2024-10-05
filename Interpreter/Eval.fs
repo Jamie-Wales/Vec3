@@ -26,7 +26,7 @@ let evalSubtraction = function
     | LFloat x, LFloat y -> LFloat (x - y)
     | LRational (n1, d1), LRational (n2, d2) -> LRational (n1 * d2 - n2 * d1, d1 * d2)
     | LComplex (r1, i1), LComplex (r2, i2) -> LComplex (r1 - r2, i1 - i2)
-    | _ -> failwith "invlaid"
+    | _ -> failwith "invalid"
     
 let evalMultiplication = function
     | LInteger x, LInteger y -> LInteger (x * y)
@@ -73,14 +73,14 @@ let rec evalExpr (env: Env) =
     | EGrouping (expr, _) -> evalExpr env expr
 
     | ELiteral (lit, t) -> ELiteral (evalLiteral lit, t)
-    | ECall (expr, args, t) ->
+    | ECall (expr, args, _) ->
         let expr = evalExpr env expr
         match expr with
-        | ELambda(params', _, body, t) ->
-            let rec evalParams (env: Env) (params': (Token * Grammar.Type) list) (args: Expr list) =
+        | ELambda(params', body, _) ->
+            let rec evalParams (env: Env) (params': Token list) (args: Expr list) =
                 match params', args with
                 | [], [] -> env
-                | (p, _) :: ps, a :: as' ->
+                | p :: ps, a :: as' ->
                     let env' = evalParams env ps as'
                     Map.add p.lexeme (evalExpr env a) env'
                 | _ -> failwith "invalid"
@@ -99,7 +99,7 @@ let rec evalExpr (env: Env) =
                     printfn $"{String.Join(' ', args)}"
                     ELiteral(LUnit, TUnit)
                 | "input" ->
-                    let args = List.map (evalExpr env) args
+                    let _ = List.map (evalExpr env) args
                     let input = Console.ReadLine()
                     ELiteral(LString input, TString)
                 | "cos" ->
@@ -120,7 +120,7 @@ let rec evalExpr (env: Env) =
                 | _ -> failwith $"function {name} not found"
             | _ -> failwith $"function {name} not found"
         | _ -> failwith "invalid"
-    | ELambda(params', t, body, t') -> ELambda(params', t, body, t')
+    | ELambda(params', body, t') -> ELambda(params', body, t')
     | EIdentifier (name, typ) ->
         match env.TryGetValue name.lexeme with
         | true, expr -> expr
@@ -138,7 +138,7 @@ let rec evalExpr (env: Env) =
         let rhs = evalExpr env rhs
 
         match op, lhs, rhs with
-        | { lexeme = Operator op } , ELiteral (LNumber lhs, typ1), ELiteral (LNumber rhs, typ2) ->
+        | { lexeme = Operator op } , ELiteral (LNumber lhs, _), ELiteral (LNumber rhs, _) ->
             match op with
             | Operator.Plus -> ELiteral (LNumber (evalAddition (lhs, rhs)), typ)
             | Operator.Minus -> ELiteral (LNumber (evalSubtraction (lhs, rhs)), typ)
@@ -197,9 +197,9 @@ let rec evalExpr (env: Env) =
 
 and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
     match stmt with
-    | SExpression (expr, typ) -> evalExpr env expr, env
+    | SExpression (expr, _) -> evalExpr env expr, env
 
-    | SVariableDeclaration(name, _, expr, _) ->
+    | SVariableDeclaration(name, expr, _) ->
         let value = evalExpr env expr
         ELiteral (LUnit, TUnit), Map.add name.lexeme value env
     
@@ -216,7 +216,5 @@ let evalStatement (env: Env) (stmt: Stmt) : Literal * Env =
     
 
 let evalProgram (env: Env) (program: Program) : Literal * Env =
-    // return last staement and update env
-    match List.fold (fun (lit, env) -> evalStatement env) (LUnit, env) program with
-    | lit, env -> lit, env
-    | _ -> failwith "invalid"
+    // return last statement and update env
+    List.fold (fun (_, env) -> evalStatement env) (LUnit, env) program

@@ -62,12 +62,12 @@ type Expr =
     | ETernary of Expr * Expr * Expr * Type
     
     | ECall of Expr * Expr list * Type
-    | ELambda of (Token * Type) list * Type * Expr * Type
+    | ELambda of Token list * Expr * Type
     | EBlock of Stmt list * Type
     
 and Stmt =
     | SExpression of Expr * Type
-    | SVariableDeclaration of Token * Type * Expr * Type
+    | SVariableDeclaration of Token * Expr * Type
     | SPrintStatement of Expr * Type
 
 type Program = Stmt list

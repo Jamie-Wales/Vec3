@@ -211,7 +211,11 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         | _ -> Error [ TypeError.InvalidCallType(callee, TInfer, TInfer) ] // fix
 
     // need better type inference here for params, unless params must be typed
-    | ELambda(paramList, returnType, body, _) ->
+    | ELambda(paramList, body, typ) ->
+        let returnT, paramT = match typ with
+                                | TFunction(parameters, returnType) -> returnType, parameters
+                                | _ -> TInfer, List.map (fun _ -> TInfer) paramList
+        
         let newEnv =
             List.fold
                 (fun acc (param, typ) ->
@@ -219,18 +223,18 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
                     | Identifier name -> Map.add name typ acc
                     | _ -> raise (TypeException([TypeError.UndefinedVariable param])))
                 env
-                paramList
+                (List.zip paramList paramT)
 
         let bodyType = checkExpr newEnv body
 
         match bodyType with
         | Ok bodyType ->
-            if bodyType = returnType then
-                Ok <| TFunction(List.map snd paramList, returnType)
-            else if returnType = TInfer then
-                Ok <| TFunction(List.map snd paramList, bodyType)
+            if bodyType = returnT then
+                Ok <| TFunction(paramT, returnT)
+            else if returnT = TInfer then
+                Ok <| TFunction(paramT, bodyType)
             else
-                Error [ TypeError.InvalidFunctionReturn(fst paramList.Head, returnType, bodyType) ]
+                Error [ TypeError.InvalidFunctionReturn(paramList.Head, returnT, bodyType) ]
         | Error errors -> Error errors
     | EBlock (stmts, _) ->
         let rec checkBlock (env: TypeEnv) (stmts: Stmt list) : Result<TType, TypeErrors> =
@@ -239,7 +243,7 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
             | [ stmt ] ->
                 match stmt with
                 | SExpression (expr, _) -> checkExpr env expr
-                | SVariableDeclaration(_, _, expr, _) -> checkExpr env expr
+                | SVariableDeclaration(_, expr, _) -> checkExpr env expr
                 | SPrintStatement (expr, _) -> checkExpr env expr
             | stmt :: rest ->
                 let env', _ = checkStmt env stmt
@@ -256,7 +260,7 @@ and checkStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv * Result<TType, TypeErrors> 
         | Error errors -> env, Error errors
         | Ok exprType -> env, Ok exprType
 
-    | SVariableDeclaration(token, typ, expr, t) ->
+    | SVariableDeclaration(token, expr, typ) ->
         let exprType = checkExpr env expr
 
         match exprType with
