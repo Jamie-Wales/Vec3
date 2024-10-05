@@ -11,11 +11,11 @@ let rec printAST program =
 and printASTWithIndent expr indent (sb: StringBuilder) =
     let indentStr = String.replicate indent "  "
     match expr with
-    | ELiteral lit -> printLiteral lit indentStr sb
-    | EUnary (op, expr) -> printUnary op expr indentStr indent sb
-    | EBinary (left, op, right) -> printBinary left op right indentStr indent sb
-    | EGrouping expr -> printGrouping expr indentStr indent sb
-    | EAssignment (name, expr) -> 
+    | ELiteral (lit, _) -> printLiteral lit indentStr sb
+    | EUnary (op, expr, _) -> printUnary op expr indentStr indent sb
+    | EBinary (left, op, right, _) -> printBinary left op right indentStr indent sb
+    | EGrouping (expr, _) -> printGrouping expr indentStr indent sb
+    | EAssignment (name, expr, _) -> 
         sb.AppendLine($"{indentStr}Assignment") |> ignore
         sb.AppendLine($"{indentStr}Name: {name.lexeme}") |> ignore
         sb.AppendLine($"{indentStr}Expression:") |> ignore
@@ -51,10 +51,10 @@ let printStmt stmt indent =
     let sb = StringBuilder()
     let indentStr = String.replicate indent "  "
     match stmt with
-    | SExpression expr ->
+    | SExpression (expr, _) ->
         sb.AppendLine($"{indentStr}Expression Statement:") |> ignore
         printASTWithIndent expr (indent + 1) sb
-    | SPrintStatement expr ->
+    | SPrintStatement (expr, _) ->
         sb.AppendLine($"{indentStr}Print Statement:") |> ignore
         printASTWithIndent expr (indent + 1) sb
     | SVariableDeclaration (name, _, expr) ->

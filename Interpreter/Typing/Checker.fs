@@ -25,16 +25,15 @@ let rec checkExpression (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> 
     // type env holds all of the infered types
     // expr is the expression to check
     match expr with
-    | ELiteral lit -> Ok <| checkLiteral lit
-    | EIdentifier token -> checkIdentifier env token
-    
+    | ELiteral (lit, _) -> Ok <| checkLiteral lit
+    | EIdentifier (token, _) -> checkIdentifier env token
 
 
 let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
     match expr with
-    | ELiteral lit -> Ok <| checkLiteral lit
-    | EIdentifier token -> checkIdentifier env token
-    | EUnary(op, expr) ->
+    | ELiteral (lit, _) -> Ok <| checkLiteral lit
+    | EIdentifier (token, _) -> checkIdentifier env token
+    | EUnary(op, expr, _) ->
         let exprType = checkExpr env expr
 
         match exprType with
@@ -53,7 +52,7 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
 
         | Ok t -> Error [ TypeError.InvalidOperator(op, t) ]
         | Error errors -> Error errors
-    | EBinary(lhs, op, rhs) ->
+    | EBinary(lhs, op, rhs, _) ->
         let lhsType = checkExpr env lhs
         let rhsType = checkExpr env rhs
 
@@ -152,8 +151,8 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         | Error errors, Ok _ -> Error errors
         | Ok _, Error errors -> Error errors
         | Ok t, Ok t' -> Error [ TypeError.InvalidOperandType(op, t, t') ]
-    | EGrouping expr -> checkExpr env expr
-    | EAssignment(token, expr) ->
+    | EGrouping (expr, _) -> checkExpr env expr
+    | EAssignment(token, expr, _) ->
         let exprType = checkExpr env expr
 
         match token.lexeme with
@@ -166,8 +165,8 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
                 | Error errors -> Error errors
             | None -> Error [ TypeError.UndefinedVariable token ]
         | _ -> Error [ TypeError.UndefinedVariable token ]
-    | ECall(callee, args) ->
-        let calleeType = checkExpr env (EIdentifier callee)
+    | ECall(callee, args, _) ->
+        let calleeType = checkExpr env callee
 
         match calleeType with
         | Ok(TFunction(paramList, returnType)) ->
@@ -212,7 +211,11 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         | _ -> Error [ TypeError.InvalidCallType(callee, TInfer, TInfer) ] // fix
 
     // need better type inference here for params, unless params must be typed
-    | ELambda(paramList, returnType, body) ->
+    | ELambda(paramList, body, typ) ->
+        let returnT, paramT = match typ with
+                                | TFunction(parameters, returnType) -> returnType, parameters
+                                | _ -> TInfer, List.map (fun _ -> TInfer) paramList
+        
         let newEnv =
             List.fold
                 (fun acc (param, typ) ->
@@ -220,28 +223,28 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
                     | Identifier name -> Map.add name typ acc
                     | _ -> raise (TypeException([TypeError.UndefinedVariable param])))
                 env
-                paramList
+                (List.zip paramList paramT)
 
         let bodyType = checkExpr newEnv body
 
         match bodyType with
         | Ok bodyType ->
-            if bodyType = returnType then
-                Ok <| TFunction(List.map snd paramList, returnType)
-            else if returnType = TInfer then
-                Ok <| TFunction(List.map snd paramList, bodyType)
+            if bodyType = returnT then
+                Ok <| TFunction(paramT, returnT)
+            else if returnT = TInfer then
+                Ok <| TFunction(paramT, bodyType)
             else
-                Error [ TypeError.InvalidFunctionReturn(fst paramList.Head, returnType, bodyType) ]
+                Error [ TypeError.InvalidFunctionReturn(paramList.Head, returnT, bodyType) ]
         | Error errors -> Error errors
-    | EBlock stmts ->
+    | EBlock (stmts, _) ->
         let rec checkBlock (env: TypeEnv) (stmts: Stmt list) : Result<TType, TypeErrors> =
             match stmts with
             | [] -> Ok TUnit
             | [ stmt ] ->
                 match stmt with
-                | SExpression expr -> checkExpr env expr
-                | SVariableDeclaration _ -> Ok TUnit
-                | SPrintStatement _ -> Ok TUnit
+                | SExpression (expr, _) -> checkExpr env expr
+                | SVariableDeclaration(_, expr, _) -> checkExpr env expr
+                | SPrintStatement (expr, _) -> checkExpr env expr
             | stmt :: rest ->
                 let env', _ = checkStmt env stmt
                 checkBlock env' rest
@@ -250,14 +253,14 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
 
 and checkStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv * Result<TType, TypeErrors> =
     match stmt with
-    | SExpression expr ->
+    | SExpression (expr, _) ->
         let exprType = checkExpr env expr
 
         match exprType with
         | Error errors -> env, Error errors
         | Ok exprType -> env, Ok exprType
 
-    | SVariableDeclaration(token, typ, expr) ->
+    | SVariableDeclaration(token, expr, typ) ->
         let exprType = checkExpr env expr
 
         match exprType with
@@ -273,7 +276,7 @@ and checkStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv * Result<TType, TypeErrors> 
                 | _ -> env, Error [ TypeError.UndefinedVariable token ]
             else
                 env, Error [ TypeError.TypeMismatch(token, typ, exprType) ]
-    | SPrintStatement(expr) -> (env, checkExpr env expr)
+    | SPrintStatement(expr, t) -> (env, checkExpr env expr)
 
 let rec checkStmts (env: TypeEnv) (stmts: Stmt list): Result<TypeEnv, TypeErrors> =
     let rec helper env accErrors stmts =
@@ -302,10 +305,10 @@ let rec formatTypeError (error: TypeError) : string =
     | TypeMismatch(token, expected, actual) -> $"Type mismatch at Line: {token.line}, expected {expected}, got {actual}"
     | InvalidAssignment(token, expected, actual) ->
         $"Invalid assignment at Line: {token.line}, expected {expected}, got {actual}"
-    | InvalidArgumentCount(token, expected, actual) ->
-        $"Invalid argument count at Line: {token.line}, expected {expected}, got {actual}"
-    | InvalidArgumentType(token, expected, actual) ->
-        $"Invalid argument type at Line: {token.line}, expected {expected}, got {actual}"
+    | InvalidArgumentCount(expr, expected, actual) ->
+        $"Invalid argument count at expr: {expr}, expected {expected}, got {actual}"
+    | InvalidArgumentType(expr, expected, actual) ->
+        $"Invalid argument type at expr: {expr}, expected {expected}, got {actual}"
     | InvalidReturnType(token, expected, actual) ->
         $"Invalid return type at Line: {token.line}, expected {expected}, got {actual}"
     | InvalidOperandType(token, expected, actual) ->
@@ -320,15 +323,16 @@ let rec formatTypeError (error: TypeError) : string =
     | InvalidFunctionBody(token, expected, actual) ->
         $"Invalid function body at Line: {token.line}, expected {expected}, got {actual}"
     | InvalidBlock(token, expected, actual) -> $"Invalid block at Line: {token.line}, expected {expected}, got {actual}"
-    | InvalidCall(token, typ) -> $"Invalid call at Line: {token.line}, got {typ}"
-    | InvalidCallType(token, expected, actual) ->
-        $"Invalid call type at Line: {token.line}, expected {expected}, got {actual}"
+    | InvalidCall(expr, typ) -> $"Invalid call at expr: {expr}, got {typ}"
+    | InvalidCallType(expr, expected, actual) ->
+        $"Invalid call type at expr: {expr}, expected {expected}, got {actual}"
     | InvalidCallReturn(token, expected, actual) ->
         $"Invalid call return at Line: {token.line}, expected {expected}, got {actual}"
     | InvalidCallBody(token, expected, actual) ->
         $"Invalid call body at Line: {token.line}, expected {expected}, got {actual}"
     | NotEnoughInformation(token) -> $"Not enough information at Line: {token.line}"
     | InvalidOpen(token) -> $"Invalid open statement at Line: {token.line}"
+    | InvalidIf(expr) -> $"Invalid if statement at expr: {expr}"
 
 let formatTypeErrors (errors: TypeError list) : string =
     List.map formatTypeError errors |> String.concat "\n"

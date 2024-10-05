@@ -2,8 +2,6 @@ module Vec3.Interpreter.Grammar
 
 open Token
 
-// what if i make type variables a tuple of TypeVar * Constraint list
-// therefore (x, y) -> x + y, x and y could be a type variable of constraint list
 type TypeVar = int
 
 type Type =
@@ -24,16 +22,13 @@ type Type =
     | TAny
     
     | TFunction of Type list * Type
-    // maybe instead
-    // | Function of (Type list) list * Type
-    // so that functions can be unionized, but of course need to check whether body is valid
     
     | TTypeVariable of TypeVar
     
     // contrains a type to an allowed set of types
     // i have ideas that this will allow hidler miller inference without type classes
     // gonna take quite a bit of trial and error
-    | TConstrain of Type list
+    | TConstrain of TypeVar * Type list
     
     // todo
     | TTuple of Type list
@@ -57,21 +52,23 @@ type Literal =
     | LUnit
 
 type Expr =
-    | ELiteral of Literal
-    | EIdentifier of Token
-    | EUnary of Token * Expr
-    | EBinary of Expr * Token * Expr
-    | EGrouping of Expr
-    | EAssignment of Token * Expr 
+    | ELiteral of Literal * Type
+    | EIdentifier of Token * Type
+    | EUnary of Token * Expr * Type
+    | EBinary of Expr * Token * Expr * Type
+    | EGrouping of Expr * Type
+    | EAssignment of Token * Expr * Type
+    | EIf of Expr * Expr * Expr * Type
+    | ETernary of Expr * Expr * Expr * Type
     
-    | ECall of Token * Expr list
-    | ELambda of (Token * Type) list * Type * Expr
-    | EBlock of Stmt list
+    | ECall of Expr * Expr list * Type
+    | ELambda of Token list * Expr * Type
+    | EBlock of Stmt list * Type
     
 and Stmt =
-    | SExpression of Expr
-    | SVariableDeclaration of Token * Type * Expr // option
-    | SPrintStatement of Expr
+    | SExpression of Expr * Type
+    | SVariableDeclaration of Token * Expr * Type
+    | SPrintStatement of Expr * Type
 
 type Program = Stmt list
 
