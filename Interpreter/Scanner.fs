@@ -42,6 +42,7 @@ type TokenPattern =
     | PColon
     | PComma
     | PSemicolon
+    | PDotDot
     | PDot
     
     | PIdentifier
@@ -85,6 +86,7 @@ let tokenPatterns : (TokenPattern * Regex) list = [
     (PColon, Regex(@"^:", RegexOptions.Compiled))
     (PComma, Regex(@"^,", RegexOptions.Compiled))
     (PSemicolon, Regex(@"^;", RegexOptions.Compiled))
+    (PDotDot, Regex(@"^\.\.", RegexOptions.Compiled))
     (PDot, Regex(@"^\.", RegexOptions.Compiled))
     
     (PIdentifier, Regex(@"^[a-zA-Z_][a-zA-Z0-9_]*", RegexOptions.Compiled))
@@ -100,6 +102,7 @@ let keywordMap =
       "false", Keyword.False
       "nil", Keyword.Nil
       "print", Keyword.Print
+      "in", Keyword.In
        ]
     |> Map.ofList
 

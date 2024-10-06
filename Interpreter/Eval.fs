@@ -69,6 +69,8 @@ let rec evalExpr (env: Env) =
                 evalBlock env' rest
 
         evalBlock env stmts
+    | ETuple (exprs, typ) -> ETuple (List.map (evalExpr env) exprs, typ)
+    | EList (exprs, typ) -> EList (List.map (evalExpr env) exprs, typ)
     | EAssignment(_, expr, _) -> evalExpr env expr
     | EGrouping (expr, _) -> evalExpr env expr
 
@@ -194,6 +196,12 @@ let rec evalExpr (env: Env) =
         | _ -> failwith "invalid"
     | ETernary(cond, then', else', typ) ->
         evalExpr env (EIf(cond, then', else', typ))
+    | EIndex(expr, index, _) ->
+        let expr = evalExpr env expr
+        let index = evalExpr env index
+        match expr, index with
+        | EList (exprs, _), ELiteral (LNumber (LInteger i), _) -> List.item i exprs
+        | _ -> failwith "invalid"
 
 and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
     match stmt with
@@ -208,13 +216,14 @@ and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
         printfn $"{value}"
         ELiteral (LUnit, TUnit), env
 
-let evalStatement (env: Env) (stmt: Stmt) : Literal * Env =
+let evalStatement (env: Env) (stmt: Stmt) : Expr * Env =
     match evalStmt env stmt with
-    | ELiteral (lit, _), env -> lit, env
-    | _, env -> LUnit , env
+    | ELiteral (lit, typ), env -> ELiteral(lit, typ), env
+    | EList (exprs, typ), env -> EList(exprs, typ), env
+    | _, env -> ELiteral(LUnit, TUnit) , env
     
     
 
-let evalProgram (env: Env) (program: Program) : Literal * Env =
+let evalProgram (env: Env) (program: Program) : Expr * Env =
     // return last statement and update env
-    List.fold (fun (_, env) -> evalStatement env) (LUnit, env) program
+    List.fold (fun (_, env) -> evalStatement env) (ELiteral(LUnit, TUnit), env) program
