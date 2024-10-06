@@ -1,6 +1,8 @@
 module Vec3.Interpreter.Repl
 
 open System
+open Vec3.Interpreter.Backend
+open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Parser
 open Vec3.Interpreter.Backend.Compiler
 open Vec3.Interpreter.Backend.VM
@@ -28,6 +30,7 @@ and numberToString = function
     | LRational (n, d) -> $"{n}/{d}"
     | LComplex (r, i) -> $"{r} + {i}i"
 
+
 let evalRepl =
     let rec repl' (env: Env) (typeEnv: TypeEnv) =
         Console.Write ">> "
@@ -51,38 +54,57 @@ let evalRepl =
     repl' Map.empty defaultTypeEnv
     ()
 
-let rec repl =
-    let rec repl' () =
-        Console.Write ">> "
-        let input = Console.ReadLine()
-        
-        if input.ToLower() = "exit" then
-            printfn "Exiting REPL..."
-        else
-            try
-                let parsed = parse input
-                match parsed with
-                | Ok(program, _) ->
-                    match compileProgram program with
-                    | Ok (chunk, _) ->
-                        interpret chunk |> ignore
-                    | Error (msg, _) ->
-                        printfn $"Compilation error: {msg}"
-                | Error (msg, _) ->
-                    printfn $"Parsing error: {msg}"
-            
-            with
-            | :? ArgumentException as e ->
-                printfn $"Parsing error: {e.Message}"
-            | e ->
-                printfn $"An error occurred: {e.Message}"
-            
-            repl' ()
+type ReplState = {
+    VM: VM option
+}
+
+
+let createInitialState () = { VM = None }
+
+let executeInRepl (state: ReplState) (input: string) : ReplState =
+    try
+        let parsed = parse input
+        match parsed with
+        | Ok(program, _) ->
+            match compileProgram program with
+            | Ok (chunk, _) ->
+                let vm = 
+                    match state.VM with
+                    | Some existingVM -> 
+                        { existingVM with 
+                            Chunk = chunk
+                            IP = 0
+                            Stack = ResizeArray<Value>(256) }
+                    | None -> createVM chunk
+                let updatedVM = run vm
+                { VM = Some updatedVM }
+            | Error (msg, _) ->
+                printfn $"Compilation error: {msg}"
+                state
+        | Error (msg, _) ->
+            printfn $"Parsing error: {msg}"
+            state
+    with
+    | :? ArgumentException as e ->
+        printfn $"Parsing error: {e.Message}"
+        state
+    | e ->
+        printfn $"An error occurred: {e.Message}"
+        state
+
+let rec repl (state: ReplState) =
+    Console.Write ">> "
+    let input = Console.ReadLine()
     
-    repl' ()
+    if input.ToLower() = "exit" then
+        printfn "Exiting REPL..."
+    else
+        let newState = executeInRepl state input
+        repl newState
 
 let startRepl () =
     printfn "Welcome to the Vec3 REPL!"
     printfn "Type your code and press Enter to execute."
     printfn "Type 'exit' to quit the REPL."
-    repl
+    let initialState = createInitialState()
+    repl initialState

@@ -21,7 +21,7 @@ let emitByte (byte: byte) (state: CompilerState) : CompilerResult<unit> =
    Ok ((), state)
 
 let emitBytes (bytes: byte seq) (state: CompilerState) : CompilerResult<unit> =
-   let () = Seq.iter (fun byte -> writeChunk state.Chunk byte state.CurrentLine) bytes in
+   Seq.iter (fun byte -> writeChunk state.Chunk byte state.CurrentLine) bytes
    Ok ((), state)
    
 let emitConstant (value: Value) (state: CompilerState) : CompilerResult<unit> =
@@ -52,6 +52,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         match expr with
         | ELiteral (lit, _) -> compileLiteral lit state
         | EBinary (left, op, right, _) -> compileBinary left op right state
+        | EIdentifier (e, _)-> compileIdentifier e state
         | _ -> Error ("Unsupported expression type", state)
 and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
     fun state ->
@@ -82,6 +83,15 @@ and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)
         | _ -> Error ($"Unsupported binary operator: {op.lexeme}", state)
 
+and compileIdentifier (token: Token) : Compiler<unit> =
+    fun state ->
+        if state.Locals.ContainsKey token.lexeme then
+            let index = state.Locals.[token.lexeme]
+            emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte index |] state
+        else
+            let constIndex = addConstant state.Chunk (Value.String (lexemeToString token.lexeme))
+            emitBytes [| byte (opCodeToByte OP_CODE.GET_GLOBAL); byte constIndex |] state
+    
 let rec compileStmt (stmt: Stmt) : Compiler<unit> =
     fun state ->
         match stmt with
@@ -98,8 +108,12 @@ and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit
     fun state ->
         compileExpr initializer state
         |> Result.bind (fun ((), state) ->
-            let locals = Map.add name.lexeme state.Locals.Count state.Locals
-            Ok ((), { state with Locals = locals }))
+            if state.ScopeDepth > 0 then
+                let locals = Map.add name.lexeme state.Locals.Count state.Locals
+                Ok ((), { state with Locals = locals })
+            else
+                let constIndex = addConstant state.Chunk (Value.String (lexemeToString name.lexeme))
+                emitBytes [| byte (opCodeToByte OP_CODE.DEFINE_GLOBAL); byte constIndex |] state)
 
 let compileProgram (program: Program) : CompilerResult<Chunk> =
     let initialState =

@@ -1,10 +1,57 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Vec3.App"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
-
+             RequestedThemeVariant="Light">
+    <Application.Resources>
+        <Color x:Key="LightGreyColor">#F5F5F5</Color>
+        <Color x:Key="DarkBlueColor">#1E2630</Color>
+        <Color x:Key="LightBlueColor">#4ECDC4</Color>
+        <Color x:Key="BrightOrangeColor">#FF6B3D</Color>
+        <Color x:Key="BlackColor">#000000</Color>
+        
+        <SolidColorBrush x:Key="LightGrey" Color="{StaticResource LightGreyColor}"/>
+        <SolidColorBrush x:Key="DarkBlue" Color="{StaticResource DarkBlueColor}"/>
+        <SolidColorBrush x:Key="LightBlue" Color="{StaticResource LightBlueColor}"/>
+        <SolidColorBrush x:Key="BrightOrange" Color="{StaticResource BrightOrangeColor}"/>
+        <SolidColorBrush x:Key="Black" Color="{StaticResource BlackColor}"/>
+    </Application.Resources>
+    
     <Application.Styles>
         <FluentTheme />
+        <Style Selector="Button">
+            <Setter Property="Background" Value="{DynamicResource BrightOrange}"/>
+            <Setter Property="Foreground" Value="{DynamicResource LightGrey}"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="{DynamicResource LightGrey}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Black}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource Black}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource LightBlue}"/>
+        </Style>
+        <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource LightGrey}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource LightBlue}"/>
+        </Style>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource Black}"/>
+        </Style>
+        <Style Selector="TextBlock.h1">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Foreground" Value="{DynamicResource DarkBlue}"/>
+        </Style>
+        <Style Selector="TextBlock.h2">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,10,0,5"/>
+            <Setter Property="Foreground" Value="{DynamicResource DarkBlue}"/>
+        </Style>
+        <Style Selector="TextBlock.h3">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,5,0,5"/>
+            <Setter Property="Foreground" Value="{DynamicResource DarkBlue}"/>
+        </Style>
     </Application.Styles>
 </Application>
