@@ -49,7 +49,16 @@ let map (result: ParseResult<'a>) (fn: 'a -> 'b) =
     | Ok(value, state) -> Ok(fn value, state)
     | Error(s1, parserState) -> Error(s1, parserState)
 
+let flattenAndExtractDims (nestedList: 'a list list) =
+    let flatList = List.collect id nestedList
+    
+    let outerDim = List.length nestedList
+    let innerDim = 
+        match nestedList with
+        | [] -> 0
+        | firstInnerList::_ -> List.length firstInnerList
 
+    (flatList, outerDim, innerDim)
 
 let createParserState tokens =
     { Tokens = tokens
@@ -536,7 +545,17 @@ and parseType (state: ParserState) : ParseResult<Grammar.Type> =
     | Some { lexeme = Lexeme.Identifier "string" } -> Ok(TString, advance state)
     | Some { lexeme = Lexeme.Identifier "unit" } -> Ok(TUnit, advance state)
     | Some { lexeme = Lexeme.Identifier "never" } -> Ok(TNever, advance state)
+    | Some { lexeme = Lexeme.Identifier "any" } -> Ok(TAny, advance state)
     | Some { lexeme = Lexeme.Operator Operator.LeftParen } -> parseFunctionType state
+    | Some { lexeme = Lexeme.Operator Operator.LeftBracket } ->
+        let state = advance state
+
+        match parseType state with
+        | Ok(innerType, state) ->
+            match peek state with
+            | Some { lexeme = Lexeme.Operator Operator.RightBracket } -> Ok(TTensor(innerType, DAny), advance state)
+            | _ -> Error("Expected ']' after type.", state)
+        | Error(s1, parserState) -> Error(s1, parserState)
     | _ -> Error("Expected a type after colon.", state)
 
 and parseBlock (state : ParserState) : ParseResult<Expr> =

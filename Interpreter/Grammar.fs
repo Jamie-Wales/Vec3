@@ -30,12 +30,12 @@ type Type =
     // todo
     | TTuple of Type list
     
-    | TTensor of Type * (int list)
+    | TTensor of Type * Dims
     // | TVector of Type * int
     // | TMatrix of Type * int * int
 
-and Constraint = Constraint of Type list
-    
+and Dims = Dims of int list | DAny | DVar of TypeVar
+
 type Number =
     | LInteger of int
     | LFloat of float

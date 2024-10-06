@@ -100,6 +100,7 @@ let operatorToString (op: Operator): string =
     | LeftBracket -> "["
     | RightBracket -> "]"
     | Dot -> "."
+    | DotDot -> ".."
     | Percent -> "%"
 
 let lexemeToString (lex: Lexeme): string =
