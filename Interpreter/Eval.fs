@@ -119,6 +119,27 @@ let rec evalExpr (env: Env) =
                     match args with
                     | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(Math.Tan(double x))), TFloat)
                     | _ -> failwith "invalid"
+                    // perform casts
+                | "bool" ->
+                    let args = List.map (evalExpr env) args
+                    match args with
+                    | _ -> failwith "todo"
+                | "integer" ->
+                    let args = List.map (evalExpr env) args
+                    match args with
+                    | _ -> failwith "todo"
+                | "float" ->
+                    let args = List.map (evalExpr env) args
+                    match args with
+                    | _ -> failwith "todo"
+                | "rational" ->
+                    let args = List.map (evalExpr env) args
+                    match args with
+                    | _ -> failwith "todo"
+                | "complex" ->
+                    let args = List.map (evalExpr env) args
+                    match args with
+                    | _ -> failwith "todo"
                 | _ -> failwith $"function {name} not found"
             | _ -> failwith $"function {name} not found"
         | _ -> failwith "invalid"
@@ -128,6 +149,11 @@ let rec evalExpr (env: Env) =
         | true, expr -> expr
         | false, _ ->
             match name.lexeme with
+            | Identifier "bool"
+            | Identifier "integer"
+            | Identifier "float"
+            | Identifier "rational"
+            | Identifier "complex"
             | Identifier "print"
             | Identifier "input"
             | Identifier "cos"
@@ -223,7 +249,7 @@ let evalStatement (env: Env) (stmt: Stmt) : Expr * Env =
     | _, env -> ELiteral(LUnit, TUnit) , env
     
     
-
 let evalProgram (env: Env) (program: Program) : Expr * Env =
     // return last statement and update env
     List.fold (fun (_, env) -> evalStatement env) (ELiteral(LUnit, TUnit), env) program
+

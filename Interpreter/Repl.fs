@@ -59,7 +59,9 @@ type ReplState = {
 }
 
 
-let createInitialState () = { VM = None }
+let createInitialState () = {
+    VM = None
+}
 
 let executeInRepl (state: ReplState) (input: string) : ReplState =
     try
@@ -108,14 +110,21 @@ let startRepl () =
     printfn "Type 'exit' to quit the REPL."
     let initialState = createInitialState()
     repl initialState
+    
 let parseAndCompile (code: string) =
+        let code = preprocessContent code
         match parse code with
         | Ok (program, _) ->
-            match compileProgram program with
-            | Ok (chunk, _) -> Some chunk
-            | Error (msg, _) ->
-                printfn $"Compilation error: {msg}"
+            match inferProgram defaultTypeEnv program with
+            | Ok (_,_, program) ->
+                match compileProgram program with
+                | Ok (chunk, _) -> Some chunk
+                | Error (msg, _) ->
+                    printfn $"Compilation error: {msg}"
+                    None
+            | Error errors ->
+                printfn $"Type error: {formatTypeErrors errors}"
                 None
-        | Error (msg, _) ->
-            printfn $"Parsing error: {msg}"
+        | Error (e, s) ->
+            printfn $"Parsing error: {formatParserError e s}"
             None 

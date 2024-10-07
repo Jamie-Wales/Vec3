@@ -3,6 +3,7 @@ module Vec3.Interpreter.Scanner
 open Token
 open System
 open System.Text.RegularExpressions
+open Vec3.Interpreter.Token
 
 type TokenPattern =
     | PComplex
@@ -19,6 +20,7 @@ type TokenPattern =
     | PStarStar
     | PSlash
     | PPercent
+    | PUpArrow
     
     | PEqualEqual
     | PBangEqual
@@ -60,6 +62,7 @@ let tokenPatterns : (TokenPattern * Regex) list = [
     (PPlus, Regex(@"^\+", RegexOptions.Compiled));
     (PMinus, Regex(@"^-", RegexOptions.Compiled))
     (PStarStar, Regex(@"^\*\*", RegexOptions.Compiled))
+    (PUpArrow, Regex(@"^\^", RegexOptions.Compiled))
     (PStar, Regex(@"^\*", RegexOptions.Compiled));
     (PSlash, Regex(@"^/", RegexOptions.Compiled))
     (PPercent, Regex(@"^%", RegexOptions.Compiled))
@@ -167,6 +170,7 @@ let lexemeFromPattern (pattern: TokenPattern) (value: string) =
     | PSlash -> Lexeme.Operator Operator.Slash
     | PStarStar -> Lexeme.Operator Operator.StarStar
     | PPercent -> Lexeme.Operator Operator.Percent
+    | PUpArrow -> Lexeme.Operator Operator.StarStar
     
     | PEqualEqual -> Lexeme.Operator Operator.EqualEqual
     | PBangEqual -> Lexeme.Operator Operator.BangEqual
@@ -191,6 +195,7 @@ let lexemeFromPattern (pattern: TokenPattern) (value: string) =
     | PSemicolon -> Lexeme.Semicolon
     | PArrow -> Lexeme.Operator Operator.Arrow
     | PColon -> Lexeme.Colon
+    | PDotDot -> Lexeme.Operator Operator.DotDot
     | PDot -> Lexeme.Operator Operator.Dot
     
     | PIdentifier -> lexemeFromIndent value

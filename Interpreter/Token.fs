@@ -13,6 +13,7 @@ type Operator =
     | StarStar
     | Slash
     | Percent
+    | UpArrow
     
     | EqualEqual
     | BangEqual
@@ -83,6 +84,7 @@ let operatorToString (op: Operator): string =
     | Minus -> "-"
     | Star -> "*"
     | StarStar -> "**"
+    | UpArrow -> "^"
     | Slash -> "/"
     | Equal -> "="
     | EqualEqual -> "=="

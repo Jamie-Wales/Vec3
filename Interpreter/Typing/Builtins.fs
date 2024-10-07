@@ -10,5 +10,12 @@ let BuiltinFunctions: Map<string, TType> =
       "cos", TFunction([ TFloat ], TFloat)
       "sin", TFunction([ TFloat ], TFloat)
       "tan", TFunction([ TFloat ], TFloat)
-      "env", TFunction([], TUnit) ]
+      "env", TFunction([], TUnit)
+      "integer", TFunction([TAny], TInteger)
+      "float", TFunction([TAny], TFloat)
+      "rational", TFunction([TAny], TRational)
+      "complex", TFunction([TAny], TComplex)
+      "bool", TFunction([TAny], TBool)
+      ]
+      
     |> Map.ofList
