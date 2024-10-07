@@ -48,7 +48,16 @@ let map (result: ParseResult<'a>) (fn: 'a -> 'b) =
     | Ok(value, state) -> Ok(fn value, state)
     | Error(s1, parserState) -> Error(s1, parserState)
 
+let flattenAndExtractDims (nestedList: 'a list list) =
+    let flatList = List.collect id nestedList
+    
+    let outerDim = List.length nestedList
+    let innerDim = 
+        match nestedList with
+        | [] -> 0
+        | firstInnerList::_ -> List.length firstInnerList
 
+    (flatList, outerDim, innerDim)
 
 let createParserState tokens =
     { Tokens = tokens
@@ -76,7 +85,6 @@ type ParseRule =
     { Prefix: (ParserState -> ParseResult<Expr>) option
       Infix: (ParserState -> Expr -> ParseResult<Expr>) option
       Precedence: Precedence }
-
 
 // sort of like combinators, maybe move to monadic approach to avoid nesting
 // lots of nested maps -> make the result a functor ? or at least extract out common patterns
@@ -147,6 +155,10 @@ and operatorRule (op: Operator) : ParseRule =
         { Prefix = Some parseBlock
           Infix = None
           Precedence = Precedence.None }
+    | Operator.LeftBracket ->
+        { Prefix = Some parseList
+          Infix = Some index 
+          Precedence = Precedence.None }
     | Operator.Minus ->
         { Prefix = Some unary
           Infix = Some binary
@@ -199,6 +211,10 @@ and keywordRule (kw: Keyword) : ParseRule =
     | If ->
         { Prefix = Some ifExpr
           Infix = Some ternary
+          Precedence = Precedence.None }
+    | In ->
+        { Prefix = None
+          Infix = None // todo, infix for list checking
           Precedence = Precedence.None }
     | _ ->
         { Prefix = None
@@ -275,6 +291,29 @@ and unary (state: ParserState) : ParseResult<Expr> =
     | Ok(right, state) -> Ok(EUnary(op, right, TInfer), state)
     | Error _ as f -> f
 
+and parseList (state: ParserState) : ParseResult<Expr> =
+    let state = setLabel state "List"
+    
+    let rec loop state exprs =
+        match peek state with
+        | Some { lexeme = Lexeme.Operator Operator.RightBracket } ->
+            let state = advance state
+            Ok(EList(List.rev exprs, TInfer), state)
+        | _ ->
+            match expression state Precedence.None with
+            | Ok(expr, state) ->
+                match peek state with
+                | Some { lexeme = Lexeme.Comma } ->
+                    let state = advance state
+                    loop state (expr :: exprs)
+                | Some { lexeme = Lexeme.Operator Operator.RightBracket } ->
+                    let state = advance state
+                    Ok(EList(List.rev (expr :: exprs), TInfer), state)
+                | _ -> Error("Expected ',' or ']'.", state)
+            | Error _ as f -> f
+
+    loop state []
+
 and grouping (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Grouping"
 
@@ -283,6 +322,16 @@ and grouping (state: ParserState) : ParseResult<Expr> =
         match nextToken state with
         | Some({ lexeme = Lexeme.Operator Operator.RightParen }, state) -> Ok(EGrouping (expr, TInfer), state)
         | _ -> Error("Expect ')' after expression.", state)
+    | Error _ as f -> f
+
+and index (state: ParserState) (left: Expr) : ParseResult<Expr> =
+    let state = setLabel state "Index"
+
+    match expression state Precedence.None with
+    | Ok(index, state) ->
+        match nextToken state with
+        | Some({ lexeme = Lexeme.Operator Operator.RightBracket }, state) -> Ok(EIndex(left, index, TInfer), state)
+        | _ -> Error("Expect ']' after index.", state)
     | Error _ as f -> f
 
 and ifExpr (state: ParserState) : ParseResult<Expr> =
@@ -495,7 +544,17 @@ and parseType (state: ParserState) : ParseResult<Grammar.Type> =
     | Some { lexeme = Lexeme.Identifier "string" } -> Ok(TString, advance state)
     | Some { lexeme = Lexeme.Identifier "unit" } -> Ok(TUnit, advance state)
     | Some { lexeme = Lexeme.Identifier "never" } -> Ok(TNever, advance state)
+    | Some { lexeme = Lexeme.Identifier "any" } -> Ok(TAny, advance state)
     | Some { lexeme = Lexeme.Operator Operator.LeftParen } -> parseFunctionType state
+    | Some { lexeme = Lexeme.Operator Operator.LeftBracket } ->
+        let state = advance state
+
+        match parseType state with
+        | Ok(innerType, state) ->
+            match peek state with
+            | Some { lexeme = Lexeme.Operator Operator.RightBracket } -> Ok(TTensor(innerType, DAny), advance state)
+            | _ -> Error("Expected ']' after type.", state)
+        | Error(s1, parserState) -> Error(s1, parserState)
     | _ -> Error("Expected a type after colon.", state)
 
 and parseBlock (state : ParserState) : ParseResult<Expr> =
