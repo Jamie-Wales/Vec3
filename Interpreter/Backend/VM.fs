@@ -26,7 +26,7 @@ type VM = {
     ScopeDepth: int
     Globals: Map<String, Value>
     Streams: OutputStreams
-    ExecutionHistory: ResizeArray<VM>  // New field to store execution history
+    ExecutionHistory: ResizeArray<VM>  
 }
 
 let createOutputStreams() = {
@@ -286,16 +286,7 @@ let interpretWithMode (chunk: Chunk) (vm: VM option) (isRepl: bool) =
             { existingVM with Chunk = chunk; IP = 0 }
         | _ -> 
             let newVM = createVM chunk
-            let newVM = appendOutput newVM ConstantPool "=== Constant Pool ==="
-            chunk.ConstantPool 
-            |> Seq.indexed 
-            |> Seq.fold (fun vm (i, value) -> 
-                appendOutput vm ConstantPool $"[{i}] {valueToString value}") newVM
-    
-    let vm = appendOutput vm Disassembly "\n=== Disassembled Chunk ==="
-    let disassembledChunk = disassembleChunkToString chunk "program"
-    let vm = appendOutput vm Disassembly disassembledChunk
-    
+            appendOutput newVM ConstantPool "=== Constant Pool ==="
     let vm = appendOutput vm Execution "\n=== Program Execution ==="
     let finalVm = run vm
     

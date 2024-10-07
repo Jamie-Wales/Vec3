@@ -142,14 +142,22 @@ if x > 0 then
 
     member private this.ExecuteCode() =
         let code = this.GetEditorText()
-        match debugVM with
+        match replState.VM with
         | Some vm ->
-            let finalVM = run vm
-            debugVM <- Some finalVM
+            match debugVM with
+            | Some debugVm ->
+                let finalVM = run debugVm
+                debugVM <- Some finalVM
+            | None ->
+                match parseAndCompile code with
+                | Some chunk ->
+                    let (newVM, _) = replExecute chunk (Some vm)
+                    replState <- { replState with VM = Some newVM }
+                | None -> printfn "Failed to compile code"
         | None ->
             match parseAndCompile code with
             | Some chunk ->
-                let (newVM, _) = replExecute chunk (Some replState.VM.Value)
+                let (newVM, _) = replExecute chunk None
                 replState <- { replState with VM = Some newVM }
             | None -> printfn "Failed to compile code"
         
