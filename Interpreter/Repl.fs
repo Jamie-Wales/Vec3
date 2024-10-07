@@ -88,3 +88,14 @@ let startRepl () =
     printfn "Type 'exit' to quit the REPL."
     let initialState = createInitialState()
     repl initialState
+let parseAndCompile (code: string) =
+        match parse code with
+        | Ok (program, _) ->
+            match compileProgram program with
+            | Ok (chunk, _) -> Some chunk
+            | Error (msg, _) ->
+                printfn $"Compilation error: {msg}"
+                None
+        | Error (msg, _) ->
+            printfn $"Parsing error: {msg}"
+            None 
