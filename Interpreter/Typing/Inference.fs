@@ -33,7 +33,7 @@ let checkLiteral (lit: Literal) : TType =
     | LUnit -> TUnit
 
 let checkIdentifier (env: TypeEnv) (token: Token) : Result<TType, TypeErrors> =
-    match token.lexeme with
+    match token.Lexeme with
     | Identifier name ->
         match Map.tryFind name env with
         | Some t -> Ok t
@@ -299,7 +299,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
         let newEnv =
             List.fold2
                 (fun acc param typ ->
-                    match param.lexeme with
+                    match param.Lexeme with
                     | Identifier name -> Map.add name typ acc
                     | _ -> acc)
                 env
@@ -412,7 +412,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
             let vecVar = freshTypeVar ()
 
             let opType =
-                match op.lexeme with
+                match op.Lexeme with
                 | Operator Plus
                 | Operator Minus
                 | Operator Star
@@ -451,10 +451,17 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
                 | Operator LessEqual -> TConstrain(typeVar, [ TInteger; TFloat; TRational; TComplex ])
                 | Operator Greater -> TConstrain(typeVar, [ TInteger; TFloat; TRational; TComplex ])
                 | Operator GreaterEqual -> TConstrain(typeVar, [ TInteger; TFloat; TRational; TComplex ])
+                
+                | Operator AmpersandAmpersand -> TBool
+                | Operator PipePipe -> TBool
+                
+                | Keyword And -> TBool
+                | Keyword Or -> TBool
+                
                 | _ -> TNever
 
             let returnType =
-                match op.lexeme with
+                match op.Lexeme with
                 | Operator Plus
                 | Operator Minus
                 | Operator Star
@@ -488,6 +495,12 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
                 | Operator LessEqual
                 | Operator Greater
                 | Operator GreaterEqual -> TBool
+                
+                | Operator AmpersandAmpersand -> TBool
+                | Operator PipePipe -> TBool
+                
+                | Keyword And -> TBool
+                | Keyword Or -> TBool
 
                 | _ -> TNever
 
@@ -522,7 +535,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
             let typeVar = freshTypeVar ()
 
             let opType =
-                match op.lexeme with
+                match op.Lexeme with
                 | Operator Minus -> TConstrain(typeVar, [ TInteger; TFloat; TRational; TComplex ]) // maybe make
                 // this a type var
                 // if i have a function (x, y) -> x + y, then x and y should be inferred to the same Constrain type, so that only one type can be passed in
@@ -765,7 +778,7 @@ and inferStmt (env: TypeEnv) (stmt: Stmt) : Result<TypeEnv * Substitution * Stmt
                 
                 let env =
                     match name with
-                    | { lexeme = Identifier name } -> Map.add name typ env
+                    | { Lexeme = Identifier name } -> Map.add name typ env
                     | _ -> env
                 
                 Ok(env, sub, SVariableDeclaration(name, expr, typ))

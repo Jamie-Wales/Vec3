@@ -96,9 +96,6 @@ let disassembleChunk (chunk: Chunk) name =
             disassembleInstruction chunk offset
             |> disassembleRec
     disassembleRec 0
-open System.Text
-open Vec3.Interpreter.Backend.Instructions
-open Vec3.Interpreter.Backend.Value
 
 let disassembleChunkToString (chunk: Chunk) name =
     let sb = StringBuilder()

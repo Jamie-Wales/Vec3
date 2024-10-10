@@ -45,7 +45,7 @@ and numbersEqual (a: VNumber) (b: VNumber) =
     | VRational(n1, d1), VRational(n2, d2) -> n1 * d2 = n2 * d1
     | VComplex(r1, i1), VComplex(r2, i2) -> r1 = r2 && i1 = i2
     | _ -> 
-        let (f1, f2) = (floatValue a, floatValue b)
+        let f1, f2 = (floatValue a, floatValue b)
         f1 = f2
 
 and floatValue =

@@ -84,12 +84,12 @@ let rec evalExpr (env: Env) =
                 | [], [] -> env
                 | p :: ps, a :: as' ->
                     let env' = evalParams env ps as'
-                    Map.add p.lexeme (evalExpr env a) env'
+                    Map.add p.Lexeme (evalExpr env a) env'
                 | _ -> failwith "invalid"
 
             let env' = evalParams env params' args
             evalExpr env' body
-        | EIdentifier ({ lexeme = name }, _) ->
+        | EIdentifier ({ Lexeme = name }, _) ->
             match name with
             | Identifier name ->
                 match name with
@@ -124,10 +124,10 @@ let rec evalExpr (env: Env) =
         | _ -> failwith "invalid"
     | ELambda(params', body, t') -> ELambda(params', body, t')
     | EIdentifier (name, typ) ->
-        match env.TryGetValue name.lexeme with
+        match env.TryGetValue name.Lexeme with
         | true, expr -> expr
         | false, _ ->
-            match name.lexeme with
+            match name.Lexeme with
             | Identifier "print"
             | Identifier "input"
             | Identifier "cos"
@@ -140,7 +140,7 @@ let rec evalExpr (env: Env) =
         let rhs = evalExpr env rhs
 
         match op, lhs, rhs with
-        | { lexeme = Operator op } , ELiteral (LNumber lhs, _), ELiteral (LNumber rhs, _) ->
+        | { Lexeme = Operator op } , ELiteral (LNumber lhs, _), ELiteral (LNumber rhs, _) ->
             match op with
             | Operator.Plus -> ELiteral (LNumber (evalAddition (lhs, rhs)), typ)
             | Operator.Minus -> ELiteral (LNumber (evalSubtraction (lhs, rhs)), typ)
@@ -155,12 +155,22 @@ let rec evalExpr (env: Env) =
             | Operator.Greater -> ELiteral (LBool (lhs > rhs), typ)
             | Operator.GreaterEqual -> ELiteral (LBool (lhs >= rhs), typ)
             | _ -> failwith "invalid"
+        | { Lexeme = Operator op }, ELiteral (LBool lhs, _), ELiteral (LBool rhs, _) ->
+            match op with
+            | Operator.AmpersandAmpersand -> ELiteral (LBool (lhs && rhs), typ) // should short circuit ?
+            | Operator.PipePipe -> ELiteral (LBool (lhs || rhs), typ)
+            | _ -> failwith "invalid"
+        | { Lexeme = Keyword kw }, ELiteral (LBool lhs, _), ELiteral (LBool rhs, _) ->
+            match kw with
+            | Keyword.And -> ELiteral (LBool (lhs && rhs), typ) // should short circuit ?
+            | Keyword.Or -> ELiteral (LBool (lhs || rhs), typ)
+            | _ -> failwith "invalid"
         | _ -> failwith "invalid"
     | EUnary(op, expr, typ) ->
         let value = evalExpr env expr
 
         match op, value with
-        | { lexeme = Operator op }, ELiteral (value, _) ->
+        | { Lexeme = Operator op }, ELiteral (value, _) ->
             match op with
             | Bang ->
                 match value with
@@ -209,7 +219,7 @@ and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
 
     | SVariableDeclaration(name, expr, _) ->
         let value = evalExpr env expr
-        ELiteral (LUnit, TUnit), Map.add name.lexeme value env
+        ELiteral (LUnit, TUnit), Map.add name.Lexeme value env
     
     | SPrintStatement (expr, _) ->
         let value = evalExpr env expr

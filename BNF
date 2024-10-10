@@ -1,0 +1,111 @@
+<program> ::= <stmt_list>
+
+<stmt_list> ::= <stmt> | <stmt_list> <stmt>
+
+<stmt> ::= <var_decl> | <expr_stmt>
+
+<var_decl> ::= "let" <identifier> "=" <expr>
+             | "let" <identifier> ":" <type> "=" <expr>
+
+<expr_stmt> ::= <expr>
+
+<expr> ::= <logical_expr> | <logical_expr> <logical_op> <expr>
+
+<logical_expr> ::= <comparison_expr> 
+                 | <logical_expr> <comparison_op> <comparison_expr>
+
+<comparison_expr> ::= <term>
+               | <comparison_expr> <comparison_op> <term>
+
+<term> ::= <factor> 
+         | <term> <low_precedence_op> <factor>
+
+<factor> ::= <primary> | <factor> <high_precedence_op> <primary>
+
+<primary> ::= <unary_expr> 
+           | <grouping_expr> 
+           | <literal> 
+           | <identifier> 
+           | <call_expr> 
+           | <index_expr> 
+           | <if_expr> 
+           | <ternary_expr> 
+           | <list_expr> 
+           | <lambda_expr>
+           | <block>
+
+<unary_expr> ::= <unary_operator> <expr>
+
+<grouping_expr> ::= "(" <expr> ")"
+
+<if_expr> ::= "if" <expr> "then" <expr> "else" <expr>
+
+<ternary_expr> ::= <expr> "if" <expr> "else" <expr>
+
+<list_expr> ::= "[" <expr_list> "]"
+
+<expr_list> ::= <expr> 
+              | <expr> "," <expr_list>
+
+<call_expr> ::= <expr> "(" <expr_list> ")"
+
+<index_expr> ::= <expr> "[" <expr> "]"
+
+<lambda_expr> ::= "(" <param_list> ")" "->" <expr>
+                | "(" <param_list> "):" <type> "->" <expr>
+                | "(" <param_list> "):" <type> <block>
+                | "(" <param_list> ")" <block>
+
+<param_list> ::= <param> 
+               | <param> ":" <type> 
+               | <param> "," <param_list>
+               | <param> ":" <type> "," <param_list>
+
+<block> ::= "{" <stmt_list> "}"
+
+<literal> ::= <number>
+            | <string>
+            | <bool>
+            | "()"
+
+<number> ::= <integer> 
+           | <float> 
+           | <rational> 
+           | <complex>
+
+<integer> ::= [0-9]+
+
+<float> ::= <integer> "." <integer>
+
+<rational> ::= <integer> "/" <integer>
+
+<complex> ::= <number> "i" 
+            | <number> "i" "+" <number> 
+            | <number> "i" "-" <number> 
+            | <number> "-" <number> "i"
+            | <number> "+" <number> "i"
+
+<string> ::= "\"" [a-zA-Z0-9]* "\""
+
+<bool> ::= "true" | "false"
+
+<type> ::= "int"
+         | "float"
+         | "rational"
+         | "complex"
+         | "bool"
+         | "string"
+         | "unit"
+         | "any"
+
+<identifier> ::= [a-zA-Z_][a-zA-Z0-9_]*
+
+<unary_operator> ::= "-" | "+" | "!"
+
+<low_precedence_op> ::= "+" | "-"
+
+<high_precedence_op> ::= "*" | "/" | "%"
+
+<comparison_op> ::= "==" | "!=" | "<" | ">" | "<=" | ">="
+
+<logical_op> ::= "and" | "or" | "&&" | "||"

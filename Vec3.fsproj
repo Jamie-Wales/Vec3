@@ -29,6 +29,7 @@
         <Compile Include="App.axaml.fs"/>
         <Compile Include="Program.fs"/>
         <Content Include=".gitignore"/>
+        <Content Include="BNF" />
         <Content Include="test.vec3" />
     </ItemGroup>
 

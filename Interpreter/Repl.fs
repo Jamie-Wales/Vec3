@@ -11,7 +11,6 @@ open Vec3.Interpreter.Typing.Inference
 open Vec3.Interpreter.Eval
 open Vec3.Interpreter.Preprocessor
 open Vec3.Interpreter.Grammar
-open Vec3.Interpreter.Token
 
 let rec exprToString  = function
     | ELiteral (lit, _) -> litToString lit
