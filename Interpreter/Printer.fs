@@ -17,7 +17,7 @@ and printASTWithIndent expr indent (sb: StringBuilder) =
     | EGrouping (expr, _) -> printGrouping expr indentStr indent sb
     | EAssignment (name, expr, _) -> 
         sb.AppendLine($"{indentStr}Assignment") |> ignore
-        sb.AppendLine($"{indentStr}Name: {name.lexeme}") |> ignore
+        sb.AppendLine($"{indentStr}Name: {name.Lexeme}") |> ignore
         sb.AppendLine($"{indentStr}Expression:") |> ignore
         printASTWithIndent expr (indent + 1) sb
         
@@ -59,7 +59,7 @@ let printStmt stmt indent =
         printASTWithIndent expr (indent + 1) sb
     | SVariableDeclaration (name, _, expr) ->
         sb.AppendLine($"{indentStr}Variable Declaration:") |> ignore
-        sb.AppendLine($"{indentStr}Name: {name.lexeme}") |> ignore
+        sb.AppendLine($"{indentStr}Name: {name.Lexeme}") |> ignore
     sb.ToString()
 
 let printProgram (program: Program) =

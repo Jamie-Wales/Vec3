@@ -25,11 +25,10 @@
         <Compile Include="Interpreter\Typing\Checker.fs" />
         <Compile Include="Interpreter\Eval.fs" />
         <Compile Include="Interpreter\Repl.fs" />
+
         <Compile Include="MainWindow.axaml.fs" />
         <Compile Include="App.axaml.fs" />
         <Compile Include="Program.fs" />
-        <Content Include=".gitignore" />
-        <Content Include="test.vec3" />
     </ItemGroup>
 
     <ItemGroup>

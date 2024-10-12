@@ -37,18 +37,18 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         let exprType = checkExpr env expr
 
         match exprType with
-        | Ok TInteger when op.lexeme = Operator Minus -> Ok TInteger
-        | Ok TFloat when op.lexeme = Operator Minus -> Ok TFloat
-        | Ok TRational when op.lexeme = Operator Minus -> Ok TRational
+        | Ok TInteger when op.Lexeme = Operator Minus -> Ok TInteger
+        | Ok TFloat when op.Lexeme = Operator Minus -> Ok TFloat
+        | Ok TRational when op.Lexeme = Operator Minus -> Ok TRational
 
-        | Ok TInteger when op.lexeme = Operator Plus -> Ok TInteger
-        | Ok TFloat when op.lexeme = Operator Plus -> Ok TFloat
-        | Ok TRational when op.lexeme = Operator Plus -> Ok TRational
+        | Ok TInteger when op.Lexeme = Operator Plus -> Ok TInteger
+        | Ok TFloat when op.Lexeme = Operator Plus -> Ok TFloat
+        | Ok TRational when op.Lexeme = Operator Plus -> Ok TRational
 
-        | Ok TBool when op.lexeme = Operator Bang -> Ok TBool
-        | Ok TInteger when op.lexeme = Operator Bang -> Ok TInteger
-        | Ok TFloat when op.lexeme = Operator Bang -> Ok TFloat
-        | Ok TRational when op.lexeme = Operator Bang -> Ok TRational
+        | Ok TBool when op.Lexeme = Operator Bang -> Ok TBool
+        | Ok TInteger when op.Lexeme = Operator Bang -> Ok TInteger
+        | Ok TFloat when op.Lexeme = Operator Bang -> Ok TFloat
+        | Ok TRational when op.Lexeme = Operator Bang -> Ok TRational
 
         | Ok t -> Error [ TypeError.InvalidOperator(op, t) ]
         | Error errors -> Error errors
@@ -57,95 +57,95 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         let rhsType = checkExpr env rhs
 
         match lhsType, rhsType with
-        | Ok TInteger, Ok TInteger when op.lexeme = Operator Plus -> Ok TInteger
-        // | Ok TInfer, Ok TInteger when op.lexeme = Operator Plus -> Ok TInteger
-        // | Ok TInteger, Ok TInfer when op.lexeme = Operator Plus -> Ok TInteger
+        | Ok TInteger, Ok TInteger when op.Lexeme = Operator Plus -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.Lexeme = Operator Plus -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.Lexeme = Operator Plus -> Ok TInteger
         
-        | Ok TFloat, Ok TFloat when op.lexeme = Operator Plus -> Ok TFloat
-        // | Ok TInfer, Ok TFloat when op.lexeme = Operator Plus -> Ok TFloat
-        // | Ok TFloat, Ok TInfer when op.lexeme = Operator Plus -> Ok TFloat
+        | Ok TFloat, Ok TFloat when op.Lexeme = Operator Plus -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.Lexeme = Operator Plus -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.Lexeme = Operator Plus -> Ok TFloat
         
-        | Ok TRational, Ok TRational when op.lexeme = Operator Plus -> Ok TRational
-        // | Ok TInfer, Ok TRational when op.lexeme = Operator Plus -> Ok TRational
-        // | Ok TRational, Ok TInfer when op.lexeme = Operator Plus -> Ok TRational
+        | Ok TRational, Ok TRational when op.Lexeme = Operator Plus -> Ok TRational
+        // | Ok TInfer, Ok TRational when op.Lexeme = Operator Plus -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.Lexeme = Operator Plus -> Ok TRational
 
         
-        | Ok TInteger, Ok TInteger when op.lexeme = Operator Minus -> Ok TInteger
-        // | Ok TInfer, Ok TInteger when op.lexeme = Operator Minus -> Ok TInteger
-        // | Ok TInteger, Ok TInfer when op.lexeme = Operator Minus -> Ok TInteger
+        | Ok TInteger, Ok TInteger when op.Lexeme = Operator Minus -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.Lexeme = Operator Minus -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.Lexeme = Operator Minus -> Ok TInteger
         
-        | Ok TFloat, Ok TFloat when op.lexeme = Operator Minus -> Ok TFloat
-        // | Ok TInfer, Ok TFloat when op.lexeme = Operator Minus -> Ok TFloat
-        // | Ok TFloat, Ok TInfer when op.lexeme = Operator Minus -> Ok TFloat
+        | Ok TFloat, Ok TFloat when op.Lexeme = Operator Minus -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.Lexeme = Operator Minus -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.Lexeme = Operator Minus -> Ok TFloat
         
-        | Ok TRational, Ok TRational when op.lexeme = Operator Minus -> Ok TRational
-        // | Ok TInfer, Ok TRational when op.lexeme = Operator Minus -> Ok TRational
-        // | Ok TRational, Ok TInfer when op.lexeme = Operator Minus -> Ok TRational
-        
-
-        | Ok TInteger, Ok TInteger when op.lexeme = Operator Star -> Ok TInteger
-        // | Ok TInfer, Ok TInteger when op.lexeme = Operator Star -> Ok TInteger
-        // | Ok TInteger, Ok TInfer when op.lexeme = Operator Star -> Ok TInteger
-        
-        | Ok TFloat, Ok TFloat when op.lexeme = Operator Star -> Ok TFloat
-        // | Ok TInfer, Ok TFloat when op.lexeme = Operator Star -> Ok TFloat
-        // | Ok TFloat, Ok TInfer when op.lexeme = Operator Star -> Ok TFloat
-        
-        | Ok TRational, Ok TRational when op.lexeme = Operator Star -> Ok TRational
-        // | Ok TInfer, Ok TRational when op.lexeme = Operator Star -> Ok TRational
-        // | Ok TRational, Ok TInfer when op.lexeme = Operator Star -> Ok TRational
+        | Ok TRational, Ok TRational when op.Lexeme = Operator Minus -> Ok TRational
+        // | Ok TInfer, Ok TRational when op.Lexeme = Operator Minus -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.Lexeme = Operator Minus -> Ok TRational
         
 
-        | Ok TInteger, Ok TInteger when op.lexeme = Operator Slash -> Ok TInteger
-        // | Ok TInfer, Ok TInteger when op.lexeme = Operator Slash -> Ok TInteger
-        // | Ok TInteger, Ok TInfer when op.lexeme = Operator Slash -> Ok TInteger
+        | Ok TInteger, Ok TInteger when op.Lexeme = Operator Star -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.Lexeme = Operator Star -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.Lexeme = Operator Star -> Ok TInteger
         
-        | Ok TFloat, Ok TFloat when op.lexeme = Operator Slash -> Ok TFloat
-        // | Ok TInfer, Ok TFloat when op.lexeme = Operator Slash -> Ok TFloat
-        // | Ok TFloat, Ok TInfer when op.lexeme = Operator Slash -> Ok TFloat
+        | Ok TFloat, Ok TFloat when op.Lexeme = Operator Star -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.Lexeme = Operator Star -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.Lexeme = Operator Star -> Ok TFloat
         
-        | Ok TRational, Ok TRational when op.lexeme = Operator Slash -> Ok TRational
-        // | Ok TInfer, Ok TRational when op.lexeme = Operator Slash -> Ok TRational
-        // | Ok TRational, Ok TInfer when op.lexeme = Operator Slash -> Ok TRational
+        | Ok TRational, Ok TRational when op.Lexeme = Operator Star -> Ok TRational
+        // | Ok TInfer, Ok TRational when op.Lexeme = Operator Star -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.Lexeme = Operator Star -> Ok TRational
         
-        
-        | Ok TInteger, Ok TInteger when op.lexeme = Operator StarStar -> Ok TInteger
-        // | Ok TInfer, Ok TInteger when op.lexeme = Operator StarStar -> Ok TInteger
-        // | Ok TInteger, Ok TInfer when op.lexeme = Operator StarStar -> Ok TInteger
-        
-        | Ok TFloat, Ok TFloat when op.lexeme = Operator StarStar -> Ok TFloat
-        // | Ok TInfer, Ok TFloat when op.lexeme = Operator StarStar -> Ok TFloat
-        // | Ok TFloat, Ok TInfer when op.lexeme = Operator StarStar -> Ok TFloat
-        
-        | Ok TRational, Ok TRational when op.lexeme = Operator StarStar -> Ok TRational
-        // | Ok TInfer, Ok TRational when op.lexeme = Operator StarStar -> Ok TRational
-        // | Ok TRational, Ok TInfer when op.lexeme = Operator StarStar -> Ok TRational
-        
-        | Ok TInteger, Ok TInteger when op.lexeme = Operator EqualEqual -> Ok TBool
-        | Ok TFloat, Ok TFloat when op.lexeme = Operator EqualEqual -> Ok TBool
-        | Ok TRational, Ok TRational when op.lexeme = Operator EqualEqual -> Ok TBool
-        | Ok TBool, Ok TBool when op.lexeme = Operator EqualEqual -> Ok TBool
 
-        | Ok TInteger, Ok TInteger when op.lexeme = Operator BangEqual -> Ok TBool
-        | Ok TFloat, Ok TFloat when op.lexeme = Operator BangEqual -> Ok TBool
-        | Ok TRational, Ok TRational when op.lexeme = Operator BangEqual -> Ok TBool
-        | Ok TInteger, Ok TInteger when op.lexeme = Operator Less -> Ok TBool
+        | Ok TInteger, Ok TInteger when op.Lexeme = Operator Slash -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.Lexeme = Operator Slash -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.Lexeme = Operator Slash -> Ok TInteger
+        
+        | Ok TFloat, Ok TFloat when op.Lexeme = Operator Slash -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.Lexeme = Operator Slash -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.Lexeme = Operator Slash -> Ok TFloat
+        
+        | Ok TRational, Ok TRational when op.Lexeme = Operator Slash -> Ok TRational
+        // | Ok TInfer, Ok TRational when op.Lexeme = Operator Slash -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.Lexeme = Operator Slash -> Ok TRational
+        
+        
+        | Ok TInteger, Ok TInteger when op.Lexeme = Operator StarStar -> Ok TInteger
+        // | Ok TInfer, Ok TInteger when op.Lexeme = Operator StarStar -> Ok TInteger
+        // | Ok TInteger, Ok TInfer when op.Lexeme = Operator StarStar -> Ok TInteger
+        
+        | Ok TFloat, Ok TFloat when op.Lexeme = Operator StarStar -> Ok TFloat
+        // | Ok TInfer, Ok TFloat when op.Lexeme = Operator StarStar -> Ok TFloat
+        // | Ok TFloat, Ok TInfer when op.Lexeme = Operator StarStar -> Ok TFloat
+        
+        | Ok TRational, Ok TRational when op.Lexeme = Operator StarStar -> Ok TRational
+        // | Ok TInfer, Ok TRational when op.Lexeme = Operator StarStar -> Ok TRational
+        // | Ok TRational, Ok TInfer when op.Lexeme = Operator StarStar -> Ok TRational
+        
+        | Ok TInteger, Ok TInteger when op.Lexeme = Operator EqualEqual -> Ok TBool
+        | Ok TFloat, Ok TFloat when op.Lexeme = Operator EqualEqual -> Ok TBool
+        | Ok TRational, Ok TRational when op.Lexeme = Operator EqualEqual -> Ok TBool
+        | Ok TBool, Ok TBool when op.Lexeme = Operator EqualEqual -> Ok TBool
 
-        | Ok TInteger, Ok TInteger when op.lexeme = Operator Less -> Ok TBool
-        | Ok TFloat, Ok TFloat when op.lexeme = Operator Less -> Ok TBool
-        | Ok TRational, Ok TRational when op.lexeme = Operator Less -> Ok TBool
+        | Ok TInteger, Ok TInteger when op.Lexeme = Operator BangEqual -> Ok TBool
+        | Ok TFloat, Ok TFloat when op.Lexeme = Operator BangEqual -> Ok TBool
+        | Ok TRational, Ok TRational when op.Lexeme = Operator BangEqual -> Ok TBool
+        | Ok TInteger, Ok TInteger when op.Lexeme = Operator Less -> Ok TBool
 
-        | Ok TInteger, Ok TInteger when op.lexeme = Operator LessEqual -> Ok TBool
-        | Ok TFloat, Ok TFloat when op.lexeme = Operator LessEqual -> Ok TBool
-        | Ok TRational, Ok TRational when op.lexeme = Operator LessEqual -> Ok TBool
+        | Ok TInteger, Ok TInteger when op.Lexeme = Operator Less -> Ok TBool
+        | Ok TFloat, Ok TFloat when op.Lexeme = Operator Less -> Ok TBool
+        | Ok TRational, Ok TRational when op.Lexeme = Operator Less -> Ok TBool
 
-        | Ok TInteger, Ok TInteger when op.lexeme = Operator Greater -> Ok TBool
-        | Ok TFloat, Ok TFloat when op.lexeme = Operator Greater -> Ok TBool
-        | Ok TRational, Ok TRational when op.lexeme = Operator Greater -> Ok TBool
+        | Ok TInteger, Ok TInteger when op.Lexeme = Operator LessEqual -> Ok TBool
+        | Ok TFloat, Ok TFloat when op.Lexeme = Operator LessEqual -> Ok TBool
+        | Ok TRational, Ok TRational when op.Lexeme = Operator LessEqual -> Ok TBool
 
-        | Ok TInteger, Ok TInteger when op.lexeme = Operator GreaterEqual -> Ok TBool
-        | Ok TFloat, Ok TFloat when op.lexeme = Operator GreaterEqual -> Ok TBool
-        | Ok TRational, Ok TRational when op.lexeme = Operator GreaterEqual -> Ok TBool
+        | Ok TInteger, Ok TInteger when op.Lexeme = Operator Greater -> Ok TBool
+        | Ok TFloat, Ok TFloat when op.Lexeme = Operator Greater -> Ok TBool
+        | Ok TRational, Ok TRational when op.Lexeme = Operator Greater -> Ok TBool
+
+        | Ok TInteger, Ok TInteger when op.Lexeme = Operator GreaterEqual -> Ok TBool
+        | Ok TFloat, Ok TFloat when op.Lexeme = Operator GreaterEqual -> Ok TBool
+        | Ok TRational, Ok TRational when op.Lexeme = Operator GreaterEqual -> Ok TBool
         
         | Error errors, Error errors' -> Error(errors @ errors')
         | Error errors, Ok _ -> Error errors
@@ -155,7 +155,7 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
     | EAssignment(token, expr, _) ->
         let exprType = checkExpr env expr
 
-        match token.lexeme with
+        match token.Lexeme with
         | Identifier name ->
             match Map.tryFind name env with
             | Some t ->
@@ -219,7 +219,7 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         let newEnv =
             List.fold
                 (fun acc (param, typ) ->
-                    match param.lexeme with
+                    match param.Lexeme with
                     | Identifier name -> Map.add name typ acc
                     | _ -> raise (TypeException([TypeError.UndefinedVariable param])))
                 env
@@ -267,11 +267,11 @@ and checkStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv * Result<TType, TypeErrors> 
         | Error errors -> env, Error errors
         | Ok exprType ->
             if typ = exprType then
-                match token.lexeme with
+                match token.Lexeme with
                 | Identifier name -> Map.add name typ env, Ok TUnit
                 | _ -> env, Error [ TypeError.UndefinedVariable token ]
             else if typ = TInfer then
-                match token.lexeme with
+                match token.Lexeme with
                 | Identifier name -> Map.add name exprType env, Ok TUnit
                 | _ -> env, Error [ TypeError.UndefinedVariable token ]
             else
@@ -299,39 +299,39 @@ let checkProgram (program: Program) =
 
 let rec formatTypeError (error: TypeError) : string =
     match error with
-    | UndefinedVariable token -> $"Undefined variable {token.lexeme} at Line: {token.line}"
-    | UndefinedFunction token -> $"Undefined function {token.lexeme} at Line: {token.line}"
-    | UndefinedType token -> $"Undefined type {token.lexeme} at Line: {token.line}"
-    | TypeMismatch(token, expected, actual) -> $"Type mismatch at Line: {token.line}, expected {expected}, got {actual}"
+    | UndefinedVariable token -> $"Undefined variable {token.Lexeme} at Line: {token.Position.Line}"
+    | UndefinedFunction token -> $"Undefined function {token.Lexeme} at Line: {token.Position.Line}"
+    | UndefinedType token -> $"Undefined type {token.Lexeme} at Line: {token.Position.Line}"
+    | TypeMismatch(token, expected, actual) -> $"Type mismatch at Line: {token.Position.Line}, expected {expected}, got {actual}"
     | InvalidAssignment(token, expected, actual) ->
-        $"Invalid assignment at Line: {token.line}, expected {expected}, got {actual}"
+        $"Invalid assignment at Line: {token.Position.Line}, expected {expected}, got {actual}"
     | InvalidArgumentCount(expr, expected, actual) ->
         $"Invalid argument count at expr: {expr}, expected {expected}, got {actual}"
     | InvalidArgumentType(expr, expected, actual) ->
         $"Invalid argument type at expr: {expr}, expected {expected}, got {actual}"
     | InvalidReturnType(token, expected, actual) ->
-        $"Invalid return type at Line: {token.line}, expected {expected}, got {actual}"
+        $"Invalid return type at Line: {token.Position.Line}, expected {expected}, got {actual}"
     | InvalidOperandType(token, expected, actual) ->
-        $"Invalid operand type at Line: {token.line}, expected {expected}, got {actual}"
-    | InvalidOperator(token, typ) -> $"Invalid operator at Line: {token.line}, got {typ}"
-    | InvalidFunctionType(token, typ) -> $"Invalid function type at Line: {token.line}, got {typ}"
-    | InvalidFunction(token, typ) -> $"Invalid function at Line: {token.line}, got {typ}"
+        $"Invalid operand type at Line: {token.Position.Line}, expected {expected}, got {actual}"
+    | InvalidOperator(token, typ) -> $"Invalid operator at Line: {token.Position.Line}, got {typ}"
+    | InvalidFunctionType(token, typ) -> $"Invalid function type at Line: {token.Position.Line}, got {typ}"
+    | InvalidFunction(token, typ) -> $"Invalid function at Line: {token.Position.Line}, got {typ}"
     | InvalidFunctionArgument(token, expected, actual) ->
-        $"Invalid function argument at Line: {token.line}, expected {expected}, got {actual}"
+        $"Invalid function argument at Line: {token.Position.Line}, expected {expected}, got {actual}"
     | InvalidFunctionReturn(token, expected, actual) ->
-        $"Invalid function return at Line: {token.line}, expected {expected}, got {actual}"
+        $"Invalid function return at Line: {token.Position.Line}, expected {expected}, got {actual}"
     | InvalidFunctionBody(token, expected, actual) ->
-        $"Invalid function body at Line: {token.line}, expected {expected}, got {actual}"
-    | InvalidBlock(token, expected, actual) -> $"Invalid block at Line: {token.line}, expected {expected}, got {actual}"
+        $"Invalid function body at Line: {token.Position.Line}, expected {expected}, got {actual}"
+    | InvalidBlock(token, expected, actual) -> $"Invalid block at Line: {token.Position.Line}, expected {expected}, got {actual}"
     | InvalidCall(expr, typ) -> $"Invalid call at expr: {expr}, got {typ}"
     | InvalidCallType(expr, expected, actual) ->
         $"Invalid call type at expr: {expr}, expected {expected}, got {actual}"
     | InvalidCallReturn(token, expected, actual) ->
-        $"Invalid call return at Line: {token.line}, expected {expected}, got {actual}"
+        $"Invalid call return at Line: {token.Position.Line}, expected {expected}, got {actual}"
     | InvalidCallBody(token, expected, actual) ->
-        $"Invalid call body at Line: {token.line}, expected {expected}, got {actual}"
-    | NotEnoughInformation(token) -> $"Not enough information at Line: {token.line}"
-    | InvalidOpen(token) -> $"Invalid open statement at Line: {token.line}"
+        $"Invalid call body at Line: {token.Position.Line}, expected {expected}, got {actual}"
+    | NotEnoughInformation(token) -> $"Not enough information at Line: {token.Position.Line}"
+    | InvalidOpen(token) -> $"Invalid open statement at Line: {token.Position.Line}"
     | InvalidIf(expr) -> $"Invalid if statement at expr: {expr}"
     | InvalidIndex(expr, typ) -> $"Invalid index at expr: {expr}, got {typ}"
 

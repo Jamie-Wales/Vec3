@@ -240,8 +240,45 @@ if x > 0 then
         if textEditor <> null then
             textEditor.Text
         else
+
+            // If we can't split the output as expected, just display it all in the output block
+            if outputBlock <> null then
+                outputBlock.Text <- vmOutput
+
+    member private this.Evaluate_Click(_sender: obj) (_e: RoutedEventArgs) =
+        if inputBox <> null then
+            let input = inputBox.Text
+            if not (String.IsNullOrWhiteSpace input) then
+                this.ClearOutput()
+                this.AppendOutput $"> {input}"
+                try
+                    let preprocessedInput = preprocessContent input
+                    let parsed = parse preprocessedInput
+                    match parsed with
+                    | Ok(_, program) ->
+                        match compileProgram program with
+                        | Ok (chunk, _) ->
+                            let vmOutput = interpret chunk
+                            this.ProcessVMOutput(vmOutput)
+                        | Error (msg, _) ->
+                            this.AppendOutput $"Compilation error: {msg}"
+                    | Error (msg, _) ->
+                        this.AppendOutput $"Parsing error: {msg}"
+                with
+                | e -> this.AppendOutput $"An error occurred: {e.Message}"
+
+    member private this.SwitchMode_Click(_sender: obj) (_e: RoutedEventArgs) =
+        isReplMode <- not isReplMode
+        if switchModeButton <> null then
+            switchModeButton.Content <- if isReplMode then "Switch to Multi-line Mode" else "Switch to REPL Mode"
+        if inputBox <> null then
+            inputBox.AcceptsReturn <- not isReplMode
+            this.ClearOutput()
+            inputBox.Text <- ""
+            this.UpdateLineNumbers(null)
             ""
 
     member this.SetEditorText(text: string) =
         if textEditor <> null then
             textEditor.Text <- text
+
