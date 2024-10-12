@@ -13,6 +13,11 @@ type Operator =
     | StarStar
     | Slash
     | Percent
+    | Caret
+    | Hash
+    
+    | AmpersandAmpersand
+    | PipePipe
     
     | EqualEqual
     | BangEqual
@@ -44,6 +49,28 @@ type Keyword =
     | Nil
     | Print
     | In
+    | And
+    | Or
+    
+    
+let keywordMap = 
+    [ "let", Keyword.Let
+      "if", Keyword.If
+      "then", Keyword.Then
+      "else", Keyword.Else
+      "for", Keyword.For
+      "true", Keyword.True
+      "false", Keyword.False
+      "nil", Keyword.Nil
+      "print", Keyword.Print
+      "in", Keyword.In
+      "and", Keyword.And
+      "or", Keyword.Or
+       ]
+    |> Map.ofList
+
+let isKeyword (s: string): bool =
+    Map.containsKey s keywordMap
 
 type BuiltInFunction =
     | Print
@@ -52,7 +79,20 @@ type BuiltInFunction =
     | Cos
     | Sin
     | Tan
-    
+    | Env
+
+
+let builtInFunctionMap =
+    [ "print", BuiltInFunction.Print
+      "input", BuiltInFunction.Input
+      "exit", BuiltInFunction.Exit
+      "cos", BuiltInFunction.Cos
+      "sin", BuiltInFunction.Sin
+      "tan", BuiltInFunction.Tan ]
+    |> Map.ofList
+
+let isBuiltInFunction (s: string): bool =
+    Map.containsKey s builtInFunctionMap
 
 type Lexeme =
     | Number of Number
@@ -65,9 +105,10 @@ type Lexeme =
     | Semicolon
     | Colon
 
-type Token = { lexeme: Lexeme; line: int }
+type Position = { Line: int; Column: int; }
+type Token = { Lexeme: Lexeme; Position: Position; }
 
-let Empty = { lexeme = Identifier ""; line = 0 }
+let Empty = { Lexeme = Identifier ""; Position = { Line = 0; Column = 0; } }
 
 let numberToString (n: Number): string =
     match n with
@@ -81,6 +122,7 @@ let operatorToString (op: Operator): string =
     match op with
     | Plus -> "+"
     | Minus -> "-"
+    | Hash -> "#"
     | Star -> "*"
     | StarStar -> "**"
     | Slash -> "/"
@@ -102,6 +144,9 @@ let operatorToString (op: Operator): string =
     | Dot -> "."
     | DotDot -> ".."
     | Percent -> "%"
+    | AmpersandAmpersand -> "and"
+    | PipePipe -> "or"
+    | Caret -> "^"
 
 let lexemeToString (lex: Lexeme): string =
     match lex with
@@ -115,4 +160,4 @@ let lexemeToString (lex: Lexeme): string =
     | Colon -> ":"
 
 let tokenToString (token: Token): string =
-    $"{{ lexeme: %s{lexemeToString token.lexeme}; line: %d{token.line} }}"
+    $"{{ lexeme: %s{lexemeToString token.Lexeme}; line: %d{token.Position.Line} }}"

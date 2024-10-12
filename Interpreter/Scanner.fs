@@ -2,236 +2,473 @@ module Vec3.Interpreter.Scanner
 
 open Token
 open System
-open System.Text.RegularExpressions
 
-type TokenPattern =
-    | PComplex
-    | PRational
-    | PFloat
-    | PInteger
-    | PString
-    
-    | PArrow
-    
-    | PPlus
-    | PMinus
-    | PStar
-    | PStarStar
-    | PSlash
-    | PPercent
-    
-    | PEqualEqual
-    | PBangEqual
-    | PLess
-    | PLessEqual
-    | PGreater
-    | PGreaterEqual
-    | PEqual
-    
-    | PBang
-    
-    | PLeftParen
-    | PRightParen
-    
-    | PLeftBrace
-    | PRightBrace
-    
-    | PLeftBracket
-    | PRightBracket
-    
-    | PColon
-    | PComma
-    | PSemicolon
-    | PDotDot
-    | PDot
-    
-    | PIdentifier
-    
+type LexerError =
+    | UnterminatedString of Position
+    | UnterminatedComment of Position
+    | UnterminatedBlockComment of Position
+    | UnknownCharacter of char * Position
+    | UnexpectedCharacter of char * Position
+    | UnexpectedEndOfFile of Position
+    | InvalidNumber of string * Position
+    | InvalidIdentifier of string * Position
+    | Other of string * Position
+    | Errors of LexerError list
 
-let tokenPatterns : (TokenPattern * Regex) list = [
-    (PComplex, Regex(@"^([+-]?\d*\.?\d*)i\s*([+-]\s*\d*\.?\d+)?$", RegexOptions.Compiled));
-    (PRational, Regex(@"^\d+/\d+", RegexOptions.Compiled));
-    (PFloat, Regex(@"^\d+\.\d+", RegexOptions.Compiled));
-    (PInteger, Regex(@"^\d+", RegexOptions.Compiled))
-    (PString, Regex(@"^"".*?""", RegexOptions.Compiled))
-    
-    (PArrow, Regex(@"^->", RegexOptions.Compiled))
-    
-    (PPlus, Regex(@"^\+", RegexOptions.Compiled));
-    (PMinus, Regex(@"^-", RegexOptions.Compiled))
-    (PStarStar, Regex(@"^\*\*", RegexOptions.Compiled))
-    (PStar, Regex(@"^\*", RegexOptions.Compiled));
-    (PSlash, Regex(@"^/", RegexOptions.Compiled))
-    (PPercent, Regex(@"^%", RegexOptions.Compiled))
-    
-    (PEqualEqual, Regex(@"^==", RegexOptions.Compiled));
-    (PBangEqual, Regex(@"^!=", RegexOptions.Compiled));
-    (PLess, Regex(@"^<", RegexOptions.Compiled));
-    (PLessEqual, Regex(@"^<=", RegexOptions.Compiled));
-    (PGreater, Regex(@"^>", RegexOptions.Compiled));
-    (PGreaterEqual, Regex(@"^>=", RegexOptions.Compiled));
-    (PEqual, Regex(@"^=", RegexOptions.Compiled))
-    
-    (PBang, Regex(@"^!", RegexOptions.Compiled));
-    
-    (PLeftParen, Regex(@"^\(", RegexOptions.Compiled));
-    (PRightParen, Regex(@"^\)", RegexOptions.Compiled))
-    
-    (PLeftBrace, Regex(@"^{", RegexOptions.Compiled))
-    (PRightBrace, Regex(@"^}", RegexOptions.Compiled))
-    
-    (PLeftBracket, Regex(@"^\[", RegexOptions.Compiled))
-    (PRightBracket, Regex(@"^\]", RegexOptions.Compiled))
-    
-    (PColon, Regex(@"^:", RegexOptions.Compiled))
-    (PComma, Regex(@"^,", RegexOptions.Compiled))
-    (PSemicolon, Regex(@"^;", RegexOptions.Compiled))
-    (PDotDot, Regex(@"^\.\.", RegexOptions.Compiled))
-    (PDot, Regex(@"^\.", RegexOptions.Compiled))
-    
-    (PIdentifier, Regex(@"^[a-zA-Z_][a-zA-Z0-9_]*", RegexOptions.Compiled))
-]
+exception LexerException of LexerError
 
-let keywordMap = 
-    [ "let", Keyword.Let
-      "if", Keyword.If
-      "then", Keyword.Then
-      "else", Keyword.Else
-      "for", Keyword.For
-      "true", Keyword.True
-      "false", Keyword.False
-      "nil", Keyword.Nil
-      "print", Keyword.Print
-      "in", Keyword.In
-       ]
-    |> Map.ofList
+type LexerResult<'a> = Result<'a, LexerError>
 
-let isKeyword (value: string) =
-    keywordMap |> Map.containsKey value
 
-let whitespace = Regex(@"^\s+", RegexOptions.Compiled)
+let isWhitespace = Char.IsWhiteSpace
 
-let parseComplex (value: string) =
-    let parseImaginary (part: string) =
-        if part = "i" then 1
-        elif part = "-i" then -1
-        else
-            int (part.Replace("i", ""))
+let isDigit = Char.IsDigit
 
-    let parseReal (part: string) =
-        float part
+let isLetter = Char.IsLetter
 
-    let parts = value.Replace(" ", "").Split([|'i'|], StringSplitOptions.RemoveEmptyEntries)
+let intVal (c: char) : int = int c - int '0'
 
-    match parts with
-    | [||] ->
-        Lexeme.Number (Number.Complex (0, 0))
-    | [|""|] ->
-        Lexeme.Number (Number.Complex (0, parseImaginary "i"))
+let str2lst (s: string) = [ for c in s -> c ]
 
-    | [|rPart|] when value.EndsWith("i") ->
-        let i = parseImaginary rPart
-        Lexeme.Number (Number.Complex (0, i))
+let scString (sStr: char list) : (char list * string) option =
+    let rec inner (sStr: char list) (sVal: string) : (char list * string) option =
+        match sStr with
+        | '"' :: tail -> Some(tail, sVal)
+        | c :: tail -> inner tail (sVal + string c)
+        | _ -> None
 
-    | [|rPart|] ->
-        let r = parseReal rPart
-        Lexeme.Number (Number.Complex (r, 0))
+    inner sStr ""
 
-    | [|rPart; iPart|] ->
-        let r = parseReal rPart
-        let i = parseImaginary iPart
-        Lexeme.Number (Number.Complex (r, i))
+let rec scIdentifier (iStr: char list) (iVal: string) : (char list * string) option =
+    match iStr with
+    | c :: tail when isLetter c -> scIdentifier tail (iVal + string c)
+    | _ -> Some(iStr, iVal)
 
-    | _ -> failwith "Invalid complex number format"
-    
-let lexemeFromIndent (value: string) =
-    if isKeyword value then
-        Lexeme.Keyword keywordMap[value]
-    else
-        Lexeme.Identifier value
+// float: 1.0, 1.0e-3, 1.0e3
+// int: 1, 100, 1000
+// rational: 1/2, 1/3, 1/4
+// complex: 1+2i, 1-2i, 1+2i, 1-2i, i, -i, 2i, etc TODO
+// int return is length of the number string
+let scNumber (nStr: char list) : (char list * Number * int) option =
+    let rec scInt (iStr: char list) (iVal: int) (len: int) : char list * int * int =
+        match iStr with
+        | c :: tail when isDigit c -> scInt tail (10 * iVal + intVal c) (len + 1)
+        | '-' :: tail -> let iTail, iInt, iLen = scInt tail 0 len in (iTail, -iInt, iLen + 1)
+        | '+' :: tail -> scInt tail iVal (len + 1)
+        | _ -> (iStr, iVal, len)
 
-let lexemeFromPattern (pattern: TokenPattern) (value: string) =
-    match pattern with
-    | PComplex -> parseComplex value
-    | PRational -> let parts = value.Split('/')
-                   let n = bigint.Parse parts[0]
-                   let d = bigint.Parse parts[1]
-                   Lexeme.Number (Number.Rational (int n, int d))
-    | PFloat -> Lexeme.Number (Number.Float (float value))
-    | PInteger -> Lexeme.Number (Number.Integer (int value))
-    | PString -> Lexeme.String (value.Substring(1, value.Length - 2))
-    
-    | PPlus -> Lexeme.Operator Operator.Plus
-    | PMinus -> Lexeme.Operator Operator.Minus
-    | PStar -> Lexeme.Operator Operator.Star
-    | PSlash -> Lexeme.Operator Operator.Slash
-    | PStarStar -> Lexeme.Operator Operator.StarStar
-    | PPercent -> Lexeme.Operator Operator.Percent
-    
-    | PEqualEqual -> Lexeme.Operator Operator.EqualEqual
-    | PBangEqual -> Lexeme.Operator Operator.BangEqual
-    | PLess -> Lexeme.Operator Operator.Less
-    | PLessEqual -> Lexeme.Operator Operator.LessEqual
-    | PGreater -> Lexeme.Operator Operator.Greater
-    | PGreaterEqual -> Lexeme.Operator Operator.GreaterEqual
-    | PEqual -> Lexeme.Operator Operator.Equal
-    
-    | PBang -> Lexeme.Operator Operator.Bang
-    
-    | PLeftParen -> Lexeme.Operator Operator.LeftParen
-    | PRightParen -> Lexeme.Operator Operator.RightParen
-    
-    | PLeftBrace -> Lexeme.Operator Operator.LeftBrace
-    | PRightBrace -> Lexeme.Operator Operator.RightBrace
-    
-    | PLeftBracket -> Lexeme.Operator Operator.LeftBracket
-    | PRightBracket -> Lexeme.Operator Operator.RightBracket
-    
-    | PComma -> Lexeme.Comma
-    | PSemicolon -> Lexeme.Semicolon
-    | PArrow -> Lexeme.Operator Operator.Arrow
-    | PColon -> Lexeme.Colon
-    | PDot -> Lexeme.Operator Operator.Dot
-    
-    | PIdentifier -> lexemeFromIndent value
+    let rec scFraction (fStr: char list) (acc: float) (div: float) (len: int) : char list * float * int =
+        match fStr with
+        | c :: tail when isDigit c ->
+            let newAcc = acc + (float (intVal c)) / div
+            scFraction tail newAcc (div * 10.0) (len + 1)
+        | _ -> (fStr, acc, len)
 
-let tokenize (input: string) =
-    let rec tokenize' (input: string) (line: int) (tokens: Token list) =
-        if String.IsNullOrEmpty(input) then
-            List.rev tokens 
-        else
-            let input, line =
-                if input.StartsWith("\n") then
-                    (input.Substring(1), line + 1)
+    match nStr with
+    | c :: tail when isDigit c ->
+        let iStr, iVal, iLen = scInt tail (intVal c) 1
+
+        match iStr with
+        | '/' :: ratTail ->
+            let fStr, fVal, fLen = scInt ratTail 0 0
+            Some(fStr, Number.Rational(iVal, int fVal), iLen + fLen + 1)
+        | '.' :: fracTail ->
+            let fStr, fVal, fLen = scFraction fracTail 0.0 10.0 0
+
+            match fStr with
+            | 'e' :: expTail
+            | 'E' :: expTail ->
+                let eStr, expVal, eLen = scInt expTail 0 0
+                Some(eStr, Number.Float((float iVal + fVal) * (10.0 ** float expVal)), iLen + fLen + eLen + 2)
+            | _ -> Some(fStr, Number.Float(float iVal + fVal), iLen + fLen + 1)
+        | 'e' :: expTail ->
+            let eStr, expVal, eLen = scInt expTail 0 0
+            Some(eStr, Number.Float(float iVal * (10.0 ** float expVal)), iLen + eLen + 1)
+        | _ -> Some(iStr, Number.Integer iVal, iLen)
+    | _ -> None
+
+
+let lexer (input: string) : LexerResult<Token list> =
+    let rec scan (input: char list) (position: Position) : LexerResult<Token> list =
+        match input with
+        | [] -> []
+        | '-' :: '>' :: tail ->
+            Ok
+                { Lexeme = Operator Arrow
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 2 }
+        | '*' :: '*' :: tail ->
+            Ok
+                { Lexeme = Operator StarStar
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 2 }
+        | '+' :: tail ->
+            Ok
+                { Lexeme = Operator Plus
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | '-' :: tail ->
+            Ok
+                { Lexeme = Operator Minus
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | '*' :: tail ->
+            Ok
+                { Lexeme = Operator Star
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | '/' :: tail ->
+            Ok
+                { Lexeme = Operator Slash
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | '%' :: tail ->
+            Ok
+                { Lexeme = Operator Percent
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | '^' :: tail ->
+            Ok
+                { Lexeme = Operator Caret
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+
+        | '(' :: tail ->
+            Ok
+                { Lexeme = Operator LeftParen
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | ')' :: tail ->
+            Ok
+                { Lexeme = Operator RightParen
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | '[' :: tail ->
+            Ok
+                { Lexeme = Operator LeftBracket
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | ']' :: tail ->
+            Ok
+                { Lexeme = Operator RightBracket
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | '{' :: tail ->
+            Ok
+                { Lexeme = Operator LeftBrace
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | '}' :: tail ->
+            Ok
+                { Lexeme = Operator RightBrace
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+
+        | ':' :: tail ->
+            Ok { Lexeme = Colon; Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | ',' :: tail ->
+            Ok { Lexeme = Comma; Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | ';' :: tail ->
+            Ok
+                { Lexeme = Semicolon
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+
+        | '#' :: tail ->
+            Ok
+                { Lexeme = Operator Hash
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+
+        | '.' :: c :: tail when isDigit c ->
+            let nRes = scNumber ('0' :: '.' :: c :: tail)
+
+            match nRes with
+            | None ->
+                Error(InvalidNumber(string c, position))
+                :: scan
+                    tail
+                    { position with
+                        Column = position.Column + 1 }
+            | Some(nStr, nVal, nLen) ->
+                Ok
+                    { Lexeme = Number nVal
+                      Position = position }
+
+                :: scan
+                    nStr
+                    { position with
+                        Column = position.Column + nLen }
+
+        | '.' :: '.' :: tail ->
+            Ok
+                { Lexeme = Operator DotDot
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 2 }
+        | '.' :: tail ->
+            Ok
+                { Lexeme = Operator Dot
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | '=' :: '=' :: tail ->
+            Ok
+                { Lexeme = Operator EqualEqual
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 2 }
+        | '!' :: '=' :: tail ->
+            Ok
+                { Lexeme = Operator BangEqual
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 2 }
+        | '<' :: '=' :: tail ->
+            Ok
+                { Lexeme = Operator LessEqual
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 2 }
+        | '<' :: tail ->
+            Ok
+                { Lexeme = Operator Less
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | '>' :: '=' :: tail ->
+            Ok
+                { Lexeme = Operator GreaterEqual
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 2 }
+        | '>' :: tail ->
+            Ok
+                { Lexeme = Operator Greater
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | '=' :: tail ->
+            Ok
+                { Lexeme = Operator Equal
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+        | '!' :: tail ->
+            Ok
+                { Lexeme = Operator Bang
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+
+        | '&' :: '&' :: tail ->
+            Ok
+                { Lexeme = Operator AmpersandAmpersand
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 2 }
+        | '|' :: '|' :: tail ->
+            Ok
+                { Lexeme = Operator PipePipe
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 2 }
+
+        | c :: tail when isWhitespace c ->
+            match c with
+            | '\n' -> scan tail { Line = position.Line + 1; Column = 0 }
+            | _ ->
+                scan
+                    tail
+                    { position with
+                        Column = position.Column + 1 }
+
+        | c :: tail when isDigit c ->
+            let nRes = scNumber (c :: tail)
+
+            match nRes with
+            | None ->
+                Error(InvalidNumber(string c, position))
+                :: scan
+                    tail
+                    { position with
+                        Column = position.Column + 1 }
+            | Some(nStr, nVal, nLen) ->
+                Ok
+                    { Lexeme = Number nVal
+                      Position = position }
+
+                :: scan
+                    nStr
+                    { position with
+                        Column = position.Column + nLen }
+
+        | '"' :: tail ->
+            match scString tail with
+            | None ->
+                Error(UnterminatedString position)
+                :: scan
+                    tail
+                    { position with
+                        Column = position.Column + 1 }
+            | Some(sStr, sVal) ->
+                Ok
+                    { Lexeme = Lexeme.String sVal
+                      Position = position }
+                :: scan
+                    sStr
+                    { position with
+                        Column = position.Column + sVal.Length + 2 }
+
+
+        | c :: tail when isLetter c ->
+            match scIdentifier tail (string c) with
+            | None ->
+                Error(InvalidIdentifier(string c, position))
+                :: scan
+                    tail
+                    { position with
+                        Column = position.Column + 1 }
+            | Some(iStr, iVal) ->
+                if isKeyword iVal then
+                    Ok
+                        { Lexeme = Keyword keywordMap[iVal]
+                          Position = position }
+                    :: scan
+                        iStr
+                        { position with
+                            Column = position.Column + iVal.Length }
                 else
-                    (input, line)
-                    
-            let input =
-                match whitespace.Match(input) with
-                | m when m.Success ->
-                    input.Substring(m.Length)
-                | _ -> input
-                    
-            if String.IsNullOrEmpty(input) then
-                List.rev tokens
-            else
-                let matched =
-                    tokenPatterns
-                    |> List.tryPick (fun (tokenType, pattern) ->
-                        let m = pattern.Match(input)
-                        
-                        if m.Success then
-                            let value = m.Value
-                            let remainingInput = input.Substring(m.Length)
-                            let lexeme = lexemeFromPattern tokenType value
-                            let token = { lexeme = lexeme; line = line }
-                            Some (token, remainingInput)
-                        else None)
-                    
-                match matched with
-                | Some (token, remainingInput) ->
-                    tokenize' remainingInput line (token :: tokens)
-                | None ->
-                    printfn $"Unrecognized token at line %d{line}: '%c{input[0]}'"
-                    tokenize' (input.Substring(1)) line tokens
-    tokenize' input 1 []
+                    Ok
+                        { Lexeme = Identifier iVal
+                          Position = position }
+                    :: scan
+                        iStr
+                        { position with
+                            Column = position.Column + iVal.Length }
+        | _ :: tail ->
+            Error(UnknownCharacter(List.head input, position))
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+
+    let tokens = scan (str2lst input) { Line = 1; Column = 0 }
+
+    if
+        List.exists
+            (fun x ->
+                match x with
+                | Error _ -> true
+                | _ -> false)
+            tokens
+    then
+        let errors =
+            List.filter
+                (fun x ->
+                    match x with
+                    | Error _ -> true
+                    | _ -> false)
+                tokens
+
+        let errors =
+            List.map
+                (fun x ->
+                    match x with
+                    | Error e -> e
+                    | _ -> failwith "Impossible")
+                errors
+
+        Error(Errors errors)
+    else
+        let tokens =
+            List.map
+                (fun x ->
+                    match x with
+                    | Ok t -> t
+                    | _ -> failwith "Impossible")
+                tokens
+
+        Ok tokens
+
+let tokenize = lexer

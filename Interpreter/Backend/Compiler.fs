@@ -80,7 +80,7 @@ and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
             compileOperands state
             |> Result.bind (fun ((), state) -> emitOpCode opCode state)
         
-        match op.lexeme with
+        match op.Lexeme with
         | Operator Plus -> emitBinaryOp OP_CODE.ADD state
         | Operator Minus -> emitBinaryOp OP_CODE.SUBTRACT state
         | Operator Star -> emitBinaryOp OP_CODE.MULTIPLY state
@@ -97,7 +97,7 @@ and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
         | Operator LessEqual ->
             emitBinaryOp OP_CODE.GREATER state
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)
-        | _ -> Error ($"Unsupported binary operator: {op.lexeme}", state)
+        | _ -> Error ($"Unsupported binary operator: {op.Lexeme}", state)
 
 and compileGrouping grouping : Compiler<unit> =
     fun state ->
@@ -105,11 +105,11 @@ and compileGrouping grouping : Compiler<unit> =
         
 and compileIdentifier (token: Token) : Compiler<unit> =
     fun state ->
-        if state.Locals.ContainsKey token.lexeme then
-            let index = state.Locals.[token.lexeme]
+        if state.Locals.ContainsKey token.Lexeme then
+            let index = state.Locals[token.Lexeme]
             emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte index |] state
         else
-            let constIndex = addConstant state.Chunk (Value.String (lexemeToString token.lexeme))
+            let constIndex = addConstant state.Chunk (Value.String (lexemeToString token.Lexeme))
             emitBytes [| byte (opCodeToByte OP_CODE.GET_GLOBAL); byte constIndex |] state
     
 let rec compileStmt (stmt: Stmt) : Compiler<unit> =
@@ -129,10 +129,10 @@ and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit
         compileExpr initializer state
         |> Result.bind (fun ((), state) ->
             if state.ScopeDepth > 0 then
-                let locals = Map.add name.lexeme state.Locals.Count state.Locals
+                let locals = Map.add name.Lexeme state.Locals.Count state.Locals
                 Ok ((), { state with Locals = locals })
             else
-                let constIndex = addConstant state.Chunk (Value.String (lexemeToString name.lexeme))
+                let constIndex = addConstant state.Chunk (Value.String (lexemeToString name.Lexeme))
                 emitBytes [| byte (opCodeToByte OP_CODE.DEFINE_GLOBAL); byte constIndex |] state)
 
 let compileProgram (program: Program) : CompilerResult<Chunk> =

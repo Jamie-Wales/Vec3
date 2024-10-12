@@ -36,6 +36,8 @@ type Type =
 
 and Dims = Dims of int list | DAny | DVar of TypeVar
 
+type TType = Type
+
 type Number =
     | LInteger of int
     | LFloat of float
