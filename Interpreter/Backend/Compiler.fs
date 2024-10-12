@@ -52,8 +52,24 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         match expr with
         | ELiteral (lit, _) -> compileLiteral lit state
         | EBinary (left, op, right, _) -> compileBinary left op right state
-        | EIdentifier (e, _)-> compileIdentifier e state
+        | EIdentifier (i, _)-> compileIdentifier i state
+        | EGrouping (e, _ ) -> compileGrouping e state
+        | EUnary (token, u, _ ) -> compileUnary token u state
         | _ -> Error ("Unsupported expression type", state)
+        
+and compileUnary (op: Token) (expr: Expr) : Compiler<unit> =
+    fun state ->
+        let _ = compileExpr expr state 
+        let emitBinaryOp opCode state =
+            emitOpCode opCode state
+            
+        match op.lexeme with
+        | Operator Bang -> emitBinaryOp OP_CODE.NOT state
+        | Operator Minus -> emitBinaryOp OP_CODE.NEGATE state
+        | _ -> Error ($"Unsupported binary operator: {op.lexeme}", state)
+        
+        
+    
 and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
     fun state ->
         let compileOperands state =
@@ -83,6 +99,10 @@ and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)
         | _ -> Error ($"Unsupported binary operator: {op.Lexeme}", state)
 
+and compileGrouping grouping : Compiler<unit> =
+    fun state ->
+        compileExpr grouping state
+        
 and compileIdentifier (token: Token) : Compiler<unit> =
     fun state ->
         if state.Locals.ContainsKey token.Lexeme then

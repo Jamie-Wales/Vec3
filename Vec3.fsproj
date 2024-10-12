@@ -11,34 +11,42 @@
         <Compile Include="Interpreter\Preprocessor.fs" />
         <Compile Include="Interpreter\Token.fs" />
         <Compile Include="Interpreter\Grammar.fs" />
-        <Compile Include="Interpreter\Printer.fs"/>
-        <Compile Include="Interpreter\Scanner.fs"/>
-        <Compile Include="Interpreter\Parser.fs"/>
-        <Compile Include="Interpreter\Backend\Value.fs"/>
-        <Compile Include="Interpreter\Backend\Instructions.fs"/>
-        <Compile Include="Interpreter\Backend\Chunk.fs"/>
-        <Compile Include="Interpreter\Backend\VM.fs"/>
-        <Compile Include="Interpreter\Backend\Compiler.fs"/>
+        <Compile Include="Interpreter\Printer.fs" />
+        <Compile Include="Interpreter\Scanner.fs" />
+        <Compile Include="Interpreter\Parser.fs" />
+        <Compile Include="Interpreter\Backend\Value.fs" />
+        <Compile Include="Interpreter\Backend\Instructions.fs" />
+        <Compile Include="Interpreter\Backend\Chunk.fs" />
+        <Compile Include="Interpreter\Backend\VM.fs" />
+        <Compile Include="Interpreter\Backend\Compiler.fs" />
         <Compile Include="Interpreter\Typing\Exceptions.fs" />
         <Compile Include="Interpreter\Typing\Builtins.fs" />
         <Compile Include="Interpreter\Typing\Inference.fs" />
         <Compile Include="Interpreter\Typing\Checker.fs" />
         <Compile Include="Interpreter\Eval.fs" />
         <Compile Include="Interpreter\Repl.fs" />
-        <Compile Include="MainWindow.axaml.fs"/>
-        <Compile Include="App.axaml.fs"/>
-        <Compile Include="Program.fs"/>
-        <Content Include=".gitignore"/>
-        <Content Include="BNF" />
-        <Content Include="test.vec3" />
+
+        <Compile Include="MainWindow.axaml.fs" />
+        <Compile Include="App.axaml.fs" />
+        <Compile Include="Program.fs" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="11.1.0"/>
-        <PackageReference Include="Avalonia.Desktop" Version="11.1.0"/>
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.0"/>
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.0"/>
+        <Content Include="grammar/vec3.tmLanguage.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="11.1.0" />
+        <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.1.0" />
+        <PackageReference Include="Avalonia.Desktop" Version="11.1.0" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.0" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.0" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.0"/>
+        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.0" />
+        <PackageReference Include="AvaloniaEdit.TextMate" Version="11.1.0" />
+        <PackageReference Include="Russkyc.AvaloniaAutoGrid" Version="1.0.0" />
+        <PackageReference Include="TextMateSharp" Version="1.0.63" />
+        <PackageReference Include="TextMateSharp.Grammars" Version="1.0.63" />
     </ItemGroup>
 </Project>
