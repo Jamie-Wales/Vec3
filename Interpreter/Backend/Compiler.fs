@@ -63,10 +63,10 @@ and compileUnary (op: Token) (expr: Expr) : Compiler<unit> =
         let emitBinaryOp opCode state =
             emitOpCode opCode state
             
-        match op.lexeme with
+        match op.Lexeme with
         | Operator Bang -> emitBinaryOp OP_CODE.NOT state
         | Operator Minus -> emitBinaryOp OP_CODE.NEGATE state
-        | _ -> Error ($"Unsupported binary operator: {op.lexeme}", state)
+        | _ -> Error ($"Unsupported binary operator: {op.Lexeme}", state)
         
         
     

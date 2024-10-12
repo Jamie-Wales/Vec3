@@ -112,7 +112,7 @@ let startRepl () =
 let parseAndCompile (code: string) =
         let code = preprocessContent code
         match parse code with
-        | Ok (program, _) ->
+        | Ok (_, program) ->
             match inferProgram defaultTypeEnv program with
             | Ok (_,_, program) ->
                 match compileProgram program with
