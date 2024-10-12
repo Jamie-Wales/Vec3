@@ -120,7 +120,7 @@ type MainWindow () as this =
                     let preprocessedInput = preprocessContent input
                     let parsed = parse preprocessedInput
                     match parsed with
-                    | Ok(program, _) ->
+                    | Ok(_, program) ->
                         match compileProgram program with
                         | Ok (chunk, _) ->
                             let vmOutput = interpret chunk

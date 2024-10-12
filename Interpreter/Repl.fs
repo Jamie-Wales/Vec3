@@ -1,7 +1,6 @@
 module Vec3.Interpreter.Repl
 
 open System
-open Vec3.Interpreter.Backend
 open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Parser
 open Vec3.Interpreter.Backend.Compiler
@@ -12,18 +11,18 @@ open Vec3.Interpreter.Eval
 open Vec3.Interpreter.Preprocessor
 open Vec3.Interpreter.Grammar
 
+let litToString = function
+    | LNumber n -> numberToString n
+    | LString s -> $"\"{s}\""
+    | LBool b -> $"{b}"
+    | LUnit -> "()"
+    
 let rec exprToString  = function
     | ELiteral (lit, _) -> litToString lit
     | EList (exprs, _) -> $"""[{String.concat ", " (List.map exprToString exprs)}]"""
     | _ -> "()"
 
-and litToString = function
-    | LNumber n -> numberToString n
-    | LString s -> $"\"{s}\""
-    | LBool b -> $"{b}"
-    | LUnit -> "()"
-
-and numberToString = function
+let numberToString = function
     | LInteger x -> $"{x}"
     | LFloat x -> $"{x}"
     | LRational (n, d) -> $"{n}/{d}"
@@ -36,7 +35,7 @@ let evalRepl =
         let input = Console.ReadLine()
         let input = preprocessContent input
         match parse input with
-        | Ok (program, _) ->
+        | Ok (_, program) ->
             let typeCheck = inferProgram typeEnv program
             match typeCheck with
             | Ok (typeEnv, _, program) ->
@@ -64,7 +63,7 @@ let executeInRepl (state: ReplState) (input: string) : ReplState =
     try
         let parsed = parse input
         match parsed with
-        | Ok(program, _) ->
+        | Ok(_, program) ->
             match compileProgram program with
             | Ok (chunk, _) ->
                 let vm = 

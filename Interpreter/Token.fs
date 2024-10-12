@@ -14,6 +14,7 @@ type Operator =
     | Slash
     | Percent
     | Caret
+    | Hash
     
     | AmpersandAmpersand
     | PipePipe
@@ -68,6 +69,9 @@ let keywordMap =
        ]
     |> Map.ofList
 
+let isKeyword (s: string): bool =
+    Map.containsKey s keywordMap
+
 type BuiltInFunction =
     | Print
     | Input
@@ -75,7 +79,20 @@ type BuiltInFunction =
     | Cos
     | Sin
     | Tan
-    
+    | Env
+
+
+let builtInFunctionMap =
+    [ "print", BuiltInFunction.Print
+      "input", BuiltInFunction.Input
+      "exit", BuiltInFunction.Exit
+      "cos", BuiltInFunction.Cos
+      "sin", BuiltInFunction.Sin
+      "tan", BuiltInFunction.Tan ]
+    |> Map.ofList
+
+let isBuiltInFunction (s: string): bool =
+    Map.containsKey s builtInFunctionMap
 
 type Lexeme =
     | Number of Number
@@ -105,6 +122,7 @@ let operatorToString (op: Operator): string =
     match op with
     | Plus -> "+"
     | Minus -> "-"
+    | Hash -> "#"
     | Star -> "*"
     | StarStar -> "**"
     | Slash -> "/"

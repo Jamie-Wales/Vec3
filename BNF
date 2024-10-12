@@ -75,7 +75,16 @@
 
 <integer> ::= [0-9]+
 
-<float> ::= <integer> "." <integer>
+<float> ::= <integer> "." <integer> 
+           | <integer> "." <integer> "e" <integer>
+           | <integer> "." <integer> "E" <integer>
+           | <integer> "e" <integer>
+           | "." <integer> "e" <integer>
+           | <integer> "E" <integer>
+           | "." <integer> "E" <integer>
+           | "." <integer>
+           
+              
 
 <rational> ::= <integer> "/" <integer>
 

@@ -1,13 +1,15 @@
 module Vec3.Interpreter.Typing.Builtins
 
 open Vec3.Interpreter.Grammar
+open Vec3.Interpreter.Token
 
 
-let BuiltinFunctions: Map<string, TType> =
-    [ "print", TFunction([ TAny ], TUnit)
-      "input", TFunction([], TString)
-      "cos", TFunction([ TFloat ], TFloat)
-      "sin", TFunction([ TFloat ], TFloat)
-      "tan", TFunction([ TFloat ], TFloat)
-      "env", TFunction([], TUnit) ]
+let BuiltinFunctions: Map<BuiltInFunction, TType> =
+    [ Print, TFunction([ TAny ], TUnit)
+      Input, TFunction([], TString)
+      Cos, TFunction([ TFloat ], TFloat)
+      Sin, TFunction([ TFloat ], TFloat)
+      Tan, TFunction([ TFloat ], TFloat)
+      Env, TFunction([], TUnit) 
+      Exit, TFunction([], TUnit) ]
     |> Map.ofList
