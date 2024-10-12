@@ -3,6 +3,7 @@ module Vec3.Interpreter.Typing.Builtins
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 
+type TType = Vec3.Interpreter.Grammar.Type
 
 let BuiltinFunctions: Map<BuiltInFunction, TType> =
     [ Print, TFunction([ TAny ], TUnit)
