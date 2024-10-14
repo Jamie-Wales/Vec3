@@ -26,6 +26,7 @@
         <Compile Include="Interpreter\Eval.fs" />
         <Compile Include="Interpreter\Repl.fs" />
         <Compile Include="Interpreter\Parser2.fs" />
+        <Compile Include="Interpreter\ConstantFolding.fs" />
 
         <Compile Include="MainWindow.axaml.fs" />
         <Compile Include="App.axaml.fs" />
