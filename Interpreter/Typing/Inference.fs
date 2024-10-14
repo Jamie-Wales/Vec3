@@ -441,13 +441,15 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
                         let argSubs = List.map (fun (_, sub, _) -> sub) argResults
                         let argExprs = List.map (fun (_, _, expr) -> expr) argResults
                         
-                        let t = TFunction(argTypes, TAny)
+                        let returnT = TTypeVariable (freshTypeVar ())
+                        
+                        let t = TFunction(argTypes, returnT)
                         
                         match unify t (TTypeVariable a) with
                         | Ok sub ->
-                            let t = applySubstitution sub (TTypeVariable a)
+                            let t' = applySubstitution sub (TTypeVariable a)
                             
-                            Ok(TAny, sub, ECall(expr, argExprs, TAny))
+                            Ok(t', sub, ECall(expr, argExprs, t))
                         | Error errs -> Error errs
 
             | _ -> Error [ TypeError.InvalidCall(callee, t) ]
