@@ -1,9 +1,11 @@
+
 module Vec3.Interpreter.Backend.Value
 
 type Value =
     | VNumber of VNumber
     | String of string
     | Boolean of bool
+    | Function
     | Nil
 
 and VNumber =

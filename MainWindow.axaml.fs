@@ -12,7 +12,6 @@ open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Compiler
 
-
 type MainWindow () as this =
     inherit Window ()
 
@@ -36,10 +35,11 @@ type MainWindow () as this =
     do
         AvaloniaXamlLoader.Load(this)
         this.InitializeComponent()
+
     member private this.InitializeComponent() =
         textEditor <- this.FindControl<TextEditor>("Editor")
         switchToReplButton <- this.FindControl<Button>("SwitchToReplButton")
-        switchToStandardButton <- this.FindControl<Button>("SwitchToStandardButton")  // Button for switching to standard mode
+        switchToStandardButton <- this.FindControl<Button>("SwitchToStandardButton")
         executeButton <- this.FindControl<Button>("ExecuteButton")
         debugButton <- this.FindControl<Button>("DebugButton")
         stepBackButton <- this.FindControl<Button>("StepBackButton")
@@ -48,36 +48,8 @@ type MainWindow () as this =
         disassemblyOutput <- this.FindControl<TextBlock>("DisassemblyOutput")
         executionOutput <- this.FindControl<TextBlock>("ExecutionOutput")
         standardOutput <- this.FindControl<TextBlock>("StandardOutput")
-        exitDebugButton <- this.FindControl<Button>("ExitDebugButton")  // Button for exiting debug mode
+        exitDebugButton <- this.FindControl<Button>("ExitDebugButton")
         globalsOutput <- this.FindControl<TextBlock>("GlobalsOutput")
-
-        // Verify that all controls are not null
-        if textEditor = null then
-            raise (System.Exception("TextEditor not found"))
-        if switchToReplButton = null then
-            raise (System.Exception("SwitchToReplButton not found"))
-        if switchToStandardButton = null then
-            raise (System.Exception("SwitchToStandardButton not found"))
-        if executeButton = null then
-            raise (System.Exception("ExecuteButton not found"))
-        if debugButton = null then
-            raise (System.Exception("DebugButton not found"))
-        if stepBackButton = null then
-            raise (System.Exception("StepBackButton not found"))
-        if stepForwardButton = null then
-            raise (System.Exception("StepForwardButton not found"))
-        if constantPoolOutput = null then
-            raise (System.Exception("ConstantPoolOutput not found"))
-        if disassemblyOutput = null then
-            raise (System.Exception("DisassemblyOutput not found"))
-        if executionOutput = null then
-            raise (System.Exception("ExecutionOutput not found"))
-        if standardOutput = null then
-            raise (System.Exception("StandardOutput not found"))
-        if exitDebugButton = null then
-            raise (System.Exception("ExitDebugButton not found"))
-        if globalsOutput = null then
-            raise (System.Exception("GlobalsOutput not found"))
             
         if textEditor <> null then
             textEditor.ShowLineNumbers <- true
@@ -150,14 +122,14 @@ if x > 0 then
                 debugVM <- Some finalVM
             | None ->
                 match parseAndCompile code with
-                | Some chunk ->
-                    let (newVM, _) = replExecute chunk (Some vm)
+                | Some func ->
+                    let (newVM, _) = replExecute func (Some vm)
                     replState <- { replState with VM = Some newVM }
                 | None -> printfn "Failed to compile code"
         | None ->
             match parseAndCompile code with
-            | Some chunk ->
-                let (newVM, _) = replExecute chunk None
+            | Some func ->
+                let (newVM, _) = replExecute func None
                 replState <- { replState with VM = Some newVM }
             | None -> printfn "Failed to compile code"
         
@@ -167,8 +139,8 @@ if x > 0 then
         let code = this.GetEditorText()
 
         match parseAndCompile code with
-        | Some chunk ->
-            let vm = createVM chunk
+        | Some func ->
+            let vm = createVM func
             debugVM <- Some vm
             this.UpdateOutputStreams()
             this.SetButtonStates(isRepl = false, isDebug = true)
@@ -190,7 +162,8 @@ if x > 0 then
         | Some vm ->
             let steppedVM = stepVM vm
             debugVM <- Some steppedVM
-            if steppedVM.IP >= steppedVM.Chunk.Code.Count then
+            let currentFrame = getCurrentFrame steppedVM
+            if currentFrame.IP >= currentFrame.Function.Chunk.Code.Count then
                 this.SetButtonStates(isRepl = false, isDebug = true, canStepForward = false)
             this.UpdateOutputStreams()
         | None -> ()
@@ -200,7 +173,8 @@ if x > 0 then
         | Some vm ->
             let previousVM = stepBackVM vm
             debugVM <- Some previousVM
-            if previousVM.IP = 0 then
+            let currentFrame = getCurrentFrame previousVM
+            if currentFrame.IP = 0 then
                 this.SetButtonStates(isRepl = false, isDebug = true, canStepBack = false)
             else
                 this.SetButtonStates(isRepl = false, isDebug = true, canStepForward = true)
@@ -214,14 +188,14 @@ if x > 0 then
             | None -> 
                 match replState.VM with
                 | Some vm -> vm
-                | None -> createVM (emptyChunk())
-
+                | None -> createVM (initFunction "Main")
         constantPoolOutput.Text <- getStreamContent vm.Streams.ConstantPool
         disassemblyOutput.Text <- getStreamContent vm.Streams.Disassembly
         executionOutput.Text <- getStreamContent vm.Streams.Execution
         standardOutput.Text <- getStreamContent vm.Streams.StandardOutput
         globalsOutput.Text <- getStreamContent vm.Streams.Globals
-        this.HighlightCurrentInstruction(vm.IP)
+        let currentFrame = getCurrentFrame vm
+        this.HighlightCurrentInstruction(currentFrame.IP)
 
     member private this.SetButtonStates(isRepl: bool, isDebug: bool, ?canStepBack: bool, ?canStepForward: bool) =
         switchToReplButton.IsEnabled <- not isRepl && not isDebug
