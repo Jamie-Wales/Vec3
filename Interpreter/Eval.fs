@@ -206,6 +206,8 @@ let rec evalExpr (env: Env) =
             match op with
             | Operator.AmpersandAmpersand -> ELiteral(LBool(lhs && rhs), typ) // should short circuit ?
             | Operator.PipePipe -> ELiteral(LBool(lhs || rhs), typ)
+            | Operator.EqualEqual -> ELiteral(LBool(lhs = rhs), typ)
+            | Operator.BangEqual -> ELiteral(LBool(not (lhs = rhs)), typ)
             | _ -> failwith "invalid"
         | { Lexeme = Keyword kw }, ELiteral(LBool lhs, _), ELiteral(LBool rhs, _) ->
             match kw with

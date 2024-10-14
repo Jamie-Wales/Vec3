@@ -589,7 +589,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
                 match opResult with
                 | Ok sub'' ->
                     let sub = combineMaps sub'' sub
-                    let opResult = unify opType returnType
+                    // let opResult = unify opType returnType
 
                     match opResult with
                     | Ok sub''' ->
