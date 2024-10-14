@@ -10,6 +10,7 @@ open Vec3.Interpreter.Typing.Inference
 open Vec3.Interpreter.Eval
 open Vec3.Interpreter.Preprocessor
 open Vec3.Interpreter.Grammar
+open Vec3.Interpreter.ConstantFolding
 
 let litToString = function
     | LNumber n -> numberToString n
@@ -39,6 +40,12 @@ let evalRepl =
             let typeCheck = inferProgram typeEnv program
             match typeCheck with
             | Ok (typeEnv, _, program) ->
+                let program = foldConstants program
+                // List.iter (function
+                //     | SVariableDeclaration(n, expr, typ) -> printfn $"{exprToString expr}"
+                //     | SExpression(expr, typ) -> printfn $"{exprToString expr}"
+                //     | _ -> ()) program
+                    
                 let value, env = evalProgram env program
                 printfn $"{exprToString value}"
                 repl' env typeEnv

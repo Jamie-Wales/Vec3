@@ -472,6 +472,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
                 | Operator Minus
                 | Operator Star
                 | Operator Slash
+                | Operator Caret
                 | Operator StarStar ->
                     match t1, t2 with
                     | TInteger, _
@@ -530,6 +531,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
                 | Operator Minus
                 | Operator Star
                 | Operator Slash
+                | Operator Caret
                 | Operator StarStar ->
                     match t1, t2 with
                     | TInteger, _
