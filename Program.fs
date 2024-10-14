@@ -26,9 +26,9 @@ module Program =
         match argv with
         | [||] | [|"-g"|] ->
             // Start the GUI
-            evalRepl
+            // evalRepl
+            buildAvaloniaApp().StartWithClassicDesktopLifetime(argv)
             0
-            // buildAvaloniaApp().StartWithClassicDesktopLifetime(argv)
         | [|"-r"|] ->
             // Explicit REPL mode
             startRepl ()
