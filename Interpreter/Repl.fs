@@ -56,7 +56,6 @@ type ReplState = {
     VM: VM option
 }
 
-
 let createInitialState () = {
     VM = None
 }
@@ -67,16 +66,19 @@ let executeInRepl (state: ReplState) (input: string) : ReplState =
         match parsed with
         | Ok(_, program) ->
             match compileProgram program with
-            | Ok (chunk, _) ->
+            | Ok (func, _) ->
                 let vm = 
                     match state.VM with
-                    | Some existingVM -> 
-                        { existingVM with 
-                            Chunk = chunk
+                    | Some existingVM ->
+                        let newFrame = {
+                            Function = func
                             IP = 0
-                            Stack = ResizeArray<Value>(256) }
-                    | None -> createVM chunk
-                let updatedVM = run vm
+                            StackBase = existingVM.Stack.Count
+                        }
+                        existingVM.Frames.Add(newFrame)
+                        existingVM
+                    | None -> createVM func
+                let (updatedVM, _) = interpretWithMode func (Some vm) true
                 { VM = Some updatedVM }
             | Error (msg, _) ->
                 printfn $"Compilation error: {msg}"
@@ -110,19 +112,19 @@ let startRepl () =
     repl initialState
     
 let parseAndCompile (code: string) =
-        let code = preprocessContent code
-        match parse code with
-        | Ok (_, program) ->
-            match inferProgram defaultTypeEnv program with
-            | Ok (_,_, program) ->
-                match compileProgram program with
-                | Ok (chunk, _) -> Some chunk
-                | Error (msg, _) ->
-                    printfn $"Compilation error: {msg}"
-                    None
-            | Error errors ->
-                printfn $"Type error: {formatTypeErrors errors}"
+    let code = preprocessContent code
+    match parse code with
+    | Ok (_, program) ->
+        match inferProgram defaultTypeEnv program with
+        | Ok (_, _, program) ->
+            match compileProgram program with
+            | Ok (func, _) -> Some func
+            | Error (msg, _) ->
+                printfn $"Compilation error: {msg}"
                 None
-        | Error (e, s) ->
-            printfn $"Parsing error: {formatParserError e s}"
-            None 
+        | Error errors ->
+            printfn $"Type error: {formatTypeErrors errors}"
+            None
+    | Error (e, s) ->
+        printfn $"Parsing error: {formatParserError e s}"
+        None

@@ -19,9 +19,15 @@ type OutputStreams = {
     StandardOutput: seq<string>
     Globals: seq<string>
 }
-type VM = {
-    Chunk: Chunk
+
+type CallFrame = {
+    Function: Function
     IP: int
+    StackBase: int
+}
+
+type VM = {
+    Frames: ResizeArray<CallFrame>
     Stack: ResizeArray<Value>
     ScopeDepth: int
     Globals: Map<String, Value>
@@ -36,29 +42,40 @@ let createOutputStreams() = {
     StandardOutput = Seq.empty
     Globals = Seq.empty
 }
-let createVM (chunk: Chunk) =
+
+let getCurrentFrame (vm: VM) =
+    vm.Frames[vm.Frames.Count - 1]
+
+let createVM (mainFunc: Function) : VM =
     let constantPool = 
-        chunk.ConstantPool 
+        mainFunc.Chunk.ConstantPool 
         |> Seq.indexed 
         |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
-    
     let disassembly = 
-        disassembleChunkToString chunk "program"
+        disassembleChunkToString mainFunc.Chunk "program"
         |> fun s -> s.Split(Environment.NewLine) |> Seq.ofArray
-    
-    { Chunk = chunk
-      IP = 0
-      Stack = ResizeArray<Value>(256)
-      ScopeDepth = 0
-      Globals = Map.empty
-      Streams = { ConstantPool = constantPool
-                  Disassembly = disassembly
-                  Execution = Seq.empty
-                  StandardOutput = Seq.empty
-                  Globals = Seq.empty }
-      ExecutionHistory = ResizeArray<VM>() }
+    let vm = {
+        Frames = ResizeArray<CallFrame>()
+        Stack = ResizeArray<Value>(256)
+        ScopeDepth = 0
+        Globals = Map.empty
+        Streams = { 
+            ConstantPool = constantPool
+            Disassembly = disassembly
+            Execution = Seq.empty
+            StandardOutput = Seq.empty
+            Globals = Seq.empty 
+        }
+        ExecutionHistory = ResizeArray<VM>()
+    }
+    let mainFrame = {
+        Function = mainFunc
+        IP = 0
+        StackBase = 0
+    }
+    vm.Frames.Add(mainFrame)
+    vm
 
-// New function to save VM state
 let saveVMState (vm: VM) =
     vm.ExecutionHistory.Add(vm)
 
@@ -74,7 +91,7 @@ let appendOutput (vm: VM) (streamType: StreamType) (str: string) =
         | StandardOutput -> { vm.Streams with StandardOutput = appendToStream vm.Streams.StandardOutput str }
         | Globals -> { vm.Streams with Globals = appendToStream vm.Streams.Globals str }
     { vm with Streams = updatedStreams }
-    
+
 let push (vm: VM) (value: Value) =
     vm.Stack.Add(value)
     vm
@@ -88,24 +105,29 @@ let peek (vm: VM) offset =
     vm.Stack[vm.Stack.Count - 1 - offset]
 
 let readByte (vm: VM) =
-    let byte = vm.Chunk.Code[vm.IP]
-    ({ vm with IP = vm.IP + 1 }, byte)
+    let frame = getCurrentFrame vm
+    let byte = frame.Function.Chunk.Code[frame.IP]
+    let updatedFrame = { frame with IP = frame.IP + 1 }
+    vm.Frames[vm.Frames.Count - 1] <- updatedFrame
+    (vm, byte)
 
 let readConstant (vm: VM) =
     let vm, byte = readByte vm
-    if int byte >= vm.Chunk.ConstantPool.Count then
-        failwithf "Constant index out of range: %d (pool size: %d)" (int byte) vm.Chunk.ConstantPool.Count
-    let constant = vm.Chunk.ConstantPool[int byte]
+    let frame = getCurrentFrame vm
+    if int byte >= frame.Function.Chunk.ConstantPool.Count then
+        failwithf $"Constant index out of range: %d{int byte} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
+    let constant = frame.Function.Chunk.ConstantPool[int byte]
     (constant, vm)
 
 let readConstantLong (vm: VM) =
     let vm, byte1 = readByte vm
     let vm, byte2 = readByte vm
     let vm, byte3 = readByte vm
+    let frame = getCurrentFrame vm
     let index = (int byte1) ||| ((int byte2) <<< 8) ||| ((int byte3) <<< 16)
-    if index >= vm.Chunk.ConstantPool.Count then
-        failwithf "Long constant index out of range: %d (pool size: %d)" index vm.Chunk.ConstantPool.Count
-    let constant = vm.Chunk.ConstantPool[index]
+    if index >= frame.Function.Chunk.ConstantPool.Count then
+        failwithf $"Long constant index out of range: %d{index} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
+    let constant = frame.Function.Chunk.ConstantPool[index]
     (constant, vm)
 
 let defineGlobal (vm: VM) (name: string) (value: Value) =
@@ -122,9 +144,134 @@ let binaryOp (vm: VM) (op: Value -> Value -> Value) =
     let a, vm = pop vm
     let result = op a b
     push vm result
+
+let rec run (vm: VM) =
+    let rec runLoop vm =
+        let frame = getCurrentFrame vm
+        if frame.IP >= frame.Function.Chunk.Code.Count then
+            if vm.Frames.Count > 1 then
+                vm.Frames.RemoveAt(vm.Frames.Count - 1)
+                runLoop vm
+            else
+                vm
+        else
+            saveVMState vm
+            let vm, instruction = readByte vm
+            let updatedVM = 
+                match byteToOpCode instruction with
+                | opcode ->
+                    let vm = appendOutput vm Execution $"Executing: {opCodeToString opcode}"
+                    match opcode with
+                    | CONSTANT ->
+                        let constant, vm = readConstant vm
+                        push vm constant
+                    | CONSTANT_LONG ->
+                        let constant, vm = readConstantLong vm
+                        push vm constant
+                    | ADD -> binaryOp vm add
+                    | SUBTRACT -> binaryOp vm subtract
+                    | MULTIPLY -> binaryOp vm multiply
+                    | DIVIDE -> binaryOp vm divide
+                    | NEGATE ->
+                        let value, vm = pop vm
+                        push vm (negate value)
+                    | EQUAL ->
+                        let b, vm = pop vm
+                        let a, vm = pop vm
+                        push vm (Boolean (valuesEqual a b))
+                    | GREATER ->
+                        let b, vm = pop vm
+                        let a, vm = pop vm
+                        match (a, b) with
+                        | VNumber x, VNumber y -> push vm (Boolean (x > y))
+                        | _ -> failwith "Operands must be numbers"
+                    | LESS ->
+                        let b, vm = pop vm
+                        let a, vm = pop vm
+                        match (a, b) with
+                        | VNumber x, VNumber y -> push vm (Boolean (x < y))
+                        | _ -> failwith "Operands must be numbers"
+                    | TRUE -> push vm (Boolean true)
+                    | FALSE -> push vm (Boolean false)
+                    | NOT ->
+                        let value, vm = pop vm
+                        push vm (Boolean (not (isTruthy value)))
+                    | PRINT ->
+                        let value, vm = pop vm
+                        appendOutput vm StandardOutput $"{valueToString value}"
+                    | POP ->
+                        let _, vm = pop vm
+                        vm
+                    | DEFINE_GLOBAL ->
+                        let constant, vm = readConstant vm
+                        match constant with
+                        | Value.String name ->
+                            let value, vm = pop vm
+                            let vm = appendOutput vm Execution $"Defining global variable: {name} = {valueToString value}"
+                            defineGlobal vm name value
+                        | _ -> failwith "Expected string constant for variable name"
+                    | GET_GLOBAL ->
+                        let constant, vm = readConstant vm
+                        match constant with
+                        | Value.String name ->
+                            match getGlobal vm name with
+                            | Some value -> 
+                                push vm value
+                            | None -> 
+                                failwith $"Undefined variable '{name}'"
+                        | _ -> failwith "Expected string constant for variable name"
+                    | RETURN ->
+                        if vm.Stack.Count > 0 then
+                            let result, vm = pop vm
+                            appendOutput vm Execution $"Return value: {valueToString result}"
+                        else
+                            vm
+                    | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
+            runLoop updatedVM
+    runLoop vm
+
+let interpretWithMode (func: Function) (vm: VM option) (isRepl: bool) =
+    let vm = 
+        match vm with
+        | Some existingVM when isRepl ->
+            let newFrame = {
+                Function = func
+                IP = 0
+                StackBase = existingVM.Stack.Count
+            }
+            existingVM.Frames.Add(newFrame)
+            existingVM
+        | _ -> 
+            let newVM = createVM func
+            appendOutput newVM ConstantPool "=== Constant Pool ==="
+    let vm = appendOutput vm Execution "\n=== Program Execution ==="
+    let finalVm = run vm
+    (finalVm, finalVm.Streams)
+
+let interpret (func: Function) =
+    let _, streams = interpretWithMode func None false
+    streams
+
+let replExecute (func: Function) (vm: VM option) =
+    interpretWithMode func vm true
+
+let getStreamContent (stream: seq<string>) =
+    String.concat Environment.NewLine (Seq.toArray stream)
+
+let resetStreams (vm: VM) =
+    { vm with Streams = createOutputStreams() }
+    
 let stepVM (vm: VM) =
-    if vm.IP >= vm.Chunk.Code.Count then
-        vm  
+    let currentFrame = getCurrentFrame vm
+    if currentFrame.IP >= currentFrame.Function.Chunk.Code.Count then
+        // Current function has finished executing
+        if vm.Frames.Count > 1 then
+            // Pop the current frame and return to the calling function
+            vm.Frames.RemoveAt(vm.Frames.Count - 1)
+            vm
+        else
+            // All frames have finished, return the VM
+            vm
     else
         saveVMState vm
         let vm, instruction = readByte vm
@@ -192,14 +339,19 @@ let stepVM (vm: VM) =
                             failwith $"Undefined variable '{name}'"
                     | _ -> failwith "Expected string constant for variable name"
                 | RETURN ->
-                    if vm.Stack.Count > 0 then
-                        let result, vm = pop vm
-                        appendOutput vm Execution $"Return value: {valueToString result}"
+                    if vm.Frames.Count > 1 then
+                        let returnValue, vm = 
+                            if vm.Stack.Count > 0 then
+                                pop vm
+                            else
+                                Value.Nil, vm
+                        vm.Frames.RemoveAt(vm.Frames.Count - 1)
+                        push vm returnValue
                     else
                         vm
-                | _ -> failwith $"Unimplemented opcode: {opCodeToString
-                opcode}"
+                | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
         updatedVM
+
 let stepBackVM (vm: VM) =
     if vm.ExecutionHistory.Count > 0 then
         let previousState = vm.ExecutionHistory[vm.ExecutionHistory.Count - 1]
@@ -207,100 +359,3 @@ let stepBackVM (vm: VM) =
         previousState
     else
         vm 
-let rec run (vm: VM) =
-    if vm.IP >= vm.Chunk.Code.Count then
-        vm  
-    else
-        let vm, instruction = readByte vm
-        match byteToOpCode instruction with
-        | CONSTANT ->
-            let constant, vm = readConstant vm
-            run (push vm constant)
-        | CONSTANT_LONG ->
-            let constant, vm = readConstantLong vm
-            run (push vm constant)
-        | ADD -> run (binaryOp vm add)
-        | SUBTRACT -> run (binaryOp vm subtract)
-        | MULTIPLY -> run (binaryOp vm multiply)
-        | DIVIDE -> run (binaryOp vm divide)
-        | NEGATE ->
-            let value, vm = pop vm
-            run (push vm (negate value))
-        | EQUAL ->
-            let b, vm = pop vm
-            let a, vm = pop vm
-            run (push vm (Boolean (valuesEqual a b)))
-        | GREATER ->
-            let b, vm = pop vm
-            let a, vm = pop vm
-            match (a, b) with
-            | VNumber x, VNumber y -> run (push vm (Boolean (x > y)))
-            | _ -> failwith "Operands must be numbers"
-        | LESS ->
-            let b, vm = pop vm
-            let a, vm = pop vm
-            match (a, b) with
-            | VNumber x, VNumber y -> run (push vm (Boolean (x < y)))
-            | _ -> failwith "Operands must be numbers"
-        | TRUE -> run (push vm (Boolean true))
-        | FALSE -> run (push vm (Boolean false))
-        | NOT ->
-            let value, vm = pop vm
-            run (push vm (Boolean (not (isTruthy value))))
-        | PRINT ->
-            let value, vm = pop vm
-            let vm = appendOutput vm StandardOutput $"{valueToString value}"
-            run vm
-        | POP ->
-            let _, vm = pop vm
-            run vm
-        | DEFINE_GLOBAL ->
-            let constant, vm = readConstant vm
-            match constant with
-            | Value.String name ->
-                let value, vm = pop vm
-                let vm = appendOutput vm Execution $"Defining global variable: {name} = {valueToString value}"
-                run (defineGlobal vm name value)
-            | _ -> failwith "Expected string constant for variable name"
-        | GET_GLOBAL ->
-            let constant, vm = readConstant vm
-            match constant with
-            | Value.String name ->
-                match getGlobal vm name with
-                | Some value -> 
-                    run (push vm value)
-                | None -> 
-                    failwith $"Undefined variable '{name}'"
-            | _ -> failwith "Expected string constant for variable name"
-        | RETURN ->
-            if vm.Stack.Count > 0 then
-                let result, vm = pop vm
-                appendOutput vm Execution $"Return value: {valueToString result}"
-            else
-                vm
-        | _ -> failwith $"Unimplemented opcode: {instruction}"
-let interpretWithMode (chunk: Chunk) (vm: VM option) (isRepl: bool) =
-    let vm = 
-        match vm with
-        | Some existingVM when not isRepl -> 
-            { existingVM with Chunk = chunk; IP = 0 }
-        | _ -> 
-            let newVM = createVM chunk
-            appendOutput newVM ConstantPool "=== Constant Pool ==="
-    let vm = appendOutput vm Execution "\n=== Program Execution ==="
-    let finalVm = run vm
-    
-    (finalVm, finalVm.Streams)
-
-let interpret (chunk: Chunk) =
-    let (_, streams) = interpretWithMode chunk None false
-    streams
-
-let replExecute (chunk: Chunk) (vm: VM option) =
-    interpretWithMode chunk vm true
-
-let getStreamContent (stream: seq<string>) =
-    String.concat Environment.NewLine (Seq.toArray stream)
-
-let resetStreams (vm: VM) =
-    { vm with Streams = createOutputStreams() }

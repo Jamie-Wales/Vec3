@@ -1,8 +1,10 @@
 module Vec3.Interpreter.Backend.Chunk
 
 open System.Text
+open Vec3.Interpreter
 open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Value
+open Vec3.Interpreter.Token
 
 type LineInfo = { Offset: int; LineNumber: int }
 
@@ -11,6 +13,12 @@ type Chunk =
       ConstantPool: ResizeArray<Value>
       Lines: ResizeArray<LineInfo> }
 
+type Function ={
+    Name:string
+    Chunk:Chunk
+    Locals: Map<Lexeme, int>  
+ }
+    
 let emptyChunk() =
     { Code = ResizeArray<byte>()
       ConstantPool = ResizeArray<Value>()
