@@ -156,8 +156,8 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         let exprType = checkExpr env expr
 
         match token.Lexeme with
-        | Identifier name ->
-            match Map.tryFind name env with
+        | Identifier _ as id ->
+            match Map.tryFind id env with
             | Some t ->
                 match exprType with
                 | Ok t' when t = t' -> Ok t
@@ -220,7 +220,7 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
             List.fold
                 (fun acc (param, typ) ->
                     match param.Lexeme with
-                    | Identifier name -> Map.add name typ acc
+                    | Identifier _ as id -> Map.add id typ acc
                     | _ -> raise (TypeException([TypeError.UndefinedVariable param])))
                 env
                 (List.zip paramList paramT)
@@ -268,11 +268,11 @@ and checkStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv * Result<TType, TypeErrors> 
         | Ok exprType ->
             if typ = exprType then
                 match token.Lexeme with
-                | Identifier name -> Map.add name typ env, Ok TUnit
+                | Identifier _ as id -> Map.add id typ env, Ok TUnit
                 | _ -> env, Error [ TypeError.UndefinedVariable token ]
             else if typ = TInfer then
                 match token.Lexeme with
-                | Identifier name -> Map.add name exprType env, Ok TUnit
+                | Identifier _ as id -> Map.add id exprType env, Ok TUnit
                 | _ -> env, Error [ TypeError.UndefinedVariable token ]
             else
                 env, Error [ TypeError.TypeMismatch(token, typ, exprType) ]

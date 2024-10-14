@@ -5,6 +5,22 @@ open Parser
 open Eval
 open Grammar
 
+let rec GCD a b =
+    let r = a / b
+    if r = 0 then
+        b
+    else
+        GCD b r
+
+let simplifyRational rat =
+    match rat with
+    | Rational(a, b) ->
+        let gcd = GCD a b
+        let a = a / gcd
+        let b = b / gcd
+        Rational(a, b)
+    | _ -> failwith "bad"
+    
 
 let foldConstants (program: Program) : Program =
     let rec foldStatements (stmts: Stmt list) : Stmt list = List.map foldStmt stmts
@@ -96,7 +112,7 @@ let foldConstants (program: Program) : Program =
         | EIndex (expr, index, typ) -> EIndex(foldExpr expr, foldExpr index, typ)
         | ELambda(args, body, typ) -> ELambda(args, foldExpr body, typ)
         | EIf(condEx, thenEx, elseEx, typ) -> EIf(foldExpr condEx, foldExpr thenEx, foldExpr elseEx, typ)
-        | ETernary(thenEx, condEx, elseEx, typ) -> foldExpr (EIf(condEx, thenEx, elseEx, typ))
+        | ETernary(condEx, thenEx, elseEx, typ) -> foldExpr (EIf(condEx, thenEx, elseEx, typ))
         | ETuple(elems, typ) -> ETuple(List.map foldExpr elems, typ)
         | EAssignment(tok, expr, typ) -> EAssignment(tok, foldExpr expr, typ)
 
