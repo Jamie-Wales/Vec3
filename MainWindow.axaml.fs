@@ -1,12 +1,12 @@
 namespace Vec3
 
+open System.Text.Encodings.Web
 open Avalonia.Controls
 open Avalonia.Markup.Xaml
 open AvaloniaEdit
 open Avalonia.Media
 open TextMateSharp.Grammars
 open AvaloniaEdit.TextMate
-open Avalonia.Interactivity
 open Vec3.Interpreter.Repl
 open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Chunk
@@ -31,7 +31,6 @@ type MainWindow () as this =
     let mutable globalsOutput: TextBlock = null
     let mutable replState = createInitialState()
     let mutable debugVM: VM option = None
-
     do
         AvaloniaXamlLoader.Load(this)
         this.InitializeComponent()
@@ -207,7 +206,6 @@ if x > 0 then
         exitDebugButton.IsEnabled <- isDebug
         
     member private this.HighlightCurrentInstruction(ip: int) =
-        // Placeholder for highlighting current instruction
         ()
 
     member this.GetEditorText() : string =

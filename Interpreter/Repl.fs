@@ -78,7 +78,7 @@ let executeInRepl (state: ReplState) (input: string) : ReplState =
                         existingVM.Frames.Add(newFrame)
                         existingVM
                     | None -> createVM func
-                let (updatedVM, _) = interpretWithMode func (Some vm) true
+                let updatedVM, _ = interpretWithMode func (Some vm) true
                 { VM = Some updatedVM }
             | Error (msg, _) ->
                 printfn $"Compilation error: {msg}"

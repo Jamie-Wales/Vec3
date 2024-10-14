@@ -149,6 +149,7 @@ let rec run (vm: VM) =
     let rec runLoop vm =
         let frame = getCurrentFrame vm
         if frame.IP >= frame.Function.Chunk.Code.Count then
+            // Function has finished executing
             if vm.Frames.Count > 1 then
                 vm.Frames.RemoveAt(vm.Frames.Count - 1)
                 runLoop vm

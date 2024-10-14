@@ -1,11 +1,12 @@
 
 module Vec3.Interpreter.Backend.Value
+open Vec3.Interpreter.Grammar
 
 type Value =
     | VNumber of VNumber
     | String of string
     | Boolean of bool
-    | Function
+    | Function of Expr 
     | Nil
 
 and VNumber =

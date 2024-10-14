@@ -9,7 +9,7 @@ open Vec3.Interpreter.Token
 
 
 
-type CompilerState ={
+type CompilerState = {
     currentFunction : Chunk.Function
     CurrentLine: int
     ScopeDepth: int
@@ -34,6 +34,12 @@ let emitConstant (value: Value) (state: CompilerState) : CompilerResult<unit> =
 let emitOpCode (opCode: OP_CODE) (state: CompilerState) : CompilerResult<unit> =
    emitByte (opCodeToByte opCode) state
 
+let initFunction (name:string) =
+   {
+       Chunk =emptyChunk()
+       Locals = Map.empty
+       Name = name
+    }
 let rec compileLiteral (lit: Literal) : Compiler<unit> =
     let compileNumber (n: Vec3.Interpreter.Grammar.Number) state =
         match n with
@@ -58,12 +64,20 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | EIdentifier (i, _)-> compileIdentifier i state
         | EGrouping (e, _ ) -> compileGrouping e state
         | EUnary (token, u, _ ) -> compileUnary token u state
-        | ELambda (token, l, _) -> compileLambda token l state
+        // | ELambda (token, l, _) -> compileLambda token l state
         | _ -> Error ("Unsupported expression type", state)
         
-and compileLambda (op: Token list) (expr: Expr) : Compiler<unit> =
-    fun state ->
-        compileExpr expr state 
+// and compileLambda (op: Token list) (expr: Expr) : Compiler<unit> =
+//    let compilerState =
+//             {
+//               currentFunction = initFunction("lambda")
+//               ScopeDepth = 0
+//               CurrentLine = 1 
+//             }
+//    match (compileExpr expr compilerState) with
+   // | Ok expr -> writeConstant(Value(Function(expr)))
+                           
+                                
 and compileUnary (op: Token) (expr: Expr) : Compiler<unit> =
     fun state ->
         let _ = compileExpr expr state 
@@ -156,12 +170,6 @@ let compileProgramState (program: Program) (state:CompilerState): CompilerResult
         emitOpCode OP_CODE.RETURN state
         |> Result.map (fun ((), state) -> (state.currentFunction.Chunk, state)))
    
-let initFunction (name:string) =
-   {
-       Chunk =emptyChunk()
-       Locals = Map.empty
-       Name = name
-    }
    
 let compileProgram (program: Program) : CompilerResult<Chunk.Function> =
     let initialState =
