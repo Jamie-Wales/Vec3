@@ -28,10 +28,9 @@ module Program =
             // Start the GUI
             // evalRepl
             buildAvaloniaApp().StartWithClassicDesktopLifetime(argv)
-            0
         | [|"-r"|] ->
             // Explicit REPL mode
-            startRepl ()
+            evalRepl
             0
         | [|"-f"; filename|] ->
             // File execution mode

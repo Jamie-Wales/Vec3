@@ -407,6 +407,48 @@ let rec infer (env: TypeEnv) (expr: Expr) : Result<TType * Substitution * Expr, 
                                     | Error errors -> Error errors
                                 | None -> Error [ TypeError.InvalidCall(callee, t) ]
                             | _ -> Ok(returnType, combinedSubs, ECall(expr, argExprs, returnType))
+            | TTypeVariable a ->
+                    let argResults = List.map (infer env) args
+                    if
+                        List.exists
+                            (fun result ->
+                                match result with
+                                | Error _ -> true
+                                | _ -> false)
+                            argResults
+                    then
+                        let errors =
+                            List.collect
+                                (fun result ->
+                                    match result with
+                                    | Error errors -> errors
+                                    | _ -> [])
+                                argResults
+
+                        Error errors
+                    else
+                        let argResults =
+                            List.map
+                                (fun result ->
+                                    match result with
+                                    | Ok(t, sub, expr) -> (t, sub, expr)
+                                    | _ -> failwith "Impossible")
+                                argResults
+                    
+                    
+                    
+                        let argTypes = List.map (fun (t, _, _) -> t) argResults
+                        let argSubs = List.map (fun (_, sub, _) -> sub) argResults
+                        let argExprs = List.map (fun (_, _, expr) -> expr) argResults
+                        
+                        let t = TFunction(argTypes, TAny)
+                        
+                        match unify t (TTypeVariable a) with
+                        | Ok sub ->
+                            let t = applySubstitution sub (TTypeVariable a)
+                            
+                            Ok(TAny, sub, ECall(expr, argExprs, TAny))
+                        | Error errs -> Error errs
 
             | _ -> Error [ TypeError.InvalidCall(callee, t) ]
 
