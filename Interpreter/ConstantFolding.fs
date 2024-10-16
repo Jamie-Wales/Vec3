@@ -29,7 +29,8 @@ let foldConstants (program: Program) : Program =
         match stmt with
         | SVariableDeclaration(tok, expr, typ) -> SVariableDeclaration(tok, foldExpr expr, typ)
         | SExpression(expr, typ) -> SExpression(foldExpr expr, typ)
-        | stmt -> stmt
+        | SPrintStatement(expr, typ) -> SPrintStatement(foldExpr expr, typ)
+        | SAssertStatement(expr, msg, typ) -> SAssertStatement(foldExpr expr, Option.map foldExpr msg, typ)
 
     and foldExpr (expr: Expr) : Expr =
         match expr with
@@ -111,7 +112,13 @@ let foldConstants (program: Program) : Program =
         | EList (elems, typ) -> EList(List.map foldExpr elems, typ)
         | EIndex (expr, index, typ) -> EIndex(foldExpr expr, foldExpr index, typ)
         | ELambda(args, body, typ) -> ELambda(args, foldExpr body, typ)
-        | EIf(condEx, thenEx, elseEx, typ) -> EIf(foldExpr condEx, foldExpr thenEx, foldExpr elseEx, typ)
+        | EIf(condEx, thenEx, elseEx, typ) ->
+            let cond = foldExpr condEx
+            match cond with
+            | ELiteral(LBool true, _) -> foldExpr thenEx
+            | ELiteral(LBool false, _) -> foldExpr elseEx
+            | _ ->
+                EIf(cond, foldExpr thenEx, foldExpr elseEx, typ)
         | ETernary(condEx, thenEx, elseEx, typ) -> foldExpr (EIf(condEx, thenEx, elseEx, typ))
         | ETuple(elems, typ) -> ETuple(List.map foldExpr elems, typ)
         | EAssignment(tok, expr, typ) -> EAssignment(tok, foldExpr expr, typ)
