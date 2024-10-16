@@ -334,6 +334,7 @@ let rec formatTypeError (error: TypeError) : string =
     | InvalidOpen(token) -> $"Invalid open statement at Line: {token.Position.Line}"
     | InvalidIf(expr) -> $"Invalid if statement at expr: {expr}"
     | InvalidIndex(expr, typ) -> $"Invalid index at expr: {expr}, got {typ}"
+    | InvalidAssert(expr, typ) -> $"Invalid assert at expr: {expr}, got {typ}"
 
 let formatTypeErrors (errors: TypeError list) : string =
     List.map formatTypeError errors |> String.concat "\n"

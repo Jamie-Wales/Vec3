@@ -17,7 +17,6 @@ let evalNumber =
     | LFloat x -> Ok(LFloat x)
     | LRational(n, d) -> Ok(LRational(n, d))
     | LComplex(r, i) -> Ok(LComplex(r, i))
-    | _ -> Error "invalid"
 
 
 let rec evalAddition =
@@ -270,6 +269,18 @@ and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
         let value = evalExpr env expr
         printfn $"{value}"
         ELiteral(LUnit, TUnit), env
+    | SAssertStatement(expr, msg, _) ->
+        let value = evalExpr env expr
+        
+        match value with
+        | ELiteral(LBool true, _) -> ELiteral(LUnit, TUnit), env
+        | ELiteral(LBool false, _) ->
+            match msg with
+            | Some msg -> printfn $"Assert failed: {msg}"
+            | None -> printfn $"Assertion failed"
+            ELiteral(LUnit, TUnit), env
+        | _ -> failwith "invalid"
+        
 
 let evalStatement (env: Env) (stmt: Stmt) : Expr * Env =
     match evalStmt env stmt with

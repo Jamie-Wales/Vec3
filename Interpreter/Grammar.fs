@@ -73,6 +73,7 @@ and Stmt =
     | SExpression of Expr * Type
     | SVariableDeclaration of Token * Expr * Type
     | SPrintStatement of Expr * Type
+    | SAssertStatement of Expr * Expr option * Type
 
 type Program = Stmt list
 

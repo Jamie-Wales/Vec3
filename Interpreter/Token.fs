@@ -51,6 +51,7 @@ type Keyword =
     | In
     | And
     | Or
+    | Assert
     
     
 let keywordMap = 
@@ -66,6 +67,7 @@ let keywordMap =
       "in", Keyword.In
       "and", Keyword.And
       "or", Keyword.Or
+      "assert", Keyword.Assert
        ]
     |> Map.ofList
 

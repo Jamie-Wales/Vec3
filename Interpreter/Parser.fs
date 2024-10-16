@@ -536,6 +536,16 @@ and printStatement (state: ParserState) : ParseResult<Stmt> =
     expression state Precedence.Assignment
     |> Result.bind (fun (state, expr) -> Ok(state, SPrintStatement(expr, TUnit)))
 
+and assertStatement (state: ParserState) : ParseResult<Stmt> =
+    let state = setLabel state "Assert"
+
+    expression state Precedence.Assignment
+    |> Result.bind (fun (state, expr) ->
+        match peek state with
+        | Some { Lexeme = Lexeme.Comma } ->
+            expression (advance state) Precedence.Assignment
+            |> Result.bind (fun (state, message) -> Ok(state, SAssertStatement(expr, Some message, TUnit)))
+        | _ -> Ok(state, SAssertStatement(expr, None, TUnit)))
 
 and statement (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Statement"
@@ -547,6 +557,7 @@ and statement (state: ParserState) : ParseResult<Stmt> =
             match kw with
             | Keyword.Let -> varDecl (advance state)
             | Keyword.Print -> printStatement (advance state)
+            | Keyword.Assert -> assertStatement (advance state)
             | _ ->
                 expression state Precedence.None
                 |> Result.bind (fun (state, expr) -> Ok(state, SExpression(expr, TInfer)))
