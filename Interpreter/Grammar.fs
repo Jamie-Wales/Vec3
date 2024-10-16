@@ -56,7 +56,6 @@ type Expr =
     | EUnary of Token * Expr * Type
     | EBinary of Expr * Token * Expr * Type
     | EGrouping of Expr * Type
-    | EAssignment of Token * Expr * Type
     | EIf of Expr * Expr * Expr * Type
     | ETernary of Expr * Expr * Expr * Type
     

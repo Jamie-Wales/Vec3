@@ -1,5 +1,6 @@
 module Vec3.Interpreter.Typing.Inference
 
+open System.Runtime.InteropServices.JavaScript
 open Microsoft.FSharp.Core
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
@@ -7,7 +8,7 @@ open Builtins
 open Exceptions
 
 // ISSUE: let x = (y) -> y() + 1, should infer x as a function that takes a function of type TFunction([], Interger) and returns an integer
-// or let x = (y) -> y() + y() should infer y as a function of TFunction([], TCOnstrain(var, [ TInteger; TFloat; TRational; TComplex ]))
+// or let x = (y) -> y() + y() should infer y as a function of TFunction([], TConstrain(var, [ TInteger; TFloat; TRational; TComplex ]))
 // but doesnt, very difficult to implement
 
 type TypeEnv = Map<Lexeme, TType>
@@ -41,9 +42,7 @@ let getOpTypeBinary (op: Lexeme) (t1: TType) (t2: TType) : TType =
               TFloat
               TRational
               TComplex
-              TTensor(TConstrain(vecVar, [ TInteger; TFloat; TRational; TComplex ]), DVar dimsVar)
-              TFunction([], TConstrain(typeVar, [ TInteger; TFloat; TRational; TComplex ]))
-              ]
+              TTensor(TConstrain(vecVar, [ TInteger; TFloat; TRational; TComplex ]), DVar dimsVar) ]
         )
 
     match op with
@@ -64,12 +63,13 @@ let getOpTypeBinary (op: Lexeme) (t1: TType) (t2: TType) : TType =
             | _, TRational -> TFunction([ TRational; TRational ], TRational)
             | TComplex, _
             | _, TComplex -> TFunction([ TComplex; TComplex ], TComplex)
-            | TTensor(_, DVar v), _
-            | _, TTensor(_, DVar v) -> TTensor(standardConstrain, DVar v)
-            | TTensor(_, Dims sizes), _
-            | _, TTensor(_, Dims sizes) -> TTensor(standardConstrain, Dims sizes)
-            | TTensor(_, DAny), _
-            | _, TTensor(_, DAny) -> TTensor(standardConstrain, DAny)
+            | TTensor(typ, DVar v), _
+            | _, TTensor(typ, DVar v) -> TFunction([ TTensor(typ, DVar v); TTensor(typ, DVar v) ], TTensor(typ, DVar v))
+            | TTensor(typ, Dims sizes), _
+            | _, TTensor(typ, Dims sizes) ->
+                TFunction([ TTensor(typ, Dims sizes); TTensor(typ, Dims sizes) ], TTensor(typ, Dims sizes))
+            | TTensor(typ, DAny), _
+            | _, TTensor(typ, DAny) -> TFunction([ TTensor(typ, DAny); TTensor(typ, DAny) ], TTensor(typ, DAny))
             | _ -> TFunction([ standardConstrain; standardConstrain ], standardConstrain)
         | Operator.Percent -> TFunction([ TInteger; TInteger ], TInteger)
         | Operator.EqualEqual
@@ -89,12 +89,12 @@ let getOpTypeBinary (op: Lexeme) (t1: TType) (t2: TType) : TType =
             | _, TBool -> TFunction([ TBool; TBool ], TBool)
             | TUnit, _
             | _, TUnit -> TFunction([ TUnit; TUnit ], TBool)
-            | TTensor(_, DVar v), _ // wrong
-            | _, TTensor(_, DVar v) -> TFunction([ standardConstrain; standardConstrain ], TBool)
-            | TTensor(_, Dims sizes), _
-            | _, TTensor(_, Dims sizes) -> TFunction([ standardConstrain; standardConstrain ], TBool)
-            | TTensor(_, DAny), _
-            | _, TTensor(_, DAny) -> TFunction([ standardConstrain; standardConstrain ], TBool)
+            | TTensor(typ, DVar v), _ // wrong
+            | _, TTensor(typ, DVar v) -> TFunction([ TTensor(typ, DVar v); TTensor(typ, DVar v) ], TBool)
+            | TTensor(typ, Dims sizes), _
+            | _, TTensor(typ, Dims sizes) -> TFunction([ TTensor(typ, Dims sizes); TTensor(typ, Dims sizes) ], TBool)
+            | TTensor(typ, DAny), _
+            | _, TTensor(typ, DAny) -> TFunction([ TTensor(typ, DAny); TTensor(typ, DAny) ], TBool)
             | _ -> TFunction([ TTypeVariable typeVar; TTypeVariable typeVar ], TBool)
         | Operator.Less
         | Operator.LessEqual
@@ -109,12 +109,12 @@ let getOpTypeBinary (op: Lexeme) (t1: TType) (t2: TType) : TType =
             | _, TRational -> TFunction([ TRational; TRational ], TBool)
             | TComplex, _
             | _, TComplex -> TFunction([ TComplex; TComplex ], TBool)
-            | TTensor(_, DVar v), _
-            | _, TTensor(_, DVar v) -> TFunction([ standardConstrain; standardConstrain ], TBool)
-            | TTensor(_, Dims sizes), _
-            | _, TTensor(_, Dims sizes) -> TFunction([ standardConstrain; standardConstrain ], TBool)
-            | TTensor(_, DAny), _
-            | _, TTensor(_, DAny) -> TFunction([ standardConstrain; standardConstrain ], TBool)
+            | TTensor(typ, DVar v), _
+            | _, TTensor(typ, DVar v) -> TFunction([ TTensor(typ, DVar v); TTensor(typ, DVar v) ], TBool)
+            | TTensor(typ, Dims sizes), _
+            | _, TTensor(typ, Dims sizes) -> TFunction([ TTensor(typ, Dims sizes); TTensor(typ, Dims sizes) ], TBool)
+            | TTensor(typ, DAny), _
+            | _, TTensor(typ, DAny) -> TFunction([ TTensor(typ, DAny); TTensor(typ, DAny) ], TBool)
             | _ -> TFunction([ standardConstrain; standardConstrain ], TBool)
         | Operator.AmpersandAmpersand
         | Operator.PipePipe -> TFunction([ TBool; TBool ], TBool)
@@ -154,6 +154,7 @@ let getOptTypeUnary (op: Lexeme) (t: TType) : TType =
             | TBool -> TBool
             | _ -> TNever
         | _ -> TNever
+    | _ -> TNever
 
 let checkLiteral (lit: Literal) : TType =
     match lit with
@@ -166,7 +167,7 @@ let checkLiteral (lit: Literal) : TType =
     | LBool _ -> TBool
     | LUnit -> TUnit
 
-let checkIdentifier (env: TypeEnv) (token: Token) : TypeResult<TType> =
+let checkIdentifier (env: TypeEnv) (token: Token) : TType TypeResult =
     match Map.tryFind token.Lexeme env with
     | Some t -> Ok t
     | None -> Error [ TypeError.UndefinedVariable token ]
@@ -212,7 +213,7 @@ let applySubstitutionToEnv (sub: Substitution) (env: TypeEnv) : TypeEnv =
 
 
 // attempts to unify two types
-let rec unify (t1: TType) (t2: TType) : TypeResult<Substitution> =
+let rec unify (t1: TType) (t2: TType) : Substitution TypeResult =
     match t1, t2 with
     | TInteger, TInteger
     | TFloat, TFloat
@@ -229,8 +230,8 @@ let rec unify (t1: TType) (t2: TType) : TypeResult<Substitution> =
     | TInfer, _
     | _, TInfer -> Ok Map.empty
 
-    | TAny, t
-    | t, TAny -> Ok Map.empty
+    | TAny, _
+    | _, TAny -> Ok Map.empty
 
     | TTypeVariable tv, t
     | t, TTypeVariable tv ->
@@ -318,8 +319,8 @@ let rec unify (t1: TType) (t2: TType) : TypeResult<Substitution> =
     | TTensor(typ1, sizes1), TTensor(typ2, sizes2) ->
         match sizes1, sizes2 with
         | DAny, DAny -> unify typ1 typ2
-        | DAny, Dims sizes
-        | Dims sizes, DAny -> unify typ1 typ2
+        | DAny, Dims _
+        | Dims _, DAny -> unify typ1 typ2
         | Dims sizes1, Dims sizes2 ->
             if sizes1 = sizes2 || List.isEmpty sizes1 || List.isEmpty sizes2 then
                 unify typ1 typ2
@@ -340,7 +341,15 @@ let rec unify (t1: TType) (t2: TType) : TypeResult<Substitution> =
             else
                 let sub = Map.add v1 (TTensor(typ1, DVar v2)) Map.empty // this is wrong
                 Ok sub
-        | _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
+        | DVar v, DAny
+        | DAny, DVar v ->
+            let resolved = Map.tryFind v resolvedDims.Value
+
+            match resolved with
+            | Some(DAny) -> unify typ1 typ2
+            | _ ->
+                resolvedDims.Value <- Map.add v DAny resolvedDims.Value
+                unify typ1 typ2
     | _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 
 and occursCheck (tv: TypeVar) (t: TType) : bool =
@@ -378,7 +387,7 @@ let rec unifyWithSubstitution
     (paramTypes: TType list)
     (argTypes: TType list)
     (currentSubs: Substitution)
-    : TypeResult<Substitution> =
+    : Substitution TypeResult =
     match (paramTypes, argTypes) with
     | [], [] -> Ok currentSubs
     | paramType :: restParamTypes, argType :: restArgTypes ->
@@ -400,7 +409,7 @@ let rec unifyWithSubstitution
             [ TypeError.InvalidArgumentCount(EIdentifier(Empty, TNever), List.length paramTypes, List.length argTypes) ]
 
 
-let rec infer (env: TypeEnv) (expr: Expr) : TypeResult<TType * Substitution * Expr> =
+let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeResult =
 
     let inferArgs (env: TypeEnv) (args: Expr list) =
         let argResults = List.map (infer env) args
@@ -427,11 +436,6 @@ let rec infer (env: TypeEnv) (expr: Expr) : TypeResult<TType * Substitution * Ex
             Ok argTypes
 
     match expr with
-    | EAssignment(token, expr, _) ->
-        infer env expr
-        |> Result.bind (fun (t, sub, expr) ->
-            let t = applySubstitution sub t
-            Ok(t, sub, EAssignment(token, expr, t)))
     | ELiteral(lit, _) ->
         let t = checkLiteral lit
         Ok(t, Map.empty, ELiteral(lit, t))
@@ -497,7 +501,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : TypeResult<TType * Substitution * Ex
                         let argTypes = List.map (fun (t, _, _) -> t) argResults
                         let argSubs = List.map (fun (_, sub, _) -> sub) argResults
                         let argExprs = List.map (fun (_, _, expr) -> expr) argResults
-                        
+
                         unifyWithSubstitution paramTypes argTypes Map.empty
                         |> Result.bind (fun sub' ->
                             let combinedSubs = List.fold combineMaps sub' argSubs
@@ -532,7 +536,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : TypeResult<TType * Substitution * Ex
                     unify t (TTypeVariable a)
                     |> Result.bind (fun sub ->
                         let t' = applySubstitution sub (TTypeVariable a)
-                        
+
                         let sub = List.fold combineMaps sub argSubs
                         Ok(t', sub, ECall(expr, argExprs, t))))
             | _ -> Error [ TypeError.InvalidCall(callee, t) ])
@@ -542,13 +546,43 @@ let rec infer (env: TypeEnv) (expr: Expr) : TypeResult<TType * Substitution * Ex
         let expr2Result = infer env expr2
 
         match expr1Result, expr2Result with
+        | Ok(TTensor(typ1, dims1), sub1, expr1), Ok(TTensor(typ2, dims2), sub2, expr2) ->
+            match op.Lexeme with
+            | Operator Plus
+            | Operator Minus
+            | Operator Star
+            | Operator Slash ->
+                let sub = combineMaps sub1 sub2
+
+                let dims =
+                    match dims1, dims2 with
+                    | DAny, DAny -> Ok DAny
+                    | DAny, Dims sizes
+                    | Dims sizes, DAny -> Ok(Dims sizes)
+                    | Dims sizes1, Dims sizes2 ->
+                        if sizes1 = sizes2 then
+                            Ok(Dims sizes1)
+                        else
+                            Error [ TypeError.InvalidOperator(op, typ1) ]
+                    | _ -> Error [ TypeError.InvalidOperator(op, typ1) ]
+
+                dims
+                |> Result.bind (fun _ ->
+                    unify typ1 typ2
+                    |> Result.bind (fun sub' ->
+                        let sub = combineMaps sub sub'
+
+                        let returnT = applySubstitution sub typ1
+                        Ok(returnT, sub, EBinary(expr1, op, expr2, returnT))))
+            | _ -> Error [ TypeError.InvalidOperator(op, typ1) ]
         | Ok(t1, sub1, expr1), Ok(t2, sub2, expr2) ->
             let opType = getOpTypeBinary op.Lexeme t1 t2
             let env = Map.add op.Lexeme opType env
             let sub = combineMaps sub1 sub2
             let opExpr = EIdentifier(op, opType)
+
             infer env (ECall(opExpr, [ expr1; expr2 ], opType))
-            |> Result.bind (fun (t, sub', expr) -> Ok(t, combineMaps sub sub', EBinary(expr1, op, expr2, t)))
+            |> Result.bind (fun (t, sub', _) -> Ok(t, combineMaps sub sub', EBinary(expr1, op, expr2, t)))
 
         | Error errors, _ -> Error errors
         | _, Error errors -> Error errors
@@ -589,6 +623,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : TypeResult<TType * Substitution * Ex
                         | Error _ -> TNever
                     | SVariableDeclaration _ -> TUnit
                     | SPrintStatement _ -> TUnit
+                    | SAssertStatement _ -> TUnit
 
                 Ok(lastStmtType, sub, EBlock(stmts, lastStmtType))))
 
@@ -620,18 +655,14 @@ let rec infer (env: TypeEnv) (expr: Expr) : TypeResult<TType * Substitution * Ex
             let types = List.map (fun (t, _, _) -> t) results
             let subs = List.map (fun (_, sub, _) -> sub) results
             let exprs = List.map (fun (_, _, expr) -> expr) results
+            
 
             let subResults =
-                List.map2 unify types (List.replicate (List.length types - 1) TInfer)
+                List.map2 unify types (List.replicate (List.length types) TInfer)
 
-            if
-                List.exists
-                    (fun result ->
-                        match result with
-                        | Error _ -> true
-                        | _ -> false)
-                    subResults
-            then
+            let hasErrors = List.exists Result.isError subResults
+
+            if hasErrors then
                 let errors =
                     List.collect
                         (fun result ->
@@ -643,11 +674,10 @@ let rec infer (env: TypeEnv) (expr: Expr) : TypeResult<TType * Substitution * Ex
                 Error errors
             else
                 let subResults =
-                    List.map
-                        (fun result ->
-                            match result with
-                            | Ok sub -> sub
-                            | _ -> failwith "Impossible")
+                    List.choose
+                        (function
+                        | Ok(sub) -> Some(sub)
+                        | _ -> None)
                         subResults
 
                 let combinedSubs = List.fold combineMaps Map.empty subResults
@@ -656,7 +686,6 @@ let rec infer (env: TypeEnv) (expr: Expr) : TypeResult<TType * Substitution * Ex
                 let returnType = TTuple(List.map (applySubstitution combinedSubs) types)
                 Ok(returnType, combinedSubs, ETuple(exprs, returnType)))
     | EList(exprs, _) ->
-
         inferArgs env exprs
         |> Result.bind (fun results ->
             let types = List.map (fun (t, _, _) -> t) results
@@ -680,7 +709,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : TypeResult<TType * Substitution * Ex
         let exprResult = infer env expr
 
         match indexResult, exprResult with
-        | Ok(TInteger, sub1, expr1), Ok(TTensor(typ, sizes), sub2, expr2) ->
+        | Ok(TInteger, sub1, expr1), Ok(TTensor(typ, _), sub2, expr2) -> // might be nice to have little dependent types with the dims and index
             let sub = combineMaps sub1 sub2
             let returnType = applySubstitution sub typ
             Ok(returnType, sub, EIndex(expr2, expr1, returnType))
@@ -690,10 +719,28 @@ let rec infer (env: TypeEnv) (expr: Expr) : TypeResult<TType * Substitution * Ex
             let sub = combineMaps sub1 sub2
 
             let sub2 = Map.add n (TTensor(TTypeVariable typeVar, DVar dimsTypeVar)) sub
-            let returnType = TTensor(TTypeVariable typeVar, DVar dimsTypeVar) // this isnt right
             Ok(TTypeVariable typeVar, sub2, EIndex(expr2, expr1, TTypeVariable typeVar))
-        | Ok(TInteger, sub1, expr1), Ok(TTuple(types), sub2, expr2) -> failwith "todo"
-        | Ok(TInteger, sub1, expr1), Ok(t, s, e) -> Error [ TypeError.InvalidIndex(expr, t) ]
+
+        | Ok(TInteger, sub1, expr1), Ok(TConstrain(n, types), sub2, expr2) -> // is this correct ?
+            let sub = combineMaps sub1 sub2
+
+            let tensorType =
+                List.tryFind
+                    (fun t ->
+                        match t with
+                        | TTensor _ -> true
+                        | _ -> false)
+                    types
+
+            match tensorType with
+            | Some(TTensor(typ, dims)) ->
+                let sub2 = Map.add n (TTensor(typ, dims)) sub
+                Ok(typ, sub2, EIndex(expr2, expr1, typ))
+            | _ -> Error [ TypeError.InvalidIndex(expr, TTypeVariable n) ]
+
+        | Ok(TInteger, _, _), Ok(TTuple _, _, _) -> failwith "todo"
+        | Ok(TInteger, _, _), Ok(t, _, _) -> Error [ TypeError.InvalidIndex(expr, t) ]
+
         | Error errors, _ -> Error errors
         | _, Error errors -> Error errors
         | _ -> Error [ TypeError.InvalidIndex(expr, TInfer) ]
@@ -701,12 +748,12 @@ let rec infer (env: TypeEnv) (expr: Expr) : TypeResult<TType * Substitution * Ex
 
 
 
-and inferStmt (env: TypeEnv) (stmt: Stmt) : Result<TypeEnv * Substitution * Stmt, TypeErrors> =
+and inferStmt (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Substitution * Stmt) TypeResult =
     // make this immutable later, pass it around, or resolved in substitution
     resolvedTypes.Value <- Map.empty
 
     match stmt with
-    | SExpression(expr, typ) ->
+    | SExpression(expr, _) ->
         infer env expr
         |> Result.map (fun (t, sub, expr) -> (env, sub, SExpression(expr, t)))
     | SVariableDeclaration(name, expr, typ) ->
@@ -732,27 +779,27 @@ and inferStmt (env: TypeEnv) (stmt: Stmt) : Result<TypeEnv * Substitution * Stmt
 
                 Ok(env, sub, SVariableDeclaration(name, expr, typ))))
     | SPrintStatement _ -> Ok(env, Map.empty, stmt)
-    | SAssertStatement (expr, msg, _) ->
+    | SAssertStatement(expr, msg, _) ->
         let exprResult = infer env expr
-        
+
         match exprResult with
         | Ok(TBool, sub, expr) ->
             let msgResult =
                 match msg with
                 | Some msg -> infer env msg
                 | None -> Ok(TString, Map.empty, ELiteral(LString "", TString))
-            
+
             match msgResult with
             | Ok(TString, sub', msg) ->
                 let sub = combineMaps sub sub'
                 Ok(env, sub, SAssertStatement(expr, Some msg, TBool))
-            | Ok (t, _, _) -> Error [ TypeError.InvalidAssert(msg.Value, t) ]
+            | Ok(t, _, _) -> Error [ TypeError.InvalidAssert(msg.Value, t) ]
             | Error errors -> Error errors
-            
-        | Ok (t, _, _) -> Error [ TypeError.InvalidAssert(expr, t) ]
+
+        | Ok(t, _, _) -> Error [ TypeError.InvalidAssert(expr, t) ]
         | Error errors -> Error errors
 
-and inferProgram (env: TypeEnv) (stmts: Program) : Result<TypeEnv * Substitution * Program, TypeErrors> =
+and inferProgram (env: TypeEnv) (stmts: Program) : (TypeEnv * Substitution * Program) TypeResult =
     List.fold
         (fun acc stmt ->
             acc
@@ -764,7 +811,7 @@ and inferProgram (env: TypeEnv) (stmts: Program) : Result<TypeEnv * Substitution
         (Ok(env, Map.empty, []))
         stmts
 
-let quickInferStmt (env: TypeEnv) (stmt: Stmt) =
+let quickInferStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv =
     match inferStmt env stmt with
     | Ok(env, _, _) -> env
     | Error errors -> raise <| TypeException errors

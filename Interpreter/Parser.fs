@@ -380,7 +380,7 @@ and leftParen (state: ParserState) : ParseResult<Expr> =
     match peek state with
     | Some { Lexeme = Lexeme.Identifier _ } ->
         match peek (advance state) with
-        | Some { Lexeme = Lexeme.Comma }
+        | Some { Lexeme = Lexeme.Comma } -> lambdaOrTuple state
         | Some { Lexeme = Lexeme.Colon } -> lambda state
 
         | Some { Lexeme = Lexeme.Operator Operator.RightParen } ->
@@ -395,8 +395,45 @@ and leftParen (state: ParserState) : ParseResult<Expr> =
         | Some { Lexeme = Lexeme.Operator Operator.Arrow }
         | Some { Lexeme = Lexeme.Colon }
         | Some { Lexeme = Lexeme.Operator Operator.LeftBrace } -> lambda state
-        | _ -> Ok(state, ELiteral(LUnit, TUnit))
-    | _ -> grouping state
+        | _ -> Ok(advance state, ELiteral(LUnit, TUnit))
+    | _ -> groupingOrTuple state
+
+and parseTuple (state: ParserState) (items: Expr list) : Expr ParseResult =
+    expression state Precedence.None
+    |> Result.bind (fun (state, expr) ->
+        match peek state with
+        | Some { Lexeme = Lexeme.Comma } -> parseTuple (advance state) (expr :: items)
+        | Some { Lexeme = Lexeme.Operator Operator.RightParen } ->
+            Ok(advance state, ETuple(List.rev (expr :: items), TInfer))
+        | _ -> Error("Expected ',' or ')'.", state))
+
+and lambdaOrTuple (state: ParserState) : Expr ParseResult =
+    match peek (advance state) with
+    | Some { Lexeme = Lexeme.Operator Operator.RightParen } ->
+        Ok(advance (advance state), ELiteral(LUnit, TUnit))
+    | Some { Lexeme = Lexeme.Comma } ->
+        let tuple = parseTuple state []
+        match tuple with
+        | Ok(newState, expr) ->
+            match peek newState with
+            | Some { Lexeme = Lexeme.Operator Operator.Arrow } ->
+                lambda state
+            | Some { Lexeme = Lexeme.Colon } ->
+                lambda state
+            | Some { Lexeme = Lexeme.Operator Operator.LeftBrace } ->
+                lambda state
+            | _ -> Ok(newState, expr)
+        | _ -> lambda state
+    | _ -> lambda state
+
+and groupingOrTuple (state: ParserState) : ParseResult<Expr> =
+    expression state Precedence.None
+    |> Result.bind (fun (state, expr) ->
+        match peek state with
+        | Some { Lexeme = Lexeme.Comma } -> parseTuple (advance state) [ expr ]
+        | Some { Lexeme = Lexeme.Operator Operator.RightParen } -> Ok(advance state, expr)
+        | _ -> Error("Expected ',' or ')'.", state)
+        )
 
 // and this
 and lambda (state: ParserState) : ParseResult<Expr> =
@@ -428,7 +465,6 @@ and lambda (state: ParserState) : ParseResult<Expr> =
         | Some(state, { Lexeme = Lexeme.Operator Operator.LeftBrace }) -> block state
         | Some(state, { Lexeme = Lexeme.Operator Operator.Arrow }) -> expression state Precedence.Assignment
         | _ -> Error("Expected '->' or '{' after parameter list.", state)
-
 
     parseParameters state []
     |> Result.bind (fun (state, params') ->

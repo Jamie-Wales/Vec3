@@ -1,5 +1,6 @@
 module Vec3.Interpreter.Eval
 
+open System.Runtime.InteropServices.JavaScript
 open Microsoft.FSharp.Core
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
@@ -72,8 +73,9 @@ let evalLiteral =
     | LBool b -> Ok(LBool b)
     | LUnit -> Ok(LUnit)
 
-let rec evalExpr (env: Env) =
-    function
+
+let rec evalExpr (env: Env) (expr: Expr) : Expr =
+    match expr with
     | EBlock(stmts, _) ->
         let rec evalBlock (env: Env) =
             function
@@ -86,7 +88,6 @@ let rec evalExpr (env: Env) =
         evalBlock env stmts
     | ETuple(exprs, typ) -> ETuple(List.map (evalExpr env) exprs, typ)
     | EList(exprs, typ) -> EList(List.map (evalExpr env) exprs, typ)
-    | EAssignment(_, expr, _) -> evalExpr env expr
     | EGrouping(expr, _) -> evalExpr env expr
 
     | ELiteral(lit, t) ->
@@ -165,33 +166,33 @@ let rec evalExpr (env: Env) =
         | { Lexeme = Operator op }, ELiteral(LNumber lhs, _), ELiteral(LNumber rhs, _) ->
             match op with
             | Operator.Plus ->
-                match evalAddition(lhs, rhs) with
+                match evalAddition (lhs, rhs) with
                 | Ok res -> ELiteral(LNumber(res), typ)
                 | Error s -> failwith s
-             
-                
+
+
             | Operator.Minus ->
-                match evalSubtraction(lhs, rhs) with
+                match evalSubtraction (lhs, rhs) with
                 | Ok res -> ELiteral(LNumber(res), typ)
                 | Error s -> failwith s
-                
+
             | Operator.Star ->
-                match evalMultiplication(lhs, rhs) with
+                match evalMultiplication (lhs, rhs) with
                 | Ok res -> ELiteral(LNumber(res), typ)
                 | Error s -> failwith s
-                
+
             | Operator.Slash ->
-                match evalDivision(lhs, rhs) with
+                match evalDivision (lhs, rhs) with
                 | Ok res -> ELiteral(LNumber(res), typ)
                 | Error s -> failwith s
             | Operator.Caret
             | Operator.StarStar ->
-                match evalPower(lhs, rhs) with
+                match evalPower (lhs, rhs) with
                 | Ok res -> ELiteral(LNumber(res), typ)
                 | Error s -> failwith s
-                
+
             | Operator.Percent ->
-                match evalModulo(lhs, rhs) with
+                match evalModulo (lhs, rhs) with
                 | Ok res -> ELiteral(LNumber(res), typ)
                 | Error s -> failwith s
             | Operator.EqualEqual -> ELiteral(LBool(lhs = rhs), typ)
@@ -205,6 +206,7 @@ let rec evalExpr (env: Env) =
             match op with
             | Operator.AmpersandAmpersand -> ELiteral(LBool(lhs && rhs), typ) // should short circuit ?
             | Operator.PipePipe -> ELiteral(LBool(lhs || rhs), typ)
+
             | Operator.EqualEqual -> ELiteral(LBool(lhs = rhs), typ)
             | Operator.BangEqual -> ELiteral(LBool(not (lhs = rhs)), typ)
             | _ -> failwith "invalid"
@@ -271,25 +273,25 @@ and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
         ELiteral(LUnit, TUnit), env
     | SAssertStatement(expr, msg, _) ->
         let value = evalExpr env expr
-        
+
         match value with
         | ELiteral(LBool true, _) -> ELiteral(LUnit, TUnit), env
         | ELiteral(LBool false, _) ->
             match msg with
             | Some msg -> printfn $"Assert failed: {msg}"
             | None -> printfn $"Assertion failed"
+
             ELiteral(LUnit, TUnit), env
         | _ -> failwith "invalid"
-        
+
 
 let evalStatement (env: Env) (stmt: Stmt) : Expr * Env =
     match evalStmt env stmt with
     | ELiteral(lit, typ), env -> ELiteral(lit, typ), env
     | EList(exprs, typ), env -> EList(exprs, typ), env
+    | ETuple(exprs, typ), env -> ETuple(exprs, typ), env
     | _, env -> ELiteral(LUnit, TUnit), env
 
 
-
 let evalProgram (env: Env) (program: Program) : Expr * Env =
-    // return last statement and update env
     List.fold (fun (_, env) -> evalStatement env) (ELiteral(LUnit, TUnit), env) program

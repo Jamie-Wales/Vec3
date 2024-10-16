@@ -4,7 +4,6 @@ open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open Inference
 open Exceptions
-open System
 
 // TODO
 // - Type inference for params
@@ -152,19 +151,6 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         | Ok _, Error errors -> Error errors
         | Ok t, Ok t' -> Error [ TypeError.InvalidOperandType(op, t, t') ]
     | EGrouping (expr, _) -> checkExpr env expr
-    | EAssignment(token, expr, _) ->
-        let exprType = checkExpr env expr
-
-        match token.Lexeme with
-        | Identifier _ as id ->
-            match Map.tryFind id env with
-            | Some t ->
-                match exprType with
-                | Ok t' when t = t' -> Ok t
-                | Ok t' -> Error [ TypeError.InvalidAssignment(token, t, t') ]
-                | Error errors -> Error errors
-            | None -> Error [ TypeError.UndefinedVariable token ]
-        | _ -> Error [ TypeError.UndefinedVariable token ]
     | ECall(callee, args, _) ->
         let calleeType = checkExpr env callee
 

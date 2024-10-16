@@ -40,6 +40,7 @@ let foldConstants (program: Program) : Program =
         | EBinary(lhs, opp, rhs, typ) ->
             let lhss = foldExpr lhs
             let rhss = foldExpr rhs
+            
             match opp, lhss, rhss with
             | { Lexeme = Operator op }, ELiteral(LNumber lhs, _), ELiteral(LNumber rhs, _) ->
                 match op with
@@ -48,7 +49,6 @@ let foldConstants (program: Program) : Program =
                     | Ok res -> ELiteral(LNumber(res), typ)
                     | Error s -> EBinary(lhss, opp, rhss, typ)
                  
-                    
                 | Operator.Minus ->
                     match evalSubtraction(lhs, rhs) with
                     | Ok res -> ELiteral(LNumber(res), typ)
@@ -79,6 +79,13 @@ let foldConstants (program: Program) : Program =
                 | Operator.LessEqual -> ELiteral(LBool(lhs <= rhs), typ)
                 | Operator.Greater -> ELiteral(LBool(lhs > rhs), typ)
                 | Operator.GreaterEqual -> ELiteral(LBool(lhs >= rhs), typ)
+                | _ -> EBinary(lhss, opp, rhss, typ)
+            | { Lexeme = Operator op }, ELiteral(LBool lhs, _), ELiteral(LBool rhs, _) ->
+                match op with
+                | Operator.EqualEqual -> ELiteral(LBool(lhs = rhs), typ)
+                | Operator.BangEqual -> ELiteral(LBool(lhs <> rhs), typ)
+                | Operator.AmpersandAmpersand -> ELiteral(LBool(lhs && rhs), typ) // SHORT CIRCUIT
+                | Operator.PipePipe -> ELiteral(LBool(lhs || rhs), typ) // SHORT CIRCUIT
                 | _ -> EBinary(lhss, opp, rhss, typ)
             | _ -> EBinary(lhss, opp, rhss, typ)
         | EUnary(opp, expr, typ) as un ->
@@ -121,6 +128,5 @@ let foldConstants (program: Program) : Program =
                 EIf(cond, foldExpr thenEx, foldExpr elseEx, typ)
         | ETernary(condEx, thenEx, elseEx, typ) -> foldExpr (EIf(condEx, thenEx, elseEx, typ))
         | ETuple(elems, typ) -> ETuple(List.map foldExpr elems, typ)
-        | EAssignment(tok, expr, typ) -> EAssignment(tok, foldExpr expr, typ)
 
     foldStatements program

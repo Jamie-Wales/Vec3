@@ -21,6 +21,7 @@ let litToString = function
 let rec exprToString  = function
     | ELiteral (lit, _) -> litToString lit
     | EList (exprs, _) -> $"""[{String.concat ", " (List.map exprToString exprs)}]"""
+    | ETuple (exprs, _) -> $"""({String.concat ", " (List.map exprToString exprs)})"""
     | _ -> "()"
 
 let numberToString = function
@@ -41,11 +42,6 @@ let evalRepl =
             match typeCheck with
             | Ok (typeEnv, _, program) ->
                 let program = foldConstants program
-                // List.iter (function
-                //     | SVariableDeclaration(n, expr, typ) -> printfn $"{exprToString expr}"
-                //     | SExpression(expr, typ) -> printfn $"{exprToString expr}"
-                //     | _ -> ()) program
-                    
                 let value, env = evalProgram env program
                 printfn $"{exprToString value}"
                 repl' env typeEnv
