@@ -193,9 +193,11 @@ if x > 0 then
         executionOutput.Text <- getStreamContent vm.Streams.Execution
         standardOutput.Text <- getStreamContent vm.Streams.StandardOutput
         globalsOutput.Text <- getStreamContent vm.Streams.Globals
-        let currentFrame = getCurrentFrame vm
-        this.HighlightCurrentInstruction(currentFrame.IP)
-
+        if vm.Frames.Count > 0 then
+            let currentFrame = getCurrentFrame vm
+            this.HighlightCurrentInstruction(currentFrame.IP)
+        else
+            ignore()
     member private this.SetButtonStates(isRepl: bool, isDebug: bool, ?canStepBack: bool, ?canStepForward: bool) =
         switchToReplButton.IsEnabled <- not isRepl && not isDebug
         switchToStandardButton.IsEnabled <- not isDebug

@@ -21,11 +21,16 @@ and VNumber =
     | VFloat of float
     | VRational of int * int  
     | VComplex of float * float
-
+and  Local = {
+    Name: string
+    Depth: int
+    Index: int
+}
 and Function = {
     Arity: int
     Chunk: Chunk
     Name: string
+    Locals: Local list
 }
 
 and Closure = {

@@ -74,6 +74,7 @@ let executeInRepl (state: ReplState) (input: string) : ReplState =
                             Function = func
                             IP = 0
                             StackBase = existingVM.Stack.Count
+                            Locals = [||] 
                         }
                         existingVM.Frames.Add(newFrame)
                         existingVM

@@ -96,7 +96,6 @@ let disassembleChunk (chunk: Chunk) name =
 
 let disassembleChunkToString (chunk: Chunk) name =
     let sb = StringBuilder()
-
     let appendLine (text: string) =
         sb.AppendLine(text) |> ignore
 

@@ -10,6 +10,7 @@ type CompilerState = {
     CurrentFunction: Function
     CurrentLine: int
     ScopeDepth: int
+    LocalCount: int // To assign slot indices
 }
 
 type CompilerError = string * CompilerState
@@ -30,19 +31,17 @@ let emitConstant (value: Value) (state: CompilerState) : CompilerResult<unit> =
 
 let emitOpCode (opCode: OP_CODE) (state: CompilerState) : CompilerResult<unit> =
     emitByte (opCodeToByte opCode) state
-
 let initFunction (name: string) =
     { 
         Arity = 0
         Chunk = emptyChunk()
         Name = name
+        Locals = []
     }
-
 let addLocal (name: string) (state: CompilerState) : CompilerState =
-    let newConstantPool = ResizeArray(state.CurrentFunction.Chunk.ConstantPool)
-    newConstantPool.Add(Value.String name)
-    let newChunk = { state.CurrentFunction.Chunk with ConstantPool = newConstantPool }
-    { state with CurrentFunction = { state.CurrentFunction with Chunk = newChunk } }
+    let local = { Name = name; Depth = state.ScopeDepth; Index = state.LocalCount }
+    let updatedFunction = { state.CurrentFunction with Locals = local :: state.CurrentFunction.Locals }
+    { state with CurrentFunction = updatedFunction; LocalCount = state.LocalCount + 1 }
 
 let rec compileLiteral (lit: Literal) : Compiler<unit> =
     let compileNumber (n: Vec3.Interpreter.Grammar.Number) state =
@@ -69,6 +68,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | EGrouping (e, _) -> compileGrouping e state
         | EUnary (token, u, _) -> compileUnary token u state
         | ELambda (parameters, body, _) -> compileLambda parameters body state
+        | ECall (callee, arguments, _) -> compileCall callee arguments state
         | _ -> Error ("Unsupported expression type", state)
 
 and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
@@ -79,7 +79,8 @@ and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
         let lambdaState = 
             { state with 
                 CurrentFunction = lambdaFunction
-                ScopeDepth = 0 }
+                ScopeDepth = 1
+                LocalCount = 0 }
         
         let compiledParamsState = 
             parameters 
@@ -99,6 +100,25 @@ and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
                 emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
             | Error e -> Error e
         | Error e -> Error e
+
+and compileCall (callee: Expr) (arguments: Expr list) : Compiler<unit> =
+    fun state ->
+        let calleeResult = compileExpr callee state
+        
+        match calleeResult with
+        | Error e -> Error e
+        | Ok ((), state) ->
+            let rec compileArgs args state =
+                match args with
+                | [] -> Ok ((), state)
+                | arg::rest ->
+                    compileExpr arg state
+                    |> Result.bind (fun ((), state) -> compileArgs rest state)
+            
+            compileArgs arguments state
+            |> Result.bind (fun ((), state) ->
+                let argCount = byte arguments.Length
+                emitBytes [| byte (opCodeToByte OP_CODE.CALL); argCount |] state)
 
 and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
     fun state ->
@@ -146,17 +166,12 @@ and compileGrouping grouping : Compiler<unit> =
         
 and compileIdentifier (token: Token) : Compiler<unit> =
     fun state ->
-        let localIndex = 
-            state.CurrentFunction.Chunk.ConstantPool
-            |> Seq.tryFindIndex (function 
-                | Value.String s when s = lexemeToString token.Lexeme -> true 
-                | _ -> false)
-        
-        match localIndex with
-        | Some index ->
-            emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte index |] state
+        let name = lexemeToString token.Lexeme
+        match state.CurrentFunction.Locals |> List.tryFind (fun local -> local.Name = name) with
+        | Some local ->
+            emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte local.Index |] state
         | None ->
-            let constIndex = addConstant state.CurrentFunction.Chunk (Value.String (lexemeToString token.Lexeme))
+            let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
             emitBytes [| byte (opCodeToByte OP_CODE.GET_GLOBAL); byte constIndex |] state
 
 let rec compileStmt (stmt: Stmt) : Compiler<unit> =
@@ -202,6 +217,7 @@ let compileProgram (program: Program) : CompilerResult<Function> =
             CurrentFunction = initFunction "REPL_Input"
             ScopeDepth = 0
             CurrentLine = 1
+            LocalCount = 0 
         }
     
     let rec compileStmts stmts state =
