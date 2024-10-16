@@ -3,6 +3,7 @@ module Vec3.Interpreter.Backend.VM
 open System
 open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Chunk
+open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
 
 type StreamType =
@@ -46,13 +47,39 @@ let createOutputStreams() = {
 let getCurrentFrame (vm: VM) =
     vm.Frames[vm.Frames.Count - 1]
 
+let readByte (vm: VM) =
+    let frame = getCurrentFrame vm
+    let byte = frame.Function.Chunk.Code[frame.IP]
+    let updatedFrame = { frame with IP = frame.IP + 1 }
+    vm.Frames[vm.Frames.Count - 1] <- updatedFrame
+    (vm, byte)
+
+let readConstant (vm: VM) =
+    let vm, byte = readByte vm
+    let frame = getCurrentFrame vm
+    if int byte >= frame.Function.Chunk.ConstantPool.Count then
+        failwithf $"Constant index out of range: %d{int byte} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
+    let constant = frame.Function.Chunk.ConstantPool[int byte]
+    (constant, vm)
+
+let readConstantLong (vm: VM) =
+    let vm, byte1 = readByte vm
+    let vm, byte2 = readByte vm
+    let vm, byte3 = readByte vm
+    let frame = getCurrentFrame vm
+    let index = (int byte1) ||| ((int byte2) <<< 8) ||| ((int byte3) <<< 16)
+    if index >= frame.Function.Chunk.ConstantPool.Count then
+        failwithf $"Long constant index out of range: %d{index} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
+    let constant = frame.Function.Chunk.ConstantPool[index]
+    (constant, vm)
+
 let createVM (mainFunc: Function) : VM =
     let constantPool = 
         mainFunc.Chunk.ConstantPool 
         |> Seq.indexed 
         |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
     let disassembly = 
-        disassembleChunkToString mainFunc.Chunk "program"
+        disassembleChunkToString mainFunc.Chunk mainFunc.Name
         |> fun s -> s.Split(Environment.NewLine) |> Seq.ofArray
     let vm = {
         Frames = ResizeArray<CallFrame>()
@@ -104,31 +131,6 @@ let pop (vm: VM) =
 let peek (vm: VM) offset =
     vm.Stack[vm.Stack.Count - 1 - offset]
 
-let readByte (vm: VM) =
-    let frame = getCurrentFrame vm
-    let byte = frame.Function.Chunk.Code[frame.IP]
-    let updatedFrame = { frame with IP = frame.IP + 1 }
-    vm.Frames[vm.Frames.Count - 1] <- updatedFrame
-    (vm, byte)
-
-let readConstant (vm: VM) =
-    let vm, byte = readByte vm
-    let frame = getCurrentFrame vm
-    if int byte >= frame.Function.Chunk.ConstantPool.Count then
-        failwithf $"Constant index out of range: %d{int byte} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
-    let constant = frame.Function.Chunk.ConstantPool[int byte]
-    (constant, vm)
-
-let readConstantLong (vm: VM) =
-    let vm, byte1 = readByte vm
-    let vm, byte2 = readByte vm
-    let vm, byte3 = readByte vm
-    let frame = getCurrentFrame vm
-    let index = (int byte1) ||| ((int byte2) <<< 8) ||| ((int byte3) <<< 16)
-    if index >= frame.Function.Chunk.ConstantPool.Count then
-        failwithf $"Long constant index out of range: %d{index} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
-    let constant = frame.Function.Chunk.ConstantPool[index]
-    (constant, vm)
 
 let defineGlobal (vm: VM) (name: string) (value: Value) =
     let updatedGlobals = Map.add name value vm.Globals
@@ -145,14 +147,30 @@ let binaryOp (vm: VM) (op: Value -> Value -> Value) =
     let result = op a b
     push vm result
 
+let callValue (vm: VM) (argCount: int) : VM =
+    let callee = peek vm argCount
+    match callee with
+    | Value.Function func ->
+        if argCount <> func.Arity then
+            failwith $"Expected {func.Arity} arguments but got {argCount}"
+        let frame = {
+            Function = func
+            IP = 0
+            StackBase = vm.Stack.Count - argCount - 1
+        }
+        vm.Frames.Add(frame)
+        vm // Return the updated VM
+    | _ -> failwith $"Can only call functions, got: {valueToString callee}"
 let rec run (vm: VM) =
     let rec runLoop vm =
         let frame = getCurrentFrame vm
         if frame.IP >= frame.Function.Chunk.Code.Count then
-            // Function has finished executing
             if vm.Frames.Count > 1 then
+                let result, vm = pop vm
                 vm.Frames.RemoveAt(vm.Frames.Count - 1)
-                runLoop vm
+                let callerFrame = getCurrentFrame vm
+                vm.Stack.RemoveRange(callerFrame.StackBase, vm.Stack.Count - callerFrame.StackBase)
+                push vm result |> runLoop
             else
                 vm
         else
@@ -221,16 +239,36 @@ let rec run (vm: VM) =
                             | None -> 
                                 failwith $"Undefined variable '{name}'"
                         | _ -> failwith "Expected string constant for variable name"
+                      | CLOSURE ->
+                        let constant, vm = readConstant vm
+                        match constant with
+                        | Value.Function func ->
+                            let closure = {
+                                Function = func
+                                UpValues = [] 
+                            }
+                            push vm (Value.Closure closure)
+                        | unexpected ->
+                            let errorMsg = $"Expected function for CLOSURE instruction, but got: {valueToString unexpected}"
+                            failwith errorMsg
+                    | CALL ->
+                        let vm, argCount = readByte vm
+                        callValue vm (int argCount) |> runLoop  
                     | RETURN ->
-                        if vm.Stack.Count > 0 then
-                            let result, vm = pop vm
-                            appendOutput vm Execution $"Return value: {valueToString result}"
+                        let result, vm = pop vm
+                        vm.Frames.RemoveAt(vm.Frames.Count - 1)
+                        if vm.Frames.Count = 0 then
+                            push vm result
                         else
-                            vm
+                            let callerFrame = getCurrentFrame vm
+                            vm.Stack.RemoveRange(callerFrame.StackBase, vm.Stack.Count - callerFrame.StackBase)
+                            push vm result |> runLoop  
                     | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
-            runLoop updatedVM
+            updatedVM
     runLoop vm
+    
 
+    
 let interpretWithMode (func: Function) (vm: VM option) (isRepl: bool) =
     let vm = 
         match vm with
@@ -248,7 +286,6 @@ let interpretWithMode (func: Function) (vm: VM option) (isRepl: bool) =
     let vm = appendOutput vm Execution "\n=== Program Execution ==="
     let finalVm = run vm
     (finalVm, finalVm.Streams)
-
 let interpret (func: Function) =
     let _, streams = interpretWithMode func None false
     streams
@@ -265,13 +302,10 @@ let resetStreams (vm: VM) =
 let stepVM (vm: VM) =
     let currentFrame = getCurrentFrame vm
     if currentFrame.IP >= currentFrame.Function.Chunk.Code.Count then
-        // Current function has finished executing
         if vm.Frames.Count > 1 then
-            // Pop the current frame and return to the calling function
             vm.Frames.RemoveAt(vm.Frames.Count - 1)
             vm
         else
-            // All frames have finished, return the VM
             vm
     else
         saveVMState vm

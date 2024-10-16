@@ -27,6 +27,7 @@ type OP_CODE =
     | JUMP_IF_FALSE
     | LOOP
     | CALL
+    | CLOSURE
 
 let opCodeToByte =
     function
@@ -56,9 +57,10 @@ let opCodeToByte =
     | JUMP_IF_FALSE -> 23uy
     | LOOP -> 24uy
     | CALL -> 25uy
+    | CLOSURE -> 26uy
 
-let byteToOpCode =
-    function
+let byteToOpCode byte =
+    match byte with
     | 0uy -> CONSTANT
     | 1uy -> CONSTANT_LONG
     | 2uy -> ADD
@@ -85,7 +87,9 @@ let byteToOpCode =
     | 23uy -> JUMP_IF_FALSE
     | 24uy -> LOOP
     | 25uy -> CALL
-    | _ -> failwith "Unknown OP_CODE"
+    | 26uy -> CLOSURE
+    | _ -> failwithf "Unknown OP_CODE: %d" byte
+
 let opCodeToString =
     function
     | CONSTANT -> "CONSTANT"
@@ -114,3 +118,4 @@ let opCodeToString =
     | JUMP_IF_FALSE -> "JUMP_IF_FALSE"
     | LOOP -> "LOOP"
     | CALL -> "CALL"
+    | CLOSURE -> "CLOSURE"

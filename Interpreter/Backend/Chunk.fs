@@ -1,23 +1,10 @@
 module Vec3.Interpreter.Backend.Chunk
 
 open System.Text
-open Vec3.Interpreter
 open Vec3.Interpreter.Backend.Instructions
-open Vec3.Interpreter.Backend.Value
-open Vec3.Interpreter.Token
+open Vec3.Interpreter.Backend.Types
 
-type LineInfo = { Offset: int; LineNumber: int }
 
-type Chunk =
-    { Code: ResizeArray<byte>
-      ConstantPool: ResizeArray<Value>
-      Lines: ResizeArray<LineInfo> }
-
-type Function ={
-    Name:string
-    Chunk:Chunk
-    Locals: Map<Lexeme, int>  
- }
     
 let emptyChunk() =
     { Code = ResizeArray<byte>()
@@ -93,6 +80,8 @@ let disassembleInstruction (chunk: Chunk) offset =
     | OP_CODE.POP -> simpleInstruction "OP_POP" offset
     | OP_CODE.DEFINE_GLOBAL -> constantInstruction chunk "OP_DEFINE_GLOBAL" offset
     | OP_CODE.GET_GLOBAL -> constantInstruction chunk "OP_GET_GLOBAL" offset
+    | OP_CODE.CALL-> constantInstruction chunk "OP_CALL" offset
+    | OP_CODE.CLOSURE-> constantInstruction chunk "OP_CLOSURE" offset
     | _ ->
         printfn $"Unknown opcode {chunk.Code[offset]}"
         offset + 1
@@ -107,15 +96,23 @@ let disassembleChunk (chunk: Chunk) name =
 
 let disassembleChunkToString (chunk: Chunk) name =
     let sb = StringBuilder()
-    sb.AppendLine($"== {name} ==") |> ignore
-    
+
+    let appendLine (text: string) =
+        sb.AppendLine(text) |> ignore
+
+    appendLine $"=== Disassembly of {name} ==="
+    appendLine $"Constant Pool Size: {chunk.ConstantPool.Count}"
+    appendLine $"Code Size: {chunk.Code.Count} bytes"
+    appendLine ""
+
     let simpleInstruction name offset =
-        sb.AppendLine($"{name}") |> ignore
+        appendLine $"{offset:D4} | {name}"
         offset + 1
 
     let constantInstruction chunk name offset =
         let constant = int chunk.Code[offset + 1]
-        sb.AppendLine($"{name,-16} {constant,4} '{valueToString chunk.ConstantPool[constant]}'") |> ignore
+        let value = chunk.ConstantPool[constant]
+        appendLine $"{offset:D4} | {name,-16} {constant,4} | {valueToString value}"
         offset + 2
 
     let constantLongInstruction chunk name offset =
@@ -123,15 +120,31 @@ let disassembleChunkToString (chunk: Chunk) name =
             (int chunk.Code[offset + 1]) ||| 
             ((int chunk.Code[offset + 2]) <<< 8) ||| 
             ((int chunk.Code[offset + 3]) <<< 16)
-        sb.AppendLine($"{name,-16} {constant,4} '{valueToString chunk.ConstantPool[constant]}'") |> ignore
+        let value = chunk.ConstantPool[constant]
+        appendLine $"{offset:D4} | {name,-16} {constant,4} | {valueToString value}"
         offset + 4
 
+    let byteInstruction name offset =
+        let slot = int chunk.Code[offset + 1]
+        appendLine $"{offset:D4} | {name,-16} {slot,4}"
+        offset + 2
+
+    let jumpInstruction name sign offset =
+        let jump = 
+            (int chunk.Code[offset + 1] <<< 8) ||| 
+            int chunk.Code[offset + 2]
+        let target = offset + 3 + sign * jump
+        appendLine $"{offset:D4} | {name,-16} {offset,4} -> {target,4}"
+        offset + 3
+
     let rec disassembleInstruction offset =
-        sb.Append($"{offset:D4} ") |> ignore
-        if offset > 0 && getLineNumber chunk offset = getLineNumber chunk (offset - 1) then
-            sb.Append("   | ") |> ignore
-        else
-            sb.Append($"{getLineNumber chunk offset,4} ") |> ignore
+        let lineInfo = 
+            chunk.Lines
+            |> Seq.tryFind (fun li -> li.Offset = offset)
+            |> Option.map (fun li -> $"[Line {li.LineNumber,4}]")
+            |> Option.defaultValue "[No Line]"
+
+        sb.Append($"{offset:D4} {lineInfo} | ") |> ignore
         
         match byteToOpCode chunk.Code[offset] with
         | OP_CODE.RETURN -> simpleInstruction "OP_RETURN" offset
@@ -152,8 +165,20 @@ let disassembleChunkToString (chunk: Chunk) name =
         | OP_CODE.POP -> simpleInstruction "OP_POP" offset
         | OP_CODE.DEFINE_GLOBAL -> constantInstruction chunk "OP_DEFINE_GLOBAL" offset
         | OP_CODE.GET_GLOBAL -> constantInstruction chunk "OP_GET_GLOBAL" offset
+        | OP_CODE.SET_GLOBAL -> constantInstruction chunk "OP_SET_GLOBAL" offset
+        | OP_CODE.GET_LOCAL -> byteInstruction "OP_GET_LOCAL" offset
+        | OP_CODE.SET_LOCAL -> byteInstruction "OP_SET_LOCAL" offset
+        | OP_CODE.JUMP -> jumpInstruction "OP_JUMP" 1 offset
+        | OP_CODE.JUMP_IF_FALSE -> jumpInstruction "OP_JUMP_IF_FALSE" 1 offset
+        | OP_CODE.LOOP -> jumpInstruction "OP_LOOP" -1 offset
+        | OP_CODE.CALL -> byteInstruction "OP_CALL" offset
+        | OP_CODE.CLOSURE ->
+            let constant = int chunk.Code[offset + 1]
+            let function' = chunk.ConstantPool[constant]
+            appendLine $"{offset:D4} | OP_CLOSURE       {constant,4} | {valueToString function'}"
+            offset + 2
         | _ ->
-            sb.AppendLine($"Unknown opcode {chunk.Code[offset]}") |> ignore
+            appendLine $"{offset:D4} | Unknown opcode {chunk.Code[offset]}"
             offset + 1
 
     let rec disassembleRec offset =
@@ -161,4 +186,6 @@ let disassembleChunkToString (chunk: Chunk) name =
             disassembleRec (disassembleInstruction offset)
     
     disassembleRec 0
+    appendLine ""
+    appendLine "=== End of Disassembly ==="
     sb.ToString()
