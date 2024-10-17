@@ -38,6 +38,9 @@ type OP_CODE =
     | RECORD_CREATE
     | RECORD_SET
     | RECORD_GET
+    | BLOCK_START
+    | BLOCK_END
+    | BLOCK_RETURN
 
 let opCodeToByte =
     function
@@ -78,6 +81,9 @@ let opCodeToByte =
     | RECORD_CREATE -> 34uy
     | RECORD_SET -> 35uy
     | RECORD_GET -> 36uy
+    | BLOCK_START -> 37uy
+    | BLOCK_END -> 38uy
+    | BLOCK_RETURN -> 39uy
 
 let byteToOpCode byte =
     match byte with
@@ -118,6 +124,9 @@ let byteToOpCode byte =
     | 34uy -> RECORD_CREATE
     | 35uy -> RECORD_SET
     | 36uy -> RECORD_GET
+    | 37uy -> BLOCK_START
+    | 38uy -> BLOCK_END
+    | 39uy -> BLOCK_RETURN
     | _ -> failwith $"Unknown OP_CODE: {byte}"
 
 let opCodeToString =
@@ -159,5 +168,8 @@ let opCodeToString =
     | RECORD_CREATE -> "RECORD_CREATE"
     | RECORD_SET -> "RECORD_SET"
     | RECORD_GET -> "RECORD_GET"
+    | BLOCK_START -> "BLOCK_START"
+    | BLOCK_END -> "BLOCK_END"
+    | BLOCK_RETURN -> "BLOCK_RETURN"
     
     

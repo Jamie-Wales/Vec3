@@ -428,6 +428,22 @@ let rec run (vm: VM) =
                             let vm = push vm value
                             vm
                         | _ -> failwith "Expected record and string key"
+                    | BLOCK_START ->
+                        let vm = { vm with ScopeDepth = vm.ScopeDepth + 1 }
+                        vm
+                    | BLOCK_END ->
+                        let vm = { vm with ScopeDepth = vm.ScopeDepth - 1 }
+                        vm
+                    | BLOCK_RETURN ->
+                        let result, vm = pop vm
+                        printfn $"Block return: {result}"
+                        
+                        let frame = getCurrentFrame vm
+                        let frame = { frame with IP = frame.Function.Chunk.Code.Count }
+                        vm.Frames[vm.Frames.Count - 1] <- frame
+                        let vm = push vm result
+                        vm
+                    
                     | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
                 runLoop vm  
     runLoop vm
