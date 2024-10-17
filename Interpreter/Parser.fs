@@ -135,6 +135,8 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
               Precedence = Precedence.Term }
         | Operator.Slash
         | Operator.Percent
+        | Operator.Dot
+        | Operator.Cross
         | Operator.Star ->
             { Prefix = None
               Infix = Some binary
@@ -298,6 +300,8 @@ and commaSeparatedList (state: ParserState) : ParseResult<Expr list> =
             | _ -> Ok(state, List.rev exprs))
 
     loop state []
+    |> Result.bind (fun (state, exprs) ->
+        Ok (state, List.rev exprs))
 
 and list (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "List"

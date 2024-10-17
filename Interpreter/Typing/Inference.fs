@@ -1,6 +1,5 @@
 module Vec3.Interpreter.Typing.Inference
 
-open System.Runtime.InteropServices.JavaScript
 open Microsoft.FSharp.Core
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
@@ -71,6 +70,17 @@ let getOpTypeBinary (op: Lexeme) (t1: TType) (t2: TType) : TType =
             | TTensor(typ, DAny), _
             | _, TTensor(typ, DAny) -> TFunction([ TTensor(typ, DAny); TTensor(typ, DAny) ], TTensor(typ, DAny))
             | _ -> TFunction([ standardConstrain; standardConstrain ], standardConstrain)
+        | Operator.Dot ->
+            match t1, t2 with
+            | TTensor(typ1, Dims sizes1), _
+            | _, TTensor(typ1, Dims sizes1) ->
+                TFunction([ TTensor(typ1, Dims sizes1); TTensor(typ1, Dims sizes1) ], TInteger)
+            | TTensor(typ1, DVar v1), _
+            | _, TTensor(typ1, DVar v1) -> TFunction([ TTensor(typ1, DVar v1); TTensor(typ1, DVar v1) ], TInfer)
+            | TTensor(typ1, DAny), _
+            | _, TTensor(typ1, DAny) -> TFunction([ TTensor(typ1, DAny); TTensor(typ1, DAny) ], TInfer)
+            | _ -> TNever
+            
         | Operator.Percent -> TFunction([ TInteger; TInteger ], TInteger)
         | Operator.EqualEqual
         | Operator.BangEqual ->
@@ -574,6 +584,62 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
 
                         let returnT = applySubstitution sub typ1
                         Ok(returnT, sub, EBinary(expr1, op, expr2, returnT))))
+            | Operator Cross ->
+                let sub = combineMaps sub1 sub2
+                
+                // dims must be 3
+                let dims =
+                    match dims1, dims2 with
+                    | Dims [ 3 ], Dims [ 3 ] -> Ok(Dims [ 3 ])
+                    | Dims [ 3 ], DAny
+                    | DAny, Dims [ 3 ] -> Ok(Dims [ 3 ])
+                    | DAny, DAny -> Ok(Dims [ 3 ])
+                    | _ -> Error [ TypeError.InvalidOperator(op, typ1) ]
+                    
+                dims
+                |> Result.bind (fun _ ->
+                    unify typ1 typ2
+                    |> Result.bind (fun sub' ->
+                        let sub = combineMaps sub sub'
+
+                        let returnT = applySubstitution sub typ1
+                        Ok(returnT, sub, EBinary(expr1, op, expr2, returnT)))
+                )
+                
+            | Operator Dot ->
+                // must return type of tensor, mus tbe of same dims and type
+                let sub = combineMaps sub1 sub2
+                
+                let dims =
+                    match dims1, dims2 with
+                    | DAny, DAny -> Ok DAny
+                    | DAny, Dims sizes
+                    | Dims sizes, DAny -> Ok(Dims sizes)
+                    | Dims sizes1, Dims sizes2 ->
+                        if sizes1 = sizes2 then
+                            Ok(Dims sizes1)
+                        else
+                            Error [ TypeError.InvalidOperator(op, typ1) ]
+                    | DVar v1, DVar v2 ->
+                        let resolved = Map.tryFind v1 resolvedDims.Value
+
+                        match resolved with
+                        | Some(Dims sizes) when v1 = v2 -> Ok(Dims sizes)
+                        | _ ->
+                            resolvedDims.Value <- Map.add v1 dims2 resolvedDims.Value
+                            Ok dims2
+                    | _ -> Error [ TypeError.InvalidOperator(op, typ1) ]
+                
+                match dims with
+                | Ok dims ->
+                    unify typ1 typ2
+                    |> Result.bind (fun sub' ->
+                        let sub = combineMaps sub sub'
+
+                        let returnT = applySubstitution sub typ1
+                        Ok(returnT, sub, EBinary(expr1, op, expr2, returnT))
+                    )
+                | _ -> Error [ TypeError.InvalidOperator(op, typ1) ]
             | _ -> Error [ TypeError.InvalidOperator(op, typ1) ]
         | Ok(t1, sub1, expr1), Ok(t2, sub2, expr2) ->
             let opType = getOpTypeBinary op.Lexeme t1 t2

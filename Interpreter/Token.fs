@@ -38,6 +38,8 @@ type Operator =
     | DotDot
     | Dot
     
+    | Cross
+    
 type Keyword =
     | Let
     | If
