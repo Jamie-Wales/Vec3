@@ -631,7 +631,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
                     | _ -> Error [ TypeError.InvalidOperator(op, typ1) ]
                 
                 match dims with
-                | Ok dims ->
+                | Ok _ ->
                     unify typ1 typ2
                     |> Result.bind (fun sub' ->
                         let sub = combineMaps sub sub'
@@ -868,12 +868,18 @@ and inferStmt (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Substitution * Stmt) Type
 and inferProgram (env: TypeEnv) (stmts: Program) : (TypeEnv * Substitution * Program) TypeResult =
     List.fold
         (fun acc stmt ->
-            acc
-            |> Result.bind (fun (env, sub, stmts) ->
+            match acc with
+            | Error errors ->
+                let errors' =
+                    match inferStmt env stmt with
+                    | Ok _ -> []
+                    | Error errors -> errors
+                Error (errors @ errors')
+            | Ok (env, sub, stmts) ->
                 inferStmt env stmt
                 |> Result.bind (fun (env', sub', stmt) ->
                     let sub = combineMaps sub sub'
-                    Ok(env', sub, stmts @ [ stmt ]))))
+                    Ok(env', sub, stmts @ [ stmt ])))
         (Ok(env, Map.empty, []))
         stmts
 

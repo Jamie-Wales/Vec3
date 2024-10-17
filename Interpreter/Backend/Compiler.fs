@@ -83,20 +83,22 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | EBlock(stmts, _) -> compileBlock stmts state
         | _ -> Error("Unsupported expression type", state)
 
-and compileBlock(stmts: Stmt list) : Compiler<unit> =
+and compileBlock (stmts: Stmt list) : Compiler<unit> =
     fun state ->
-        let newState = { state with ScopeDepth = state.ScopeDepth + 1 }
+        let state = { state with ScopeDepth = state.ScopeDepth + 1 }
+        
         let rec compileStmts stmts state =
             match stmts with
             | [] -> Ok((), state)
+            | [stmt] -> compileStmt stmt state
             | stmt :: rest ->
                 compileStmt stmt state
+                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.POP state)
                 |> Result.bind (fun ((), state) -> compileStmts rest state)
-
-        compileStmts stmts newState
-        |> Result.bind (fun ((), state) ->
-            emitOpCode OP_CODE.POP state
-            )
+        
+        compileStmts stmts state
+        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RETURN state)
+        |> Result.map (fun ((), state) -> ((), { state with ScopeDepth = state.ScopeDepth - 1 }))
 
 and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
     fun state ->
@@ -106,7 +108,7 @@ and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
         let lambdaState =
             { state with
                 CurrentFunction = lambdaFunction
-                ScopeDepth = 1
+                ScopeDepth = state.ScopeDepth + 1
                 LocalCount = 0 }
 
         let compiledParamsState =
@@ -230,7 +232,6 @@ and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit
             else
                 let constIndex =
                     addConstant state.CurrentFunction.Chunk (Value.String(lexemeToString name.Lexeme))
-
                 emitBytes [| byte (opCodeToByte OP_CODE.DEFINE_GLOBAL); byte constIndex |] state)
 
 let compileProgramState (program: Program) (state: CompilerState) : CompilerResult<Chunk> =

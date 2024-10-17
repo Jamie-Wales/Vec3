@@ -2,11 +2,10 @@ module Vec3.Interpreter.Backend.Types
 
 type LineInfo = { Offset: int; LineNumber: int }
 
-type Chunk = {
-    Code: ResizeArray<byte>
-    Lines: ResizeArray<LineInfo>
-    ConstantPool: ResizeArray<Value>
-}
+type Chunk =
+    { Code: ResizeArray<byte>
+      Lines: ResizeArray<LineInfo>
+      ConstantPool: ResizeArray<Value> }
 
 and Value =
     | VNumber of VNumber
@@ -17,26 +16,23 @@ and Value =
     | Nil
 
 and VNumber =
-    | VInteger of int  
+    | VInteger of int
     | VFloat of float
-    | VRational of int * int  
+    | VRational of int * int
     | VComplex of float * float
-and  Local = {
-    Name: string
-    Depth: int
-    Index: int
-}
-and Function = {
-    Arity: int
-    Chunk: Chunk
-    Name: string
-    Locals: Local list
-}
 
-and Closure = {
-    Function: Function
-    UpValues: Value list
-}
+and Local =
+    { Name: string; Depth: int; Index: int }
+
+and Function =
+    { Arity: int
+      Chunk: Chunk
+      Name: string
+      Locals: Local list }
+
+and Closure =
+    { Function: Function
+      UpValues: Value list }
 
 let valueToString =
     function
