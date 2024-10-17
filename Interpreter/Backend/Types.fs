@@ -16,6 +16,7 @@ and Value =
     | Nil
     | List of Value list
     | Tuple of Value list
+    | Record of (string * Value) list
 
 and VNumber =
     | VInteger of int
@@ -49,4 +50,5 @@ let rec valueToString =
     | Nil -> "nil"
     | List l -> $"""[{String.concat ", " (List.map valueToString l)}]"""
     | Tuple t -> $"""({String.concat ", " (List.map valueToString t)})"""
+    | Record r -> $"""{String.concat ", " (List.map (fun (k, v) -> $"{k}: {valueToString v}") r)}"""
     

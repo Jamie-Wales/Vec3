@@ -170,6 +170,39 @@ let evalListOp (op: Lexeme) (lhs: Expr) (rhs: Expr) =
 
 let rec evalExpr (env: Env) (expr: Expr) : Expr =
     match expr with
+    | ERecord(fields, typ) ->
+        // eval all fields
+        let fields = List.map (fun (k, v, t) -> k, evalExpr env v, t) fields
+        ERecord(fields, typ)
+    | ERecordSelect(expr, field, _) ->
+        let expr = evalExpr env expr
+
+        match expr with
+        | ERecord(fields, _) ->
+            let rec selectField (fields: (Token * Expr * TType) list) (field: Lexeme) =
+                match fields with
+                | [] -> failwith "field not found"
+                | (k, v, _) :: rest ->
+                    if k.Lexeme = field then v
+                    else selectField rest field
+
+            selectField fields field.Lexeme
+        | _ -> failwith "invalid"
+    | ERecordUpdate(expr, fields, _) ->
+        let expr = evalExpr env expr
+        match expr with
+        | ERecord(oldFields, _) ->
+            let rec updateFields (fields: (Token * Expr * TType) list) (oldFields: (Token * Expr * TType) list) =
+                match fields, oldFields with
+                | [], [] -> []
+                | (k, v, t) :: rest, (ok, ov, ot) :: rest' ->
+                    if k.Lexeme = ok.Lexeme then (k, v, t) :: updateFields rest rest'
+                    else (ok, ov, ot) :: updateFields fields rest'
+                | (k, v, t) :: rest, []
+                | [], (k, v, t) :: rest -> (k, v, t) :: updateFields [] rest
+                
+            ERecord(updateFields fields oldFields, TRecord [])
+        | _ -> failwith "invalid"
     | EBlock(stmts, _) ->
         let rec evalBlock (env: Env) =
             function
@@ -391,6 +424,7 @@ let evalStatement (env: Env) (stmt: Stmt) : Expr * Env =
     | ELiteral(lit, typ), env -> ELiteral(lit, typ), env
     | EList(exprs, typ), env -> EList(exprs, typ), env
     | ETuple(exprs, typ), env -> ETuple(exprs, typ), env
+    | ERecord(fields, typ), env -> ERecord(fields, typ), env
     | _, env -> ELiteral(LUnit, TUnit), env
 
 

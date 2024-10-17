@@ -1,5 +1,6 @@
 module Vec3.Interpreter.Backend.Compiler
 
+open Microsoft.FSharp.Core
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Instructions
@@ -90,16 +91,83 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | EUnary(token, u, _) -> compileUnary token u state
         | ELambda(parameters, body, _) -> compileLambda parameters body state
         | ECall(callee, arguments, _) -> compileCall callee arguments state
-        | EBlock(stmts, _) -> compileBlock stmts state
-        | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
         | EList(elements, _) -> compileList elements state
-        | EIndex(list, index, _) ->
-            compileExpr list state
-            |> Result.bind (fun ((), state) -> compileExpr index state)
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.INDEX state)
+        | EIndex(list, index, _) -> compileIndex list index state
         | ETuple(elements, _) ->
             compileTuple elements state
-        | _ -> Error("Unsupported expression type", state)
+        | ERecord(fields, _) ->
+            let compileField (name, value, _) state =
+                let name = match name with
+                            | { Lexeme = Identifier n } -> n
+                            | _ -> failwith "Invalid record field name"
+                
+                compileExpr value state
+                |> Result.bind (fun ((), state) ->
+                    let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
+                    emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
+                    |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RECORD_SET state))
+
+            let rec compileFields fields state =
+                match fields with
+                | [] -> Ok((), state)
+                | field :: rest ->
+                    compileField field state
+                    |> Result.bind (fun ((), state) -> compileFields rest state)
+
+            emitOpCode OP_CODE.RECORD_CREATE state
+            |> Result.bind (fun ((), state) ->
+                compileFields fields state)
+        
+        | ERecordSelect(expr, token, _) ->
+            let name = match token with
+                        | { Lexeme = Identifier n } -> n
+                        | _ -> failwith "Invalid record field name"
+                        
+            compileExpr expr state
+            |> Result.bind (fun ((), state) ->
+                let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
+                emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
+                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RECORD_GET state)
+                )
+        | ERecordUpdate(expr, newFields, _) ->
+            
+            let compileField (name, value, _) state =
+                let name = match name with
+                            | { Lexeme = Identifier n } -> n
+                            | _ -> failwith "Invalid record field name"
+                
+                compileExpr value state
+                |> Result.bind (fun ((), state) ->
+                    let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
+                    emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
+                    |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RECORD_SET state))
+                
+            let rec compileFields fields state =
+                match fields with
+                | [] -> Ok((), state)
+                | field :: rest ->
+                    compileField field state
+                    |> Result.bind (fun ((), state) -> compileFields rest state)
+                   
+            emitOpCode OP_CODE.RECORD_UPDATE state
+            |> Result.bind (fun ((), state) ->
+                compileExpr expr state
+                |> Result.bind (fun ((), state) -> compileFields newFields state))
+            
+            
+            
+            
+        // below not working
+        | EBlock(stmts, _) -> compileBlock stmts state
+        | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
+        | ETernary(cond, thenB, elseB, _) -> compileIf cond thenB elseB state
+        
+
+and compileIndex (list: Expr) (index: Expr) : Compiler<unit> =
+    fun state ->
+        compileExpr list state
+        |> Result.bind (fun ((), state) -> compileExpr index state)
+        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.INDEX state)
 
 and compileTuple (elements: Expr list) : Compiler<unit> =
     fun state ->
@@ -112,7 +180,6 @@ and compileTuple (elements: Expr list) : Compiler<unit> =
         
         compileElements elements state
         |> Result.bind (fun ((), state) ->
-            // would be nicer to emit byte probably
             emitConstant (VNumber(VInteger elements.Length)) state)
         |> Result.bind (fun ((), state) ->
             emitOpCode OP_CODE.TUPLE_CREATE state)
@@ -145,22 +212,29 @@ and compileIf (condition: Expr) (thenBranch: Expr) (elseBranch: Expr) : Compiler
                 |> Result.bind (fun ((), state) -> emitJumpBack endJump state))
             )
 
+// block is a new scope and an expression, therefore last expression is returned in the block
 and compileBlock (stmts: Stmt list) : Compiler<unit> =
     fun state ->
-        let state = { state with ScopeDepth = state.ScopeDepth + 1 }
-        
         let rec compileStmts stmts state =
             match stmts with
             | [] -> Ok((), state)
-            | [stmt] -> compileStmt stmt state
+            | [stmt] ->
+                emitOpCode OP_CODE.BLOCK_RETURN state
+                |> Result.bind (fun ((), state) ->
+                    match stmt with
+                    | SExpression(expr, _) -> compileExpr expr state
+                    | _ ->
+                        compileStmt stmt state
+                        |> Result.bind (fun ((), state) -> emitConstant Value.Nil state
+                    ))
+                    
             | stmt :: rest ->
                 compileStmt stmt state
-                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.POP state)
                 |> Result.bind (fun ((), state) -> compileStmts rest state)
-        
-        compileStmts stmts state
-        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RETURN state)
-        |> Result.map (fun ((), state) -> ((), { state with ScopeDepth = state.ScopeDepth - 1 }))
+                
+        emitOpCode OP_CODE.BLOCK_START state
+        |> Result.bind (fun ((), newState) -> compileStmts stmts newState)
+        |> Result.bind (fun ((), newState) -> emitOpCode OP_CODE.BLOCK_END newState)
 
 and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
     fun state ->
@@ -231,7 +305,7 @@ and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
         | Operator Star -> emitBinaryOp OP_CODE.MULTIPLY state
         | Operator Slash -> emitBinaryOp OP_CODE.DIVIDE state
         | Operator EqualEqual -> emitBinaryOp OP_CODE.EQUAL state
-        | Operator Dot -> emitOpCode OP_CODE.DOTPRODUCT state
+        | Operator DotStar -> emitOpCode OP_CODE.DOTPRODUCT state
         | Operator Cross -> emitOpCode OP_CODE.CROSSPRODUCT state
         | Operator BangEqual ->
             emitBinaryOp OP_CODE.EQUAL state

@@ -35,7 +35,13 @@ type OP_CODE =
     | LIST_CREATE
     | INDEX
     | TUPLE_CREATE
-    
+    | RECORD_CREATE
+    | RECORD_SET
+    | RECORD_GET
+    | RECORD_UPDATE
+    | BLOCK_START
+    | BLOCK_END
+    | BLOCK_RETURN
 
 let opCodeToByte =
     function
@@ -73,6 +79,14 @@ let opCodeToByte =
     | LIST_CREATE -> 31uy
     | INDEX -> 32uy
     | TUPLE_CREATE -> 33uy
+    | RECORD_CREATE -> 34uy
+    | RECORD_SET -> 35uy
+    | RECORD_GET -> 36uy
+    | RECORD_UPDATE -> 37uy
+    | BLOCK_START -> 38uy
+    | BLOCK_END -> 39uy
+    | BLOCK_RETURN -> 40uy
+    
 
 let byteToOpCode byte =
     match byte with
@@ -110,6 +124,13 @@ let byteToOpCode byte =
     | 31uy -> LIST_CREATE
     | 32uy -> INDEX
     | 33uy -> TUPLE_CREATE
+    | 34uy -> RECORD_CREATE
+    | 35uy -> RECORD_SET
+    | 36uy -> RECORD_GET
+    | 37uy -> RECORD_UPDATE
+    | 38uy -> BLOCK_START
+    | 39uy -> BLOCK_END
+    | 40uy -> BLOCK_RETURN
     | _ -> failwith $"Unknown OP_CODE: {byte}"
 
 let opCodeToString =
@@ -148,3 +169,12 @@ let opCodeToString =
     | LIST_CREATE -> "LIST_CREATE"
     | INDEX -> "INDEX"
     | TUPLE_CREATE -> "TUPLE_CREATE"
+    | RECORD_CREATE -> "RECORD_CREATE"
+    | RECORD_SET -> "RECORD_SET"
+    | RECORD_GET -> "RECORD_GET"
+    | RECORD_UPDATE -> "RECORD_UPDATE"
+    | BLOCK_START -> "BLOCK_START"
+    | BLOCK_END -> "BLOCK_END"
+    | BLOCK_RETURN -> "BLOCK_RETURN"
+    
+    

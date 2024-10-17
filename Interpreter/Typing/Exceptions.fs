@@ -31,6 +31,8 @@ type TypeError =
     | InvalidOpen of Token
     | InvalidIndex of Expr * TType
     | InvalidAssert of Expr * TType
+    | InvalidField of Token * TType
+    | InvalidFields of (Token * Expr * TType) list * TType
 
 type TypeErrors = TypeError list
 exception TypeException of TypeErrors
@@ -73,6 +75,9 @@ let formatTypeError (error: TypeError) : string =
     | InvalidIf(expr) -> $"Invalid if statement at expr: {expr}"
     | InvalidIndex(expr, typ) -> $"Invalid index at expr: {expr}, got {typ}"
     | InvalidAssert(expr, typ) -> $"Invalid assert at expr: {expr}, got {typ}"
+    | InvalidField(token, typ) -> $"Invalid field at Line: {token.Position.Line}, got {typ}"
+    | InvalidFields(tokens, typ) -> $"""Invalid fields at Line: {String.concat ", " (List.map (fun (t, _,_) -> $"{t.Lexeme}") tokens)}, got {typ}"""
+        
 
 let formatTypeErrors (errors: TypeError list) : string =
     List.map formatTypeError errors |> String.concat "\n"

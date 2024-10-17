@@ -1,6 +1,6 @@
 module Vec3.Interpreter.Token
 
-type Number =
+type TNumber =
     | Float of float
     | Integer of int
     | Rational of int * int
@@ -39,6 +39,7 @@ type Operator =
     | Dot
     
     | Cross
+    | DotStar
     
 type Keyword =
     | Let
@@ -54,6 +55,7 @@ type Keyword =
     | And
     | Or
     | Assert
+    | With
     
     
 let keywordMap = 
@@ -70,6 +72,7 @@ let keywordMap =
       "and", Keyword.And
       "or", Keyword.Or
       "assert", Keyword.Assert
+      "with", Keyword.With
        ]
     |> Map.ofList
 
@@ -79,7 +82,7 @@ let isKeyword (s: string): bool =
 
 
 type Lexeme =
-    | Number of Number
+    | Number of TNumber
     | String of string
     | Keyword of Keyword
     | Operator of Operator
@@ -94,7 +97,7 @@ type Token = { Lexeme: Lexeme; Position: Position; }
 
 let Empty = { Lexeme = Identifier ""; Position = { Line = 0; Column = 0; } }
 
-let numberToString (n: Number): string =
+let numberToString (n: TNumber): string =
     match n with
     | Float f -> $"Float({f})"
     | Integer i -> $"Integer({i})"
@@ -131,6 +134,8 @@ let operatorToString (op: Operator): string =
     | AmpersandAmpersand -> "and"
     | PipePipe -> "or"
     | Caret -> "^"
+    | Cross -> "X"
+    | DotStar -> ".*"
 
 let lexemeToString (lex: Lexeme): string =
     match lex with

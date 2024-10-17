@@ -401,6 +401,59 @@ let rec run (vm: VM) =
                             let vm = push vm tuple
                             vm
                         | _ -> failwith "Expected non-negative integer for tuple size"
+                    | RECORD_CREATE ->
+                        let record = Record []
+                        let vm = push vm record
+                        vm
+                    | RECORD_SET ->
+                        let key, vm = pop vm
+                        let value, vm = pop vm
+                        let record, vm = pop vm
+                        match (record, key) with
+                        | Record fields, String key ->
+                            let updatedRecord = Record <| if List.exists (fun (k, _) -> k = key) fields then
+                                                            fields
+                                                            |> List.map (fun (k, v) -> if k = key then (k, value) else (k, v))
+                                                          else
+                                                            (key, value) :: fields
+                            
+                            let vm = push vm updatedRecord
+                            vm
+                        | _ -> failwith "Expected record and string key"
+                    | RECORD_GET ->
+                        let key, vm = pop vm
+                        let record, vm = pop vm
+                        match (record, key) with
+                        | Record fields, String key ->
+                            let value = 
+                                fields
+                                |> List.tryFind (fun (k, _) -> k = key)
+                                |> Option.map snd
+                                |> Option.defaultValue Value.Nil
+                            let vm = push vm value
+                            vm
+                        | _ -> failwith "Expected record and string key"
+                    | RECORD_UPDATE ->
+                        let value, vm = pop vm
+                        let vm = push vm value
+                        vm
+                        
+                    | BLOCK_START ->
+                        let vm = { vm with ScopeDepth = vm.ScopeDepth + 1 }
+                        vm
+                    | BLOCK_END ->
+                        let vm = { vm with ScopeDepth = vm.ScopeDepth - 1 }
+                        vm
+                    | BLOCK_RETURN ->
+                        let result, vm = pop vm
+                        printfn $"Block return: {result}"
+                        
+                        let frame = getCurrentFrame vm
+                        let frame = { frame with IP = frame.Function.Chunk.Code.Count }
+                        vm.Frames[vm.Frames.Count - 1] <- frame
+                        let vm = push vm result
+                        vm
+                    
                     | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
                 runLoop vm  
     runLoop vm

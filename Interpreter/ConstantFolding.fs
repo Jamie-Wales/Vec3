@@ -127,5 +127,8 @@ let foldConstants (program: Program) : Program =
                 EIf(cond, foldExpr thenEx, foldExpr elseEx, typ)
         | ETernary(condEx, thenEx, elseEx, typ) -> foldExpr (EIf(condEx, thenEx, elseEx, typ))
         | ETuple(elems, typ) -> ETuple(List.map foldExpr elems, typ)
+        | ERecordSelect(record, field, typ) -> ERecordSelect(foldExpr record, field, typ)
+        | ERecord(fields, typ) -> ERecord(List.map (fun (f, e, t) -> (f, foldExpr e, t)) fields, typ)
+        | ERecordUpdate(record, fields, typ) -> ERecordUpdate(foldExpr record, List.map (fun (f, e, t) -> (f, foldExpr e, t)) fields, typ)
 
     foldStatements program

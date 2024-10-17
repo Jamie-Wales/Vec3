@@ -10,7 +10,15 @@ open Vec3.Interpreter.Eval
 open Vec3.Interpreter.Preprocessor
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.ConstantFolding
+open Vec3.Interpreter.Token
 
+let numberToString (n: Number): string =
+    match n with
+    | LFloat f -> $"Float({f})"
+    | LInteger i -> $"Integer({i})"
+    | LRational (n, d) -> $"Rational({n}/{d})"
+    | LComplex (r, i) -> $"Complex({r}i{i})"
+    
 let litToString = function
     | LNumber n -> numberToString n
     | LString s -> $"\"{s}\""
@@ -21,14 +29,8 @@ let rec exprToString  = function
     | ELiteral (lit, _) -> litToString lit
     | EList (exprs, _) -> $"""[{String.concat ", " (List.map exprToString exprs)}]"""
     | ETuple (exprs, _) -> $"""({String.concat ", " (List.map exprToString exprs)})"""
+    | ERecord (fields, _) -> $"""{{ {String.concat ", " (List.map (fun (k, v, typ) -> $"{k.Lexeme}: {typ} = {exprToString v}") fields)} }}"""
     | _ -> "()"
-
-let numberToString = function
-    | LInteger x -> $"{x}"
-    | LFloat x -> $"{x}"
-    | LRational (n, d) -> $"{n}/{d}"
-    | LComplex (r, i) -> $"{r} + {i}i"
-
 
 let evalRepl =
     let rec repl' (env: Env) (typeEnv: TypeEnv) =
@@ -40,6 +42,9 @@ let evalRepl =
             let typeCheck = inferProgram typeEnv program
             match typeCheck with
             | Ok (typeEnv, _, program) ->
+                // print env and program
+                // Map.iter (fun k v -> printfn $"{k} -> {exprToString v}") env
+                // printfn $"{program}"
                 let program = foldConstants program
                 let value, env = evalProgram env program
                 printfn $"{exprToString value}"

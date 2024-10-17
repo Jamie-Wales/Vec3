@@ -27,12 +27,11 @@ type Type =
     
     | TConstrain of TypeVar * Type list
     
-    // todo
     | TTuple of Type list
     
     | TTensor of Type * Dims
-    // | TVector of Type * int
-    // | TMatrix of Type * int * int
+    
+    | TRecord of (Token * Type) list
 
 and Dims = Dims of int list | DAny | DVar of TypeVar
 
@@ -67,6 +66,10 @@ type Expr =
     
     | ELambda of Token list * Expr * Type
     | EBlock of Stmt list * Type
+    
+    | ERecordSelect of Expr * Token * Type
+    | ERecord of (Token * Expr * TType) list * Type
+    | ERecordUpdate of Expr * (Token * Expr * TType) list * Type
     
 and Stmt =
     | SExpression of Expr * Type
