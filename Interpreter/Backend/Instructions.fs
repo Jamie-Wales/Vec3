@@ -28,6 +28,14 @@ type OP_CODE =
     | LOOP
     | CALL
     | CLOSURE
+    | ASSERT
+    | DOTPRODUCT
+    | CROSSPRODUCT
+    | LIST_APPEND
+    | LIST_CREATE
+    | INDEX
+    | TUPLE_CREATE
+    
 
 let opCodeToByte =
     function
@@ -58,6 +66,13 @@ let opCodeToByte =
     | LOOP -> 24uy
     | CALL -> 25uy
     | CLOSURE -> 26uy
+    | ASSERT -> 27uy
+    | DOTPRODUCT -> 28uy
+    | CROSSPRODUCT -> 29uy
+    | LIST_APPEND -> 30uy
+    | LIST_CREATE -> 31uy
+    | INDEX -> 32uy
+    | TUPLE_CREATE -> 33uy
 
 let byteToOpCode byte =
     match byte with
@@ -88,7 +103,14 @@ let byteToOpCode byte =
     | 24uy -> LOOP
     | 25uy -> CALL
     | 26uy -> CLOSURE
-    | _ -> failwithf "Unknown OP_CODE: %d" byte
+    | 27uy -> ASSERT
+    | 28uy -> DOTPRODUCT
+    | 29uy -> CROSSPRODUCT
+    | 30uy -> LIST_APPEND
+    | 31uy -> LIST_CREATE
+    | 32uy -> INDEX
+    | 33uy -> TUPLE_CREATE
+    | _ -> failwith $"Unknown OP_CODE: {byte}"
 
 let opCodeToString =
     function
@@ -119,3 +141,10 @@ let opCodeToString =
     | LOOP -> "LOOP"
     | CALL -> "CALL"
     | CLOSURE -> "CLOSURE"
+    | ASSERT -> "ASSERT"
+    | DOTPRODUCT -> "DOTPRODUCT"
+    | CROSSPRODUCT -> "CROSSPRODUCT"
+    | LIST_APPEND -> "LIST_APPEND"
+    | LIST_CREATE -> "LIST_CREATE"
+    | INDEX -> "INDEX"
+    | TUPLE_CREATE -> "TUPLE_CREATE"

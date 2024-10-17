@@ -1,12 +1,11 @@
 module Vec3.Interpreter.Repl
 
 open System
-open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Parser
 open Vec3.Interpreter.Backend.Compiler
 open Vec3.Interpreter.Backend.VM
-open Vec3.Interpreter.Typing.Checker
 open Vec3.Interpreter.Typing.Inference
+open Vec3.Interpreter.Typing.Exceptions
 open Vec3.Interpreter.Eval
 open Vec3.Interpreter.Preprocessor
 open Vec3.Interpreter.Grammar

@@ -135,7 +135,7 @@ let evalListOp (op: Lexeme) (lhs: Expr) (rhs: Expr) =
                         :: mulVectors ls rs
                     | _ -> failwith "invalid"
                 | _ -> failwith "invalid"
-
+            
             Ok(EList(mulVectors lhs rhs, TInteger))
 
         // dot product

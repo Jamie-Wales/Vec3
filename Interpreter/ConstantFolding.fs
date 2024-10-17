@@ -1,7 +1,6 @@
 module Vec3.Interpreter.ConstantFolding
 
 open Token
-open Parser
 open Eval
 open Grammar
 
@@ -47,32 +46,32 @@ let foldConstants (program: Program) : Program =
                 | Operator.Plus ->
                     match evalAddition(lhs, rhs) with
                     | Ok res -> ELiteral(LNumber(res), typ)
-                    | Error s -> EBinary(lhss, opp, rhss, typ)
+                    | Error _ -> EBinary(lhss, opp, rhss, typ)
                  
                 | Operator.Minus ->
                     match evalSubtraction(lhs, rhs) with
                     | Ok res -> ELiteral(LNumber(res), typ)
-                    | Error s -> EBinary(lhss, opp, rhss, typ)
+                    | Error _ -> EBinary(lhss, opp, rhss, typ)
                     
                 | Operator.Star ->
                     match evalMultiplication(lhs, rhs) with
                     | Ok res -> ELiteral(LNumber(res), typ)
-                    | Error s -> EBinary(lhss, opp, rhss, typ)
+                    | Error _ -> EBinary(lhss, opp, rhss, typ)
                     
                 | Operator.Slash ->
                     match evalDivision(lhs, rhs) with
                     | Ok res -> ELiteral(LNumber(res), typ)
-                    | Error s -> EBinary(lhss, opp, rhss, typ)
+                    | Error _ -> EBinary(lhss, opp, rhss, typ)
                 | Operator.Caret
                 | Operator.StarStar ->
                     match evalPower(lhs, rhs) with
                     | Ok res -> ELiteral(LNumber(res), typ)
-                    | Error s -> EBinary(lhss, opp, rhss, typ)
+                    | Error _ -> EBinary(lhss, opp, rhss, typ)
                     
                 | Operator.Percent ->
                     match evalModulo(lhs, rhs) with
                     | Ok res -> ELiteral(LNumber(res), typ)
-                    | Error s -> EBinary(lhss, opp, rhss, typ)
+                    | Error _ -> EBinary(lhss, opp, rhss, typ)
                 | Operator.EqualEqual -> ELiteral(LBool(lhs = rhs), typ)
                 | Operator.BangEqual -> ELiteral(LBool(lhs <> rhs), typ)
                 | Operator.Less -> ELiteral(LBool(lhs < rhs), typ)

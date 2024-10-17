@@ -70,7 +70,7 @@ let readConstantLong (vm: VM) =
     let frame = getCurrentFrame vm
     let index = (int byte1) ||| ((int byte2) <<< 8) ||| ((int byte3) <<< 16)
     if index >= frame.Function.Chunk.ConstantPool.Count then
-        failwithf $"Long constant index out of range: %d{index} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
+        failwith $"Long constant index out of range: %d{index} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
     let constant = frame.Function.Chunk.ConstantPool[index]
     (constant, vm)
 
@@ -161,7 +161,22 @@ let callValue (vm: VM) (argCount: int) : VM =
             StackBase = vm.Stack.Count - argCount
             Locals = Array.zeroCreate func.Locals.Length
         }
+        printfn $"Calling function: {frame}"
         vm.Frames.Add(frame)
+        vm
+    | Value.Closure closure ->
+        if argCount <> closure.Function.Arity then
+            failwith $"Expected {closure.Function.Arity} arguments but got {argCount}"
+        let frame = {
+            Function = closure.Function
+            IP = 0
+            StackBase = vm.Stack.Count - argCount
+            Locals = Array.zeroCreate closure.Function.Locals.Length
+        }
+        vm.Frames.Add(frame)
+        let frame = getCurrentFrame vm
+        closure.UpValues
+        |> Seq.iteri (fun i upValue -> frame.Locals[i] <- upValue)
         vm
     | _ -> failwith $"Can only call functions, got: {valueToString callee}"
     
@@ -196,123 +211,197 @@ let rec run (vm: VM) =
                 saveVMState vm
                 let vm, instruction = readByte vm
                 let vm =
-                    match byteToOpCode instruction with
-                    | opcode ->
-                        let vm = appendOutput vm Execution $"Executing: {opCodeToString opcode}"
-                        match opcode with
-                        | CONSTANT ->
-                            let constant, vm = readConstant vm
-                            let vm = push vm constant
-                            appendOutput vm Execution $"Pushed constant onto stack: {valueToString constant}"
+                    let opcode = byteToOpCode instruction
+                    printfn $"Executing: {opcode}"
+                    let vm = appendOutput vm Execution $"Executing: {opCodeToString opcode}"
+                    match opcode with
+                    | CONSTANT ->
+                        let constant, vm = readConstant vm
+                        let vm = push vm constant
+                        let _ = appendOutput vm Execution $"Pushed constant onto stack: {valueToString constant}"
+                        vm
+                    | CONSTANT_LONG ->
+                        let constant, vm = readConstantLong vm
+                        let vm = push vm constant
+                        let _ = appendOutput vm Execution $"Pushed long constant onto stack: {valueToString constant}"
+                        vm
+                    | GET_LOCAL ->
+                        let vm, slot = readByte vm
+                        let frame = getCurrentFrame vm
+                        let index = frame.StackBase + int slot
+                        if index >= vm.Stack.Count then
+                            failwith $"GET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}"
+                        let value = vm.Stack[index]
+                        let vm = push vm value
+                        vm
+                    | SET_LOCAL ->
+                        let vm, slot = readByte vm
+                        let value, vm = pop vm
+                        let frame = getCurrentFrame vm
+                        let index = frame.StackBase + int slot
+                        if index >= vm.Stack.Count then
+                            failwith $"SET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}"
+                        vm.Stack[index] <- value
+                        vm
+                    | ADD -> binaryOp vm add
+                    | SUBTRACT -> binaryOp vm subtract
+                    | MULTIPLY -> binaryOp vm multiply
+                    | DIVIDE -> binaryOp vm divide
+                    | DOTPRODUCT -> binaryOp vm dotProduct
+                    | CROSSPRODUCT -> binaryOp vm crossProduct
+                    | NEGATE ->
+                        let value, vm = pop vm
+                        push vm (negate value)
+                    | EQUAL ->
+                        let b, vm = pop vm
+                        let a, vm = pop vm
+                        push vm (Boolean (valuesEqual a b))
+                    | GREATER ->
+                        let b, vm = pop vm
+                        let a, vm = pop vm
+                        match (a, b) with
+                        | VNumber x, VNumber y -> push vm (Boolean (x > y))
+                        | _ -> failwith "Operands must be numbers"
+                    | LESS ->
+                        let b, vm = pop vm
+                        let a, vm = pop vm
+                        match (a, b) with
+                        | VNumber x, VNumber y -> push vm (Boolean (x < y))
+                        | _ -> failwith "Operands must be numbers"
+                    | TRUE -> push vm (Boolean true)
+                    | FALSE -> push vm (Boolean false)
+                    | NIL -> push vm Value.Nil
+                    | NOT ->
+                        let value, vm = pop vm
+                        push vm (Boolean (not (isTruthy value)))
+                    | PRINT ->
+                        let value, vm = pop vm
+                        let vm = appendOutput vm StandardOutput $"{valueToString value}"
+                        vm
+                    | POP ->
+                        let _, vm = pop vm
+                        vm
+                    | DEFINE_GLOBAL ->
+                        let constant, vm = readConstant vm
+                        match constant with
+                        | Value.String name ->
+                            let value, vm = pop vm
+                            let vm = appendOutput vm Execution $"Defining global variable: {name} = {valueToString value}"
+                            defineGlobal vm name value
+                        | _ -> failwith "Expected string constant for variable name in DEFINE_GLOBAL"
+                    | GET_GLOBAL ->
+                        let constant, vm = readConstant vm
+                        match constant with
+                        | Value.String name ->
+                            match getGlobal vm name with
+                            | Some value ->
+                                push vm value
+                            | None ->
+                                failwith $"Undefined variable '{name}'"
+                        | _ -> failwith "Expected string constant for variable name in GET_GLOBAL"
+                    | SET_GLOBAL ->
+                        let constant, vm = readConstant vm
+                        match constant with
+                        | Value.String name ->
+                            let value, vm = pop vm
+                            if vm.Globals.ContainsKey(name) then
+                                let vm = defineGlobal vm name value
+                                vm
+                            else
+                                failwith $"Undefined variable '{name}'"
+                        | _ -> failwith "Expected string constant for variable name in SET_GLOBAL"
+                    | CALL ->
+                        let vm, argCount = readByte vm
+                        let vm = callValue vm (int argCount)
+                        vm
+                    | RETURN ->
+                        let result, vm =
+                            if vm.Stack.Count > 0 then
+                                pop vm
+                            else
+                                Value.Nil, vm  
+                        vm.Frames.RemoveAt(vm.Frames.Count - 1)
+                        if vm.Frames.Count = 0 then
+                            let vm = push vm result
+                            vm  
+                        else
+                            let callerFrame = getCurrentFrame vm
+                            vm.Stack.RemoveRange(callerFrame.StackBase, vm.Stack.Count - callerFrame.StackBase)
+                            let vm = push vm result
+                            runLoop vm
+                    | ASSERT ->
+                        let msg, vm = pop vm
+                        let value, vm = pop vm
+                        if not (isTruthy value) then
+                            failwithf $"Assertion failed: {valueToString msg}"
+                        vm
+                    | CLOSURE ->
+                        let constant, vm = readConstant vm
+                        match constant with
+                        | Value.Function func ->
+                            let upValues = 
+                                func.Locals
+                                |> Seq.filter (fun local -> local.Depth > 0)
+                                |> Seq.map (fun local -> vm.Stack[local.Index])
+                                |> Seq.toList
+                            let closure = Closure { Function = func; UpValues = upValues }
+                            let vm = push vm closure
                             vm
-                        | CONSTANT_LONG ->
-                            let constant, vm = readConstantLong vm
-                            let vm = push vm constant
-                            appendOutput vm Execution $"Pushed long constant onto stack: {valueToString constant}"
-                            vm
-                        | GET_LOCAL ->
-                            let vm, slot = readByte vm
+                        | _ -> failwith "Expected function constant for closure"
+                    | JUMP ->
+                        let vm, byte1 = readByte vm
+                        let vm, byte2 = readByte vm
+                        let jump = (int byte1 <<< 8) ||| int byte2
+                        let frame = getCurrentFrame vm
+                        let frame = { frame with IP = frame.IP + jump }
+                        vm.Frames[vm.Frames.Count - 1] <- frame
+                        vm
+                    | JUMP_IF_FALSE ->
+                        let vm, byte1 = readByte vm
+                        let vm, byte2 = readByte vm
+                        let jump = (int byte1 <<< 8) ||| int byte2
+                        let condition, vm = pop vm
+                        if not (isTruthy condition) then
                             let frame = getCurrentFrame vm
-                            let index = frame.StackBase + int slot
-                            if index >= vm.Stack.Count then
-                                failwith $"GET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}"
-                            let value = vm.Stack.[index]
+                            let frame = { frame with IP = frame.IP + jump }
+                            vm.Frames[vm.Frames.Count - 1] <- frame
+                        vm
+                        
+                    | LIST_CREATE ->
+                        let list = List []
+                        let vm = push vm list
+                        vm
+                    | LIST_APPEND ->
+                        let value, vm = pop vm
+                        let list, vm = pop vm
+                        match list with
+                        | List values ->
+                            let updatedList = List.append values [value]
+                            let vm = push vm (List updatedList)
+                            vm
+                        | _ -> failwith "Expected list value on stack"
+                    | INDEX ->
+                        let index, vm = pop vm
+                        let list, vm = pop vm
+                        match (list, index) with
+                        | List values, VNumber(VInteger i) when i >= 0 && i < List.length values ->
+                            let value = List.item i values
                             let vm = push vm value
                             vm
-                        | SET_LOCAL ->
-                            let vm, slot = readByte vm
-                            let value, vm = pop vm
-                            let frame = getCurrentFrame vm
-                            let index = frame.StackBase + int slot
-                            if index >= vm.Stack.Count then
-                                failwith $"SET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}"
-                            vm.Stack.[index] <- value
+                        | _ -> failwith "Invalid index"
+                    | TUPLE_CREATE ->
+                        let count, vm = pop vm
+                        match count with
+                        | VNumber(VInteger n) when n >= 0 ->
+                            let values = 
+                                [0..n - 1]
+                                |> List.map (fun _ -> let value, vm = pop vm in value)
+                                |> List.rev
+                            let tuple = Tuple values
+                            let vm = push vm tuple
                             vm
-                        | ADD -> binaryOp vm add
-                        | SUBTRACT -> binaryOp vm subtract
-                        | MULTIPLY -> binaryOp vm multiply
-                        | DIVIDE -> binaryOp vm divide
-                        | NEGATE ->
-                            let value, vm = pop vm
-                            push vm (negate value)
-                        | EQUAL ->
-                            let b, vm = pop vm
-                            let a, vm = pop vm
-                            push vm (Boolean (valuesEqual a b))
-                        | GREATER ->
-                            let b, vm = pop vm
-                            let a, vm = pop vm
-                            match (a, b) with
-                            | VNumber x, VNumber y -> push vm (Boolean (x > y))
-                            | _ -> failwith "Operands must be numbers"
-                        | LESS ->
-                            let b, vm = pop vm
-                            let a, vm = pop vm
-                            match (a, b) with
-                            | VNumber x, VNumber y -> push vm (Boolean (x < y))
-                            | _ -> failwith "Operands must be numbers"
-                        | TRUE -> push vm (Boolean true)
-                        | FALSE -> push vm (Boolean false)
-                        | NIL -> push vm Value.Nil
-                        | NOT ->
-                            let value, vm = pop vm
-                            push vm (Boolean (not (isTruthy value)))
-                        | PRINT ->
-                            let value, vm = pop vm
-                            let vm = appendOutput vm StandardOutput $"{valueToString value}"
-                            vm
-                        | POP ->
-                            let _, vm = pop vm
-                            vm
-                        | DEFINE_GLOBAL ->
-                            let constant, vm = readConstant vm
-                            match constant with
-                            | Value.String name ->
-                                let value, vm = pop vm
-                                let vm = appendOutput vm Execution $"Defining global variable: {name} = {valueToString value}"
-                                defineGlobal vm name value
-                            | _ -> failwith "Expected string constant for variable name in DEFINE_GLOBAL"
-                        | GET_GLOBAL ->
-                            let constant, vm = readConstant vm
-                            match constant with
-                            | Value.String name ->
-                                match getGlobal vm name with
-                                | Some value ->
-                                    push vm value
-                                | None ->
-                                    failwith $"Undefined variable '{name}'"
-                            | _ -> failwith "Expected string constant for variable name in GET_GLOBAL"
-                        | SET_GLOBAL ->
-                            let constant, vm = readConstant vm
-                            match constant with
-                            | Value.String name ->
-                                let value, vm = pop vm
-                                if vm.Globals.ContainsKey(name) then
-                                    let vm = defineGlobal vm name value
-                                    vm
-                                else
-                                    failwith $"Undefined variable '{name}'"
-                            | _ -> failwith "Expected string constant for variable name in SET_GLOBAL"
-                        | CALL ->
-                            let vm, argCount = readByte vm
-                            let vm = callValue vm (int argCount)
-                            vm
-                        | RETURN ->
-                            let result, vm =
-                                if vm.Stack.Count > 0 then
-                                    pop vm
-                                else
-                                    Value.Nil, vm  
-                            vm.Frames.RemoveAt(vm.Frames.Count - 1)
-                            if vm.Frames.Count = 0 then
-                                let vm = push vm result
-                                vm  
-                            else
-                                let callerFrame = getCurrentFrame vm
-                                vm.Stack.RemoveRange(callerFrame.StackBase, vm.Stack.Count - callerFrame.StackBase)
-                                let vm = push vm result
-                                runLoop vm
-                        | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
+                        | _ -> failwith "Expected non-negative integer for tuple size"
+                    | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
                 runLoop vm  
     runLoop vm
 
@@ -367,14 +456,14 @@ let stepVM (vm: VM) =
                 | GET_LOCAL ->
                     let vm, slot = readByte vm
                     let frame = getCurrentFrame vm
-                    let value = vm.Stack.[frame.StackBase + int slot]
+                    let value = vm.Stack[frame.StackBase + int slot]
                     let _ = push vm value
                     vm
                 | SET_LOCAL ->
                     let vm, slot = readByte vm
                     let value, vm = pop vm
                     let frame = getCurrentFrame vm
-                    vm.Stack.[frame.StackBase + int slot] <- value
+                    vm.Stack[frame.StackBase + int slot] <- value
                     vm
                 | CONSTANT ->
                     let constant, vm = readConstant vm

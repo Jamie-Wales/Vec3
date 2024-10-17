@@ -15,11 +15,18 @@ and printASTWithIndent expr indent (sb: StringBuilder) =
     | EUnary (op, expr, _) -> printUnary op expr indentStr indent sb
     | EBinary (left, op, right, _) -> printBinary left op right indentStr indent sb
     | EGrouping (expr, _) -> printGrouping expr indentStr indent sb
-    // | EAssignment (name, expr, _) -> 
-    //     sb.AppendLine($"{indentStr}Assignment") |> ignore
-    //     sb.AppendLine($"{indentStr}Name: {name.Lexeme}") |> ignore
-    //     sb.AppendLine($"{indentStr}Expression:") |> ignore
-    //     printASTWithIndent expr (indent + 1) sb
+    | EIdentifier (name, _) -> sb.AppendLine($"{indentStr}Identifier: {name.Lexeme}") |> ignore
+    | ECall (callee, args, _) ->
+        sb.AppendLine($"{indentStr}Call") |> ignore
+        sb.AppendLine($"{indentStr}Callee:") |> ignore
+        printASTWithIndent callee (indent + 1) sb
+        sb.AppendLine($"{indentStr}Arguments:") |> ignore
+        List.iter (fun arg -> printASTWithIndent arg (indent + 1) sb) args
+    | EBlock (stmts, _) ->
+        sb.AppendLine($"{indentStr}Block") |> ignore
+        
+        
+        
         
 
 and printLiteral (lit: Literal) indentStr (sb: StringBuilder) =
@@ -47,7 +54,7 @@ and printGrouping expr indentStr indent (sb: StringBuilder) =
     printASTWithIndent expr (indent + 1) sb
 
 
-let printStmt stmt indent =
+and printStmt stmt indent =
     let sb = StringBuilder()
     let indentStr = String.replicate indent "  "
     match stmt with
@@ -57,9 +64,15 @@ let printStmt stmt indent =
     | SPrintStatement (expr, _) ->
         sb.AppendLine($"{indentStr}Print Statement:") |> ignore
         printASTWithIndent expr (indent + 1) sb
-    | SVariableDeclaration (name, _, expr) ->
+    | SVariableDeclaration (name, expr, _) ->
         sb.AppendLine($"{indentStr}Variable Declaration:") |> ignore
         sb.AppendLine($"{indentStr}Name: {name.Lexeme}") |> ignore
+        sb.AppendLine($"{indentStr}Initializer:") |> ignore
+        printASTWithIndent expr (indent + 1) sb
+    | SAssertStatement (expr, msg, _) ->
+        sb.AppendLine($"{indentStr}Assert Statement:") |> ignore
+        printASTWithIndent expr (indent + 1) sb
+        sb.AppendLine($"{indentStr}Message:") |> ignore
     sb.ToString()
 
 let printProgram (program: Program) =

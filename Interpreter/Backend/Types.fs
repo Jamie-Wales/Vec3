@@ -2,11 +2,10 @@ module Vec3.Interpreter.Backend.Types
 
 type LineInfo = { Offset: int; LineNumber: int }
 
-type Chunk = {
-    Code: ResizeArray<byte>
-    Lines: ResizeArray<LineInfo>
-    ConstantPool: ResizeArray<Value>
-}
+type Chunk =
+    { Code: ResizeArray<byte>
+      Lines: ResizeArray<LineInfo>
+      ConstantPool: ResizeArray<Value> }
 
 and Value =
     | VNumber of VNumber
@@ -15,30 +14,29 @@ and Value =
     | Function of Function
     | Closure of Closure
     | Nil
+    | List of Value list
+    | Tuple of Value list
 
 and VNumber =
-    | VInteger of int  
+    | VInteger of int
     | VFloat of float
-    | VRational of int * int  
+    | VRational of int * int
     | VComplex of float * float
-and  Local = {
-    Name: string
-    Depth: int
-    Index: int
-}
-and Function = {
-    Arity: int
-    Chunk: Chunk
-    Name: string
-    Locals: Local list
-}
 
-and Closure = {
-    Function: Function
-    UpValues: Value list
-}
+and Local =
+    { Name: string; Depth: int; Index: int }
 
-let valueToString =
+and Function =
+    { Arity: int
+      Chunk: Chunk
+      Name: string
+      Locals: Local list }
+
+and Closure =
+    { Function: Function
+      UpValues: Value list }
+
+let rec valueToString =
     function
     | VNumber(VInteger n) -> string n
     | VNumber(VFloat f) -> string f
@@ -49,3 +47,6 @@ let valueToString =
     | Function f -> $"<fn {f.Name}>"
     | Closure c -> $"<closure {c.Function.Name}>"
     | Nil -> "nil"
+    | List l -> $"""[{String.concat ", " (List.map valueToString l)}]"""
+    | Tuple t -> $"""({String.concat ", " (List.map valueToString t)})"""
+    
