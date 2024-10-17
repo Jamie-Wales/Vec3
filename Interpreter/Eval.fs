@@ -188,6 +188,21 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
 
             selectField fields field.Lexeme
         | _ -> failwith "invalid"
+    | ERecordUpdate(expr, fields, _) ->
+        let expr = evalExpr env expr
+        match expr with
+        | ERecord(oldFields, _) ->
+            let rec updateFields (fields: (Token * Expr * TType) list) (oldFields: (Token * Expr * TType) list) =
+                match fields, oldFields with
+                | [], [] -> []
+                | (k, v, t) :: rest, (ok, ov, ot) :: rest' ->
+                    if k.Lexeme = ok.Lexeme then (k, v, t) :: updateFields rest rest'
+                    else (ok, ov, ot) :: updateFields fields rest'
+                | (k, v, t) :: rest, []
+                | [], (k, v, t) :: rest -> (k, v, t) :: updateFields [] rest
+                
+            ERecord(updateFields fields oldFields, TRecord [])
+        | _ -> failwith "invalid"
     | EBlock(stmts, _) ->
         let rec evalBlock (env: Env) =
             function

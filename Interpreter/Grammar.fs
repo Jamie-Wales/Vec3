@@ -69,6 +69,7 @@ type Expr =
     
     | ERecordSelect of Expr * Token * Type
     | ERecord of (Token * Expr * TType) list * Type
+    | ERecordUpdate of Expr * (Token * Expr * TType) list * Type
     
 and Stmt =
     | SExpression of Expr * Type

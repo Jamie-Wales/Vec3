@@ -411,7 +411,12 @@ let rec run (vm: VM) =
                         let record, vm = pop vm
                         match (record, key) with
                         | Record fields, String key ->
-                            let updatedRecord = Record ((key, value) :: fields)
+                            let updatedRecord = Record <| if List.exists (fun (k, _) -> k = key) fields then
+                                                            fields
+                                                            |> List.map (fun (k, v) -> if k = key then (k, value) else (k, v))
+                                                          else
+                                                            (key, value) :: fields
+                            
                             let vm = push vm updatedRecord
                             vm
                         | _ -> failwith "Expected record and string key"
@@ -428,6 +433,11 @@ let rec run (vm: VM) =
                             let vm = push vm value
                             vm
                         | _ -> failwith "Expected record and string key"
+                    | RECORD_UPDATE ->
+                        let value, vm = pop vm
+                        let vm = push vm value
+                        vm
+                        
                     | BLOCK_START ->
                         let vm = { vm with ScopeDepth = vm.ScopeDepth + 1 }
                         vm

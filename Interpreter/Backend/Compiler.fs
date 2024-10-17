@@ -1,5 +1,6 @@
 module Vec3.Interpreter.Backend.Compiler
 
+open Microsoft.FSharp.Core
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Instructions
@@ -128,7 +129,33 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
                 emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
                 |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RECORD_GET state)
                 )
-        
+        | ERecordUpdate(expr, newFields, _) ->
+            
+            let compileField (name, value, _) state =
+                let name = match name with
+                            | { Lexeme = Identifier n } -> n
+                            | _ -> failwith "Invalid record field name"
+                
+                compileExpr value state
+                |> Result.bind (fun ((), state) ->
+                    let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
+                    emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
+                    |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RECORD_SET state))
+                
+            let rec compileFields fields state =
+                match fields with
+                | [] -> Ok((), state)
+                | field :: rest ->
+                    compileField field state
+                    |> Result.bind (fun ((), state) -> compileFields rest state)
+                   
+            emitOpCode OP_CODE.RECORD_UPDATE state
+            |> Result.bind (fun ((), state) ->
+                compileExpr expr state
+                |> Result.bind (fun ((), state) -> compileFields newFields state))
+            
+            
+            
             
         // below not working
         | EBlock(stmts, _) -> compileBlock stmts state
