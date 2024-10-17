@@ -215,6 +215,7 @@ let rec applySubstitution (sub: Substitution) (t: TType) : TType =
         match Map.tryFind var sub with
         | Some t' -> applySubstitution sub t'
         | None -> TConstrain(var, List.map (applySubstitution sub) types)
+    | TRecord fields -> TRecord(List.map (fun (name, typ) -> (name, applySubstitution sub typ)) fields)
     | t -> t
 
 // attempts to substitute type variables with concrete types in an environment
@@ -325,6 +326,22 @@ let rec unify (t1: TType) (t2: TType) : Substitution TypeResult =
                 | Error errors1, Error errors2 -> Error(errors1 @ errors2))
             (Ok Map.empty)
             results
+    
+    | TRecord fields1, TRecord fields2 ->
+        if List.length fields1 <> List.length fields2 then
+            Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
+        else
+        let results = List.map2 (fun (_, typ1) (_, typ2) -> unify typ1 typ2) fields1 fields2
+
+        List.fold
+            (fun acc result ->
+                match acc, result with
+                | Ok sub1, Ok sub2 -> Ok(combineMaps sub1 sub2)
+                | Error errors, Ok _ -> Error errors
+                | Ok _, Error errors -> Error errors
+                | Error errors1, Error errors2 -> Error(errors1 @ errors2))
+            (Ok Map.empty)
+            results
 
     | TTensor(typ1, sizes1), TTensor(typ2, sizes2) ->
         match sizes1, sizes2 with
@@ -373,6 +390,7 @@ and occursCheck (tv: TypeVar) (t: TType) : bool =
            | DVar v -> v = tv
            | _ -> false
     | TConstrain(var, types) -> List.exists (occursCheck tv) types || var = tv
+    | TRecord fields -> List.exists (fun (_, typ) -> occursCheck tv typ) fields
     | _ -> false
 
 let rec freeTypeVars (typ: TType) : TypeVar list =
@@ -385,6 +403,7 @@ let rec freeTypeVars (typ: TType) : TypeVar list =
         | DVar v -> v :: freeTypeVars typ
         | _ -> freeTypeVars typ
     | TConstrain(var, types) -> var :: (List.collect freeTypeVars types)
+    | TRecord fields -> List.collect (fun (_, typ) -> freeTypeVars typ) fields
     | _ -> []
 
 let freeTypeVarsInEnv (env: TypeEnv) : TypeVar list =
@@ -810,9 +829,82 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
         | Error errors, _ -> Error errors
         | _, Error errors -> Error errors
         | _ -> Error [ TypeError.InvalidIndex(expr, TInfer) ]
+    | ERecord(fields, typ) ->
+        let fieldResults = List.map (fun (_, expr, _) -> infer env expr) fields
+        
+        let hasErrors = List.exists Result.isError fieldResults
+        
+        if hasErrors then
+            let errors =
+                List.collect
+                    (fun result ->
+                        match result with
+                        | Error errors -> errors
+                        | _ -> [])
+                    fieldResults
 
+            Error errors
+        else
+            let fieldResults =
+                List.choose
+                    (function
+                    | Ok(t, sub, expr) -> Some(t, sub, expr)
+                    | _ -> None)
+                    fieldResults
+            
+            let types = List.map (fun (t, _, _) -> t) fieldResults
+            let subs = List.map (fun (_, sub, _) -> sub) fieldResults
+            let exprs = List.map (fun (_, _, expr) -> expr) fieldResults
 
+            let fieldTypes = List.map (fun (_, _, typ) -> match typ with | TInfer -> TTypeVariable(freshTypeVar ()) | _ -> typ) fields
 
+            let subResults =
+                List.map2 unify types fieldTypes
+
+            let hasErrors = List.exists Result.isError subResults
+
+            if hasErrors then
+                let errors =
+                    List.collect
+                        (fun result ->
+                            match result with
+                            | Error errors -> errors
+                            | _ -> [])
+                        subResults
+
+                Error errors
+            else
+                let subResults =
+                    List.choose
+                        (function
+                        | Ok(sub) -> Some(sub)
+                        | _ -> None)
+                        subResults
+                
+                let combinedSubs = List.fold combineMaps Map.empty subResults
+                let combinedSubs = List.fold combineMaps combinedSubs subs
+                
+                let returnType = TRecord(List.map2 (fun (name, _, _) typ -> (name, applySubstitution combinedSubs typ)) fields fieldTypes)
+                let expr = ERecord(List.map2 (fun (name, expr, _) typ -> (name, expr, typ)) fields fieldTypes, returnType)
+                Ok(returnType, combinedSubs, expr)
+    | ERecordSelect(expr, field, typ) ->
+        let exprResult = infer env expr
+        
+        match exprResult with
+        | Ok (TRecord fields, sub, expr) ->
+            let fieldType = List.tryFind (fun (name, typ) -> name.Lexeme = field.Lexeme) fields
+
+            match fieldType with
+            | Some (_, typ) -> Ok(typ, sub, ERecordSelect(expr, field, typ))
+            | None -> Error [ TypeError.InvalidField(field, TRecord fields) ]
+        | Ok (TTypeVariable n, sub, expr) ->
+            let typeVar = freshTypeVar ()
+            let sub = Map.add n (TRecord([ (field, TTypeVariable typeVar) ])) sub
+            Ok(TTypeVariable typeVar, sub, ERecordSelect(expr, field, TTypeVariable typeVar))
+        | Ok (t, _, _) -> Error [ TypeError.InvalidField(field, t) ]
+        
+        | Error errors -> Error errors
+            
 
 and inferStmt (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Substitution * Stmt) TypeResult =
     // make this immutable later, pass it around, or resolved in substitution

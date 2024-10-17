@@ -49,7 +49,7 @@ let rec scIdentifier (iStr: char list) (iVal: string) : (char list * string) opt
 // rational: 1/2, 1/3, 1/4
 // complex: 1+2i, 1-2i, 1+2i, 1-2i, i, -i, 2i, etc TODO
 // int return is length of the number string
-let scNumber (nStr: char list) : (char list * Number * int) option =
+let scNumber (nStr: char list) : (char list * TNumber * int) option =
     let rec scInt (iStr: char list) (iVal: int) (len: int) : char list * int * int =
         match iStr with
         | c :: tail when isDigit c -> scInt tail (10 * iVal + intVal c) (len + 1)
@@ -71,7 +71,7 @@ let scNumber (nStr: char list) : (char list * Number * int) option =
         match iStr with
         | '/' :: ratTail ->
             let fStr, fVal, fLen = scInt ratTail 0 0
-            Some(fStr, Number.Rational(iVal, int fVal), iLen + fLen + 1)
+            Some(fStr, TNumber.Rational(iVal, int fVal), iLen + fLen + 1)
         | '.' :: fracTail ->
             let fStr, fVal, fLen = scFraction fracTail 0.0 10.0 0
 
@@ -79,12 +79,12 @@ let scNumber (nStr: char list) : (char list * Number * int) option =
             | 'e' :: expTail
             | 'E' :: expTail ->
                 let eStr, expVal, eLen = scInt expTail 0 0
-                Some(eStr, Number.Float((float iVal + fVal) * (10.0 ** float expVal)), iLen + fLen + eLen + 2)
-            | _ -> Some(fStr, Number.Float(float iVal + fVal), iLen + fLen + 1)
+                Some(eStr, TNumber.Float((float iVal + fVal) * (10.0 ** float expVal)), iLen + fLen + eLen + 2)
+            | _ -> Some(fStr, TNumber.Float(float iVal + fVal), iLen + fLen + 1)
         | 'e' :: expTail ->
             let eStr, expVal, eLen = scInt expTail 0 0
-            Some(eStr, Number.Float(float iVal * (10.0 ** float expVal)), iLen + eLen + 1)
-        | _ -> Some(iStr, Number.Integer iVal, iLen)
+            Some(eStr, TNumber.Float(float iVal * (10.0 ** float expVal)), iLen + eLen + 1)
+        | _ -> Some(iStr, TNumber.Integer iVal, iLen)
     | _ -> None
 
 
@@ -243,6 +243,15 @@ let lexer (input: string) : LexerResult<Token list> =
                 tail
                 { position with
                     Column = position.Column + 1 }
+        
+        | '.' :: '*' :: tail ->
+            Ok
+                { Lexeme = Operator DotStar
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 2 }
 
         | '.' :: c :: tail when isDigit c ->
             let nRes = scNumber ('0' :: '.' :: c :: tail)
