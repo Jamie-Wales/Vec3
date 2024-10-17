@@ -389,6 +389,18 @@ let rec run (vm: VM) =
                             let vm = push vm value
                             vm
                         | _ -> failwith "Invalid index"
+                    | TUPLE_CREATE ->
+                        let count, vm = pop vm
+                        match count with
+                        | VNumber(VInteger n) when n >= 0 ->
+                            let values = 
+                                [0..n - 1]
+                                |> List.map (fun _ -> let value, vm = pop vm in value)
+                                |> List.rev
+                            let tuple = Tuple values
+                            let vm = push vm tuple
+                            vm
+                        | _ -> failwith "Expected non-negative integer for tuple size"
                     | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
                 runLoop vm  
     runLoop vm

@@ -34,6 +34,7 @@ type OP_CODE =
     | LIST_APPEND
     | LIST_CREATE
     | INDEX
+    | TUPLE_CREATE
     
 
 let opCodeToByte =
@@ -71,6 +72,7 @@ let opCodeToByte =
     | LIST_APPEND -> 30uy
     | LIST_CREATE -> 31uy
     | INDEX -> 32uy
+    | TUPLE_CREATE -> 33uy
 
 let byteToOpCode byte =
     match byte with
@@ -107,6 +109,7 @@ let byteToOpCode byte =
     | 30uy -> LIST_APPEND
     | 31uy -> LIST_CREATE
     | 32uy -> INDEX
+    | 33uy -> TUPLE_CREATE
     | _ -> failwith $"Unknown OP_CODE: {byte}"
 
 let opCodeToString =
@@ -144,3 +147,4 @@ let opCodeToString =
     | LIST_APPEND -> "LIST_APPEND"
     | LIST_CREATE -> "LIST_CREATE"
     | INDEX -> "INDEX"
+    | TUPLE_CREATE -> "TUPLE_CREATE"

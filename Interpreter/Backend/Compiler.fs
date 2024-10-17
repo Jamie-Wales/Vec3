@@ -97,7 +97,25 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             compileExpr list state
             |> Result.bind (fun ((), state) -> compileExpr index state)
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.INDEX state)
+        | ETuple(elements, _) ->
+            compileTuple elements state
         | _ -> Error("Unsupported expression type", state)
+
+and compileTuple (elements: Expr list) : Compiler<unit> =
+    fun state ->
+        let rec compileElements elements state =
+            match elements with
+            | [] -> Ok((), state)
+            | element :: rest ->
+                compileExpr element state
+                |> Result.bind (fun ((), state) -> compileElements rest state)
+        
+        compileElements elements state
+        |> Result.bind (fun ((), state) ->
+            // would be nicer to emit byte probably
+            emitConstant (VNumber(VInteger elements.Length)) state)
+        |> Result.bind (fun ((), state) ->
+            emitOpCode OP_CODE.TUPLE_CREATE state)
 
 and compileList (elements: Expr list) : Compiler<unit> =
     fun state ->
