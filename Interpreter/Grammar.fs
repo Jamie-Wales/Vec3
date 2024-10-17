@@ -56,7 +56,6 @@ type Expr =
     | EUnary of Token * Expr * Type
     | EBinary of Expr * Token * Expr * Type
     | EGrouping of Expr * Type
-    | EAssignment of Token * Expr * Type
     | EIf of Expr * Expr * Expr * Type
     | ETernary of Expr * Expr * Expr * Type
     
@@ -73,6 +72,7 @@ and Stmt =
     | SExpression of Expr * Type
     | SVariableDeclaration of Token * Expr * Type
     | SPrintStatement of Expr * Type
+    | SAssertStatement of Expr * Expr option * Type
 
 type Program = Stmt list
 

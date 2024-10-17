@@ -30,6 +30,7 @@ type TypeError =
     | NotEnoughInformation of Token
     | InvalidOpen of Token
     | InvalidIndex of Expr * TType
+    | InvalidAssert of Expr * TType
 
 type TypeErrors = TypeError list
 exception TypeException of TypeErrors

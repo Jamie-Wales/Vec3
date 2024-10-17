@@ -15,11 +15,11 @@ and printASTWithIndent expr indent (sb: StringBuilder) =
     | EUnary (op, expr, _) -> printUnary op expr indentStr indent sb
     | EBinary (left, op, right, _) -> printBinary left op right indentStr indent sb
     | EGrouping (expr, _) -> printGrouping expr indentStr indent sb
-    | EAssignment (name, expr, _) -> 
-        sb.AppendLine($"{indentStr}Assignment") |> ignore
-        sb.AppendLine($"{indentStr}Name: {name.Lexeme}") |> ignore
-        sb.AppendLine($"{indentStr}Expression:") |> ignore
-        printASTWithIndent expr (indent + 1) sb
+    // | EAssignment (name, expr, _) -> 
+    //     sb.AppendLine($"{indentStr}Assignment") |> ignore
+    //     sb.AppendLine($"{indentStr}Name: {name.Lexeme}") |> ignore
+    //     sb.AppendLine($"{indentStr}Expression:") |> ignore
+    //     printASTWithIndent expr (indent + 1) sb
         
 
 and printLiteral (lit: Literal) indentStr (sb: StringBuilder) =

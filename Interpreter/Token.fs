@@ -38,6 +38,8 @@ type Operator =
     | DotDot
     | Dot
     
+    | Cross
+    
 type Keyword =
     | Let
     | If
@@ -51,6 +53,7 @@ type Keyword =
     | In
     | And
     | Or
+    | Assert
     
     
 let keywordMap = 
@@ -66,33 +69,14 @@ let keywordMap =
       "in", Keyword.In
       "and", Keyword.And
       "or", Keyword.Or
+      "assert", Keyword.Assert
        ]
     |> Map.ofList
 
 let isKeyword (s: string): bool =
     Map.containsKey s keywordMap
 
-type BuiltInFunction =
-    | Print
-    | Input
-    | Exit
-    | Cos
-    | Sin
-    | Tan
-    | Env
 
-
-let builtInFunctionMap =
-    [ "print", BuiltInFunction.Print
-      "input", BuiltInFunction.Input
-      "exit", BuiltInFunction.Exit
-      "cos", BuiltInFunction.Cos
-      "sin", BuiltInFunction.Sin
-      "tan", BuiltInFunction.Tan ]
-    |> Map.ofList
-
-let isBuiltInFunction (s: string): bool =
-    Map.containsKey s builtInFunctionMap
 
 type Lexeme =
     | Number of Number
@@ -161,3 +145,26 @@ let lexemeToString (lex: Lexeme): string =
 
 let tokenToString (token: Token): string =
     $"{{ lexeme: %s{lexemeToString token.Lexeme}; line: %d{token.Position.Line} }}"
+    
+type BuiltInFunction =
+    | Print
+    | Input
+    | Exit
+    | Cos
+    | Sin
+    | Tan
+    | Env
+
+
+let builtInFunctionMap =
+    [ Identifier "print", BuiltInFunction.Print
+      Identifier "input", BuiltInFunction.Input
+      Identifier "exit", BuiltInFunction.Exit
+      Identifier "cos", BuiltInFunction.Cos
+      Identifier "sin", BuiltInFunction.Sin
+      Identifier "tan", BuiltInFunction.Tan 
+      Identifier "env", BuiltInFunction.Env ]
+    |> Map.ofList
+    
+let isBuiltInFunction (s: Lexeme): bool =
+    Map.containsKey s builtInFunctionMap

@@ -20,9 +20,9 @@
 <term> ::= <factor> 
          | <term> <low_precedence_op> <factor>
 
-<factor> ::= <primary> | <factor> <high_precedence_op> <primary>
+<factor> ::= <atom> | <factor> <high_precedence_op> <atom>
 
-<primary> ::= <unary_expr> 
+<atom> ::= <unary_expr> 
            | <grouping_expr> 
            | <literal> 
            | <identifier> 

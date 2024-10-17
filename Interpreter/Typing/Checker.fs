@@ -4,7 +4,6 @@ open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open Inference
 open Exceptions
-open System
 
 // TODO
 // - Type inference for params
@@ -152,19 +151,6 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
         | Ok _, Error errors -> Error errors
         | Ok t, Ok t' -> Error [ TypeError.InvalidOperandType(op, t, t') ]
     | EGrouping (expr, _) -> checkExpr env expr
-    | EAssignment(token, expr, _) ->
-        let exprType = checkExpr env expr
-
-        match token.Lexeme with
-        | Identifier name ->
-            match Map.tryFind name env with
-            | Some t ->
-                match exprType with
-                | Ok t' when t = t' -> Ok t
-                | Ok t' -> Error [ TypeError.InvalidAssignment(token, t, t') ]
-                | Error errors -> Error errors
-            | None -> Error [ TypeError.UndefinedVariable token ]
-        | _ -> Error [ TypeError.UndefinedVariable token ]
     | ECall(callee, args, _) ->
         let calleeType = checkExpr env callee
 
@@ -220,7 +206,7 @@ let rec checkExpr (env: TypeEnv) (expr: Expr) : Result<TType, TypeErrors> =
             List.fold
                 (fun acc (param, typ) ->
                     match param.Lexeme with
-                    | Identifier name -> Map.add name typ acc
+                    | Identifier _ as id -> Map.add id typ acc
                     | _ -> raise (TypeException([TypeError.UndefinedVariable param])))
                 env
                 (List.zip paramList paramT)
@@ -268,11 +254,11 @@ and checkStmt (env: TypeEnv) (stmt: Stmt) : TypeEnv * Result<TType, TypeErrors> 
         | Ok exprType ->
             if typ = exprType then
                 match token.Lexeme with
-                | Identifier name -> Map.add name typ env, Ok TUnit
+                | Identifier _ as id -> Map.add id typ env, Ok TUnit
                 | _ -> env, Error [ TypeError.UndefinedVariable token ]
             else if typ = TInfer then
                 match token.Lexeme with
-                | Identifier name -> Map.add name exprType env, Ok TUnit
+                | Identifier _ as id -> Map.add id exprType env, Ok TUnit
                 | _ -> env, Error [ TypeError.UndefinedVariable token ]
             else
                 env, Error [ TypeError.TypeMismatch(token, typ, exprType) ]
@@ -334,6 +320,7 @@ let rec formatTypeError (error: TypeError) : string =
     | InvalidOpen(token) -> $"Invalid open statement at Line: {token.Position.Line}"
     | InvalidIf(expr) -> $"Invalid if statement at expr: {expr}"
     | InvalidIndex(expr, typ) -> $"Invalid index at expr: {expr}, got {typ}"
+    | InvalidAssert(expr, typ) -> $"Invalid assert at expr: {expr}, got {typ}"
 
 let formatTypeErrors (errors: TypeError list) : string =
     List.map formatTypeError errors |> String.concat "\n"

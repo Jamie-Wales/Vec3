@@ -10,6 +10,7 @@ open Vec3.Interpreter.Typing.Inference
 open Vec3.Interpreter.Eval
 open Vec3.Interpreter.Preprocessor
 open Vec3.Interpreter.Grammar
+open Vec3.Interpreter.ConstantFolding
 
 let litToString = function
     | LNumber n -> numberToString n
@@ -20,6 +21,7 @@ let litToString = function
 let rec exprToString  = function
     | ELiteral (lit, _) -> litToString lit
     | EList (exprs, _) -> $"""[{String.concat ", " (List.map exprToString exprs)}]"""
+    | ETuple (exprs, _) -> $"""({String.concat ", " (List.map exprToString exprs)})"""
     | _ -> "()"
 
 let numberToString = function
@@ -39,6 +41,7 @@ let evalRepl =
             let typeCheck = inferProgram typeEnv program
             match typeCheck with
             | Ok (typeEnv, _, program) ->
+                let program = foldConstants program
                 let value, env = evalProgram env program
                 printfn $"{exprToString value}"
                 repl' env typeEnv
