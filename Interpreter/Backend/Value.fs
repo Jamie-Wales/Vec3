@@ -1,29 +1,6 @@
-
 module Vec3.Interpreter.Backend.Value
 
-type Value =
-    | VNumber of VNumber
-    | String of string
-    | Boolean of bool
-    | Function
-    | Nil
-
-and VNumber =
-    | VInteger of int  
-    | VFloat of float
-    | VRational of int * int  
-    | VComplex of float * float
-
-let valueToString =
-    function
-    | VNumber(VInteger n) -> string n
-    | VNumber(VFloat f) -> string f
-    | VNumber(VRational(n, d)) -> $"%d{n}/%d{d}"
-    | VNumber(VComplex(r, i)) -> $"%f{r} + %f{i}i"
-    | Boolean b -> string b
-    | String s -> s
-    | Nil -> "nil"
-
+open Vec3.Interpreter.Backend.Types
 let printValue value = printfn $"Printed value: {valueToString value}"
 
 let isTruthy =
@@ -37,6 +14,8 @@ let rec valuesEqual (a: Value) (b: Value) =
     | VNumber x, VNumber y -> numbersEqual x y
     | Boolean x, Boolean y -> x = y
     | String x, String y -> x = y
+    | Function f1, Function f2 -> f1.Name = f2.Name && f1.Arity = f2.Arity
+    | Closure c1, Closure c2 -> c1.Function = c2.Function
     | Nil, Nil -> true
     | _ -> false
 
@@ -49,7 +28,6 @@ and numbersEqual (a: VNumber) (b: VNumber) =
     | _ -> 
         let f1, f2 = (floatValue a, floatValue b)
         f1 = f2
-
 and floatValue =
     function
     | VInteger n -> float n
@@ -106,7 +84,7 @@ let rec divide a b =
     | VNumber(VInteger x), VNumber(VInteger y) when y <> 0 -> 
         if x % y = 0 then VNumber(VInteger(x / y)) else VNumber(VRational(x, y))
     | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) when n2 <> 0 -> 
-        VNumber(VRational(n1 * d2, d1 * n2))  // Consider simplifying the fraction
+        VNumber(VRational(n1 * d2, d1 * n2))  
     | VNumber(VComplex(a, b)), VNumber(VComplex(c, d)) when c <> 0.0 || d <> 0.0 -> 
         let denominator = c*c + d*d
         VNumber(VComplex((a*c + b*d) / denominator, (b*c - a*d) / denominator))
