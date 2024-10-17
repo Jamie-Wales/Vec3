@@ -33,6 +33,7 @@ type OP_CODE =
     | CROSSPRODUCT
     | LIST_APPEND
     | LIST_CREATE
+    | INDEX
     
 
 let opCodeToByte =
@@ -69,6 +70,7 @@ let opCodeToByte =
     | CROSSPRODUCT -> 29uy
     | LIST_APPEND -> 30uy
     | LIST_CREATE -> 31uy
+    | INDEX -> 32uy
 
 let byteToOpCode byte =
     match byte with
@@ -104,6 +106,7 @@ let byteToOpCode byte =
     | 29uy -> CROSSPRODUCT
     | 30uy -> LIST_APPEND
     | 31uy -> LIST_CREATE
+    | 32uy -> INDEX
     | _ -> failwith $"Unknown OP_CODE: {byte}"
 
 let opCodeToString =
@@ -140,3 +143,4 @@ let opCodeToString =
     | CROSSPRODUCT -> "CROSSPRODUCT"
     | LIST_APPEND -> "LIST_APPEND"
     | LIST_CREATE -> "LIST_CREATE"
+    | INDEX -> "INDEX"

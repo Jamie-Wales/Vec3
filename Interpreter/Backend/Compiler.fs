@@ -93,6 +93,10 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | EBlock(stmts, _) -> compileBlock stmts state
         | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
         | EList(elements, _) -> compileList elements state
+        | EIndex(list, index, _) ->
+            compileExpr list state
+            |> Result.bind (fun ((), state) -> compileExpr index state)
+            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.INDEX state)
         | _ -> Error("Unsupported expression type", state)
 
 and compileList (elements: Expr list) : Compiler<unit> =

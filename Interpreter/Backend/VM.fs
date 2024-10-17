@@ -70,7 +70,7 @@ let readConstantLong (vm: VM) =
     let frame = getCurrentFrame vm
     let index = (int byte1) ||| ((int byte2) <<< 8) ||| ((int byte3) <<< 16)
     if index >= frame.Function.Chunk.ConstantPool.Count then
-        failwithf $"Long constant index out of range: %d{index} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
+        failwith $"Long constant index out of range: %d{index} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
     let constant = frame.Function.Chunk.ConstantPool[index]
     (constant, vm)
 
@@ -380,6 +380,15 @@ let rec run (vm: VM) =
                             let vm = push vm (List updatedList)
                             vm
                         | _ -> failwith "Expected list value on stack"
+                    | INDEX ->
+                        let index, vm = pop vm
+                        let list, vm = pop vm
+                        match (list, index) with
+                        | List values, VNumber(VInteger i) when i >= 0 && i < List.length values ->
+                            let value = List.item i values
+                            let vm = push vm value
+                            vm
+                        | _ -> failwith "Invalid index"
                     | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
                 runLoop vm  
     runLoop vm
