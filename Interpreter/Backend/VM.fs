@@ -158,7 +158,7 @@ let callValue (vm: VM) (argCount: int) : VM =
         let frame = {
             Function = func
             IP = 0
-            StackBase = vm.Stack.Count - argCount - 1
+            StackBase = vm.Stack.Count - argCount
             Locals = Array.zeroCreate func.Locals.Length
         }
         vm.Frames.Add(frame)
@@ -302,11 +302,11 @@ let rec run (vm: VM) =
                                 if vm.Stack.Count > 0 then
                                     pop vm
                                 else
-                                    Value.Nil, vm  // Default to Nil if the stack is empty
+                                    Value.Nil, vm  
                             vm.Frames.RemoveAt(vm.Frames.Count - 1)
                             if vm.Frames.Count = 0 then
                                 let vm = push vm result
-                                vm  // Do not call runLoop again
+                                vm  
                             else
                                 let callerFrame = getCurrentFrame vm
                                 vm.Stack.RemoveRange(callerFrame.StackBase, vm.Stack.Count - callerFrame.StackBase)

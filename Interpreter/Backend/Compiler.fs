@@ -10,7 +10,7 @@ type CompilerState = {
     CurrentFunction: Function
     CurrentLine: int
     ScopeDepth: int
-    LocalCount: int // To assign slot indices
+    LocalCount: int 
 }
 
 type CompilerError = string * CompilerState

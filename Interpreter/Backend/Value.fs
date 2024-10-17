@@ -84,7 +84,7 @@ let rec divide a b =
     | VNumber(VInteger x), VNumber(VInteger y) when y <> 0 -> 
         if x % y = 0 then VNumber(VInteger(x / y)) else VNumber(VRational(x, y))
     | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) when n2 <> 0 -> 
-        VNumber(VRational(n1 * d2, d1 * n2))  // Consider simplifying the fraction
+        VNumber(VRational(n1 * d2, d1 * n2))  
     | VNumber(VComplex(a, b)), VNumber(VComplex(c, d)) when c <> 0.0 || d <> 0.0 -> 
         let denominator = c*c + d*d
         VNumber(VComplex((a*c + b*d) / denominator, (b*c - a*d) / denominator))
