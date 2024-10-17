@@ -28,6 +28,7 @@ type OP_CODE =
     | LOOP
     | CALL
     | CLOSURE
+    | ASSERT
 
 let opCodeToByte =
     function
@@ -58,6 +59,7 @@ let opCodeToByte =
     | LOOP -> 24uy
     | CALL -> 25uy
     | CLOSURE -> 26uy
+    | ASSERT -> 27uy
 
 let byteToOpCode byte =
     match byte with
@@ -88,6 +90,7 @@ let byteToOpCode byte =
     | 24uy -> LOOP
     | 25uy -> CALL
     | 26uy -> CLOSURE
+    | 27uy -> ASSERT
     | _ -> failwithf "Unknown OP_CODE: %d" byte
 
 let opCodeToString =
@@ -119,3 +122,4 @@ let opCodeToString =
     | LOOP -> "LOOP"
     | CALL -> "CALL"
     | CLOSURE -> "CLOSURE"
+    | ASSERT -> "ASSERT"

@@ -203,12 +203,12 @@ let rec run (vm: VM) =
                         | CONSTANT ->
                             let constant, vm = readConstant vm
                             let vm = push vm constant
-                            appendOutput vm Execution $"Pushed constant onto stack: {valueToString constant}"
+                            let _ = appendOutput vm Execution $"Pushed constant onto stack: {valueToString constant}"
                             vm
                         | CONSTANT_LONG ->
                             let constant, vm = readConstantLong vm
                             let vm = push vm constant
-                            appendOutput vm Execution $"Pushed long constant onto stack: {valueToString constant}"
+                            let _ = appendOutput vm Execution $"Pushed long constant onto stack: {valueToString constant}"
                             vm
                         | GET_LOCAL ->
                             let vm, slot = readByte vm
@@ -216,7 +216,7 @@ let rec run (vm: VM) =
                             let index = frame.StackBase + int slot
                             if index >= vm.Stack.Count then
                                 failwith $"GET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}"
-                            let value = vm.Stack.[index]
+                            let value = vm.Stack[index]
                             let vm = push vm value
                             vm
                         | SET_LOCAL ->
@@ -226,7 +226,7 @@ let rec run (vm: VM) =
                             let index = frame.StackBase + int slot
                             if index >= vm.Stack.Count then
                                 failwith $"SET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}"
-                            vm.Stack.[index] <- value
+                            vm.Stack[index] <- value
                             vm
                         | ADD -> binaryOp vm add
                         | SUBTRACT -> binaryOp vm subtract
@@ -312,6 +312,12 @@ let rec run (vm: VM) =
                                 vm.Stack.RemoveRange(callerFrame.StackBase, vm.Stack.Count - callerFrame.StackBase)
                                 let vm = push vm result
                                 runLoop vm
+                        | ASSERT ->
+                            let msg, vm = pop vm
+                            let value, vm = pop vm
+                            if not (isTruthy value) then
+                                failwithf $"Assertion failed: {valueToString msg}"
+                            vm
                         | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
                 runLoop vm  
     runLoop vm
@@ -367,14 +373,14 @@ let stepVM (vm: VM) =
                 | GET_LOCAL ->
                     let vm, slot = readByte vm
                     let frame = getCurrentFrame vm
-                    let value = vm.Stack.[frame.StackBase + int slot]
+                    let value = vm.Stack[frame.StackBase + int slot]
                     let _ = push vm value
                     vm
                 | SET_LOCAL ->
                     let vm, slot = readByte vm
                     let value, vm = pop vm
                     let frame = getCurrentFrame vm
-                    vm.Stack.[frame.StackBase + int slot] <- value
+                    vm.Stack[frame.StackBase + int slot] <- value
                     vm
                 | CONSTANT ->
                     let constant, vm = readConstant vm

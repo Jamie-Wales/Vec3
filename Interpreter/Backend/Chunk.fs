@@ -82,6 +82,7 @@ let disassembleInstruction (chunk: Chunk) offset =
     | OP_CODE.GET_GLOBAL -> constantInstruction chunk "OP_GET_GLOBAL" offset
     | OP_CODE.CALL-> constantInstruction chunk "OP_CALL" offset
     | OP_CODE.CLOSURE-> constantInstruction chunk "OP_CLOSURE" offset
+    | OP_CODE.ASSERT -> simpleInstruction "OP_ASSERT" offset
     | _ ->
         printfn $"Unknown opcode {chunk.Code[offset]}"
         offset + 1
@@ -171,6 +172,7 @@ let disassembleChunkToString (chunk: Chunk) name =
         | OP_CODE.JUMP_IF_FALSE -> jumpInstruction "OP_JUMP_IF_FALSE" 1 offset
         | OP_CODE.LOOP -> jumpInstruction "OP_LOOP" -1 offset
         | OP_CODE.CALL -> byteInstruction "OP_CALL" offset
+        | OP_CODE.ASSERT -> simpleInstruction "OP_ASSERT" offset
         | OP_CODE.CLOSURE ->
             let constant = int chunk.Code[offset + 1]
             let function' = chunk.ConstantPool[constant]
