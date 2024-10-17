@@ -31,6 +31,16 @@ let emitConstant (value: Value) (state: CompilerState) : CompilerResult<unit> =
 
 let emitOpCode (opCode: OP_CODE) (state: CompilerState) : CompilerResult<unit> = emitByte (opCodeToByte opCode) state
 
+let emitJump (opCode: OP_CODE) (state: CompilerState) : int =
+    emitOpCode opCode state
+    |> Result.map (fun _ -> state.CurrentFunction.Chunk.Code.Count - 1)
+    |> Result.defaultValue 0
+    
+let emitJumpBack (offset: int) (state: CompilerState) : CompilerResult<unit> =
+    let jump = state.CurrentFunction.Chunk.Code.Count - offset - 1
+    let bytes = [| byte (jump &&& 0xff); byte ((jump >>> 8) &&& 0xff) |]
+    emitBytes bytes state
+
 let initFunction (name: string) =
     { Arity = 0
       Chunk = emptyChunk ()
@@ -81,7 +91,37 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | ELambda(parameters, body, _) -> compileLambda parameters body state
         | ECall(callee, arguments, _) -> compileCall callee arguments state
         | EBlock(stmts, _) -> compileBlock stmts state
+        | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
+        | EList(elements, _) -> compileList elements state
         | _ -> Error("Unsupported expression type", state)
+
+and compileList (elements: Expr list) : Compiler<unit> =
+    fun state ->
+        let rec compileElements elements state =
+            match elements with
+            | [] -> Ok((), state)
+            | element :: rest ->
+                compileExpr element state
+                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.LIST_APPEND state)
+                |> Result.bind (fun ((), state) -> compileElements rest state)
+        
+        emitOpCode OP_CODE.LIST_CREATE state
+        |> Result.bind (fun ((), state) -> compileElements elements state)
+
+and compileIf (condition: Expr) (thenBranch: Expr) (elseBranch: Expr) : Compiler<unit> =
+    fun state ->
+        compileExpr condition state
+        |> Result.bind (fun ((), state) ->
+            let elseJump = emitJump OP_CODE.JUMP_IF_FALSE state
+            emitOpCode OP_CODE.POP state
+            |> Result.bind (fun ((), state) -> compileExpr thenBranch state)
+            |> Result.bind (fun ((), state) ->
+                let endJump = emitJump OP_CODE.JUMP state
+                emitJumpBack elseJump state
+                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.POP state)
+                |> Result.bind (fun ((), state) -> compileExpr elseBranch state)
+                |> Result.bind (fun ((), state) -> emitJumpBack endJump state))
+            )
 
 and compileBlock (stmts: Stmt list) : Compiler<unit> =
     fun state ->
@@ -169,6 +209,8 @@ and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
         | Operator Star -> emitBinaryOp OP_CODE.MULTIPLY state
         | Operator Slash -> emitBinaryOp OP_CODE.DIVIDE state
         | Operator EqualEqual -> emitBinaryOp OP_CODE.EQUAL state
+        | Operator Dot -> emitOpCode OP_CODE.DOTPRODUCT state
+        | Operator Cross -> emitOpCode OP_CODE.CROSSPRODUCT state
         | Operator BangEqual ->
             emitBinaryOp OP_CODE.EQUAL state
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)

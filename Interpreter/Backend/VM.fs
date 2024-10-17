@@ -247,6 +247,8 @@ let rec run (vm: VM) =
                     | SUBTRACT -> binaryOp vm subtract
                     | MULTIPLY -> binaryOp vm multiply
                     | DIVIDE -> binaryOp vm divide
+                    | DOTPRODUCT -> binaryOp vm dotProduct
+                    | CROSSPRODUCT -> binaryOp vm crossProduct
                     | NEGATE ->
                         let value, vm = pop vm
                         push vm (negate value)
@@ -346,6 +348,38 @@ let rec run (vm: VM) =
                             let vm = push vm closure
                             vm
                         | _ -> failwith "Expected function constant for closure"
+                    | JUMP ->
+                        let vm, byte1 = readByte vm
+                        let vm, byte2 = readByte vm
+                        let jump = (int byte1 <<< 8) ||| int byte2
+                        let frame = getCurrentFrame vm
+                        let frame = { frame with IP = frame.IP + jump }
+                        vm.Frames[vm.Frames.Count - 1] <- frame
+                        vm
+                    | JUMP_IF_FALSE ->
+                        let vm, byte1 = readByte vm
+                        let vm, byte2 = readByte vm
+                        let jump = (int byte1 <<< 8) ||| int byte2
+                        let condition, vm = pop vm
+                        if not (isTruthy condition) then
+                            let frame = getCurrentFrame vm
+                            let frame = { frame with IP = frame.IP + jump }
+                            vm.Frames[vm.Frames.Count - 1] <- frame
+                        vm
+                        
+                    | LIST_CREATE ->
+                        let list = List []
+                        let vm = push vm list
+                        vm
+                    | LIST_APPEND ->
+                        let value, vm = pop vm
+                        let list, vm = pop vm
+                        match list with
+                        | List values ->
+                            let updatedList = List.append values [value]
+                            let vm = push vm (List updatedList)
+                            vm
+                        | _ -> failwith "Expected list value on stack"
                     | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
                 runLoop vm  
     runLoop vm

@@ -17,6 +17,9 @@ let rec valuesEqual (a: Value) (b: Value) =
     | Function f1, Function f2 -> f1.Name = f2.Name && f1.Arity = f2.Arity
     | Closure c1, Closure c2 -> c1.Function = c2.Function
     | Nil, Nil -> true
+    | List l1, List l2 -> 
+        if List.length l1 <> List.length l2 then false
+        else List.forall2 valuesEqual l1 l2
     | _ -> false
 
 and numbersEqual (a: VNumber) (b: VNumber) =
@@ -53,6 +56,10 @@ let rec add a b =
         VNumber(VComplex(r1 + r2, i1 + i2))
     | VNumber x, VNumber y ->
         VNumber(VFloat(floatValue x + floatValue y))
+    | List l1, List l2 ->
+        let zipped = List.zip l1 l2
+        let added = List.map (fun (x, y) -> add x y) zipped
+        List added
     | _ -> failwith "Can only add numbers"
 
 let rec subtract a b =
@@ -66,6 +73,10 @@ let rec subtract a b =
         VNumber(VComplex(r1 - r2, i1 - i2))
     | VNumber x, VNumber y ->
         VNumber(VFloat(floatValue x - floatValue y))
+    | List l1, List l2 ->
+        let zipped = List.zip l1 l2
+        let added = List.map (fun (x, y) -> subtract x y) zipped
+        List added
     | _ -> failwith "Can only subtract numbers"
 
 let rec multiply a b =
@@ -77,6 +88,10 @@ let rec multiply a b =
         VNumber(VComplex(a*c - b*d, a*d + b*c))
     | VNumber x, VNumber y ->
         VNumber(VFloat(floatValue x * floatValue y))
+    | List l1, List l2 ->
+        let zipped = List.zip l1 l2
+        let added = List.map (fun (x, y) -> multiply x y) zipped
+        List added
     | _ -> failwith "Can only multiply numbers"
 
 let rec divide a b =
@@ -92,7 +107,36 @@ let rec divide a b =
         let f1, f2 = floatValue x, floatValue y
         if f2 = 0.0 then failwith "Division by zero"
         VNumber(VFloat(f1 / f2))
+    | List l1, List l2 ->
+        let zipped = List.zip l1 l2
+        let added = List.map (fun (x, y) -> divide x y) zipped
+        List added
     | _ -> failwith "Can only divide numbers"
+
+let dotProduct a b =
+    match (a, b) with
+    | List l1, List l2 ->
+            let rec dotVectors lhs rhs =
+                match lhs, rhs with
+                | [], [] -> 0
+                | l :: ls, r :: rs ->
+                    match l, r with
+                    | VNumber(VInteger x), VNumber(VInteger y) -> x * y + dotVectors ls rs
+                    | _ -> failwith "invalid"
+                | _ -> failwith "invalid"
+            VNumber(VInteger(dotVectors l1 l2))
+    | _ -> failwith "Can only take dot product of vectors"
+
+let crossProduct a b =
+    match (a, b) with
+    | List l1, List l2 ->
+            let rec crossVectors lhs rhs =
+                match lhs, rhs with
+                | [VNumber(VInteger x); VNumber(VInteger y); VNumber(VInteger z)], [VNumber(VInteger a); VNumber(VInteger b); VNumber(VInteger c)] ->
+                    [VNumber(VInteger(y * c - z * b)); VNumber(VInteger(z * a - x * c)); VNumber(VInteger(x * b - y * a))]
+                | _ -> failwith "invalid"
+            List(crossVectors l1 l2)
+    | _ -> failwith "Can only take cross product of vectors"
 
 let negate value =
     match value with

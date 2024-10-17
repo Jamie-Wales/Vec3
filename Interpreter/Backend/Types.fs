@@ -14,6 +14,7 @@ and Value =
     | Function of Function
     | Closure of Closure
     | Nil
+    | List of Value list
 
 and VNumber =
     | VInteger of int
@@ -34,7 +35,7 @@ and Closure =
     { Function: Function
       UpValues: Value list }
 
-let valueToString =
+let rec valueToString =
     function
     | VNumber(VInteger n) -> string n
     | VNumber(VFloat f) -> string f
@@ -45,3 +46,5 @@ let valueToString =
     | Function f -> $"<fn {f.Name}>"
     | Closure c -> $"<closure {c.Function.Name}>"
     | Nil -> "nil"
+    | List l -> $"""[{String.concat ", " (List.map valueToString l)}]"""
+    

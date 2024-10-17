@@ -29,6 +29,11 @@ type OP_CODE =
     | CALL
     | CLOSURE
     | ASSERT
+    | DOTPRODUCT
+    | CROSSPRODUCT
+    | LIST_APPEND
+    | LIST_CREATE
+    
 
 let opCodeToByte =
     function
@@ -60,6 +65,10 @@ let opCodeToByte =
     | CALL -> 25uy
     | CLOSURE -> 26uy
     | ASSERT -> 27uy
+    | DOTPRODUCT -> 28uy
+    | CROSSPRODUCT -> 29uy
+    | LIST_APPEND -> 30uy
+    | LIST_CREATE -> 31uy
 
 let byteToOpCode byte =
     match byte with
@@ -91,7 +100,11 @@ let byteToOpCode byte =
     | 25uy -> CALL
     | 26uy -> CLOSURE
     | 27uy -> ASSERT
-    | _ -> failwithf "Unknown OP_CODE: %d" byte
+    | 28uy -> DOTPRODUCT
+    | 29uy -> CROSSPRODUCT
+    | 30uy -> LIST_APPEND
+    | 31uy -> LIST_CREATE
+    | _ -> failwith $"Unknown OP_CODE: {byte}"
 
 let opCodeToString =
     function
@@ -123,3 +136,7 @@ let opCodeToString =
     | CALL -> "CALL"
     | CLOSURE -> "CLOSURE"
     | ASSERT -> "ASSERT"
+    | DOTPRODUCT -> "DOTPRODUCT"
+    | CROSSPRODUCT -> "CROSSPRODUCT"
+    | LIST_APPEND -> "LIST_APPEND"
+    | LIST_CREATE -> "LIST_CREATE"

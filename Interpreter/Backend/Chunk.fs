@@ -87,6 +87,18 @@ let disassembleInstruction (chunk: Chunk) offset =
     | OP_CODE.CALL -> constantInstruction chunk "OP_CALL" offset
     | OP_CODE.CLOSURE -> constantInstruction chunk "OP_CLOSURE" offset
     | OP_CODE.ASSERT -> simpleInstruction "OP_ASSERT" offset
+    | OP_CODE.JUMP -> 
+        let jump = (int chunk.Code[offset + 1] <<< 8) ||| int chunk.Code[offset + 2]
+        printf $"OP_JUMP          {offset, 4} -> {offset + 3 + jump, 4}"
+        offset + 3
+    | OP_CODE.JUMP_IF_FALSE ->
+        let jump = (int chunk.Code[offset + 1] <<< 8) ||| int chunk.Code[offset + 2]
+        printf $"OP_JUMP_IF_FALSE {offset, 4} -> {offset + 3 + jump, 4}"
+        offset + 3
+    | OP_CODE.DOTPRODUCT -> simpleInstruction "OP_DOTPRODUCT" offset
+    | OP_CODE.CROSSPRODUCT -> simpleInstruction "OP_CROSSPRODUCT" offset
+    | OP_CODE.LIST_APPEND -> simpleInstruction "OP_LIST_APPEND" offset
+    | OP_CODE.LIST_CREATE -> simpleInstruction "OP_LIST_CREATE" offset
     | _ ->
         printfn $"Unknown opcode {chunk.Code[offset]}"
         offset + 1
@@ -181,6 +193,10 @@ let disassembleChunkToString (chunk: Chunk) name =
             let function' = chunk.ConstantPool[constant]
             appendLine $"{offset:D4} | OP_CLOSURE       {constant, 4} | {valueToString function'}"
             offset + 2
+        | OP_CODE.DOTPRODUCT -> simpleInstruction "OP_DOTPRODUCT" offset
+        | OP_CODE.CROSSPRODUCT -> simpleInstruction "OP_CROSSPRODUCT" offset
+        | OP_CODE.LIST_APPEND -> simpleInstruction "OP_LIST_APPEND" offset
+        | OP_CODE.LIST_CREATE -> simpleInstruction "OP_LIST_CREATE" offset
         | _ ->
             appendLine $"{offset:D4} | Unknown opcode {chunk.Code[offset]}"
             offset + 1
