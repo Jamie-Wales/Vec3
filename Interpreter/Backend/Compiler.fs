@@ -90,16 +90,21 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | EUnary(token, u, _) -> compileUnary token u state
         | ELambda(parameters, body, _) -> compileLambda parameters body state
         | ECall(callee, arguments, _) -> compileCall callee arguments state
-        | EBlock(stmts, _) -> compileBlock stmts state
-        | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
         | EList(elements, _) -> compileList elements state
-        | EIndex(list, index, _) ->
-            compileExpr list state
-            |> Result.bind (fun ((), state) -> compileExpr index state)
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.INDEX state)
+        | EIndex(list, index, _) -> compileIndex list index state
         | ETuple(elements, _) ->
             compileTuple elements state
-        | _ -> Error("Unsupported expression type", state)
+            
+        // below not working
+        | EBlock(stmts, _) -> compileBlock stmts state
+        | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
+        | ETernary(cond, thenB, elseB, _) -> compileIf cond thenB elseB state
+
+and compileIndex (list: Expr) (index: Expr) : Compiler<unit> =
+    fun state ->
+        compileExpr list state
+        |> Result.bind (fun ((), state) -> compileExpr index state)
+        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.INDEX state)
 
 and compileTuple (elements: Expr list) : Compiler<unit> =
     fun state ->
@@ -112,7 +117,6 @@ and compileTuple (elements: Expr list) : Compiler<unit> =
         
         compileElements elements state
         |> Result.bind (fun ((), state) ->
-            // would be nicer to emit byte probably
             emitConstant (VNumber(VInteger elements.Length)) state)
         |> Result.bind (fun ((), state) ->
             emitOpCode OP_CODE.TUPLE_CREATE state)
