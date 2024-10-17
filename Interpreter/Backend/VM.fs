@@ -401,6 +401,33 @@ let rec run (vm: VM) =
                             let vm = push vm tuple
                             vm
                         | _ -> failwith "Expected non-negative integer for tuple size"
+                    | RECORD_CREATE ->
+                        let record = Record []
+                        let vm = push vm record
+                        vm
+                    | RECORD_SET ->
+                        let key, vm = pop vm
+                        let value, vm = pop vm
+                        let record, vm = pop vm
+                        match (record, key) with
+                        | Record fields, String key ->
+                            let updatedRecord = Record ((key, value) :: fields)
+                            let vm = push vm updatedRecord
+                            vm
+                        | _ -> failwith "Expected record and string key"
+                    | RECORD_GET ->
+                        let key, vm = pop vm
+                        let record, vm = pop vm
+                        match (record, key) with
+                        | Record fields, String key ->
+                            let value = 
+                                fields
+                                |> List.tryFind (fun (k, _) -> k = key)
+                                |> Option.map snd
+                                |> Option.defaultValue Value.Nil
+                            let vm = push vm value
+                            vm
+                        | _ -> failwith "Expected record and string key"
                     | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
                 runLoop vm  
     runLoop vm
