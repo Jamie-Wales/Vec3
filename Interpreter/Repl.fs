@@ -1,12 +1,11 @@
 module Vec3.Interpreter.Repl
 
 open System
-open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Parser
 open Vec3.Interpreter.Backend.Compiler
 open Vec3.Interpreter.Backend.VM
-open Vec3.Interpreter.Typing.Checker
 open Vec3.Interpreter.Typing.Inference
+open Vec3.Interpreter.Typing.Exceptions
 open Vec3.Interpreter.Eval
 open Vec3.Interpreter.Preprocessor
 open Vec3.Interpreter.Grammar
@@ -81,7 +80,7 @@ let executeInRepl (state: ReplState) (input: string) : ReplState =
                         existingVM.Frames.Add(newFrame)
                         existingVM
                     | None -> createVM func
-                let (updatedVM, _) = interpretWithMode func (Some vm) true
+                let updatedVM, _ = interpretWithMode func (Some vm) true
                 { VM = Some updatedVM }
             | Error (msg, _) ->
                 printfn $"Compilation error: {msg}"
