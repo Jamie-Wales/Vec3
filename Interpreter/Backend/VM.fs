@@ -401,51 +401,60 @@ let rec run (vm: VM) =
                             let vm = push vm tuple
                             vm
                         | _ -> failwith "Expected non-negative integer for tuple size"
+                    | RECORD_EMPTY
                     | RECORD_CREATE ->
                         let record = Record []
                         let vm = push vm record
                         vm
-                    | RECORD_SET ->
+                    | RECORD_EXTEND ->
+                        let record, vm = pop vm
                         let key, vm = pop vm
                         let value, vm = pop vm
-                        let record, vm = pop vm
-                        match (record, key) with
-                        | Record fields, String key ->
-                            let updatedRecord = Record <| if List.exists (fun (k, _) -> k = key) fields then
-                                                            fields
-                                                            |> List.map (fun (k, v) -> if k = key then (k, value) else (k, v))
-                                                          else
-                                                            (key, value) :: fields
-                            
-                            let vm = push vm updatedRecord
-                            vm
-                        | _ -> failwith "Expected record and string key"
+                        match record with
+                        | Record fields ->
+                            match key with
+                            | Value.String key ->
+                                let updatedRecord = Record ((key, value) :: fields)
+                                let vm = push vm updatedRecord
+                                vm
+                            | _ -> failwith "Expected string key for record"
+                        | _ -> failwith "Expected record value on stack"
                     | RECORD_GET ->
                         let key, vm = pop vm
                         let record, vm = pop vm
-                        match (record, key) with
-                        | Record fields, String key ->
-                            let value = 
-                                fields
-                                |> List.tryFind (fun (k, _) -> k = key)
-                                |> Option.map snd
-                                |> Option.defaultValue Value.Nil
-                            let vm = push vm value
-                            vm
-                        | _ -> failwith "Expected record and string key"
-                    | RECORD_UPDATE ->
-                        let value, vm = pop vm
-                        let vm = push vm value
-                        vm
+                        match record with
+                        | Record fields ->
+                            match key with
+                            | Value.String key ->
+                                let value = 
+                                    fields
+                                    |> List.tryFind (fun (k, _) -> k = key)
+                                    |> Option.map snd
+                                    |> Option.defaultValue Value.Nil
+                                let vm = push vm value
+                                vm
+                            | _ -> failwith "Expected string key for record"
+                        | _ -> failwith "Expected record value on stack"
+                    | RECORD_RESTRICT ->
+                        let key, vm = pop vm
+                        let record, vm = pop vm
+                        match record with
+                        | Record fields ->
+                            match key with
+                            | Value.String key ->
+                                let updatedFields = fields |> List.filter (fun (k, _) -> k <> key)
+                                let updatedRecord = Record updatedFields
+                                let vm = push vm updatedRecord
+                                vm
+                            | _ -> failwith "Expected string key for record"
+                        | _ -> failwith "Expected record value on stack"
                         
                     | BLOCK_START ->
                         let vm = { vm with ScopeDepth = vm.ScopeDepth + 1 }
                         vm
                     | BLOCK_END ->
                         let result, vm = pop vm
-                        
-                        let vm = { vm with ScopeDepth = vm.ScopeDepth - 1 }
-                        
+                        let vm = { vm with ScopeDepth = vm.ScopeDepth - 1}
                         let vm = push vm result
                         vm
                     | BLOCK_RETURN ->

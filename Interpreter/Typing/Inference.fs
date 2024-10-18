@@ -29,6 +29,21 @@ let freshTypeVar =
         counter.Value <- counter.Value + 1
         counter.Value
 
+let rec occursCheck (tv: TypeVar) (t: TType) : bool =
+    match t with
+    | TTypeVariable v -> v = tv
+    | TFunction(parameters, ret) -> List.exists (occursCheck tv) parameters || occursCheck tv ret
+    | TTuple types -> List.exists (occursCheck tv) types
+    | TTensor(typ, var) ->
+        occursCheck tv typ
+        || match var with
+           | DVar v -> v = tv
+           | _ -> false
+    | TConstrain(var, types) -> List.exists (occursCheck tv) types || var = tv
+    | TRecord row -> occursCheck tv row
+    | TRowExtend(_, typ, row) -> occursCheck tv typ || occursCheck tv row
+    | _ -> false
+
 let getOpTypeBinary (op: Lexeme) (t1: TType) (t2: TType) : TType =
     let typeVar = freshTypeVar ()
     let dimsVar = freshTypeVar ()
@@ -215,7 +230,8 @@ let rec applySubstitution (sub: Substitution) (t: TType) : TType =
         match Map.tryFind var sub with
         | Some t' -> applySubstitution sub t'
         | None -> TConstrain(var, List.map (applySubstitution sub) types)
-    | TRecord fields -> TRecord(List.map (fun (name, typ) -> (name, applySubstitution sub typ)) fields)
+    | TRecord row -> TRecord(applySubstitution sub row)
+    | TRowExtend(label, typ, row) -> TRowExtend(label, applySubstitution sub typ, applySubstitution sub row)
     | t -> t
 
 // attempts to substitute type variables with concrete types in an environment
@@ -326,58 +342,63 @@ let rec unify (t1: TType) (t2: TType) : Substitution TypeResult =
                 | Error errors1, Error errors2 -> Error(errors1 @ errors2))
             (Ok Map.empty)
             results
-    | TRecord fields1, TRecord fields2 ->
-        
-        let unifyField (name, typ) fields =
-            match List.tryFind (fun (name2, _) -> name.Lexeme = name2.Lexeme) fields with
-            | Some(_, typ2) -> unify typ typ2
-            | None -> Error [ TypeError.TypeMismatch(Empty, TRecord fields1, TRecord fields2) ]
+    | TRecord row1, TRecord row2 -> unify row1 row2
+    | TRowEmpty, TRowEmpty -> Ok Map.empty
+    | TRowExtend(label1, typ1, rest_rows1), (TRowExtend _ as row2) ->
+        let rec rewrite_row row label field_typ =
+            match row with
+            | TRowEmpty -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
+            | TRowExtend(label2, typ2, rest_rows2) when label1.Lexeme = label2.Lexeme -> Ok(typ2, rest_rows2)
+            | TRowExtend(label2, typ2, rest_rows2) ->
+                let inner = rewrite_row rest_rows2 label field_typ
 
-        let results1 = 
-            fields1
-            |> List.map (fun (name, typ) -> unifyField (name, typ) fields2)
+                match inner with
+                | Error _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
+                | Ok(typ, rest) -> Ok(TRowExtend(label2, typ2, typ), rest)
+            | TTypeVariable v ->
+                let resolved = Map.tryFind v resolvedTypes.Value
 
-        let results2 =
-            fields2
-            |> List.map (fun (name, typ) -> unifyField (name, typ) fields1)
+                match resolved with
+                | Some(TRowExtend(label2, typ2, rest_rows2)) when label1.Lexeme = label2.Lexeme -> Ok(typ2, rest_rows2)
+                | _ -> Ok(TRowExtend(label1, field_typ, TTypeVariable v), TRowEmpty)
 
-        let results = results1 @ results2
+            | _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 
-        List.fold
-            (fun acc result ->
-                match acc, result with
-                | Ok sub1, Ok sub2 -> Ok(combineMaps sub1 sub2)
-                | Error errors, Ok _ -> Error errors
-                | Ok _, Error errors -> Error errors
-                | Error errors1, Error errors2 -> Error(errors1 @ errors2))
-            (Ok Map.empty)
-            results
-    //
-    //
-    // | TRecord fields1, TRecord fields2 ->
-    //     let fields1, fields2 =
-    //         if List.length fields1 > List.length fields2 then
-    //             fields2, fields1
-    //         else
-    //             fields1, fields2
-    //
-    //     let results =
-    //         List.map
-    //             (fun (name1, typ1) ->
-    //                 match List.tryFind (fun (name2, _) -> name1.Lexeme = name2.Lexeme) fields2 with
-    //                 | Some(_, typ2) -> unify typ1 typ2
-    //                 | None -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ])
-    //             fields1
-    //
-    //     List.fold
-    //         (fun acc result ->
-    //             match acc, result with
-    //             | Ok sub1, Ok sub2 -> Ok(combineMaps sub1 sub2)
-    //             | Error errors, Ok _ -> Error errors
-    //             | Ok _, Error errors -> Error errors
-    //             | Error errors1, Error errors2 -> Error(errors1 @ errors2))
-    //         (Ok Map.empty)
-    //         results
+
+        let rest_row_1_var =
+            match rest_rows1 with
+            | TTypeVariable v -> Some(TTypeVariable v)
+            | _ -> None
+
+        let rest_row_2_var =
+            match row2 with
+            | TRowExtend(_, _, TTypeVariable v) -> Some(TTypeVariable v)
+            | _ -> None
+
+        let rest_row_1 =
+            match rest_row_1_var with
+            | Some(TTypeVariable v) -> TTypeVariable v
+            | Some _ -> rest_rows1
+            | None -> rest_rows1
+
+        let rest_row_2 =
+            match rest_row_2_var with
+            | Some(TTypeVariable v) -> TTypeVariable v
+            | _ -> row2
+
+        let rewritten = rewrite_row rest_row_2 label1 typ1
+
+        match rewritten with
+        | Ok(typ2, rest_rows2) ->
+            unify typ1 typ2
+            |> Result.bind (fun sub ->
+                let sub = combineMaps sub Map.empty
+
+                unify rest_row_1 rest_rows2
+                |> Result.bind (fun sub' ->
+                    let sub' = combineMaps sub' sub
+                    Ok sub'))
+        | Error _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 
     | TTensor(typ1, sizes1), TTensor(typ2, sizes2) ->
         match sizes1, sizes2 with
@@ -415,19 +436,6 @@ let rec unify (t1: TType) (t2: TType) : Substitution TypeResult =
                 unify typ1 typ2
     | _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 
-and occursCheck (tv: TypeVar) (t: TType) : bool =
-    match t with
-    | TTypeVariable v -> v = tv
-    | TFunction(parameters, ret) -> List.exists (occursCheck tv) parameters || occursCheck tv ret
-    | TTuple types -> List.exists (occursCheck tv) types
-    | TTensor(typ, var) ->
-        occursCheck tv typ
-        || match var with
-           | DVar v -> v = tv
-           | _ -> false
-    | TConstrain(var, types) -> List.exists (occursCheck tv) types || var = tv
-    | TRecord fields -> List.exists (fun (_, typ) -> occursCheck tv typ) fields
-    | _ -> false
 
 let rec freeTypeVars (typ: TType) : TypeVar list =
     match typ with
@@ -439,7 +447,6 @@ let rec freeTypeVars (typ: TType) : TypeVar list =
         | DVar v -> v :: freeTypeVars typ
         | _ -> freeTypeVars typ
     | TConstrain(var, types) -> var :: (List.collect freeTypeVars types)
-    | TRecord fields -> List.collect (fun (_, typ) -> freeTypeVars typ) fields
     | _ -> []
 
 let freeTypeVarsInEnv (env: TypeEnv) : TypeVar list =
@@ -864,197 +871,85 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
         | _ -> Error [ TypeError.InvalidIndex(expr, TInfer) ]
 
     // lot of this doesnt work,
-    | ERecord(fields, _) ->
-        let fieldResults = List.map (fun (_, expr, _) -> infer env expr) fields
-
-        let hasErrors = List.exists Result.isError fieldResults
-
-        if hasErrors then
-            let errors =
-                List.collect
-                    (fun result ->
-                        match result with
-                        | Error errors -> errors
-                        | _ -> [])
-                    fieldResults
-
-            Error errors
-        else
-            let fieldResults =
-                List.choose
-                    (function
-                    | Ok(t, sub, expr) -> Some(t, sub, expr)
-                    | _ -> None)
-                    fieldResults
-
-            let types = List.map (fun (t, _, _) -> t) fieldResults
-            let subs = List.map (fun (_, sub, _) -> sub) fieldResults
-
-            let fieldTypes =
-                List.map
-                    (fun (_, _, typ) ->
-                        match typ with
-                        | TInfer -> TTypeVariable(freshTypeVar ())
-                        | _ -> typ)
-                    fields
-
-            let subResults = List.map2 unify types fieldTypes
-
-            let hasErrors = List.exists Result.isError subResults
-
-            if hasErrors then
-                let errors =
-                    List.collect
-                        (fun result ->
-                            match result with
-                            | Error errors -> errors
-                            | _ -> [])
-                        subResults
-
-                Error errors
-            else
-                let subResults =
-                    List.choose
-                        (function
-                        | Ok(sub) -> Some(sub)
-                        | _ -> None)
-                        subResults
-
-                let combinedSubs = List.fold combineMaps Map.empty subResults
-                let combinedSubs = List.fold combineMaps combinedSubs subs
-
-                let returnType =
-                    TRecord(
-                        List.map2 (fun (name, _, _) typ -> (name, applySubstitution combinedSubs typ)) fields fieldTypes
-                    )
-
-                let expr =
-                    ERecord(List.map2 (fun (name, expr, _) typ -> (name, expr, typ)) fields fieldTypes, returnType)
-
-                Ok(returnType, combinedSubs, expr)
 
     // fails on the following:
     // let x = (x) -> x.a + 4
     // let y = { a = 4.0 }
     // x(y), doesnt infer that a must be an int, so fials on +
     // annoying error stupid hard to fix
-    | ERecordSelect(expr, field, _) ->
-        let exprResult = infer env expr
+    | ERecordEmpty _ -> Ok(TRecord(TRowEmpty), Map.empty, ERecordEmpty(TRecord(TRowEmpty)))
+    | ERecordExtend((name, value, typ), record, typ1) ->
+        let valueResult = infer env value
+        let recordResult = infer env record
 
-        match exprResult with
-        | Ok(TRecord fields, sub, expr) ->
-            let fieldType = List.tryFind (fun (name, _) -> name.Lexeme = field.Lexeme) fields
+        match valueResult, recordResult with
+        | Ok(t, sub1, expr1), Ok(TRecord(row), sub2, expr2) ->
+            let sub = combineMaps sub1 sub2
+            let row = applySubstitution sub row
+            let sub = combineMaps sub sub2
 
-            match fieldType with
-            | Some(_, typ) -> Ok(typ, sub, ERecordSelect(expr, field, typ))
-            | None -> Error [ TypeError.InvalidField(field, TRecord fields) ]
-        | Ok(TTypeVariable n, sub, expr) ->
+            let newType = TRecord(TRowExtend(name, t, row))
+            Ok(newType, sub, ERecordExtend((name, expr1, t), expr2, newType))
+        | Ok(t, sub1, expr1), Ok(TTypeVariable n, sub2, expr2) ->
             let typeVar = freshTypeVar ()
-            let sub = Map.add n (TRecord([ (field, TTypeVariable typeVar) ])) sub
-            Ok(TTypeVariable typeVar, sub, ERecordSelect(expr, field, TTypeVariable typeVar))
-        | Ok(t, _, _) -> Error [ TypeError.InvalidField(field, t) ]
+            let sub = combineMaps sub1 sub2
 
-        | Error errors -> Error errors
-    | ERecordUpdate(expr, fields, _) ->
-        let exprResult = infer env expr
-        let fieldResults = List.map (fun (_, expr, _) -> infer env expr) fields
+            let sub2 = Map.add n (TRecord(TRowExtend(name, t, TRowEmpty))) sub
 
-        match exprResult with
-        | Ok(TRecord oldFields, sub, expr) ->
-            let hasErrors = List.exists Result.isError fieldResults
+            Ok(
+                TRecord(TRowExtend(name, t, TRowEmpty)),
+                sub2,
+                ERecordExtend((name, expr1, t), expr2, TRecord(TRowExtend(name, t, TRowEmpty)))
+            )
+        // if final
+        | Ok(t, sub1, expr1), Ok(TRowEmpty, sub2, expr2) ->
+            let sub = combineMaps sub1 sub2
+            let sub = combineMaps sub sub2
 
-            if hasErrors then
-                let errors =
-                    List.collect
-                        (fun result ->
-                            match result with
-                            | Error errors -> errors
-                            | _ -> [])
-                        fieldResults
+            let newType = TRecord(TRowExtend(name, t, TRowEmpty))
+            Ok(newType, sub, ERecordExtend((name, expr1, t), expr2, newType))
+        | Error errors, _ -> Error errors
+        | _, Error errors -> Error errors
+        | _ -> Error [ TypeError.NotEnoughInformation(name) ]
 
-                Error errors
+    | ERecordSelect(record, name, _) ->
+        let recordResult = infer env record
+
+        match recordResult with
+        | Ok(TRecord(row), sub, expr) ->
+            let row = applySubstitution sub row
+
+            let rec findType (row: TType) (name: Token) : TType =
+                match row with
+                | TRowEmpty -> TNever
+                | TRowExtend(label, typ, _) when label.Lexeme = name.Lexeme -> typ
+                | TRowExtend(_, _, rest) -> findType rest name
+                | _ -> TNever
+
+            let typ = findType row name
+
+            if typ = TNever then
+                Error [ TypeError.NotEnoughInformation(name) ]
             else
-                let fieldResults =
-                    List.choose
-                        (function
-                        | Ok(t, sub, expr) -> Some(t, sub, expr)
-                        | _ -> None)
-                        fieldResults
-
-                let types = List.map (fun (t, _, _) -> t) fieldResults
-                let subs = List.map (fun (_, sub, _) -> sub) fieldResults
-
-                let fieldTypes =
-                    List.map
-                        (fun (_, _, typ) ->
-                            match typ with
-                            | TInfer -> TTypeVariable(freshTypeVar ())
-                            | _ -> typ)
-                        fields
-
-                let subResults = List.map2 unify types fieldTypes
-
-                let hasErrors = List.exists Result.isError subResults
-
-                if hasErrors then
-                    let errors =
-                        List.collect
-                            (fun result ->
-                                match result with
-                                | Error errors -> errors
-                                | _ -> [])
-                            subResults
-
-                    Error errors
-                else
-                    let subResults =
-                        List.choose
-                            (function
-                            | Ok(sub) -> Some(sub)
-                            | _ -> None)
-                            subResults
-
-                    let combinedSubs = List.fold combineMaps sub subResults
-                    let combinedSubs = List.fold combineMaps combinedSubs subs
-
-                    let returnType =
-                        TRecord(
-                            List.map2
-                                (fun (name, _, _) typ -> (name, applySubstitution combinedSubs typ))
-                                fields
-                                fieldTypes
-                            @ List.filter
-                                (fun (name, _) ->
-                                    not (List.exists (fun (name', _, _) -> name.Lexeme = name'.Lexeme) fields))
-                                oldFields
-                        )
-
-
-                    let expr =
-                        ERecordUpdate(
-                            expr,
-                            List.map2 (fun (name, expr, _) typ -> (name, expr, typ)) fields fieldTypes,
-                            returnType
-                        )
-
-                    Ok(returnType, combinedSubs, expr)
+                Ok(typ, sub, ERecordSelect(expr, name, typ))
         | Ok(TTypeVariable n, sub, expr) ->
             let typeVar = freshTypeVar ()
 
             let sub =
-                Map.add n (TRecord(List.map (fun (name, _, _) -> (name, TTypeVariable typeVar)) fields)) sub
+                Map.add n (TRecord(TRowExtend(name, TTypeVariable typeVar, TRowEmpty))) sub
 
-            Ok(
-                TRecord(List.map (fun (name, _, _) -> (name, TTypeVariable typeVar)) fields),
-                sub,
-                ERecordUpdate(
-                    expr,
-                    fields,
-                    TRecord(List.map (fun (name, _, _) -> (name, TTypeVariable typeVar)) fields)
-                )
-            )
-        | Ok(t, _, _) -> Error [ TypeError.InvalidFields(fields, t) ]
+            Ok(TTypeVariable typeVar, sub, ERecordSelect(expr, name, TTypeVariable typeVar))
         | Error errors -> Error errors
+        | _ -> Error [ TypeError.NotEnoughInformation(name) ]
+
+
+
+
+
+
+
+
+
 
 
 

@@ -31,9 +31,13 @@ type Type =
     
     | TTensor of Type * Dims
     
-    | TRecord of (Token * Type) list
+    | TRecord of Row 
+    | TRowEmpty
+    | TRowExtend of Token * Type * Row
 
 and Dims = Dims of int list | DAny | DVar of TypeVar
+
+and Row = Type // Row | RowEmpty | RowExtend
 
 type TType = Type
 
@@ -68,8 +72,9 @@ type Expr =
     | EBlock of Stmt list * Type
     
     | ERecordSelect of Expr * Token * Type
-    | ERecord of (Token * Expr * TType) list * Type
-    | ERecordUpdate of Expr * (Token * Expr * TType) list * Type
+    | ERecordExtend of (Token * Expr * Type) * Expr * Type
+    | ERecordRestrict of Expr * Token * Type
+    | ERecordEmpty of Type
     
 and Stmt =
     | SExpression of Expr * Type

@@ -26,7 +26,6 @@ let rec printExpr = function
     | ELiteral (lit, _) -> printLiteral lit
     | EList (exprs, _) -> $"""[{String.concat ", " (List.map printExpr exprs)}]"""
     | ETuple (exprs, _) -> $"""({String.concat ", " (List.map printExpr exprs)})"""
-    | ERecord (fields, _) -> $"""{{ {String.concat ", " (List.map (fun (k, v, typ) -> $"{k.Lexeme}: {typ} = {printExpr v}") fields)} }}"""
     | EBinary (left, op, right, _) -> $"""{printExpr left} {lexemeToString op.Lexeme} {printExpr right}"""
     | EUnary (op, expr, _) -> $"""{lexemeToString op.Lexeme}{printExpr expr}"""
     | EGrouping (expr, _) -> $"""({printExpr expr})"""
@@ -37,7 +36,6 @@ let rec printExpr = function
     | EBlock (stmts, _) -> $"""{{ {String.concat "\n" (List.map printStmt stmts)} }}"""
     | ELambda (params', body, _) -> $"""({String.concat ", " (List.map (fun (param) -> lexemeToString param.Lexeme) params')}) -> {printExpr body}"""
     | ERecordSelect (expr, field, _) -> $"""{printExpr expr}.{lexemeToString field.Lexeme}"""
-    | ERecordUpdate (expr, fields, _) -> $"""{printExpr expr} with {{ {String.concat ", " (List.map (fun (k, v, _) -> $"{lexemeToString k.Lexeme} = {printExpr v}") fields)} }}"""
     | ETernary (cond, thenBranch, elseBranch, _) -> $"""{printExpr thenBranch} if {printExpr cond} else {printExpr elseBranch}"""
     
 and printStmt = function

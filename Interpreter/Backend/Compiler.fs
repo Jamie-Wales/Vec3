@@ -95,29 +95,34 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | EIndex(list, index, _) -> compileIndex list index state
         | ETuple(elements, _) ->
             compileTuple elements state
-        | ERecord(fields, _) ->
-            let compileField (name, value, _) state =
-                let name = match name with
-                            | { Lexeme = Identifier n } -> n
-                            | _ -> failwith "Invalid record field name"
-                
-                compileExpr value state
-                |> Result.bind (fun ((), state) ->
-                    let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
-                    emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
-                    |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RECORD_SET state))
-
-            let rec compileFields fields state =
-                match fields with
-                | [] -> Ok((), state)
-                | field :: rest ->
-                    compileField field state
-                    |> Result.bind (fun ((), state) -> compileFields rest state)
-
-            emitOpCode OP_CODE.RECORD_CREATE state
+            
+        | ERecordRestrict(record, field, _) ->
+            let name = match field with
+                        | { Lexeme = Identifier n } -> n
+                        | _ -> failwith "Invalid record field name"
+            
+            compileExpr record state
             |> Result.bind (fun ((), state) ->
-                compileFields fields state)
+                let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
+                emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
+                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RECORD_RESTRICT state)
+             )
+        | ERecordEmpty _ -> emitOpCode OP_CODE.RECORD_EMPTY state
         
+        | ERecordExtend((name, value, _), record, _) ->
+            let name = match name with
+                        | { Lexeme = Identifier n } -> n
+                        | _ -> failwith "Invalid record field name"
+            
+            
+            compileExpr value state
+            |> Result.bind (fun ((), state) ->
+                let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
+                emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
+                |> Result.bind (fun ((), state) -> compileExpr record state)
+                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RECORD_EXTEND state)
+            )
+            
         | ERecordSelect(expr, token, _) ->
             let name = match token with
                         | { Lexeme = Identifier n } -> n
@@ -129,30 +134,6 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
                 emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
                 |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RECORD_GET state)
                 )
-        | ERecordUpdate(expr, newFields, _) ->
-            
-            let compileField (name, value, _) state =
-                let name = match name with
-                            | { Lexeme = Identifier n } -> n
-                            | _ -> failwith "Invalid record field name"
-                
-                compileExpr value state
-                |> Result.bind (fun ((), state) ->
-                    let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
-                    emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
-                    |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RECORD_SET state))
-                
-            let rec compileFields fields state =
-                match fields with
-                | [] -> Ok((), state)
-                | field :: rest ->
-                    compileField field state
-                    |> Result.bind (fun ((), state) -> compileFields rest state)
-                   
-            emitOpCode OP_CODE.RECORD_UPDATE state
-            |> Result.bind (fun ((), state) ->
-                compileExpr expr state
-                |> Result.bind (fun ((), state) -> compileFields newFields state))
             
         | EBlock(stmts, _) -> compileBlock stmts state // scope is fucked up think its global
             

@@ -309,26 +309,26 @@ and leftBrace (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "LeftBrace"
 
     match peek state with
-    | Some { Lexeme = Lexeme.Operator Operator.RightBrace } -> Ok(advance state, ERecord([], TRecord []))
+    | Some { Lexeme = Lexeme.Operator Operator.RightBrace } -> Ok(advance state, ERecordEmpty(TRowEmpty))
     | Some { Lexeme = Identifier _ } ->
         match peek (advance state) with
         | Some { Lexeme = Operator Colon } -> record state
         | Some { Lexeme = Lexeme.Operator Operator.Equal } -> record state
-        | Some { Lexeme = Lexeme.Keyword Keyword.With } -> recordUpdate state // TODO, not with identifier, just arb epxpr
+        // | Some { Lexeme = Lexeme.Keyword Keyword.With } -> recordUpdate state // TODO, not with identifier, just arb epxpr
         | _ -> block state
     | _ -> block state
 
-and recordUpdate (state: ParserState) : Expr ParseResult =
-    expression state Precedence.None
-    |> Result.bind (fun (state, expr) ->
-        expect state (Keyword With)
-        |> Result.bind (fun state ->
-            expect state (Operator LeftBrace)
-            |> Result.bind (fun state ->
-                recordFields state []
-                |> Result.bind (fun (state, fields) ->
-                    expect state (Lexeme.Operator Operator.RightBrace)
-                    |> Result.bind (fun state -> Ok(state, ERecordUpdate(expr, fields, TInfer)))))))
+// and recordUpdate (state: ParserState) : Expr ParseResult =
+//     expression state Precedence.None
+//     |> Result.bind (fun (state, expr) ->
+//         expect state (Keyword With)
+//         |> Result.bind (fun state ->
+//             expect state (Operator LeftBrace)
+//             |> Result.bind (fun state ->
+//                 recordFields state []
+//                 |> Result.bind (fun (state, fields) ->
+//                     expect state (Lexeme.Operator Operator.RightBrace)
+//                     |> Result.bind (fun state -> Ok(state, ERecordUpdate(expr, fields, TInfer)))))))
 
 and recordFields (state: ParserState) (fields: (Token * Expr * TType) list) : ParseResult<(Token * Expr * TType) list> =
     match peek state with
@@ -367,9 +367,18 @@ and recordFields (state: ParserState) (fields: (Token * Expr * TType) list) : Pa
 
 and record (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Record"
+    
+    let rowsToExpr (rows: (Token * Expr * TType) list) : Expr =
+        let rec loop (rows: (Token * Expr * TType) list) (record: Expr) : Expr =
+            match rows with
+            | [] -> record
+            | (name, value, typ) :: rest ->
+                loop rest (ERecordExtend((name, value, typ), record, TInfer))
+
+        loop rows (ERecordEmpty(TRowEmpty))
 
     recordFields state []
-    |> Result.bind (fun (state, fields) -> Ok(state, ERecord(fields, TInfer)))
+    |> Result.bind (fun (state, fields) -> Ok(state, rowsToExpr fields))
 
 
 and commaSeparatedList (state: ParserState) : ParseResult<Expr list> =
@@ -633,9 +642,17 @@ and recordType (state: ParserState) : ParseResult<TType> =
                     | Some(state, { Lexeme = Operator RightBrace }) -> Ok(state, ((fieldName, fieldType) :: fields))
                     | _ -> Error(Expected "',' or '}' after record field.", state)))
         | _ -> Error(Expected "field name", state)
+    
+    let rec fieldsToType (fields: (Token * TType) list) : TType =
+        match fields with
+        | [] -> TRowEmpty
+        | (name, fieldType) :: rest -> TRowExtend(name, fieldType, fieldsToType rest)
 
     parseFields state []
-    |> Result.bind (fun (state, fields) -> Ok(state, TRecord(List.rev fields)))
+    |> Result.bind (fun (state, fields) ->
+        Ok(state, TRecord(fieldsToType fields))
+     )
+        
 
 
 
