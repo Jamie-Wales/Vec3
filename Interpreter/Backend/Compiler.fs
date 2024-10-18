@@ -154,11 +154,9 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
                 compileExpr expr state
                 |> Result.bind (fun ((), state) -> compileFields newFields state))
             
-            
-            
+        | EBlock(stmts, _) -> compileBlock stmts state
             
         // below not working
-        | EBlock(stmts, _) -> compileBlock stmts state
         | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
         | ETernary(cond, thenB, elseB, _) -> compileIf cond thenB elseB state
         
@@ -215,6 +213,8 @@ and compileIf (condition: Expr) (thenBranch: Expr) (elseBranch: Expr) : Compiler
 // block is a new scope and an expression, therefore last expression is returned in the block
 and compileBlock (stmts: Stmt list) : Compiler<unit> =
     fun state ->
+        let state = { state with ScopeDepth = state.ScopeDepth + 1 }
+        
         let rec compileStmts stmts state =
             match stmts with
             | [] -> Ok((), state)
@@ -235,6 +235,8 @@ and compileBlock (stmts: Stmt list) : Compiler<unit> =
         emitOpCode OP_CODE.BLOCK_START state
         |> Result.bind (fun ((), newState) -> compileStmts stmts newState)
         |> Result.bind (fun ((), newState) -> emitOpCode OP_CODE.BLOCK_END newState)
+        |> Result.map (fun ((), newState) -> ((), { newState with ScopeDepth = newState.ScopeDepth - 1 }))
+        
 
 and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
     fun state ->
