@@ -247,20 +247,20 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
 
         | ':' :: tail ->
-            Ok { Lexeme = Colon; Position = position }
+            Ok { Lexeme = Operator Colon; Position = position }
             :: scan
                 tail
                 { position with
                     Column = position.Column + 1 }
         | ',' :: tail ->
-            Ok { Lexeme = Comma; Position = position }
+            Ok { Lexeme = Operator Comma; Position = position }
             :: scan
                 tail
                 { position with
                     Column = position.Column + 1 }
         | ';' :: tail ->
             Ok
-                { Lexeme = Semicolon
+                { Lexeme = Operator Semicolon
                   Position = position }
             :: scan
                 tail
@@ -385,7 +385,7 @@ let lexer (input: string) : LexerResult<Token list> =
                 tail
                 { position with
                     Column = position.Column + 1 }
-
+        
         | '&' :: '&' :: tail ->
             Ok
                 { Lexeme = Operator AmpersandAmpersand
@@ -401,7 +401,23 @@ let lexer (input: string) : LexerResult<Token list> =
             :: scan
                 tail
                 { position with
-                    Column = position.Column + 2 }
+                     Column = position.Column + 2 }
+                
+        | '&' :: tail ->
+            Ok
+                { Lexeme = Operator Ampersand
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
+                
+        | '|' :: tail ->
+            Ok { Lexeme = Operator Pipe; Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 1 }
 
         | c :: tail when isWhitespace c ->
             match c with

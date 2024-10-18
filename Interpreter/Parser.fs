@@ -242,10 +242,6 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
           Infix = None
           Precedence = Precedence.None }
 
-    | _ ->
-        { Prefix = None
-          Infix = None
-          Precedence = Precedence.None }
 
 and expression (state: ParserState) (precedence: Precedence) : ParseResult<Expr> =
     let state = setLabel state "Expression"
@@ -316,7 +312,7 @@ and leftBrace (state: ParserState) : ParseResult<Expr> =
     | Some { Lexeme = Lexeme.Operator Operator.RightBrace } -> Ok(advance state, ERecord([], TRecord []))
     | Some { Lexeme = Identifier _ } ->
         match peek (advance state) with
-        | Some { Lexeme = Lexeme.Colon } -> record state
+        | Some { Lexeme = Operator Colon } -> record state
         | Some { Lexeme = Lexeme.Operator Operator.Equal } -> record state
         | Some { Lexeme = Lexeme.Keyword Keyword.With } -> recordUpdate state // TODO, not with identifier, just arb epxpr
         | _ -> block state
@@ -345,11 +341,12 @@ and recordFields (state: ParserState) (fields: (Token * Expr * TType) list) : Pa
                 expression state Precedence.Assignment
                 |> Result.bind (fun (state, value) ->
                     match peek state with
-                    | Some { Lexeme = Lexeme.Comma } -> recordFields (advance state) ((name, value, TInfer) :: fields)
+                    | Some { Lexeme = Operator Comma } ->
+                        recordFields (advance state) ((name, value, TInfer) :: fields)
                     | Some { Lexeme = Lexeme.Operator Operator.RightBrace } ->
                         Ok(advance state, List.rev ((name, value, TInfer) :: fields))
                     | _ -> Error(Expected "',' or '}' after record field.", state))
-            | Some(state, { Lexeme = Lexeme.Colon }) ->
+            | Some(state, { Lexeme = Operator Colon }) ->
                 typeHint state
                 |> Result.bind (fun (state, fieldType) ->
                     match nextToken state with
@@ -357,7 +354,7 @@ and recordFields (state: ParserState) (fields: (Token * Expr * TType) list) : Pa
                         expression state Precedence.Assignment
                         |> Result.bind (fun (state, value) ->
                             match peek state with
-                            | Some { Lexeme = Lexeme.Comma } ->
+                            | Some { Lexeme = Operator Comma } ->
                                 recordFields (advance state) ((name, value, fieldType) :: fields)
                             | Some { Lexeme = Lexeme.Operator Operator.RightBrace } ->
                                 Ok(advance state, List.rev ((name, value, fieldType) :: fields))
@@ -383,7 +380,7 @@ and commaSeparatedList (state: ParserState) : ParseResult<Expr list> =
         |> Result.bind (fun (state, expr) -> Ok(state, expr :: exprs))
         |> Result.bind (fun (state, exprs) ->
             match peek state with
-            | Some { Lexeme = Lexeme.Comma } ->
+            | Some { Lexeme = Operator Comma } ->
                 let state = advance state
                 loop state exprs
             | _ -> Ok(state, List.rev exprs))
@@ -459,9 +456,8 @@ and call (state: ParserState) (callee: Expr) : ParseResult<Expr> =
             expression state Precedence.None
             |> Result.bind (fun (state, arg) ->
                 match nextToken state with
-                | Some(state, { Lexeme = Lexeme.Comma }) -> loop state (arg :: args)
-                | Some(state, { Lexeme = Lexeme.Operator Operator.RightParen }) ->
-                    Ok(state, ECall(callee, arg :: args, TInfer))
+                | Some(state, { Lexeme = Operator Comma }) -> loop state (arg :: args)
+                | Some(state, { Lexeme = Operator RightParen }) -> Ok(state, ECall(callee, arg :: args, TInfer))
                 | _ -> Error(Expected "argument or ')' after call.", state))
 
     loop state []
@@ -471,21 +467,21 @@ and leftParen (state: ParserState) : ParseResult<Expr> =
     match peek state with
     | Some { Lexeme = Lexeme.Identifier _ } ->
         match peek (advance state) with
-        | Some { Lexeme = Lexeme.Comma } -> lambdaOrTuple state
-        | Some { Lexeme = Lexeme.Colon } -> lambda state
+        | Some { Lexeme = Operator Comma } -> lambdaOrTuple state
+        | Some { Lexeme = Operator Colon } -> lambda state
 
         | Some { Lexeme = Lexeme.Operator Operator.RightParen } ->
             match peek (advance (advance state)) with
-            | Some { Lexeme = Lexeme.Operator Operator.Arrow }
-            | Some { Lexeme = Lexeme.Colon }
-            | Some { Lexeme = Lexeme.Operator Operator.LeftBrace } -> lambda state
+            | Some { Lexeme = Operator Arrow }
+            | Some { Lexeme = Operator Colon }
+            | Some { Lexeme = Operator LeftBrace } -> lambda state
             | _ -> grouping state
         | _ -> grouping state
     | Some { Lexeme = Lexeme.Operator Operator.RightParen } ->
         match peek (advance state) with
-        | Some { Lexeme = Lexeme.Operator Operator.Arrow }
-        | Some { Lexeme = Lexeme.Colon }
-        | Some { Lexeme = Lexeme.Operator Operator.LeftBrace } -> lambda state
+        | Some { Lexeme = Operator Arrow }
+        | Some { Lexeme = Operator Colon }
+        | Some { Lexeme = Operator LeftBrace } -> lambda state
         | _ -> Ok(advance state, ELiteral(LUnit, TUnit))
     | _ -> groupingOrTuple state
 
@@ -493,23 +489,22 @@ and parseTuple (state: ParserState) (items: Expr list) : Expr ParseResult =
     expression state Precedence.None
     |> Result.bind (fun (state, expr) ->
         match peek state with
-        | Some { Lexeme = Lexeme.Comma } -> parseTuple (advance state) (expr :: items)
-        | Some { Lexeme = Lexeme.Operator Operator.RightParen } ->
-            Ok(advance state, ETuple(List.rev (expr :: items), TInfer))
+        | Some { Lexeme = Operator Comma } -> parseTuple (advance state) (expr :: items)
+        | Some { Lexeme = Operator RightParen } -> Ok(advance state, ETuple(List.rev (expr :: items), TInfer))
         | _ -> Error(Expected "',' or ')'.", state))
 
 and lambdaOrTuple (state: ParserState) : Expr ParseResult =
     match peek (advance state) with
-    | Some { Lexeme = Lexeme.Operator Operator.RightParen } -> Ok(advance (advance state), ELiteral(LUnit, TUnit))
-    | Some { Lexeme = Lexeme.Comma } ->
+    | Some { Lexeme = Operator RightParen } -> Ok(advance (advance state), ELiteral(LUnit, TUnit))
+    | Some { Lexeme = Operator Comma } ->
         let tuple = parseTuple state []
 
         match tuple with
         | Ok(newState, expr) ->
             match peek newState with
-            | Some { Lexeme = Lexeme.Operator Operator.Arrow } -> lambda state
-            | Some { Lexeme = Lexeme.Colon } -> lambda state
-            | Some { Lexeme = Lexeme.Operator Operator.LeftBrace } -> lambda state
+            | Some { Lexeme = Operator Arrow } -> lambda state
+            | Some { Lexeme = Operator Colon } -> lambda state
+            | Some { Lexeme = Operator LeftBrace } -> lambda state
             | _ -> Ok(newState, expr)
         | _ -> lambda state
     | _ -> lambda state
@@ -518,8 +513,8 @@ and groupingOrTuple (state: ParserState) : ParseResult<Expr> =
     expression state Precedence.None
     |> Result.bind (fun (state, expr) ->
         match peek state with
-        | Some { Lexeme = Lexeme.Comma } -> parseTuple (advance state) [ expr ]
-        | Some { Lexeme = Lexeme.Operator Operator.RightParen } -> Ok(advance state, expr)
+        | Some { Lexeme = Operator Comma } -> parseTuple (advance state) [ expr ]
+        | Some { Lexeme = Operator RightParen } -> Ok(advance state, expr)
         | _ -> Error(Expected "',' or ')'.", state))
 
 // and this
@@ -528,11 +523,11 @@ and lambda (state: ParserState) : ParseResult<Expr> =
 
     let rec parseParameters (state: ParserState) (params': (Token * TType) list) : ParseResult<(Token * TType) list> =
         match nextToken state with
-        | Some(state, { Lexeme = Lexeme.Operator Operator.RightParen }) -> Ok(state, List.rev params')
-        | Some(state, ({ Lexeme = Lexeme.Identifier _ } as token)) ->
+        | Some(state, { Lexeme = Operator RightParen }) -> Ok(state, List.rev params')
+        | Some(state, ({ Lexeme = Identifier _ } as token)) ->
             let paramType, state =
                 match peek state with
-                | Some { Lexeme = Lexeme.Colon } ->
+                | Some { Lexeme = Operator Colon } ->
                     let state = advance state
 
                     match typeHint state with
@@ -541,22 +536,21 @@ and lambda (state: ParserState) : ParseResult<Expr> =
                 | _ -> TInfer, state
 
             match peek state with
-            | Some { Lexeme = Lexeme.Operator Operator.RightParen } ->
-                Ok(advance state, List.rev ((token, paramType) :: params'))
-            | Some { Lexeme = Lexeme.Comma } -> parseParameters (advance state) ((token, paramType) :: params')
+            | Some { Lexeme = Operator RightParen } -> Ok(advance state, List.rev ((token, paramType) :: params'))
+            | Some { Lexeme = Operator Comma } -> parseParameters (advance state) ((token, paramType) :: params')
             | _ -> Error(Expected "',' or ')'.", state)
         | _ -> Error(Expected "parameter name.", state)
 
     let parseBody (state: ParserState) : ParseResult<Expr> =
         match nextToken state with
-        | Some(state, { Lexeme = Lexeme.Operator Operator.LeftBrace }) -> block state
-        | Some(state, { Lexeme = Lexeme.Operator Operator.Arrow }) -> expression state Precedence.Assignment
+        | Some(state, { Lexeme = Operator LeftBrace }) -> block state
+        | Some(state, { Lexeme = Operator Arrow }) -> expression state Precedence.Assignment
         | _ -> Error(Expected "function body.", state)
 
     parseParameters state []
     |> Result.bind (fun (state, params') ->
         match nextToken state with
-        | Some(state, { Lexeme = Lexeme.Colon }) ->
+        | Some(state, { Lexeme = Operator Colon }) ->
             typeHint state
             |> Result.bind (fun (state, returnType) ->
                 parseBody state
@@ -577,19 +571,18 @@ and funcType (state: ParserState) : ParseResult<TType> =
 
     let rec parseParams (state: ParserState) (paramList: TType list) : ParseResult<TType list> =
         match peek state with
-        | Some { Lexeme = Lexeme.Operator Operator.RightParen } -> Ok(advance state, List.rev paramList)
+        | Some { Lexeme = Operator RightParen } -> Ok(advance state, List.rev paramList)
         | _ ->
             typeHint state
             |> Result.bind (fun (state, param) ->
                 match peek state with
-                | Some { Lexeme = Lexeme.Comma } -> parseParams (advance state) (param :: paramList)
-                | Some { Lexeme = Lexeme.Operator Operator.RightParen } ->
-                    Ok(advance state, List.rev (param :: paramList))
+                | Some { Lexeme = Operator Comma } -> parseParams (advance state) (param :: paramList)
+                | Some { Lexeme = Operator RightParen } -> Ok(advance state, List.rev (param :: paramList))
                 | _ -> Error(Expected "',' or ')'.", state))
 
     parseParams state []
     |> Result.bind (fun (state, paramList) ->
-        expect state Lexeme.Colon
+        expect state (Operator Colon)
         |> Result.bind (fun state ->
             typeHint state
             |> Result.bind (fun (state, returnType) -> Ok(state, TFunction(paramList, returnType)))))
@@ -620,7 +613,31 @@ and typeHint (state: ParserState) : ParseResult<TType> =
         | _ -> Error(ExpectedType typeName, state)
     | Some(state, { Lexeme = Lexeme.Operator Operator.LeftParen }) -> funcType state
     | Some(state, { Lexeme = Lexeme.Operator Operator.LeftBracket }) -> tensorType state
+    | Some(state, { Lexeme = Lexeme.Operator Operator.LeftBrace }) -> recordType state
     | _ -> Error(ExpectedType "type name", state)
+
+and recordType (state: ParserState) : ParseResult<TType> =
+    let state = setLabel state "RecordType"
+    // let x: { a: int, b: float } = { a = 1, b = 2.0 }
+
+    let rec parseFields (state: ParserState) (fields: (Token * TType) list) : (Token * TType) list ParseResult =
+        match nextToken state with
+        | Some(state, { Lexeme = Lexeme.Operator Operator.RightBrace }) -> Ok(state, fields)
+        | Some(state, ({ Lexeme = Lexeme.Identifier _ } as fieldName)) ->
+            expect state (Operator Colon)
+            |> Result.bind (fun state ->
+                typeHint state
+                |> Result.bind (fun (state, fieldType) ->
+                    match nextToken state with
+                    | Some(state, { Lexeme = Operator Comma }) -> parseFields state ((fieldName, fieldType) :: fields)
+                    | Some(state, { Lexeme = Operator RightBrace }) -> Ok(state, ((fieldName, fieldType) :: fields))
+                    | _ -> Error(Expected "',' or '}' after record field.", state)))
+        | _ -> Error(Expected "field name", state)
+
+    parseFields state []
+    |> Result.bind (fun (state, fields) -> Ok(state, TRecord(List.rev fields)))
+
+
 
 and block (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Block"
@@ -636,17 +653,17 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Variable"
 
     match nextToken state with
-    | Some(state, ({ Lexeme = Lexeme.Identifier _ } as name)) ->
+    | Some(state, ({ Lexeme = Identifier _ } as name)) ->
         let typeResult =
             match peek state with
-            | Some { Lexeme = Lexeme.Colon } ->
+            | Some { Lexeme = Operator Colon } ->
                 let state = advance state
                 typeHint state
             | _ -> Ok(state, TInfer)
 
         typeResult
         |> Result.bind (fun (state, varType) ->
-            expect state (Lexeme.Operator Operator.Equal)
+            expect state (Operator Equal)
             |> Result.bind (fun state ->
                 expression state Precedence.Assignment
                 |> Result.bind (fun (state, expr) -> Ok(state, SVariableDeclaration(name, expr, varType)))))
@@ -664,7 +681,7 @@ and assertStatement (state: ParserState) : ParseResult<Stmt> =
     expression state Precedence.Assignment
     |> Result.bind (fun (state, expr) ->
         match peek state with
-        | Some { Lexeme = Lexeme.Comma } ->
+        | Some { Lexeme = Operator Comma } ->
             expression (advance state) Precedence.Assignment
             |> Result.bind (fun (state, message) -> Ok(state, SAssertStatement(expr, Some message, TUnit)))
         | _ -> Ok(state, SAssertStatement(expr, None, TUnit)))
@@ -675,7 +692,7 @@ and statement (state: ParserState) : ParseResult<Stmt> =
     match peek state with
     | Some token ->
         match token.Lexeme with
-        | Lexeme.Keyword kw ->
+        | Keyword kw ->
             match kw with
             | Keyword.Let -> varDecl (advance state)
             | Keyword.Print -> printStatement (advance state)

@@ -11,6 +11,9 @@ open Vec3.Interpreter.Repl
 open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Compiler
+open Vec3.Interpreter.Parser
+open Vec3.Interpreter.PrettyPrinter
+
 
 type MainWindow () as this =
     inherit Window ()
@@ -113,6 +116,12 @@ if x > 0 then
 
     member private this.ExecuteCode() =
         let code = this.GetEditorText()
+        // let parsed = parse code
+        // (match parsed with
+        // | Ok(_, program) ->
+        //     let formatted = printProgram program
+        //     this.SetEditorText(formatted)
+        // | Error (msg, _) -> ())
         match replState.VM with
         | Some vm ->
             match debugVM with

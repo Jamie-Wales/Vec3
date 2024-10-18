@@ -154,7 +154,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
                 compileExpr expr state
                 |> Result.bind (fun ((), state) -> compileFields newFields state))
             
-        | EBlock(stmts, _) -> compileBlock stmts state
+        | EBlock(stmts, _) -> compileBlock stmts state // scope is fucked up think its global
             
         // below not working
         | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state

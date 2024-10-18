@@ -326,21 +326,22 @@ let rec unify (t1: TType) (t2: TType) : Substitution TypeResult =
                 | Error errors1, Error errors2 -> Error(errors1 @ errors2))
             (Ok Map.empty)
             results
-
     | TRecord fields1, TRecord fields2 ->
-        let fields1, fields2 =
-            if List.length fields1 > List.length fields2 then
-                fields2, fields1
-            else
-                fields1, fields2
+        
+        let unifyField (name, typ) fields =
+            match List.tryFind (fun (name2, _) -> name.Lexeme = name2.Lexeme) fields with
+            | Some(_, typ2) -> unify typ typ2
+            | None -> Error [ TypeError.TypeMismatch(Empty, TRecord fields1, TRecord fields2) ]
 
-        let results =
-            List.map
-                (fun (name1, typ1) ->
-                    match List.tryFind (fun (name2, _) -> name1.Lexeme = name2.Lexeme) fields2 with
-                    | Some(_, typ2) -> unify typ1 typ2
-                    | None -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ])
-                fields1
+        let results1 = 
+            fields1
+            |> List.map (fun (name, typ) -> unifyField (name, typ) fields2)
+
+        let results2 =
+            fields2
+            |> List.map (fun (name, typ) -> unifyField (name, typ) fields1)
+
+        let results = results1 @ results2
 
         List.fold
             (fun acc result ->
@@ -351,7 +352,32 @@ let rec unify (t1: TType) (t2: TType) : Substitution TypeResult =
                 | Error errors1, Error errors2 -> Error(errors1 @ errors2))
             (Ok Map.empty)
             results
-
+    //
+    //
+    // | TRecord fields1, TRecord fields2 ->
+    //     let fields1, fields2 =
+    //         if List.length fields1 > List.length fields2 then
+    //             fields2, fields1
+    //         else
+    //             fields1, fields2
+    //
+    //     let results =
+    //         List.map
+    //             (fun (name1, typ1) ->
+    //                 match List.tryFind (fun (name2, _) -> name1.Lexeme = name2.Lexeme) fields2 with
+    //                 | Some(_, typ2) -> unify typ1 typ2
+    //                 | None -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ])
+    //             fields1
+    //
+    //     List.fold
+    //         (fun acc result ->
+    //             match acc, result with
+    //             | Ok sub1, Ok sub2 -> Ok(combineMaps sub1 sub2)
+    //             | Error errors, Ok _ -> Error errors
+    //             | Ok _, Error errors -> Error errors
+    //             | Error errors1, Error errors2 -> Error(errors1 @ errors2))
+    //         (Ok Map.empty)
+    //         results
 
     | TTensor(typ1, sizes1), TTensor(typ2, sizes2) ->
         match sizes1, sizes2 with
@@ -838,7 +864,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
         | _ -> Error [ TypeError.InvalidIndex(expr, TInfer) ]
 
     // lot of this doesnt work,
-    | ERecord(fields, typ) ->
+    | ERecord(fields, _) ->
         let fieldResults = List.map (fun (_, expr, _) -> infer env expr) fields
 
         let hasErrors = List.exists Result.isError fieldResults
@@ -863,7 +889,6 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
 
             let types = List.map (fun (t, _, _) -> t) fieldResults
             let subs = List.map (fun (_, sub, _) -> sub) fieldResults
-            let exprs = List.map (fun (_, _, expr) -> expr) fieldResults
 
             let fieldTypes =
                 List.map
@@ -908,13 +933,17 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
 
                 Ok(returnType, combinedSubs, expr)
 
-    // fails on type var, need structural types i think ish
-    | ERecordSelect(expr, field, typ) ->
+    // fails on the following:
+    // let x = (x) -> x.a + 4
+    // let y = { a = 4.0 }
+    // x(y), doesnt infer that a must be an int, so fials on +
+    // annoying error stupid hard to fix
+    | ERecordSelect(expr, field, _) ->
         let exprResult = infer env expr
 
         match exprResult with
         | Ok(TRecord fields, sub, expr) ->
-            let fieldType = List.tryFind (fun (name, typ) -> name.Lexeme = field.Lexeme) fields
+            let fieldType = List.tryFind (fun (name, _) -> name.Lexeme = field.Lexeme) fields
 
             match fieldType with
             | Some(_, typ) -> Ok(typ, sub, ERecordSelect(expr, field, typ))
@@ -926,7 +955,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
         | Ok(t, _, _) -> Error [ TypeError.InvalidField(field, t) ]
 
         | Error errors -> Error errors
-    | ERecordUpdate(expr, fields, typ) ->
+    | ERecordUpdate(expr, fields, _) ->
         let exprResult = infer env expr
         let fieldResults = List.map (fun (_, expr, _) -> infer env expr) fields
 
@@ -954,7 +983,6 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
 
                 let types = List.map (fun (t, _, _) -> t) fieldResults
                 let subs = List.map (fun (_, sub, _) -> sub) fieldResults
-                let exprs = List.map (fun (_, _, expr) -> expr) fieldResults
 
                 let fieldTypes =
                     List.map
@@ -986,7 +1014,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
                             | _ -> None)
                             subResults
 
-                    let combinedSubs = List.fold combineMaps Map.empty subResults
+                    let combinedSubs = List.fold combineMaps sub subResults
                     let combinedSubs = List.fold combineMaps combinedSubs subs
 
                     let returnType =

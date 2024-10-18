@@ -16,6 +16,9 @@ type Operator =
     | Caret
     | Hash
     
+    | Ampersand
+    | Pipe
+    
     | AmpersandAmpersand
     | PipePipe
     
@@ -40,6 +43,10 @@ type Operator =
     
     | Cross
     | DotStar
+    
+    | Comma
+    | Semicolon
+    | Colon
     
 type Keyword =
     | Let
@@ -88,9 +95,6 @@ type Lexeme =
     | Operator of Operator
     | Identifier of string
     
-    | Comma
-    | Semicolon
-    | Colon
 
 type Position = { Line: int; Column: int; }
 type Token = { Lexeme: Lexeme; Position: Position; }
@@ -131,11 +135,34 @@ let operatorToString (op: Operator): string =
     | Dot -> "."
     | DotDot -> ".."
     | Percent -> "%"
-    | AmpersandAmpersand -> "and"
-    | PipePipe -> "or"
+    | AmpersandAmpersand -> "&&"
+    | PipePipe -> "||"
     | Caret -> "^"
     | Cross -> "X"
     | DotStar -> ".*"
+    | Comma -> ","
+    | Semicolon -> ";"
+    | Colon -> ":"
+    | Ampersand -> "&"
+    | Pipe -> "|"
+
+let keywordToString (kw: Keyword): string =
+    match kw with
+    | Let -> "let"
+    | If -> "if"
+    | Then -> "then"
+    | Else -> "else"
+    | For -> "for"
+    | True -> "true"
+    | False -> "false"
+    | Nil -> "nil"
+    | Print -> "print"
+    | In -> "in"
+    | And -> "and"
+    | Or -> "or"
+    | Assert -> "assert"
+    | With -> "with"
+
 
 let lexemeToString (lex: Lexeme): string =
     match lex with
@@ -144,9 +171,6 @@ let lexemeToString (lex: Lexeme): string =
     | Keyword k -> $"Keyword({k})"
     | Operator op -> $"Operator(%s{operatorToString op})"
     | Identifier i -> $"Identifier(%s{i})"
-    | Comma -> ","
-    | Semicolon -> ";"
-    | Colon -> ":"
 
 let tokenToString (token: Token): string =
     $"{{ lexeme: %s{lexemeToString token.Lexeme}; line: %d{token.Position.Line} }}"
