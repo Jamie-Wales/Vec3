@@ -42,17 +42,14 @@ let evalRepl =
             let typeCheck = inferProgram typeEnv program
             match typeCheck with
             | Ok (typeEnv, _, program) ->
-                // print env and program
-                // Map.iter (fun k v -> printfn $"{k} -> {exprToString v}") env
-                // printfn $"{program}"
                 let program = foldConstants program
                 let value, env = evalProgram env program
                 printfn $"{exprToString value}"
                 repl' env typeEnv
-            | Error errors ->
+            | Error errors -> 
                 printfn $"{formatTypeErrors errors}"
                 repl' env typeEnv
-        | Error (e, s) -> 
+        | Error (e, s) ->  
             printfn $"{formatParserError e s}"
             repl' env typeEnv
                 
