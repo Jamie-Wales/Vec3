@@ -395,7 +395,7 @@ let rec run (vm: VM) =
                         | VNumber(VInteger n) when n >= 0 ->
                             let values = 
                                 [0..n - 1]
-                                |> List.map (fun _ -> let value, vm = pop vm in value)
+                                |> List.map (fun _ -> let value, _ = pop vm in value)
                                 |> List.rev
                             let tuple = Tuple values
                             let vm = push vm tuple
@@ -442,18 +442,14 @@ let rec run (vm: VM) =
                         let vm = { vm with ScopeDepth = vm.ScopeDepth + 1 }
                         vm
                     | BLOCK_END ->
-                        let vm = { vm with ScopeDepth = vm.ScopeDepth - 1 }
-                        vm
-                    | BLOCK_RETURN ->
                         let result, vm = pop vm
-                        printfn $"Block return: {result}"
                         
-                        let frame = getCurrentFrame vm
-                        let frame = { frame with IP = frame.Function.Chunk.Code.Count }
-                        vm.Frames[vm.Frames.Count - 1] <- frame
+                        let vm = { vm with ScopeDepth = vm.ScopeDepth - 1 }
+                        
                         let vm = push vm result
                         vm
-                    
+                    | BLOCK_RETURN ->
+                        vm
                     | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
                 runLoop vm  
     runLoop vm
