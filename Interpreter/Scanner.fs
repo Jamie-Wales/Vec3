@@ -92,6 +92,38 @@ let lexer (input: string) : LexerResult<Token list> =
     let rec scan (input: char list) (position: Position) : LexerResult<Token> list =
         match input with
         | [] -> []
+        | '/' :: '/' :: tail ->
+            let rec discardComment (input: char list) (column: int) : char list * int =
+                match input with
+                | '\n' :: tail -> tail, column
+                | _ :: tail -> discardComment tail (column + 1)
+                | [] -> [], column
+            
+            let tail, len = discardComment tail position.Column
+            
+            scan
+                tail
+                { position with
+                    Column = len }
+        
+        | '/' :: '*' :: tail ->
+            let rec discardBlockComment (input: char list) (column: int) (line: int) : char list * int * int =
+                match input with
+                | '*' :: '/' :: tail -> tail, column + 2, line
+                | '\n' :: tail -> discardBlockComment tail 0 (line + 1)
+                | _ :: tail -> discardBlockComment tail (column + 1) line
+                | [] -> [], column, line
+                
+            let tail, column, line = discardBlockComment tail position.Column position.Line
+            
+            if List.isEmpty tail then
+                [ Error(UnterminatedBlockComment position) ]
+            else
+                scan
+                    tail
+                    { position with
+                        Column = column
+                        Line = line }
         | '-' :: '>' :: tail ->
             Ok
                 { Lexeme = Operator Arrow
