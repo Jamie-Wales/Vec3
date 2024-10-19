@@ -47,6 +47,7 @@ type Operator =
     | Comma
     | Semicolon
     | Colon
+    | ColonColon
     
 type Keyword =
     | Let
@@ -145,6 +146,7 @@ let operatorToString (op: Operator): string =
     | Colon -> ":"
     | Ampersand -> "&"
     | Pipe -> "|"
+    | ColonColon -> "::"
 
 let keywordToString (kw: Keyword): string =
     match kw with
@@ -183,6 +185,10 @@ type BuiltInFunction =
     | Sin
     | Tan
     | Env
+    | Sqrt
+    | Abs
+    | Floor
+    | Fold
 
 
 let builtInFunctionMap =
@@ -192,7 +198,12 @@ let builtInFunctionMap =
       Identifier "cos", BuiltInFunction.Cos
       Identifier "sin", BuiltInFunction.Sin
       Identifier "tan", BuiltInFunction.Tan 
-      Identifier "env", BuiltInFunction.Env ]
+      Identifier "env", BuiltInFunction.Env
+      Identifier "sqrt", BuiltInFunction.Sqrt
+      Identifier "abs", BuiltInFunction.Abs
+      Identifier "floor", BuiltInFunction.Floor
+      Identifier "fold", BuiltInFunction.Fold
+      ]
     |> Map.ofList
     
 let isBuiltInFunction (s: Lexeme): bool =

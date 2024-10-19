@@ -245,6 +245,15 @@ let lexer (input: string) : LexerResult<Token list> =
                 tail
                 { position with
                     Column = position.Column + 1 }
+        
+        | ':' :: ':' :: tail ->
+            Ok
+                { Lexeme = Operator ColonColon
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 2 }
 
         | ':' :: tail ->
             Ok { Lexeme = Operator Colon; Position = position }

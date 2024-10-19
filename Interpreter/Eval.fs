@@ -179,6 +179,14 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
     match expr with
     // extensible rows
     | ERecordEmpty typ -> ERecordEmpty typ
+    
+    | ERecordRestrict(record, name, typ) ->
+        let record = evalExpr env record
+
+        match record with
+        | ERecordExtend((name', value, _), record, _) when name.Lexeme = name'.Lexeme -> record
+        | ERecordExtend((_, _, _), record, _) -> evalExpr env (ERecordRestrict(record, name, typ))
+        | _ -> failwith "invalid"
 
     | ERecordExtend((name, value, typ), record, typ2) ->
         let value = evalExpr env value
@@ -258,6 +266,46 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
                     match args with
                     | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(Math.Tan(double x))), TFloat)
                     | _ -> failwith "invalid"
+                | "sqrt" ->
+                    let args = List.map (evalExpr env) args
+
+                    match args with
+                    | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(Math.Sqrt(double x))), TFloat)
+                    | _ -> failwith "invalid"
+                | "abs" ->
+                    let args = List.map (evalExpr env) args
+                    
+                    match args with
+                    | [ ELiteral(LNumber(LInteger x), TInteger) ] -> ELiteral(LNumber(LInteger(Math.Abs(x))), TInteger)
+                    | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(Math.Abs(x))), TFloat)
+                    | _ -> failwith "invalid"
+                | "floor" ->
+                    let args = List.map (evalExpr env) args
+                    
+                    match args with
+                    | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(Math.Floor(x))), TFloat)
+                    | _ -> failwith "invalid"
+                    
+                | "fold" ->
+                    let args = List.map (evalExpr env) args
+                    
+                    match args with
+                    | [ EList(exprs', _); init; ELambda([listParam; accParam], body, _); ] ->
+                        let rec fold (env: Env) (exprs: Expr list) (acc: Expr) =
+                            match exprs with
+                            | [] -> acc
+                            | e :: es ->
+                                let env' = Map.add listParam.Lexeme e env
+                                let env' = Map.add accParam.Lexeme acc env'
+                                let acc = evalExpr env' body
+                                fold env' es acc
+                                
+                        fold env exprs' init
+                    | _ -> failwith "invalid"
+                | "exit" ->
+                    Environment.Exit(0)
+                    ELiteral(LUnit, TUnit)
+                    
                 | _ -> failwith $"function {name} not found"
             | _ -> failwith $"function {name} not found"
         | _ -> failwith "invalid"
@@ -272,7 +320,13 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
             | Identifier "cos"
             | Identifier "sin"
             | Identifier "tan"
-            | Identifier "env" -> EIdentifier(name, typ)
+            | Identifier "env"
+            | Identifier "exit"
+            | Identifier "sqrt"
+            | Identifier "abs"
+            | Identifier "floor"
+            | Identifier "fold" ->
+                EIdentifier(name, typ)
             | _ -> failwith $"variable {name} not found"
     | EBinary(lhs, op, rhs, typ) ->
         let lhs = evalExpr env lhs
@@ -338,6 +392,8 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
             match res with
             | Ok res -> res
             | Error s -> failwith s
+        | { Lexeme = Operator ColonColon }, lhs, EList(elems, typ) ->
+            EList(lhs :: elems, typ)
         | _ -> failwith "invalid"
     | EUnary(op, expr, typ) ->
         let value = evalExpr env expr

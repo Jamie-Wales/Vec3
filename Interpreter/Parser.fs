@@ -187,6 +187,10 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
             { Prefix = None
               Infix = Some binary
               Precedence = Precedence.Or }
+        | Operator.ColonColon ->
+            { Prefix = None
+              Infix = Some binary
+              Precedence = Precedence.Assignment }
 
         | _ ->
             { Prefix = None
@@ -367,13 +371,12 @@ and recordFields (state: ParserState) (fields: (Token * Expr * TType) list) : Pa
 
 and record (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Record"
-    
+
     let rowsToExpr (rows: (Token * Expr * TType) list) : Expr =
         let rec loop (rows: (Token * Expr * TType) list) (record: Expr) : Expr =
             match rows with
             | [] -> record
-            | (name, value, typ) :: rest ->
-                loop rest (ERecordExtend((name, value, typ), record, TInfer))
+            | (name, value, typ) :: rest -> loop rest (ERecordExtend((name, value, typ), record, TInfer))
 
         loop rows (ERecordEmpty(TRowEmpty))
 
@@ -466,7 +469,8 @@ and call (state: ParserState) (callee: Expr) : ParseResult<Expr> =
             |> Result.bind (fun (state, arg) ->
                 match nextToken state with
                 | Some(state, { Lexeme = Operator Comma }) -> loop state (arg :: args)
-                | Some(state, { Lexeme = Operator RightParen }) -> Ok(state, ECall(callee, arg :: args, TInfer))
+                | Some(state, { Lexeme = Operator RightParen }) ->
+                    Ok(state, ECall(callee, List.rev (arg :: args), TInfer))
                 | _ -> Error(Expected "argument or ')' after call.", state))
 
     loop state []
@@ -545,7 +549,7 @@ and lambda (state: ParserState) : ParseResult<Expr> =
                 | _ -> TInfer, state
 
             match peek state with
-            | Some { Lexeme = Operator RightParen } -> Ok(advance state, List.rev ((token, paramType) :: params'))
+            | Some { Lexeme = Operator RightParen } -> Ok(advance state, (List.rev ((token, paramType) :: params')))
             | Some { Lexeme = Operator Comma } -> parseParameters (advance state) ((token, paramType) :: params')
             | _ -> Error(Expected "',' or ')'.", state)
         | _ -> Error(Expected "parameter name.", state)
@@ -564,15 +568,15 @@ and lambda (state: ParserState) : ParseResult<Expr> =
             |> Result.bind (fun (state, returnType) ->
                 parseBody state
                 |> Result.bind (fun (state, body) ->
-                    let paramTypes = List.rev <| List.map snd params'
-                    let paramNames = List.rev <| List.map fst params'
+                    let paramTypes = List.map snd params'
+                    let paramNames = List.map fst params'
                     Ok(state, ELambda(paramNames, body, TFunction(paramTypes, returnType)))))
 
         | _ ->
             parseBody state
             |> Result.bind (fun (state, body) ->
-                let paramTypes = List.rev <| List.map snd params'
-                let paramNames = List.rev <| List.map fst params'
+                let paramTypes = List.map snd params'
+                let paramNames = List.map fst params'
                 Ok(state, ELambda(paramNames, body, TFunction(paramTypes, TInfer)))))
 
 and funcType (state: ParserState) : ParseResult<TType> =
@@ -580,13 +584,13 @@ and funcType (state: ParserState) : ParseResult<TType> =
 
     let rec parseParams (state: ParserState) (paramList: TType list) : ParseResult<TType list> =
         match peek state with
-        | Some { Lexeme = Operator RightParen } -> Ok(advance state, List.rev paramList)
+        | Some { Lexeme = Operator RightParen } -> Ok(advance state, paramList)
         | _ ->
             typeHint state
             |> Result.bind (fun (state, param) ->
                 match peek state with
                 | Some { Lexeme = Operator Comma } -> parseParams (advance state) (param :: paramList)
-                | Some { Lexeme = Operator RightParen } -> Ok(advance state, List.rev (param :: paramList))
+                | Some { Lexeme = Operator RightParen } -> Ok(advance state, (param :: paramList))
                 | _ -> Error(Expected "',' or ')'.", state))
 
     parseParams state []
@@ -642,17 +646,15 @@ and recordType (state: ParserState) : ParseResult<TType> =
                     | Some(state, { Lexeme = Operator RightBrace }) -> Ok(state, ((fieldName, fieldType) :: fields))
                     | _ -> Error(Expected "',' or '}' after record field.", state)))
         | _ -> Error(Expected "field name", state)
-    
+
     let rec fieldsToType (fields: (Token * TType) list) : TType =
         match fields with
         | [] -> TRowEmpty
         | (name, fieldType) :: rest -> TRowExtend(name, fieldType, fieldsToType rest)
 
     parseFields state []
-    |> Result.bind (fun (state, fields) ->
-        Ok(state, TRecord(fieldsToType fields))
-     )
-        
+    |> Result.bind (fun (state, fields) -> Ok(state, TRecord(fieldsToType fields)))
+
 
 
 

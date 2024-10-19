@@ -22,12 +22,6 @@ let defaultTypeEnv: TypeEnv =
 let combineMaps map1 map2 =
     Map.fold (fun acc key value -> Map.add key value acc) map2 map1
 
-let freshTypeVar =
-    let counter = ref 0
-
-    fun () ->
-        counter.Value <- counter.Value + 1
-        counter.Value
 
 let rec occursCheck (tv: TypeVar) (t: TType) : bool =
     match t with
@@ -143,6 +137,7 @@ let getOpTypeBinary (op: Lexeme) (t1: TType) (t2: TType) : TType =
             | _ -> TFunction([ standardConstrain; standardConstrain ], TBool)
         | Operator.AmpersandAmpersand
         | Operator.PipePipe -> TFunction([ TBool; TBool ], TBool)
+        | Operator.ColonColon -> TFunction([ TTypeVariable typeVar; TTensor(TTypeVariable typeVar, DVar dimsVar) ], TTensor(TTypeVariable typeVar, DVar dimsVar))
         | _ -> TNever
     | Keyword kw ->
         match kw with
@@ -825,8 +820,11 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
                 let combinedSubs = List.fold combineMaps Map.empty subs
                 let combinedSubs = combineMaps combinedSubs sub'
 
+                
+                let head = if List.length types > 0 then List.head types else TTypeVariable (freshTypeVar())
+                
                 let returnType =
-                    TTensor(applySubstitution combinedSubs (List.head types), Dims [ List.length types ])
+                    TTensor(applySubstitution combinedSubs head, Dims [ List.length types ])
 
                 Ok(returnType, combinedSubs, EList(exprs, returnType))))
     | EIndex(expr, index, _) ->
@@ -878,7 +876,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
     // x(y), doesnt infer that a must be an int, so fials on +
     // annoying error stupid hard to fix
     | ERecordEmpty _ -> Ok(TRecord(TRowEmpty), Map.empty, ERecordEmpty(TRecord(TRowEmpty)))
-    | ERecordExtend((name, value, typ), record, typ1) ->
+    | ERecordExtend((name, value, _), record, _) ->
         let valueResult = infer env value
         let recordResult = infer env record
 
@@ -941,6 +939,41 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
             Ok(TTypeVariable typeVar, sub, ERecordSelect(expr, name, TTypeVariable typeVar))
         | Error errors -> Error errors
         | _ -> Error [ TypeError.NotEnoughInformation(name) ]
+    | ERecordRestrict(record, name, _) ->
+        let recordResult = infer env record
+
+        match recordResult with
+        | Ok(TRecord(row), sub, expr) ->
+            let row = applySubstitution sub row
+
+            let rec findType (row: TType) (name: Token) : TType =
+                match row with
+                | TRowEmpty -> TNever
+                | TRowExtend(label, typ, _) when label.Lexeme = name.Lexeme -> typ
+                | TRowExtend(_, _, rest) -> findType rest name
+                | _ -> TNever
+
+            let typ = findType row name
+
+            if typ = TNever then
+                Error [ TypeError.NotEnoughInformation(name) ]
+            else
+                let newType = TRecord(TRowExtend(name, typ, TRowEmpty))
+                Ok(newType, sub, ERecordRestrict(expr, name, newType))
+        | Ok(TTypeVariable n, sub, expr) ->
+            let typeVar = freshTypeVar ()
+
+            let sub =
+                Map.add n (TRecord(TRowExtend(name, TTypeVariable typeVar, TRowEmpty))) sub
+
+            Ok(
+                TRecord(TRowExtend(name, TTypeVariable typeVar, TRowEmpty)),
+                sub,
+                ERecordRestrict(expr, name, TRecord(TRowExtend(name, TTypeVariable typeVar, TRowEmpty)))
+            )
+        | Error errors -> Error errors
+        | _ -> Error [ TypeError.NotEnoughInformation(name) ]
+
 
 
 

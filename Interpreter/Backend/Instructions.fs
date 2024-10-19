@@ -31,16 +31,9 @@ type OP_CODE =
     | ASSERT
     | DOTPRODUCT
     | CROSSPRODUCT
-    | LIST_APPEND
-    | LIST_CREATE
-    | INDEX
-    | TUPLE_CREATE
     
-    | RECORD_EXTEND
-    | RECORD_EMPTY
-    | RECORD_RESTRICT
-    | RECORD_CREATE
-    | RECORD_GET
+    | COMPOUND_CREATE
+    | COMPOUND_GET
     
     | BLOCK_START
     | BLOCK_END
@@ -78,19 +71,13 @@ let opCodeToByte =
     | ASSERT -> 27uy
     | DOTPRODUCT -> 28uy
     | CROSSPRODUCT -> 29uy
-    | LIST_APPEND -> 30uy
-    | LIST_CREATE -> 31uy
-    | INDEX -> 32uy
-    | TUPLE_CREATE -> 33uy
-    | RECORD_CREATE -> 34uy
-    | RECORD_EXTEND -> 35uy
-    | RECORD_GET -> 36uy
-    | RECORD_RESTRICT -> 37uy
-    | RECORD_EMPTY -> 38uy
     
-    | BLOCK_START -> 39uy
-    | BLOCK_END -> 40uy
-    | BLOCK_RETURN -> 41uy
+    | COMPOUND_CREATE -> 30uy
+    | COMPOUND_GET -> 31uy
+    
+    | BLOCK_START -> 32uy
+    | BLOCK_END -> 33uy
+    | BLOCK_RETURN -> 34uy
     
 
 let byteToOpCode byte =
@@ -125,19 +112,11 @@ let byteToOpCode byte =
     | 27uy -> ASSERT
     | 28uy -> DOTPRODUCT
     | 29uy -> CROSSPRODUCT
-    | 30uy -> LIST_APPEND
-    | 31uy -> LIST_CREATE
-    | 32uy -> INDEX
-    | 33uy -> TUPLE_CREATE
-    | 34uy -> RECORD_CREATE
-    | 35uy -> RECORD_EXTEND
-    | 36uy -> RECORD_GET
-    | 37uy -> RECORD_RESTRICT
-    | 38uy -> RECORD_EMPTY
-    
-    | 39uy -> BLOCK_START
-    | 40uy -> BLOCK_END
-    | 41uy -> BLOCK_RETURN
+    | 30uy -> COMPOUND_CREATE
+    | 31uy -> COMPOUND_GET
+    | 32uy -> BLOCK_START
+    | 33uy -> BLOCK_END
+    | 34uy -> BLOCK_RETURN
     | _ -> failwith $"Unknown OP_CODE: {byte}"
 
 let opCodeToString =
@@ -172,15 +151,8 @@ let opCodeToString =
     | ASSERT -> "ASSERT"
     | DOTPRODUCT -> "DOTPRODUCT"
     | CROSSPRODUCT -> "CROSSPRODUCT"
-    | LIST_APPEND -> "LIST_APPEND"
-    | LIST_CREATE -> "LIST_CREATE"
-    | INDEX -> "INDEX"
-    | TUPLE_CREATE -> "TUPLE_CREATE"
-    | RECORD_CREATE -> "RECORD_CREATE"
-    | RECORD_EXTEND -> "RECORD_EXTEND"
-    | RECORD_GET -> "RECORD_GET"
-    | RECORD_RESTRICT -> "RECORD_RESTRICT"
-    | RECORD_EMPTY -> "RECORD_EMPTY"
+    | COMPOUND_CREATE -> "COMPOUND_CREATE"
+    | COMPOUND_GET -> "COMPOUND_GET"
     
     | BLOCK_START -> "BLOCK_START"
     | BLOCK_END -> "BLOCK_END"

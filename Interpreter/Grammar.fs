@@ -4,6 +4,13 @@ open Token
 
 type TypeVar = int
 
+let freshTypeVar =
+    let counter = ref 0
+
+    fun () ->
+        counter.Value <- counter.Value + 1
+        counter.Value
+
 type Type =
     | TInfer
     

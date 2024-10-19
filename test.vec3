@@ -33,3 +33,7 @@ let add2 = (a: int, b: int) {
 }
 
 // where { stmts } denotes a block 
+
+let a = map((i) -> i * i,  [1, 2, 3])
+
+
