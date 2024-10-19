@@ -4,6 +4,7 @@ open System
 open Vec3.Interpreter.Parser
 open Vec3.Interpreter.Backend.Compiler
 open Vec3.Interpreter.Backend.VM
+open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Typing.Inference
 open Vec3.Interpreter.Typing.Exceptions
 open Vec3.Interpreter.Eval
@@ -29,7 +30,6 @@ let rec exprToString  = function
     | ELiteral (lit, _) -> litToString lit
     | EList (exprs, _) -> $"""[{String.concat ", " (List.map exprToString exprs)}]"""
     | ETuple (exprs, _) -> $"""({String.concat ", " (List.map exprToString exprs)})"""
-    // | ERecord (fields, _) -> $"""{{ {String.concat ", " (List.map (fun (k, v, typ) -> $"{k.Lexeme}: {typ} = {exprToString v}") fields)} }}"""
     | _ -> "()"
 
 let evalRepl =

@@ -2,42 +2,15 @@ module Vec3.Interpreter.Backend.VM
 
 open System
 open System.Collections.Generic
+open Microsoft.FSharp.Collections
 open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
 
-type StreamType =
-    | ConstantPool
-    | Disassembly
-    | Execution
-    | StandardOutput
-    | Globals
 
-type OutputStreams = {
-    ConstantPool: seq<string>
-    Disassembly: seq<string>
-    Execution: seq<string>
-    StandardOutput: seq<string>
-    Globals: seq<string>
-}
-
-type CallFrame = {
-    Function: Function
-    IP: int
-    StackBase: int
-    Locals: Value array
-}
-
-type VM = {
-    Frames: ResizeArray<CallFrame>
-    Stack: ResizeArray<Value>
-    ScopeDepth: int
-    Globals: Map<String, Value>
-    Streams: OutputStreams
-    ExecutionHistory: ResizeArray<VM>  
-}
-
+                
+                
 let createOutputStreams() = {
     ConstantPool = Seq.empty
     Disassembly = Seq.empty
@@ -75,36 +48,6 @@ let readConstantLong (vm: VM) =
     let constant = frame.Function.Chunk.ConstantPool[index]
     (constant, vm)
 
-let createVM (mainFunc: Function) : VM =
-    let constantPool = 
-        mainFunc.Chunk.ConstantPool 
-        |> Seq.indexed 
-        |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
-    let disassembly = 
-        disassembleChunkToString mainFunc.Chunk mainFunc.Name
-        |> fun s -> s.Split(Environment.NewLine) |> Seq.ofArray
-    let vm = {
-        Frames = ResizeArray<CallFrame>()
-        Stack = ResizeArray<Value>(256)
-        ScopeDepth = 0
-        Globals = Map.empty
-        Streams = { 
-            ConstantPool = constantPool
-            Disassembly = disassembly
-            Execution = Seq.empty
-            StandardOutput = Seq.empty
-            Globals = Seq.empty 
-        }
-        ExecutionHistory = ResizeArray<VM>()
-    }
-    let mainFrame = {
-        Function = mainFunc
-        IP = 0
-        StackBase = 0
-        Locals = [||]
-    }
-    vm.Frames.Add(mainFrame)
-    vm
 
 let saveVMState (vm: VM) =
     vm.ExecutionHistory.Add(vm)
@@ -179,7 +122,116 @@ let callValue (vm: VM) (argCount: int) : VM =
         closure.UpValues
         |> Seq.iteri (fun i upValue -> frame.Locals[i] <- upValue)
         vm
+    | Value.Builtin func ->
+        let args = 
+            [0..argCount - 1]
+            |> List.map (fun _ -> let value, _ = pop vm in value)
+            |> List.rev
+        func args vm
     | _ -> failwith $"Can only call functions, got: {valueToString callee}"
+    
+    
+let builtins =
+    [
+        "Identifier(print)", Builtin(fun args vm ->
+            let vm = appendOutput vm StandardOutput $"""{String.concat " " (List.map valueToString args)}"""
+            push vm Nil);
+        "Identifier(sqrt)", Builtin(fun args vm ->
+            match args with
+            | [VNumber(VFloat f)] ->
+                let result = VNumber(VFloat(sqrt f))
+                push vm result
+            | _ -> failwith "sqrt expects a float");
+        "Identifier(abs)", Builtin(fun args vm ->
+            match args with
+            | [VNumber(VFloat f)] ->
+                push vm (VNumber(VFloat(abs f)))
+            | _ -> failwith "abs expects a float");
+        "Identifier(floor)", Builtin(fun args vm ->
+            match args with
+            | [VNumber(VFloat f)] ->
+                push vm (VNumber(VFloat(floor f)))
+            | _ -> failwith "floor expects a float");
+        "Identifier(cos)", Builtin(fun args vm ->
+            match args with
+            | [VNumber(VFloat f)] ->
+                push vm (VNumber(VFloat(cos f)))
+            | _ -> failwith "cos expects a float");
+        "Identifier(sin)", Builtin(fun args vm ->
+            match args with
+            | [VNumber(VFloat f)] ->
+                push vm (VNumber(VFloat(sin f)))
+            | _ -> failwith "sin expects a float");
+        "Identifier(tan)", Builtin(fun args vm ->
+            match args with
+            | [VNumber(VFloat f)] ->
+                push vm (VNumber(VFloat(tan f)))
+            | _ -> failwith "tan expects a float");
+        "Identifier(input)", Builtin(fun args vm ->
+            let input = Console.ReadLine()
+            push vm (String input));
+        "Identifier(exit)", Builtin(fun _ vm ->
+            Environment.Exit(0)
+            vm)
+        // works if predefined func, fails if lambda, i suspect lambda is not being compiled correctly
+        "Identifier(fold)", Builtin(fun args vm ->
+            match args with
+            | [List l; acc; Function _ as f] ->
+                let (result, vm) = 
+                    List.fold (fun (acc, vm) value ->
+                        let vm = push vm f
+                        let vm = push vm acc
+                        let vm = push vm value
+                        let result, vm = pop vm
+                        result, vm) (acc, vm) l
+                printfn $"Fold result: {valueToString result}"
+                push vm result
+            | _ -> failwith "fold expects a list, an initial value, and a function")
+        "Identifier(dotProduct)", Builtin(fun args vm ->
+            match args with
+            [List l1' as l1; List l2' as l2] when List.length l1' = List.length l2' ->
+                let result = dotProduct l1 l2
+                push vm result
+            | _ -> failwith "dotProduct expects two lists of the same length")
+        "Identifier(crossProduct)", Builtin(fun args vm ->
+            match args with
+            [List l1' as l1; List l2' as l2] when List.length l1' = 3 && List.length l2' = 3 ->
+                let result = crossProduct l1 l2
+                push vm result
+            | _ -> failwith "crossProduct expects two lists of length 3")
+        ] |> Map.ofList
+    
+    
+let createVM (mainFunc: Function) : VM =
+    let constantPool = 
+        mainFunc.Chunk.ConstantPool 
+        |> Seq.indexed 
+        |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
+    let disassembly = 
+        disassembleChunkToString mainFunc.Chunk mainFunc.Name
+        |> fun s -> s.Split(Environment.NewLine) |> Seq.ofArray
+    let vm = {
+        Frames = ResizeArray<CallFrame>()
+        Stack = ResizeArray<Value>(256)
+        ScopeDepth = 0
+        Globals = builtins
+        Streams = { 
+            ConstantPool = constantPool
+            Disassembly = disassembly
+            Execution = Seq.empty
+            StandardOutput = Seq.empty
+            Globals = Seq.empty 
+        }
+        ExecutionHistory = ResizeArray<VM>()
+    }
+    let mainFrame = {
+        Function = mainFunc
+        IP = 0
+        StackBase = 0
+        Locals = [||]
+    }
+    vm.Frames.Add(mainFrame)
+    vm
     
 let rec run (vm: VM) =
     let rec runLoop vm =
@@ -248,8 +300,6 @@ let rec run (vm: VM) =
                     | SUBTRACT -> binaryOp vm subtract
                     | MULTIPLY -> binaryOp vm multiply
                     | DIVIDE -> binaryOp vm divide
-                    | DOTPRODUCT -> binaryOp vm dotProduct
-                    | CROSSPRODUCT -> binaryOp vm crossProduct
                     | NEGATE ->
                         let value, vm = pop vm
                         push vm (negate value)
@@ -296,6 +346,7 @@ let rec run (vm: VM) =
                         | Value.String name ->
                             match getGlobal vm name with
                             | Some value ->
+                                printfn $"GET_GLOBAL: {name} = {valueToString value}"
                                 push vm value
                             | None ->
                                 failwith $"Undefined variable '{name}'"
@@ -371,16 +422,6 @@ let rec run (vm: VM) =
                     | COMPOUND_CREATE ->
                         let structure, vm = pop vm
                         let count, vm = pop vm
-                        
-                        printfn $"Creating compound structure: {structure}, {count}"
-                        
-                        match structure with
-                        | List _ -> ()
-                        | _ ->
-                            let test, vm = pop vm
-                            printfn $"Creating compound structure: {structure}, {count}, {test}" // test is value
-                            let test2, vm = pop vm
-                            printfn $"Creating compound structure: {structure}, {count}, {test2}" // test2 is record
                         
                         match (structure, count) with
                         | Value.List values, VNumber(VInteger n) when n >= 0 ->

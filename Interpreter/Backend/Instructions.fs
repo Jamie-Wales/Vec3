@@ -29,8 +29,6 @@ type OP_CODE =
     | CALL
     | CLOSURE
     | ASSERT
-    | DOTPRODUCT
-    | CROSSPRODUCT
     
     | COMPOUND_CREATE
     | COMPOUND_GET
@@ -69,15 +67,13 @@ let opCodeToByte =
     | CALL -> 25uy
     | CLOSURE -> 26uy
     | ASSERT -> 27uy
-    | DOTPRODUCT -> 28uy
-    | CROSSPRODUCT -> 29uy
     
-    | COMPOUND_CREATE -> 30uy
-    | COMPOUND_GET -> 31uy
+    | COMPOUND_CREATE -> 28uy
+    | COMPOUND_GET -> 29uy
     
-    | BLOCK_START -> 32uy
-    | BLOCK_END -> 33uy
-    | BLOCK_RETURN -> 34uy
+    | BLOCK_START -> 30uy
+    | BLOCK_END -> 31uy
+    | BLOCK_RETURN -> 32uy
     
 
 let byteToOpCode byte =
@@ -110,13 +106,11 @@ let byteToOpCode byte =
     | 25uy -> CALL
     | 26uy -> CLOSURE
     | 27uy -> ASSERT
-    | 28uy -> DOTPRODUCT
-    | 29uy -> CROSSPRODUCT
-    | 30uy -> COMPOUND_CREATE
-    | 31uy -> COMPOUND_GET
-    | 32uy -> BLOCK_START
-    | 33uy -> BLOCK_END
-    | 34uy -> BLOCK_RETURN
+    | 28uy -> COMPOUND_CREATE
+    | 29uy -> COMPOUND_GET
+    | 30uy -> BLOCK_START
+    | 31uy -> BLOCK_END
+    | 32uy -> BLOCK_RETURN
     | _ -> failwith $"Unknown OP_CODE: {byte}"
 
 let opCodeToString =
@@ -149,8 +143,6 @@ let opCodeToString =
     | CALL -> "CALL"
     | CLOSURE -> "CLOSURE"
     | ASSERT -> "ASSERT"
-    | DOTPRODUCT -> "DOTPRODUCT"
-    | CROSSPRODUCT -> "CROSSPRODUCT"
     | COMPOUND_CREATE -> "COMPOUND_CREATE"
     | COMPOUND_GET -> "COMPOUND_GET"
     

@@ -297,8 +297,12 @@ and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
         | Operator Star -> emitBinaryOp OP_CODE.MULTIPLY state
         | Operator Slash -> emitBinaryOp OP_CODE.DIVIDE state
         | Operator EqualEqual -> emitBinaryOp OP_CODE.EQUAL state
-        | Operator DotStar -> emitOpCode OP_CODE.DOTPRODUCT state
-        | Operator Cross -> emitOpCode OP_CODE.CROSSPRODUCT state
+        | Operator DotStar ->
+            let expression = ECall(EIdentifier({ op with Lexeme = Identifier "dotProduct" }, TAny), [left; right], TAny)
+            compileExpr expression state
+        | Operator Cross ->
+            let expression = ECall(EIdentifier({ op with Lexeme = Identifier "crossProduct" }, TAny), [left; right], TAny)
+            compileExpr expression state
         | Operator BangEqual ->
             emitBinaryOp OP_CODE.EQUAL state
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)
@@ -329,7 +333,9 @@ and compileIdentifier (token: Token) : Compiler<unit> =
         let name = lexemeToString token.Lexeme
 
         match state.CurrentFunction.Locals |> List.tryFind (fun local -> local.Name = name) with
-        | Some local -> emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte local.Index |] state
+        | Some local ->
+            printfn $"Local: {name}"
+            emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte local.Index |] state
         | None ->
             let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
             emitBytes [| byte (opCodeToByte OP_CODE.GET_GLOBAL); byte constIndex |] state
