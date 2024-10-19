@@ -5,7 +5,6 @@ open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Types
 
 
-
 let emptyChunk () =
     { Code = ResizeArray<byte>()
       ConstantPool = ResizeArray<Value>()
@@ -95,8 +94,6 @@ let disassembleInstruction (chunk: Chunk) offset =
     //     let jump = (int chunk.Code[offset + 1] <<< 8) ||| int chunk.Code[offset + 2]
     //     printf $"OP_JUMP_IF_FALSE {offset, 4} -> {offset + 3 + jump, 4}"
     //     offset + 3
-    | OP_CODE.DOTPRODUCT -> simpleInstruction "OP_DOTPRODUCT" offset
-    | OP_CODE.CROSSPRODUCT -> simpleInstruction "OP_CROSSPRODUCT" offset
     | OP_CODE.COMPOUND_CREATE -> simpleInstruction "OP_COMPOUND_CREATE" offset
     | OP_CODE.COMPOUND_GET -> simpleInstruction "OP_COMPOUND_GET" offset
     | _ ->
@@ -193,8 +190,6 @@ let disassembleChunkToString (chunk: Chunk) name =
             let function' = chunk.ConstantPool[constant]
             appendLine $"{offset:D4} | OP_CLOSURE       {constant, 4} | {valueToString function'}"
             offset + 2
-        | OP_CODE.DOTPRODUCT -> simpleInstruction "OP_DOTPRODUCT" offset
-        | OP_CODE.CROSSPRODUCT -> simpleInstruction "OP_CROSSPRODUCT" offset
         | OP_CODE.COMPOUND_CREATE -> simpleInstruction "OP_COMPOUND_CREATE" offset
         | OP_CODE.COMPOUND_GET -> simpleInstruction "OP_COMPOUND_GET" offset
         | _ ->

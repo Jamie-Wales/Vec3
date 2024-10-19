@@ -1,6 +1,7 @@
 module Vec3.Interpreter.Backend.Value
 
 open Vec3.Interpreter.Backend.Types
+
 let printValue value = printfn $"Printed value: {valueToString value}"
 
 let isTruthy =
