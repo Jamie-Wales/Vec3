@@ -1,6 +1,7 @@
 module Vec3.Interpreter.Backend.VM
 
 open System
+open System.Collections.Generic
 open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Types
@@ -366,86 +367,58 @@ let rec run (vm: VM) =
                             let frame = { frame with IP = frame.IP + jump }
                             vm.Frames[vm.Frames.Count - 1] <- frame
                         vm
+                    
+                    | COMPOUND_CREATE ->
+                        let structure, vm = pop vm
+                        let count, vm = pop vm
                         
-                    | LIST_CREATE ->
-                        let list = List []
-                        let vm = push vm list
-                        vm
-                    | LIST_APPEND ->
-                        let value, vm = pop vm
-                        let list, vm = pop vm
-                        match list with
-                        | List values ->
-                            let updatedList = List.append values [value]
-                            let vm = push vm (List updatedList)
+                        printfn $"Creating compound structure: {structure}, {count}"
+                        
+                        match structure with
+                        | List _ -> ()
+                        | _ ->
+                            let test, vm = pop vm
+                            printfn $"Creating compound structure: {structure}, {count}, {test}" // test is value
+                            let test2, vm = pop vm
+                            printfn $"Creating compound structure: {structure}, {count}, {test2}" // test2 is record
+                        
+                        match (structure, count) with
+                        | Value.List values, VNumber(VInteger n) when n >= 0 ->
+                            let values' = 
+                                [0..n - 1]
+                                |> List.map (fun _ -> let value, _ = pop vm in value)
+                                |> List.rev
+                            let list = List <| List.append values values' 
+                            let vm = push vm list
                             vm
-                        | _ -> failwith "Expected list value on stack"
-                    | INDEX ->
-                        let index, vm = pop vm
-                        let list, vm = pop vm
-                        match (list, index) with
+                        | _ -> failwith "Expected non-negative integer for list size"
+                        
+                    | COMPOUND_GET ->
+                        let key, vm = pop vm
+                        let structure, vm = pop vm
+                        match (structure, key) with
                         | List values, VNumber(VInteger i) when i >= 0 && i < List.length values ->
                             let value = List.item i values
                             let vm = push vm value
                             vm
-                        | _ -> failwith "Invalid index"
-                    | TUPLE_CREATE ->
-                        let count, vm = pop vm
-                        match count with
-                        | VNumber(VInteger n) when n >= 0 ->
-                            let values = 
-                                [0..n - 1]
-                                |> List.map (fun _ -> let value, _ = pop vm in value)
-                                |> List.rev
-                            let tuple = Tuple values
-                            let vm = push vm tuple
-                            vm
-                        | _ -> failwith "Expected non-negative integer for tuple size"
-                    | RECORD_CREATE ->
-                        let record = Record []
-                        let vm = push vm record
-                        vm
-                    | RECORD_SET ->
-                        let key, vm = pop vm
-                        let value, vm = pop vm
-                        let record, vm = pop vm
-                        match (record, key) with
-                        | Record fields, String key ->
-                            let updatedRecord = Record <| if List.exists (fun (k, _) -> k = key) fields then
-                                                            fields
-                                                            |> List.map (fun (k, v) -> if k = key then (k, value) else (k, v))
-                                                          else
-                                                            (key, value) :: fields
-                            
-                            let vm = push vm updatedRecord
-                            vm
-                        | _ -> failwith "Expected record and string key"
-                    | RECORD_GET ->
-                        let key, vm = pop vm
-                        let record, vm = pop vm
-                        match (record, key) with
-                        | Record fields, String key ->
+                        | List values, String key ->
                             let value = 
-                                fields
-                                |> List.tryFind (fun (k, _) -> k = key)
-                                |> Option.map snd
-                                |> Option.defaultValue Value.Nil
-                            let vm = push vm value
-                            vm
-                        | _ -> failwith "Expected record and string key"
-                    | RECORD_UPDATE ->
-                        let value, vm = pop vm
-                        let vm = push vm value
-                        vm
+                                values
+                                |> Seq.tryFind (fun value -> 
+                                    match value with
+                                    | List [String k; _] when k = key -> true
+                                    | _ -> false)
+                            match value with
+                            | Some (List [_; v]) -> push vm v
+                            | _ -> push vm Nil
+                        | _ -> failwith "Invalid index"
                         
                     | BLOCK_START ->
                         let vm = { vm with ScopeDepth = vm.ScopeDepth + 1 }
                         vm
                     | BLOCK_END ->
                         let result, vm = pop vm
-                        
-                        let vm = { vm with ScopeDepth = vm.ScopeDepth - 1 }
-                        
+                        let vm = { vm with ScopeDepth = vm.ScopeDepth - 1}
                         let vm = push vm result
                         vm
                     | BLOCK_RETURN ->

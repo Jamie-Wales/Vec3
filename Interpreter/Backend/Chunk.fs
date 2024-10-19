@@ -97,8 +97,8 @@ let disassembleInstruction (chunk: Chunk) offset =
     //     offset + 3
     | OP_CODE.DOTPRODUCT -> simpleInstruction "OP_DOTPRODUCT" offset
     | OP_CODE.CROSSPRODUCT -> simpleInstruction "OP_CROSSPRODUCT" offset
-    | OP_CODE.LIST_APPEND -> simpleInstruction "OP_LIST_APPEND" offset
-    | OP_CODE.LIST_CREATE -> simpleInstruction "OP_LIST_CREATE" offset
+    | OP_CODE.COMPOUND_CREATE -> simpleInstruction "OP_COMPOUND_CREATE" offset
+    | OP_CODE.COMPOUND_GET -> simpleInstruction "OP_COMPOUND_GET" offset
     | _ ->
         printfn $"Unknown opcode {chunk.Code[offset]}"
         offset + 1
@@ -195,9 +195,8 @@ let disassembleChunkToString (chunk: Chunk) name =
             offset + 2
         | OP_CODE.DOTPRODUCT -> simpleInstruction "OP_DOTPRODUCT" offset
         | OP_CODE.CROSSPRODUCT -> simpleInstruction "OP_CROSSPRODUCT" offset
-        | OP_CODE.LIST_APPEND -> simpleInstruction "OP_LIST_APPEND" offset
-        | OP_CODE.LIST_CREATE -> simpleInstruction "OP_LIST_CREATE" offset
-        | OP_CODE.INDEX -> simpleInstruction "OP_INDEX" offset
+        | OP_CODE.COMPOUND_CREATE -> simpleInstruction "OP_COMPOUND_CREATE" offset
+        | OP_CODE.COMPOUND_GET -> simpleInstruction "OP_COMPOUND_GET" offset
         | _ ->
             appendLine $"{offset:D4} | Unknown opcode {chunk.Code[offset]}"
             offset + 1

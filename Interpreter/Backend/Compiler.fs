@@ -1,5 +1,6 @@
 module Vec3.Interpreter.Backend.Compiler
 
+open System.Collections.Generic
 open Microsoft.FSharp.Core
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Chunk
@@ -95,66 +96,47 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | EIndex(list, index, _) -> compileIndex list index state
         | ETuple(elements, _) ->
             compileTuple elements state
-        | ERecord(fields, _) ->
-            let compileField (name, value, _) state =
-                let name = match name with
-                            | { Lexeme = Identifier n } -> n
-                            | _ -> failwith "Invalid record field name"
-                
-                compileExpr value state
-                |> Result.bind (fun ((), state) ->
-                    let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
-                    emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
-                    |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RECORD_SET state))
-
-            let rec compileFields fields state =
-                match fields with
-                | [] -> Ok((), state)
-                | field :: rest ->
-                    compileField field state
-                    |> Result.bind (fun ((), state) -> compileFields rest state)
-
-            emitOpCode OP_CODE.RECORD_CREATE state
-            |> Result.bind (fun ((), state) ->
-                compileFields fields state)
+            
+        | ERecordEmpty _ ->
+            emitConstant (VNumber(VInteger 0)) state
+            |> Result.bind (fun ((), state) -> emitConstant (Value.List []) state)
+            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
         
+        | ERecordExtend((name, value, _), record, _) ->
+            let name = match name with
+                        | { Lexeme = Identifier n } -> n
+                        | _ -> failwith "Invalid record field name"
+            
+            // pretty horrbile, but it works
+            // record is a list of lists, where each list is a pair of a string and a value
+            // might be better to have specific value for pair, but then the compound create would need to be changed
+            // or extra instruction for create pair, otherwise any two eleemnt list would be a pair
+            
+            let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
+            emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
+            |> Result.bind (fun ((), state) -> compileExpr value state)
+            |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 2)) state)
+            |> Result.bind (fun ((), state) -> emitConstant (Value.List []) state)
+            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
+            |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 1)) state)
+            |> Result.bind (fun ((), state) -> compileExpr record state)
+            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
+            
+            
         | ERecordSelect(expr, token, _) ->
             let name = match token with
                         | { Lexeme = Identifier n } -> n
                         | _ -> failwith "Invalid record field name"
                         
+            // same as index, but with a string and a record (push string)
             compileExpr expr state
             |> Result.bind (fun ((), state) ->
                 let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
                 emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
-                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RECORD_GET state)
-                )
-        | ERecordUpdate(expr, newFields, _) ->
+                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_GET state)
+            )
             
-            let compileField (name, value, _) state =
-                let name = match name with
-                            | { Lexeme = Identifier n } -> n
-                            | _ -> failwith "Invalid record field name"
-                
-                compileExpr value state
-                |> Result.bind (fun ((), state) ->
-                    let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
-                    emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
-                    |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RECORD_SET state))
-                
-            let rec compileFields fields state =
-                match fields with
-                | [] -> Ok((), state)
-                | field :: rest ->
-                    compileField field state
-                    |> Result.bind (fun ((), state) -> compileFields rest state)
-                   
-            emitOpCode OP_CODE.RECORD_UPDATE state
-            |> Result.bind (fun ((), state) ->
-                compileExpr expr state
-                |> Result.bind (fun ((), state) -> compileFields newFields state))
-            
-        | EBlock(stmts, _) -> compileBlock stmts state
+        | EBlock(stmts, _) -> compileBlock stmts state // scope is fucked up think its global
             
         // below not working
         | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
@@ -165,9 +147,27 @@ and compileIndex (list: Expr) (index: Expr) : Compiler<unit> =
     fun state ->
         compileExpr list state
         |> Result.bind (fun ((), state) -> compileExpr index state)
-        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.INDEX state)
+        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_GET state)
 
 and compileTuple (elements: Expr list) : Compiler<unit> =
+    fun state ->
+        let rec compileElements elements state =
+            match elements with
+            | [] -> Ok((), state)
+            | element :: rest ->
+                compileExpr element state
+                |> Result.bind (fun ((), state) -> compileElements rest state)
+        
+        // same as list
+        compileElements elements state
+        |> Result.bind (fun ((), state) ->
+            emitConstant (VNumber(VInteger elements.Length)) state)
+        |> Result.bind (fun ((), state) ->
+            emitConstant (Value.List []) state)
+        |> Result.bind (fun ((), state) ->
+            emitOpCode OP_CODE.COMPOUND_CREATE state)
+
+and compileList (elements: Expr list) : Compiler<unit> =
     fun state ->
         let rec compileElements elements state =
             match elements with
@@ -180,21 +180,11 @@ and compileTuple (elements: Expr list) : Compiler<unit> =
         |> Result.bind (fun ((), state) ->
             emitConstant (VNumber(VInteger elements.Length)) state)
         |> Result.bind (fun ((), state) ->
-            emitOpCode OP_CODE.TUPLE_CREATE state)
-
-and compileList (elements: Expr list) : Compiler<unit> =
-    fun state ->
-        let rec compileElements elements state =
-            match elements with
-            | [] -> Ok((), state)
-            | element :: rest ->
-                compileExpr element state
-                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.LIST_APPEND state)
-                |> Result.bind (fun ((), state) -> compileElements rest state)
+            emitConstant (Value.List []) state)
+        |> Result.bind (fun ((), state) ->
+            emitOpCode OP_CODE.COMPOUND_CREATE state)
         
-        emitOpCode OP_CODE.LIST_CREATE state
-        |> Result.bind (fun ((), state) -> compileElements elements state)
-
+        
 and compileIf (condition: Expr) (thenBranch: Expr) (elseBranch: Expr) : Compiler<unit> =
     fun state ->
         compileExpr condition state

@@ -29,7 +29,7 @@ let rec exprToString  = function
     | ELiteral (lit, _) -> litToString lit
     | EList (exprs, _) -> $"""[{String.concat ", " (List.map exprToString exprs)}]"""
     | ETuple (exprs, _) -> $"""({String.concat ", " (List.map exprToString exprs)})"""
-    | ERecord (fields, _) -> $"""{{ {String.concat ", " (List.map (fun (k, v, typ) -> $"{k.Lexeme}: {typ} = {exprToString v}") fields)} }}"""
+    // | ERecord (fields, _) -> $"""{{ {String.concat ", " (List.map (fun (k, v, typ) -> $"{k.Lexeme}: {typ} = {exprToString v}") fields)} }}"""
     | _ -> "()"
 
 let evalRepl =

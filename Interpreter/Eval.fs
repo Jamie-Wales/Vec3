@@ -135,7 +135,7 @@ let evalListOp (op: Lexeme) (lhs: Expr) (rhs: Expr) =
                         :: mulVectors ls rs
                     | _ -> failwith "invalid"
                 | _ -> failwith "invalid"
-            
+
             Ok(EList(mulVectors lhs rhs, TInteger))
 
         // dot product
@@ -151,57 +151,54 @@ let evalListOp (op: Lexeme) (lhs: Expr) (rhs: Expr) =
 
             // fix for non ints
             Ok(ELiteral(LNumber(LInteger(dotVectors lhs rhs)), TInteger))
-        
+
         | Operator.Cross ->
             let rec crossVectors (lhs: Expr list) (rhs: Expr list) =
                 match lhs, rhs with
-                | [ ELiteral(LNumber(LInteger x1), _); ELiteral(LNumber(LInteger y1), _); ELiteral(LNumber(LInteger z1), _) ],
-                  [ ELiteral(LNumber(LInteger x2), _); ELiteral(LNumber(LInteger y2), _); ELiteral(LNumber(LInteger z2), _) ] ->
+                | [ ELiteral(LNumber(LInteger x1), _)
+                    ELiteral(LNumber(LInteger y1), _)
+                    ELiteral(LNumber(LInteger z1), _) ],
+                  [ ELiteral(LNumber(LInteger x2), _)
+                    ELiteral(LNumber(LInteger y2), _)
+                    ELiteral(LNumber(LInteger z2), _) ] ->
                     let x = y1 * z2 - z1 * y2
                     let y = z1 * x2 - x1 * z2
                     let z = x1 * y2 - y1 * x2
-                    [ ELiteral(LNumber(LInteger x), TInteger); ELiteral(LNumber(LInteger y), TInteger); ELiteral(LNumber(LInteger z), TInteger) ]
+
+                    [ ELiteral(LNumber(LInteger x), TInteger)
+                      ELiteral(LNumber(LInteger y), TInteger)
+                      ELiteral(LNumber(LInteger z), TInteger) ]
                 | _ -> failwith "invalid"
-                
+
             Ok(EList(crossVectors lhs rhs, TInteger))
-        
+
         | _ -> Error "invalid"
     | _ -> Error "invalid"
 
 let rec evalExpr (env: Env) (expr: Expr) : Expr =
     match expr with
-    | ERecord(fields, typ) ->
-        // eval all fields
-        let fields = List.map (fun (k, v, t) -> k, evalExpr env v, t) fields
-        ERecord(fields, typ)
-    | ERecordSelect(expr, field, _) ->
-        let expr = evalExpr env expr
+    // extensible rows
+    | ERecordEmpty typ -> ERecordEmpty typ
+    
+    | ERecordRestrict(record, name, typ) ->
+        let record = evalExpr env record
 
-        match expr with
-        | ERecord(fields, _) ->
-            let rec selectField (fields: (Token * Expr * TType) list) (field: Lexeme) =
-                match fields with
-                | [] -> failwith "field not found"
-                | (k, v, _) :: rest ->
-                    if k.Lexeme = field then v
-                    else selectField rest field
-
-            selectField fields field.Lexeme
+        match record with
+        | ERecordExtend((name', value, _), record, _) when name.Lexeme = name'.Lexeme -> record
+        | ERecordExtend((_, _, _), record, _) -> evalExpr env (ERecordRestrict(record, name, typ))
         | _ -> failwith "invalid"
-    | ERecordUpdate(expr, fields, _) ->
-        let expr = evalExpr env expr
-        match expr with
-        | ERecord(oldFields, _) ->
-            let rec updateFields (fields: (Token * Expr * TType) list) (oldFields: (Token * Expr * TType) list) =
-                match fields, oldFields with
-                | [], [] -> []
-                | (k, v, t) :: rest, (ok, ov, ot) :: rest' ->
-                    if k.Lexeme = ok.Lexeme then (k, v, t) :: updateFields rest rest'
-                    else (ok, ov, ot) :: updateFields fields rest'
-                | (k, v, t) :: rest, []
-                | [], (k, v, t) :: rest -> (k, v, t) :: updateFields [] rest
-                
-            ERecord(updateFields fields oldFields, TRecord [])
+
+    | ERecordExtend((name, value, typ), record, typ2) ->
+        let value = evalExpr env value
+        ERecordExtend((name, value, typ), evalExpr env record, typ2)
+    | ERecordSelect(record, field, typ) ->
+        let record = evalExpr env record
+
+        match record with
+        | ERecordExtend((name, value, _), _, _) when name.Lexeme = field.Lexeme -> value
+        | ERecordExtend((_, _, _), record, _) ->
+            let record = evalExpr env record
+            evalExpr env (ERecordSelect(record, field, typ))
         | _ -> failwith "invalid"
     | EBlock(stmts, _) ->
         let rec evalBlock (env: Env) =
@@ -269,6 +266,46 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
                     match args with
                     | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(Math.Tan(double x))), TFloat)
                     | _ -> failwith "invalid"
+                | "sqrt" ->
+                    let args = List.map (evalExpr env) args
+
+                    match args with
+                    | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(Math.Sqrt(double x))), TFloat)
+                    | _ -> failwith "invalid"
+                | "abs" ->
+                    let args = List.map (evalExpr env) args
+                    
+                    match args with
+                    | [ ELiteral(LNumber(LInteger x), TInteger) ] -> ELiteral(LNumber(LInteger(Math.Abs(x))), TInteger)
+                    | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(Math.Abs(x))), TFloat)
+                    | _ -> failwith "invalid"
+                | "floor" ->
+                    let args = List.map (evalExpr env) args
+                    
+                    match args with
+                    | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(Math.Floor(x))), TFloat)
+                    | _ -> failwith "invalid"
+                    
+                | "fold" ->
+                    let args = List.map (evalExpr env) args
+                    
+                    match args with
+                    | [ EList(exprs', _); init; ELambda([listParam; accParam], body, _); ] ->
+                        let rec fold (env: Env) (exprs: Expr list) (acc: Expr) =
+                            match exprs with
+                            | [] -> acc
+                            | e :: es ->
+                                let env' = Map.add listParam.Lexeme e env
+                                let env' = Map.add accParam.Lexeme acc env'
+                                let acc = evalExpr env' body
+                                fold env' es acc
+                                
+                        fold env exprs' init
+                    | _ -> failwith "invalid"
+                | "exit" ->
+                    Environment.Exit(0)
+                    ELiteral(LUnit, TUnit)
+                    
                 | _ -> failwith $"function {name} not found"
             | _ -> failwith $"function {name} not found"
         | _ -> failwith "invalid"
@@ -283,7 +320,13 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
             | Identifier "cos"
             | Identifier "sin"
             | Identifier "tan"
-            | Identifier "env" -> EIdentifier(name, typ)
+            | Identifier "env"
+            | Identifier "exit"
+            | Identifier "sqrt"
+            | Identifier "abs"
+            | Identifier "floor"
+            | Identifier "fold" ->
+                EIdentifier(name, typ)
             | _ -> failwith $"variable {name} not found"
     | EBinary(lhs, op, rhs, typ) ->
         let lhs = evalExpr env lhs
@@ -349,6 +392,8 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
             match res with
             | Ok res -> res
             | Error s -> failwith s
+        | { Lexeme = Operator ColonColon }, lhs, EList(elems, typ) ->
+            EList(lhs :: elems, typ)
         | _ -> failwith "invalid"
     | EUnary(op, expr, typ) ->
         let value = evalExpr env expr
@@ -424,7 +469,6 @@ let evalStatement (env: Env) (stmt: Stmt) : Expr * Env =
     | ELiteral(lit, typ), env -> ELiteral(lit, typ), env
     | EList(exprs, typ), env -> EList(exprs, typ), env
     | ETuple(exprs, typ), env -> ETuple(exprs, typ), env
-    | ERecord(fields, typ), env -> ERecord(fields, typ), env
     | _, env -> ELiteral(LUnit, TUnit), env
 
 
