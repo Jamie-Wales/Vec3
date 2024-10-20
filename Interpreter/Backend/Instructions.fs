@@ -35,8 +35,8 @@ type OP_CODE =
     
     | BLOCK_START
     | BLOCK_END
+    | MOD
     
-    | RANGE
 
 let opCodeToByte =
     function
@@ -74,8 +74,8 @@ let opCodeToByte =
     
     | BLOCK_START -> 30uy
     | BLOCK_END -> 31uy
+    | MOD -> 32uy
     
-    | RANGE -> 32uy
     
 
 let byteToOpCode byte =
@@ -112,7 +112,7 @@ let byteToOpCode byte =
     | 29uy -> COMPOUND_GET
     | 30uy -> BLOCK_START
     | 31uy -> BLOCK_END
-    | 32uy -> RANGE
+    | 32uy -> MOD
     | _ -> failwith $"Unknown OP_CODE: {byte}"
 
 let opCodeToString =
@@ -151,6 +151,7 @@ let opCodeToString =
     | BLOCK_START -> "BLOCK_START"
     | BLOCK_END -> "BLOCK_END"
     
-    | RANGE -> "RANGE"
+    | MOD -> "MOD"
+    
     
     

@@ -96,9 +96,18 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | EIndex(list, index, _) -> compileIndex list index state
         | ETuple(elements, _) -> compileTuple elements state
         | ERange(start, stop, _) ->
-            compileExpr start state
-            |> Result.bind (fun ((), state) -> compileExpr stop state)
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.RANGE state)
+            let expression =
+                ECall(
+                    EIdentifier(
+                        { Lexeme = Identifier "range"
+                          Position = { Line = 0; Column = 0 } },
+                        TAny
+                    ),
+                    [ start; stop ],
+                    TAny
+                )
+
+            compileExpr expression state
 
         | ERecordEmpty _ ->
             emitConstant (VNumber(VInteger 0)) state
@@ -298,6 +307,13 @@ and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
         | Operator Star -> emitBinaryOp OP_CODE.MULTIPLY state
         | Operator Slash -> emitBinaryOp OP_CODE.DIVIDE state
         | Operator EqualEqual -> emitBinaryOp OP_CODE.EQUAL state
+        | Operator Percent -> emitBinaryOp OP_CODE.MOD state
+        | Operator Caret
+        | Operator StarStar ->
+            let expression =
+                ECall(EIdentifier({ op with Lexeme = Identifier "power" }, TAny), [ left; right ], TAny)
+
+            compileExpr expression state
         | Operator DotStar ->
             let expression =
                 ECall(
@@ -369,9 +385,6 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
         match stmt with
         | SExpression(expr, _) -> compileExpr expr state
         | SVariableDeclaration(name, initializer, _) -> compileVariableDeclaration name initializer state
-        | SPrintStatement(expr, _) ->
-            compileExpr expr state
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.PRINT state)
         | SAssertStatement(expr, msg, _) ->
             compileExpr expr state
             |> Result.bind (fun ((), state) ->
@@ -379,6 +392,7 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
                 | Some m -> compileExpr m state
                 | None -> emitConstant Value.Nil state)
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.ASSERT state)
+        | STypeDeclaration _ -> Ok((), state)
 
 and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit> =
     fun state ->

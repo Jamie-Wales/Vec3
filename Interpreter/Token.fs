@@ -58,12 +58,12 @@ type Keyword =
     | True
     | False
     | Nil
-    | Print
     | In
     | And
     | Or
     | Assert
     | With
+    | Type
     
     
 let keywordMap = 
@@ -75,12 +75,12 @@ let keywordMap =
       "true", Keyword.True
       "false", Keyword.False
       "nil", Keyword.Nil
-      "print", Keyword.Print
       "in", Keyword.In
       "and", Keyword.And
       "or", Keyword.Or
       "assert", Keyword.Assert
       "with", Keyword.With
+      "type", Keyword.Type
        ]
     |> Map.ofList
 
@@ -158,12 +158,12 @@ let keywordToString (kw: Keyword): string =
     | True -> "true"
     | False -> "false"
     | Nil -> "nil"
-    | Print -> "print"
     | In -> "in"
     | And -> "and"
     | Or -> "or"
     | Assert -> "assert"
     | With -> "with"
+    | Type -> "type"
 
 
 let lexemeToString (lex: Lexeme): string =

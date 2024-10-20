@@ -170,6 +170,22 @@ let rec builtins () =
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(abs f)))
           | _ -> failwith $"""abs expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+      "Identifier(power)", Builtin(fun args vm ->
+         match args with
+            | [ VNumber(VFloat x); VNumber(VFloat y) ] ->
+                let result = VNumber(VFloat(pown x (int y)))
+                push vm result
+            | [ VNumber(VFloat x); VNumber(VInteger y) ] ->
+                let result = VNumber(VFloat(pown x y))
+                push vm result
+            | [ VNumber(VInteger x); VNumber(VFloat y) ] ->
+                let result = VNumber(VFloat(pown x (int y)))
+                push vm result
+            | [ VNumber(VInteger x); VNumber(VInteger y) ] ->
+                let result = VNumber(VInteger(pown x y))
+                push vm result
+            | _ -> failwith "Power expects two floats"
+      )
       "Identifier(floor)",
       Builtin(fun args vm ->
           match args with
@@ -274,7 +290,16 @@ let rec builtins () =
           | [ List l1' as l1; List l2' as l2 ] when List.length l1' = 3 && List.length l2' = 3 ->
               let result = crossProduct l1 l2
               push vm result
-          | _ -> failwith "crossProduct expects two lists of length 3") ]
+          | _ -> failwith "crossProduct expects two lists of length 3") 
+      "Identifier(range)", Builtin(fun args vm ->
+         match args with
+            | [ VNumber(VInteger start); VNumber(VInteger stop) ] ->
+                let range = [ for i in start..stop -> VNumber(VInteger i) ]
+                let list = List range
+                push vm list
+            | _ -> failwith "Range expects two integers"
+    ) ]
+    
     |> Map.ofList
 
 
@@ -377,6 +402,13 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         match (a, b) with
         | VNumber x, VNumber y -> push vm (Boolean(x < y))
         | _ -> failwith "Operands must be numbers"
+    | MOD ->
+        let b, vm = pop vm
+        let a, vm = pop vm
+
+        match (a, b) with
+        | VNumber (VInteger x), VNumber (VInteger y) -> push vm (VNumber(VInteger(x % y)))
+        | _ -> failwith "Operands must be integers"
     | TRUE -> push vm (Boolean true)
     | FALSE -> push vm (Boolean false)
     | NIL -> push vm Value.Nil
@@ -538,16 +570,6 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let vm = push vm result
         vm
     
-    | RANGE ->
-        let stop, vm = pop vm
-        let start, vm = pop vm
-        
-        match (start, stop) with
-        | VNumber(VInteger s), VNumber(VInteger e) ->
-            let range = [ for i in s..e -> VNumber(VInteger i) ]
-            let list = List range
-            push vm list
-        | _ -> failwith "Range expects two integers"
     | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
 
 and runLoop vm =

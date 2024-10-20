@@ -41,6 +41,8 @@ type Type =
     | TRecord of Row 
     | TRowEmpty
     | TRowExtend of Token * Type * Row
+    
+    | TAlias of Token * Type
 
 and Dims = Dims of int list | DAny | DVar of TypeVar
 
@@ -87,8 +89,8 @@ type Expr =
 and Stmt =
     | SExpression of Expr * Type
     | SVariableDeclaration of Token * Expr * Type
-    | SPrintStatement of Expr * Type
     | SAssertStatement of Expr * Expr option * Type
+    | STypeDeclaration of Token * Type * Type
 
 type Program = Stmt list
 

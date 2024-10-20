@@ -28,8 +28,8 @@ let foldConstants (program: Program) : Program =
         match stmt with
         | SVariableDeclaration(tok, expr, typ) -> SVariableDeclaration(tok, foldExpr expr, typ)
         | SExpression(expr, typ) -> SExpression(foldExpr expr, typ)
-        | SPrintStatement(expr, typ) -> SPrintStatement(foldExpr expr, typ)
         | SAssertStatement(expr, msg, typ) -> SAssertStatement(foldExpr expr, Option.map foldExpr msg, typ)
+        | STypeDeclaration(tok, typ, typ2) -> STypeDeclaration(tok, typ, typ2)
 
     and foldExpr (expr: Expr) : Expr =
         match expr with

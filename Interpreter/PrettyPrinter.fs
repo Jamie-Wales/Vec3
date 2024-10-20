@@ -42,7 +42,6 @@ and printStmt = function
     | SExpression (expr, _) -> printExpr expr
     | SVariableDeclaration (name, expr, _) -> $"""let {lexemeToString name.Lexeme} = {printExpr expr}"""
     | SAssertStatement (expr, msg, _) -> $"""assert {printExpr expr}, "{msg}" """
-    | SPrintStatement (expr, _) -> $"""print {printExpr expr}"""
     
     
     
