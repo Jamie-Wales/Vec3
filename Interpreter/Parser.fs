@@ -407,19 +407,18 @@ and listOrRange (state: ParserState) : ParseResult<Expr> =
     | _ ->
         expression state Precedence.None
         |> Result.bind (fun (state, start) ->
-            match peek state with
-            | Some { Lexeme = Operator DotDot } ->
-                let state = advance state
+            match nextToken state with
+            | Some (state, { Lexeme = Operator DotDot }) ->
                 expression state Precedence.None
                 |> Result.bind (fun (state, end_) ->
                     expect state (Lexeme.Operator Operator.RightBracket)
                     |> Result.bind (fun state -> Ok(state, ERange(start, end_, TInfer)))
                 )
-            | Some { Lexeme = Operator Comma } ->
+            | Some (state, { Lexeme = Operator Comma }) ->
                 commaSeparatedList state
                 |> Result.bind (fun (state, exprs) ->
                     expect state (Lexeme.Operator Operator.RightBracket)
-                    |> Result.bind (fun state -> Ok(state, EList(List.rev (start :: exprs), TInfer)))
+                    |> Result.bind (fun state -> Ok(state, EList(start :: exprs, TInfer)))
                 )
             | _ -> Error(Expected "',' or '..' after list element.", state))
 
@@ -616,27 +615,8 @@ and tensorType (state: ParserState) : ParseResult<TType> =
     |> Result.bind (fun (state, innerType) ->
         expect state (Lexeme.Operator Operator.RightBracket)
         |> Result.bind (fun state -> Ok(state, TTensor(innerType, DAny))))
-
-// sumish types ? int | float etc with constrain type
-and typeHint (state: ParserState) : ParseResult<TType> =
-    match nextToken state with
-    | Some(state, { Lexeme = Lexeme.Identifier typeName }) ->
-        match typeName with
-        | "int" -> Ok(state, TInteger)
-        | "float" -> Ok(state, TFloat)
-        | "rational" -> Ok(state, TRational)
-        | "complex" -> Ok(state, TComplex)
-        | "bool" -> Ok(state, TBool)
-        | "string" -> Ok(state, TString)
-        | "unit" -> Ok(state, TUnit)
-        | "never" -> Ok(state, TNever)
-        | "any" -> Ok(state, TAny)
-        | _ -> Error(ExpectedType typeName, state)
-    | Some(state, { Lexeme = Lexeme.Operator Operator.LeftParen }) -> funcType state
-    | Some(state, { Lexeme = Lexeme.Operator Operator.LeftBracket }) -> tensorType state
-    | Some(state, { Lexeme = Lexeme.Operator Operator.LeftBrace }) -> recordType state
-    | _ -> Error(ExpectedType "type name", state)
-
+    
+    
 and recordType (state: ParserState) : ParseResult<TType> =
     let state = setLabel state "RecordType"
     // let x: { a: int, b: float } = { a = 1, b = 2.0 }
@@ -663,6 +643,27 @@ and recordType (state: ParserState) : ParseResult<TType> =
     parseFields state []
     |> Result.bind (fun (state, fields) -> Ok(state, TRecord(fieldsToType fields)))
 
+
+
+// sumish types ? int | float etc with constrain type
+and typeHint (state: ParserState) : ParseResult<TType> =
+    match nextToken state with
+    | Some(state, ({ Lexeme = Lexeme.Identifier typeName } as tok)) ->
+        match typeName with
+        | "int" -> Ok(state, TInteger)
+        | "float" -> Ok(state, TFloat)
+        | "rational" -> Ok(state, TRational)
+        | "complex" -> Ok(state, TComplex)
+        | "bool" -> Ok(state, TBool)
+        | "string" -> Ok(state, TString)
+        | "unit" -> Ok(state, TUnit)
+        | "never" -> Ok(state, TNever)
+        | "any" -> Ok(state, TAny)
+        | _ -> Ok(state, TAlias(tok, TInfer))
+    | Some(state, { Lexeme = Lexeme.Operator Operator.LeftParen }) -> funcType state
+    | Some(state, { Lexeme = Lexeme.Operator Operator.LeftBracket }) -> tensorType state
+    | Some(state, { Lexeme = Lexeme.Operator Operator.LeftBrace }) -> recordType state
+    | _ -> Error(ExpectedType "type name", state)
 
 
 
@@ -713,6 +714,18 @@ and assertStatement (state: ParserState) : ParseResult<Stmt> =
             |> Result.bind (fun (state, message) -> Ok(state, SAssertStatement(expr, Some message, TUnit)))
         | _ -> Ok(state, SAssertStatement(expr, None, TUnit)))
 
+and typeDecl (state: ParserState) : ParseResult<Stmt> =
+    let state = setLabel state "Type"
+
+    match nextToken state with
+    | Some(state, ({ Lexeme = Identifier _ } as name)) ->
+        expect state (Operator Equal)
+        |> Result.bind (fun state ->
+            typeHint state
+            |> Result.bind (fun (state, typ) -> Ok(state, STypeDeclaration(name, typ, TInfer)))
+        )
+    | _ -> Error(Expected "type name", state)
+
 and statement (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Statement"
 
@@ -724,6 +737,7 @@ and statement (state: ParserState) : ParseResult<Stmt> =
             | Keyword.Let -> varDecl (advance state)
             | Keyword.Print -> printStatement (advance state)
             | Keyword.Assert -> assertStatement (advance state)
+            | Keyword.Type -> typeDecl (advance state)
             | _ ->
                 expression state Precedence.None
                 |> Result.bind (fun (state, expr) -> Ok(state, SExpression(expr, TInfer)))
@@ -774,7 +788,6 @@ let parse (input: string) =
 
     match tokens with
     | Ok tokens ->
-        printfn "%A" tokens
         parseTokens tokens
     | Error f -> Error(LexerError f, createParserState [])
 

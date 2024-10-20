@@ -395,6 +395,7 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
                 | Some m -> compileExpr m state
                 | None -> emitConstant Value.Nil state)
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.ASSERT state)
+        | STypeDeclaration _ -> Ok((), state)
 
 and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit> =
     fun state ->

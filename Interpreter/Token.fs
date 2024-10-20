@@ -64,6 +64,7 @@ type Keyword =
     | Or
     | Assert
     | With
+    | Type
     
     
 let keywordMap = 
@@ -81,6 +82,7 @@ let keywordMap =
       "or", Keyword.Or
       "assert", Keyword.Assert
       "with", Keyword.With
+      "type", Keyword.Type
        ]
     |> Map.ofList
 
@@ -164,6 +166,7 @@ let keywordToString (kw: Keyword): string =
     | Or -> "or"
     | Assert -> "assert"
     | With -> "with"
+    | Type -> "type"
 
 
 let lexemeToString (lex: Lexeme): string =

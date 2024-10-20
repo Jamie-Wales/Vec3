@@ -475,7 +475,7 @@ and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
 
             ELiteral(LUnit, TUnit), env
         | _ -> failwith "invalid"
-
+    | STypeDeclaration(name, typ, _) -> ELiteral(LUnit, TUnit), Map.add name.Lexeme (ELiteral(LUnit, TUnit)) env
 
 let evalStatement (env: Env) (stmt: Stmt) : Expr * Env =
     match evalStmt env stmt with

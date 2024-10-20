@@ -33,27 +33,27 @@ let rec exprToString  = function
     | _ -> "()"
 
 let evalRepl =
-    let rec repl' (env: Env) (typeEnv: TypeEnv) =
+    let rec repl' (aliases: AliasMap) (env: Env) (typeEnv: TypeEnv) =
         Console.Write ">> "
         let input = Console.ReadLine()
         let input = preprocessContent input
         match parse input with
         | Ok (_, program) ->
-            let typeCheck = inferProgram typeEnv program
+            let typeCheck = inferProgram aliases typeEnv program
             match typeCheck with
-            | Ok (typeEnv, _, program) ->
+            | Ok (typeEnv, aliases, _, program) ->
                 let program = foldConstants program
                 let value, env = evalProgram env program
                 printfn $"{exprToString value}"
-                repl' env typeEnv
+                repl' aliases env typeEnv
             | Error errors -> 
                 printfn $"{formatTypeErrors errors}"
-                repl' env typeEnv
+                repl' aliases env typeEnv
         | Error (e, s) ->  
             printfn $"{formatParserError e s}"
-            repl' env typeEnv
+            repl' aliases env typeEnv
                 
-    repl' Map.empty defaultTypeEnv
+    repl' Map.empty Map.empty defaultTypeEnv
     ()
 
 type ReplState = {
@@ -120,8 +120,8 @@ let parseAndCompile (code: string) =
     let code = preprocessContent code
     match parse code with
     | Ok (_, program) ->
-        match inferProgram defaultTypeEnv program with
-        | Ok (_, _, program) ->
+        match inferProgram Map.empty defaultTypeEnv program with
+        | Ok (_, _, _, program) ->
             match compileProgram program with
             | Ok (func, _) -> Some func
             | Error (msg, _) ->

@@ -36,10 +36,10 @@ module Program =
             match parse content with
             | Ok(_, program) ->
                 let typeCheck =
-                    Typing.Inference.inferProgram Typing.Inference.defaultTypeEnv program
+                    Typing.Inference.inferProgram Map.empty Typing.Inference.defaultTypeEnv program
 
                 match typeCheck with
-                | Ok(_, _, program) ->
+                | Ok(_, _, _, program) ->
                     let program = ConstantFolding.foldConstants program
                     let value, _ = evalProgram Map.empty program
                     printfn $"{exprToString value}"
