@@ -24,5 +24,6 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       Abs, TFunction([ TFloat ], TFloat)
       Floor, TFunction([ TFloat ], TFloat)
       Fold, foldType
+      Plot, TFunction([TString; TAny; TAny;], TAny)
       ]
     |> Map.ofList

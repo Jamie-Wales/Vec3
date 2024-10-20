@@ -1,6 +1,7 @@
 module Vec3.Interpreter.Backend.Types
 
 open System
+open ScottPlot
 
 type LineInfo = { Offset: int; LineNumber: int }
 
@@ -23,7 +24,7 @@ type Chunk =
     { Code: ResizeArray<byte>
       Lines: ResizeArray<LineInfo>
       ConstantPool: ResizeArray<Value> }
-
+    
 and Value =
     | VNumber of VNumber
     | String of string
@@ -33,6 +34,8 @@ and Value =
     | Nil
     | List of Value list
     | Builtin of (Value list -> VM -> VM)
+    | PlotData of string * Value list * Value list  
+
 
 and VNumber =
     | VInteger of int
@@ -82,6 +85,3 @@ let rec valueToString =
     | Nil -> "nil"
     | List l -> $"""[{String.concat ", " (List.map valueToString l)}]"""
     | Builtin _ -> "<builtin>"
-    
-    
-
