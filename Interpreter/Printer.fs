@@ -61,9 +61,6 @@ and printStmt stmt indent =
     | SExpression (expr, _) ->
         sb.AppendLine($"{indentStr}Expression Statement:") |> ignore
         printASTWithIndent expr (indent + 1) sb
-    | SPrintStatement (expr, _) ->
-        sb.AppendLine($"{indentStr}Print Statement:") |> ignore
-        printASTWithIndent expr (indent + 1) sb
     | SVariableDeclaration (name, expr, _) ->
         sb.AppendLine($"{indentStr}Variable Declaration:") |> ignore
         sb.AppendLine($"{indentStr}Name: {name.Lexeme}") |> ignore

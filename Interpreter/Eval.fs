@@ -459,10 +459,6 @@ and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
         let value = evalExpr env expr
         ELiteral(LUnit, TUnit), Map.add name.Lexeme value env
 
-    | SPrintStatement(expr, _) ->
-        let value = evalExpr env expr
-        printfn $"{value}"
-        ELiteral(LUnit, TUnit), env
     | SAssertStatement(expr, msg, _) ->
         let value = evalExpr env expr
 

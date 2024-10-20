@@ -697,11 +697,6 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
                 |> Result.bind (fun (state, expr) -> Ok(state, SVariableDeclaration(name, expr, varType)))))
     | _ -> Error(Expected "variable name", state)
 
-and printStatement (state: ParserState) : ParseResult<Stmt> =
-    let state = setLabel state "Print"
-
-    expression state Precedence.Assignment
-    |> Result.bind (fun (state, expr) -> Ok(state, SPrintStatement(expr, TUnit)))
 
 and assertStatement (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Assert"
@@ -735,7 +730,6 @@ and statement (state: ParserState) : ParseResult<Stmt> =
         | Keyword kw ->
             match kw with
             | Keyword.Let -> varDecl (advance state)
-            | Keyword.Print -> printStatement (advance state)
             | Keyword.Assert -> assertStatement (advance state)
             | Keyword.Type -> typeDecl (advance state)
             | _ ->

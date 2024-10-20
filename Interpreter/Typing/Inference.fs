@@ -771,7 +771,6 @@ let rec infer (aliases : AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substi
                         | Ok(t, _, _) -> t
                         | Error _ -> TNever
                     | SVariableDeclaration _ -> TUnit
-                    | SPrintStatement _ -> TUnit
                     | SAssertStatement _ -> TUnit
                     | STypeDeclaration _ -> TUnit
 
@@ -1046,7 +1045,6 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
                     | _ -> env
 
                 Ok(env, aliases, sub, SVariableDeclaration(name, expr, typ))))
-    | SPrintStatement _ -> Ok(env, aliases, Map.empty, stmt)
     | SAssertStatement(expr, msg, _) ->
         let exprResult = infer aliases env expr
 
