@@ -178,6 +178,19 @@ let evalListOp (op: Lexeme) (lhs: Expr) (rhs: Expr) =
 let rec evalExpr (env: Env) (expr: Expr) : Expr =
     match expr with
     // extensible rows
+    | ERange (start, end_, _) ->
+        let start = evalExpr env start
+        let end_ = evalExpr env end_
+        
+        match start, end_ with
+        | ELiteral(LNumber(LInteger start), _), ELiteral(LNumber(LInteger end_), _) ->
+            let rec range (start: int) (end_: int) =
+                if start > end_ then []
+                else start :: range (start + 1) end_
+
+            EList(List.map (fun x -> ELiteral(LNumber(LInteger x), TInteger)) (range start end_), TInteger)
+        | _ -> failwith "invalid"
+        
     | ERecordEmpty typ -> ERecordEmpty typ
     
     | ERecordRestrict(record, name, typ) ->

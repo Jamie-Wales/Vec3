@@ -77,6 +77,7 @@ type Expr =
     
     | ELambda of Token list * Expr * Type
     | EBlock of Stmt list * Type
+    | ERange of Expr * Expr * Type
     
     | ERecordSelect of Expr * Token * Type
     | ERecordExtend of (Token * Expr * Type) * Expr * Type

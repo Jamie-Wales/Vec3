@@ -10,6 +10,11 @@ let foldType =
     
     TFunction([TTensor(listTyp, dimsVar); accTyp; TFunction([listTyp; accTyp], accTyp)], accTyp)
     
+let consType =
+    let listTyp = TTypeVariable (freshTypeVar())
+    let dimsVar = DVar (freshTypeVar())
+    
+    TFunction([listTyp; TTensor(listTyp, DAny)], TTensor(listTyp, DAny))
     
 
 let BuiltinFunctions: Map<BuiltInFunction, TType> =
@@ -23,6 +28,7 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       Sqrt, TFunction([ TFloat ], TFloat)
       Abs, TFunction([ TFloat ], TFloat)
       Floor, TFunction([ TFloat ], TFloat)
+      Ceil, TFunction([ TFloat ], TFloat)
       Fold, foldType
       Plot, TFunction([TString; TAny; TAny;], TAny)
       ]

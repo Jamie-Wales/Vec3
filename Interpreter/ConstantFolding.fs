@@ -131,5 +131,13 @@ let foldConstants (program: Program) : Program =
         | ERecordExtend((field, value, typ), record, _) -> ERecordExtend((field, foldExpr value, typ), foldExpr record, typ)
         | ERecordRestrict(record, field, typ) -> ERecordRestrict(foldExpr record, field, typ)
         | ERecordEmpty(typ) -> ERecordEmpty(typ)
+        | ERange(start, stop, typ) ->
+            let start = foldExpr start
+            let stop = foldExpr stop
+            match start, stop with
+            | ELiteral(LNumber(LInteger s), _), ELiteral(LNumber(LInteger e), _) ->
+                let range = [for i in s..e -> ELiteral(LNumber(LInteger i), typ)]
+                EList(range, typ)
+            | _ -> ERange(start, stop, typ)
 
     foldStatements program

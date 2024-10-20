@@ -85,3 +85,4 @@ let rec valueToString =
     | Nil -> "nil"
     | List l -> $"""[{String.concat ", " (List.map valueToString l)}]"""
     | Builtin _ -> "<builtin>"
+    | PlotData _ -> "<plot data>"
