@@ -1,0 +1,17 @@
+# ninja log v6
+1	24	1729448895588883526	CMakeFiles/Executable.dir/src/value.c.o	dacbb3246f898c29
+1	25	1729448895588633451	CMakeFiles/Executable.dir/src/main.c.o	ac3bb4e02c88a749
+26	52	1729448895613250760	Executable	bca413728012e2e2
+1	25	1729449179983932700	CMakeFiles/Executable.dir/src/value.c.o	dacbb3246f898c29
+1	25	1729449179983663542	CMakeFiles/Executable.dir/src/main.c.o	ac3bb4e02c88a749
+25	54	1729449180007865448	Executable	bca413728012e2e2
+0	25	1729450722697344480	CMakeFiles/Executable.dir/src/value.c.o	dacbb3246f898c29
+25	54	1729450722722396567	Executable	bca413728012e2e2
+1	35	1729450789797093724	CMakeFiles/Executable.dir/src/value.c.o	dacbb3246f898c29
+0	29	1729450871286852857	CMakeFiles/Executable.dir/src/main.c.o	ac3bb4e02c88a749
+0	27	1729450885024566601	CMakeFiles/Executable.dir/src/main.c.o	ac3bb4e02c88a749
+1	28	1729450924360635796	CMakeFiles/Executable.dir/src/value.c.o	dacbb3246f898c29
+0	28	1729450924360405054	CMakeFiles/Executable.dir/src/main.c.o	ac3bb4e02c88a749
+28	56	1729450924387904480	Executable	bca413728012e2e2
+1	31	1729451058989849954	CMakeFiles/Executable.dir/src/value.c.o	dacbb3246f898c29
+31	58	1729451059019248821	Executable	bca413728012e2e2
