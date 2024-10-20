@@ -189,7 +189,8 @@ type BuiltInFunction =
     | Abs
     | Floor
     | Fold
-    | Plot 
+    | Plot
+    | Ceil
 
 
 let builtInFunctionMap =
@@ -205,6 +206,7 @@ let builtInFunctionMap =
       Identifier "floor", BuiltInFunction.Floor
       Identifier "fold", BuiltInFunction.Fold
       Identifier "plot", BuiltInFunction.Plot
+      Identifier "ceil", BuiltInFunction.Ceil
       ]
     |> Map.ofList
     

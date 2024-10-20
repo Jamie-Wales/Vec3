@@ -141,7 +141,7 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
               Infix = Some recordSelect
               Precedence = Precedence.Index }
         | Operator.LeftBracket ->
-            { Prefix = Some list
+            { Prefix = Some listOrRange
               Infix = Some index
               Precedence = Precedence.Index }
         | Operator.Plus
@@ -399,21 +399,29 @@ and commaSeparatedList (state: ParserState) : ParseResult<Expr list> =
 
     loop state [] |> Result.bind (fun (state, exprs) -> Ok(state, List.rev exprs))
 
-and list (state: ParserState) : ParseResult<Expr> =
-    let state = setLabel state "List"
+and listOrRange (state: ParserState) : ParseResult<Expr> =
+    let state = setLabel state "ListOrRange"
 
-    let rec loop (state: ParserState) (exprs: Expr list) : ParseResult<Expr> =
-        match peek state with
-        | Some { Lexeme = Lexeme.Operator Operator.RightBracket } ->
-            let state = advance state
-            Ok(state, EList(List.rev exprs, TInfer))
-        | _ ->
-            commaSeparatedList state
-            |> Result.bind (fun (state, exprs) ->
-                expect state (Lexeme.Operator Operator.RightBracket)
-                |> Result.bind (fun state -> Ok(state, EList(List.rev exprs, TInfer))))
-
-    loop state []
+    match peek state with
+    | Some { Lexeme = Lexeme.Operator Operator.RightBracket } -> Ok(advance state, EList([], TInfer))
+    | _ ->
+        expression state Precedence.None
+        |> Result.bind (fun (state, start) ->
+            match peek state with
+            | Some { Lexeme = Operator DotDot } ->
+                let state = advance state
+                expression state Precedence.None
+                |> Result.bind (fun (state, end_) ->
+                    expect state (Lexeme.Operator Operator.RightBracket)
+                    |> Result.bind (fun state -> Ok(state, ERange(start, end_, TInfer)))
+                )
+            | Some { Lexeme = Operator Comma } ->
+                commaSeparatedList state
+                |> Result.bind (fun (state, exprs) ->
+                    expect state (Lexeme.Operator Operator.RightBracket)
+                    |> Result.bind (fun state -> Ok(state, EList(List.rev (start :: exprs), TInfer)))
+                )
+            | _ -> Error(Expected "',' or '..' after list element.", state))
 
 and grouping (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Grouping"
@@ -765,7 +773,9 @@ let parse (input: string) =
     let tokens = tokenize input
 
     match tokens with
-    | Ok tokens -> parseTokens tokens
+    | Ok tokens ->
+        printfn "%A" tokens
+        parseTokens tokens
     | Error f -> Error(LexerError f, createParserState [])
 
 let parseFile (file: string) =

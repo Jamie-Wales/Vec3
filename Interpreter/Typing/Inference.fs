@@ -827,10 +827,22 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
                     TTensor(applySubstitution combinedSubs head, Dims [ List.length types ])
 
                 Ok(returnType, combinedSubs, EList(exprs, returnType))))
+    | ERange(start, end_, _) ->
+        let startResult = infer env start
+        let endResult = infer env end_
+
+        match startResult, endResult with
+        | Ok(TInteger, sub1, expr1), Ok(TInteger, sub2, expr2) ->
+            let sub = combineMaps sub1 sub2
+            Ok(TTensor(TInteger, DAny), sub, ERange(expr1, expr2, TTensor(TInteger, DAny)))
+        | Error errors, _ -> Error errors
+        | _, Error errors -> Error errors
+        | _ -> Error [ TypeError.InvalidRange(start, end_) ]
+        
     | EIndex(expr, index, _) ->
         let indexResult = infer env index
         let exprResult = infer env expr
-
+        
         match indexResult, exprResult with
         | Ok(TInteger, sub1, expr1), Ok(TTensor(typ, _), sub2, expr2) -> // might be nice to have little dependent types with the dims and index
             let sub = combineMaps sub1 sub2
@@ -908,7 +920,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
             Ok(newType, sub, ERecordExtend((name, expr1, t), expr2, newType))
         | Error errors, _ -> Error errors
         | _, Error errors -> Error errors
-        | _ -> Error [ TypeError.NotEnoughInformation(name) ]
+        | _ -> Error [ TypeError.InvalidField(name, TInfer) ]
 
     | ERecordSelect(record, name, _) ->
         let recordResult = infer env record
@@ -927,7 +939,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
             let typ = findType row name
 
             if typ = TNever then
-                Error [ TypeError.NotEnoughInformation(name) ]
+                Error [ TypeError.InvalidField(name, TRecord(row)) ]
             else
                 Ok(typ, sub, ERecordSelect(expr, name, typ))
         | Ok(TTypeVariable n, sub, expr) ->
@@ -938,7 +950,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
 
             Ok(TTypeVariable typeVar, sub, ERecordSelect(expr, name, TTypeVariable typeVar))
         | Error errors -> Error errors
-        | _ -> Error [ TypeError.NotEnoughInformation(name) ]
+        | _ -> Error [ TypeError.InvalidField(name, TInfer) ]
     | ERecordRestrict(record, name, _) ->
         let recordResult = infer env record
 
@@ -972,7 +984,7 @@ let rec infer (env: TypeEnv) (expr: Expr) : (TType * Substitution * Expr) TypeRe
                 ERecordRestrict(expr, name, TRecord(TRowExtend(name, TTypeVariable typeVar, TRowEmpty)))
             )
         | Error errors -> Error errors
-        | _ -> Error [ TypeError.NotEnoughInformation(name) ]
+        | _ -> Error [ TypeError.InvalidField(name, TInfer) ]
 
 
 

@@ -72,8 +72,8 @@ let scNumber (nStr: char list) : (char list * TNumber * int) option =
         | '/' :: ratTail ->
             let fStr, fVal, fLen = scInt ratTail 0 0
             Some(fStr, TNumber.Rational(iVal, int fVal), iLen + fLen + 1)
-        | '.' :: fracTail ->
-            let fStr, fVal, fLen = scFraction fracTail 0.0 10.0 0
+        | '.' :: d :: fracTail when isDigit d ->
+            let fStr, fVal, fLen = scFraction (d :: fracTail) 0.0 10.0 0
 
             match fStr with
             | 'e' :: expTail
@@ -293,6 +293,15 @@ let lexer (input: string) : LexerResult<Token list> =
                 tail
                 { position with
                     Column = position.Column + 2 }
+                
+        | '.' :: '.' :: tail ->
+            Ok
+                { Lexeme = Operator DotDot
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 2 }
 
         | '.' :: c :: tail when isDigit c ->
             let nRes = scNumber ('0' :: '.' :: c :: tail)
@@ -314,14 +323,6 @@ let lexer (input: string) : LexerResult<Token list> =
                     { position with
                         Column = position.Column + nLen }
 
-        | '.' :: '.' :: tail ->
-            Ok
-                { Lexeme = Operator DotDot
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 2 }
         | '.' :: tail ->
             Ok
                 { Lexeme = Operator Dot
