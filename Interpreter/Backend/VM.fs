@@ -498,6 +498,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             vm
         | _ -> failwith "Expected function constant for closure"
     | JUMP ->
+        printfn $"Jumping"
         let vm, byte1 = readByte vm
         let vm, byte2 = readByte vm
         let jump = (int byte1 <<< 8) ||| int byte2
@@ -506,12 +507,16 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         vm.Frames[vm.Frames.Count - 1] <- frame
         vm
     | JUMP_IF_FALSE ->
+        printfn $"Jumping if false"
         let vm, byte1 = readByte vm
         let vm, byte2 = readByte vm
         let jump = (int byte1 <<< 8) ||| int byte2
         let condition, vm = pop vm
+        
+        printfn $"Condition: {valueToString condition}"
 
         if not (isTruthy condition) then
+            printfn $"Jumping"
             let frame = getCurrentFrame vm
             let frame = { frame with IP = frame.IP + jump }
             vm.Frames[vm.Frames.Count - 1] <- frame
