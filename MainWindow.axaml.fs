@@ -114,34 +114,46 @@ if x > 0 then
         debugVM <- None
         this.UpdateOutputStreams()
         this.SetButtonStates(isRepl = false, isDebug = false)
+        
 
     member private this.ExecuteCode() =
         let code = this.GetEditorText()
-        // let parsed = parse code
-        // (match parsed with
-        // | Ok(_, program) ->
-        //     let formatted = printProgram program
-        //     this.SetEditorText(formatted)
-        // | Error (msg, _) -> ())
-        match replState.VM with
-        | Some vm ->
-            match debugVM with
-            | Some debugVm ->
-                let finalVM = run debugVm
-                debugVM <- Some finalVM
-            | None ->
-                match parseAndCompile code with
-                | Some func ->
-                    let (newVM, _) = replExecute func (Some vm)
-                    replState <- { replState with VM = Some newVM }
-                | None -> printfn "Failed to compile code"
-        | None ->
-            match parseAndCompile code with
-            | Some func ->
-                let (newVM, _) = replExecute func None
-                replState <- { replState with VM = Some newVM }
-            | None -> printfn "Failed to compile code"
+        let vm =
+            match replState.VM with
+            | Some vm -> vm
+            | None -> createVM (initFunction "Main")
+        match parseAndCompile code with
+        | Some func ->
+            let newVM, _ = interpretWithMode func (Some vm) false  // Use false for isRepl
+            replState <- { replState with VM = Some newVM }
+        | None -> printfn "Failed to compile code"
         
+        match replState.VM with
+        | Some vm when vm.Stack.Count > 0 ->
+            let topValue = vm.Stack.[vm.Stack.Count - 1]
+            match topValue with
+            | PlotData (title, xs, ys) ->
+                let xValues = 
+                    xs |> List.choose (function
+                        | VNumber (VFloat f) -> Some f
+                        | VNumber (VInteger i) -> Some (float i)
+                        | _ -> None)
+                    |> Array.ofList
+                let yValues = 
+                    ys |> List.choose (function
+                        | VNumber (VFloat f) -> Some f
+                        | VNumber (VInteger i) -> Some (float i)
+                        | _ -> None)
+                    |> Array.ofList
+                let plotWindow = PlotWindow()
+                plotWindow.PlotControl.Plot.Clear()
+                plotWindow.PlotControl.Plot.Add.Scatter(xValues, yValues) |> ignore
+                plotWindow.PlotControl.Plot.Title(title)
+                plotWindow.PlotControl.Refresh()
+                plotWindow.Show()
+            | _ -> ()
+        | _ -> ()
+
         this.UpdateOutputStreams()
 
     member private this.StartDebugMode() =

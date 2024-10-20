@@ -27,7 +27,7 @@
         <Compile Include="Interpreter\Eval.fs" />
         <Compile Include="Interpreter\ConstantFolding.fs" />
         <Compile Include="Interpreter\Repl.fs" />
-
+        <Compile Include="PlotWindow.axaml.fs" />
         <Compile Include="MainWindow.axaml.fs" />
         <Compile Include="App.axaml.fs" />
         <Compile Include="Program.fs" />
@@ -48,6 +48,7 @@
         <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.0" />
         <PackageReference Include="AvaloniaEdit.TextMate" Version="11.1.0" />
         <PackageReference Include="Russkyc.AvaloniaAutoGrid" Version="1.0.0" />
+        <PackageReference Include="ScottPlot.Avalonia" Version="5.0.40" />
         <PackageReference Include="TextMateSharp" Version="1.0.63" />
         <PackageReference Include="TextMateSharp.Grammars" Version="1.0.63" />
     </ItemGroup>

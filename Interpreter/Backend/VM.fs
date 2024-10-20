@@ -2,6 +2,7 @@ module Vec3.Interpreter.Backend.VM
 
 open System
 open Microsoft.FSharp.Collections
+open ScottPlot
 open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Types
@@ -129,6 +130,12 @@ let callValue (vm: VM) (argCount: int) : VM =
     
 let builtins =
     [
+        "Identifier(plot)", Builtin(fun args vm ->
+             match args with
+             | [String title; List xs; List ys] ->
+                let result = PlotData(title, xs, ys)
+                push vm result
+             | _ -> failwith "sqrt expects a float");
         "Identifier(print)", Builtin(fun args vm ->
             let vm = appendOutput vm StandardOutput $"""{String.concat " " (List.map valueToString args)}"""
             push vm Nil);
@@ -468,7 +475,7 @@ let rec run (vm: VM) =
 let interpretWithMode (func: Function) (vm: VM option) (isRepl: bool) =
     let vm = 
         match vm with
-        | Some existingVM when isRepl ->
+        | Some existingVM ->
             let newFrame = {
                 Function = func
                 IP = 0
@@ -477,18 +484,18 @@ let interpretWithMode (func: Function) (vm: VM option) (isRepl: bool) =
             }
             existingVM.Frames.Add(newFrame)
             existingVM
-        | _ -> 
+        | None -> 
             let newVM = createVM func
             appendOutput newVM ConstantPool "=== Constant Pool ==="
     let vm = appendOutput vm Execution "\n=== Program Execution ==="
     let finalVm = run vm
     (finalVm, finalVm.Streams)
-let interpret (func: Function) =
-    let _, streams = interpretWithMode func None false
-    streams
+    
+let interpret (func: Function) (vm: VM option) =
+    interpretWithMode func vm false  
 
 let replExecute (func: Function) (vm: VM option) =
-    interpretWithMode func vm true
+    interpretWithMode func vm true  
 
 let getStreamContent (stream: seq<string>) =
     String.concat Environment.NewLine (Seq.toArray stream)

@@ -363,7 +363,6 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
         match stmt with
         | SExpression(expr, _) ->
             compileExpr expr state
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.POP state)
         | SVariableDeclaration(name, initializer, _) -> compileVariableDeclaration name initializer state
         | SPrintStatement(expr, _) ->
             compileExpr expr state
