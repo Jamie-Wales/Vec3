@@ -37,7 +37,7 @@ let emitJump (opCode: OP_CODE) (state: CompilerState) : int =
     emitOpCode opCode state
     |> Result.map (fun _ -> state.CurrentFunction.Chunk.Code.Count - 1)
     |> Result.defaultValue 0
-    
+
 let emitJumpBack (offset: int) (state: CompilerState) : CompilerResult<unit> =
     let jump = state.CurrentFunction.Chunk.Code.Count - offset - 1
     let bytes = [| byte (jump &&& 0xff); byte ((jump >>> 8) &&& 0xff) |]
@@ -94,25 +94,26 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | ECall(callee, arguments, _) -> compileCall callee arguments state
         | EList(elements, _) -> compileList elements state
         | EIndex(list, index, _) -> compileIndex list index state
-        | ETuple(elements, _) ->
-            compileTuple elements state
-            
+        | ETuple(elements, _) -> compileTuple elements state
+
         | ERecordEmpty _ ->
             emitConstant (VNumber(VInteger 0)) state
             |> Result.bind (fun ((), state) -> emitConstant (Value.List []) state)
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
-        
+
         | ERecordExtend((name, value, _), record, _) ->
-            let name = match name with
-                        | { Lexeme = Identifier n } -> n
-                        | _ -> failwith "Invalid record field name"
-            
+            let name =
+                match name with
+                | { Lexeme = Identifier n } -> n
+                | _ -> failwith "Invalid record field name"
+
             // pretty horrbile, but it works
             // record is a list of lists, where each list is a pair of a string and a value
             // might be better to have specific value for pair, but then the compound create would need to be changed
             // or extra instruction for create pair, otherwise any two eleemnt list would be a pair
-            
+
             let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
+
             emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
             |> Result.bind (fun ((), state) -> compileExpr value state)
             |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 2)) state)
@@ -121,27 +122,28 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 1)) state)
             |> Result.bind (fun ((), state) -> compileExpr record state)
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
-            
-            
+
+
         | ERecordSelect(expr, token, _) ->
-            let name = match token with
-                        | { Lexeme = Identifier n } -> n
-                        | _ -> failwith "Invalid record field name"
-                        
+            let name =
+                match token with
+                | { Lexeme = Identifier n } -> n
+                | _ -> failwith "Invalid record field name"
+
             // same as index, but with a string and a record (push string)
             compileExpr expr state
             |> Result.bind (fun ((), state) ->
                 let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
+
                 emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
-                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_GET state)
-            )
-            
+                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_GET state))
+
         | EBlock(stmts, _) -> compileBlock stmts state // scope is fucked up think its global
-            
+
         // below not working
         | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
         | ETernary(cond, thenB, elseB, _) -> compileIf cond thenB elseB state
-        
+
 
 and compileIndex (list: Expr) (index: Expr) : Compiler<unit> =
     fun state ->
@@ -157,15 +159,12 @@ and compileTuple (elements: Expr list) : Compiler<unit> =
             | element :: rest ->
                 compileExpr element state
                 |> Result.bind (fun ((), state) -> compileElements rest state)
-        
+
         // same as list
         compileElements elements state
-        |> Result.bind (fun ((), state) ->
-            emitConstant (VNumber(VInteger elements.Length)) state)
-        |> Result.bind (fun ((), state) ->
-            emitConstant (Value.List []) state)
-        |> Result.bind (fun ((), state) ->
-            emitOpCode OP_CODE.COMPOUND_CREATE state)
+        |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger elements.Length)) state)
+        |> Result.bind (fun ((), state) -> emitConstant (Value.List []) state)
+        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
 
 and compileList (elements: Expr list) : Compiler<unit> =
     fun state ->
@@ -175,58 +174,60 @@ and compileList (elements: Expr list) : Compiler<unit> =
             | element :: rest ->
                 compileExpr element state
                 |> Result.bind (fun ((), state) -> compileElements rest state)
-        
+
         compileElements elements state
-        |> Result.bind (fun ((), state) ->
-            emitConstant (VNumber(VInteger elements.Length)) state)
-        |> Result.bind (fun ((), state) ->
-            emitConstant (Value.List []) state)
-        |> Result.bind (fun ((), state) ->
-            emitOpCode OP_CODE.COMPOUND_CREATE state)
-        
-        
+        |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger elements.Length)) state)
+        |> Result.bind (fun ((), state) -> emitConstant (Value.List []) state)
+        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
+
+
 and compileIf (condition: Expr) (thenBranch: Expr) (elseBranch: Expr) : Compiler<unit> =
     fun state ->
         compileExpr condition state
         |> Result.bind (fun ((), state) ->
             let elseJump = emitJump OP_CODE.JUMP_IF_FALSE state
+
             emitOpCode OP_CODE.POP state
             |> Result.bind (fun ((), state) -> compileExpr thenBranch state)
             |> Result.bind (fun ((), state) ->
                 let endJump = emitJump OP_CODE.JUMP state
+
                 emitJumpBack elseJump state
                 |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.POP state)
                 |> Result.bind (fun ((), state) -> compileExpr elseBranch state)
-                |> Result.bind (fun ((), state) -> emitJumpBack endJump state))
-            )
+                |> Result.bind (fun ((), state) -> emitJumpBack endJump state)))
 
 // block is a new scope and an expression, therefore last expression is returned in the block
 and compileBlock (stmts: Stmt list) : Compiler<unit> =
     fun state ->
-        let state = { state with ScopeDepth = state.ScopeDepth + 1 }
-        
+        let state =
+            { state with
+                ScopeDepth = state.ScopeDepth + 1 }
+
         let rec compileStmts stmts state =
             match stmts with
             | [] -> Ok((), state)
-            | [stmt] ->
+            | [ stmt ] ->
                 emitOpCode OP_CODE.BLOCK_RETURN state
                 |> Result.bind (fun ((), state) ->
                     match stmt with
                     | SExpression(expr, _) -> compileExpr expr state
                     | _ ->
                         compileStmt stmt state
-                        |> Result.bind (fun ((), state) -> emitConstant Value.Nil state
-                    ))
-                    
+                        |> Result.bind (fun ((), state) -> emitConstant Value.Nil state))
+
             | stmt :: rest ->
                 compileStmt stmt state
                 |> Result.bind (fun ((), state) -> compileStmts rest state)
-                
+
         emitOpCode OP_CODE.BLOCK_START state
         |> Result.bind (fun ((), newState) -> compileStmts stmts newState)
         |> Result.bind (fun ((), newState) -> emitOpCode OP_CODE.BLOCK_END newState)
-        |> Result.map (fun ((), newState) -> ((), { newState with ScopeDepth = newState.ScopeDepth - 1 }))
-        
+        |> Result.map (fun ((), newState) ->
+            ((),
+             { newState with
+                 ScopeDepth = newState.ScopeDepth - 1 }))
+
 
 and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
     fun state ->
@@ -251,6 +252,7 @@ and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
                                 Arity = newState.CurrentFunction.Arity + 1 } })
                 lambdaState
 
+
         let bodyResult = compileExpr body compiledParamsState
 
         match bodyResult with
@@ -266,11 +268,8 @@ and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
 
 and compileCall (callee: Expr) (arguments: Expr list) : Compiler<unit> =
     fun state ->
-        let calleeResult = compileExpr callee state
-
-        match calleeResult with
-        | Error e -> Error e
-        | Ok((), state) ->
+        compileExpr callee state
+        |> Result.bind (fun ((), state) ->
             let rec compileArgs args state =
                 match args with
                 | [] -> Ok((), state)
@@ -279,7 +278,7 @@ and compileCall (callee: Expr) (arguments: Expr list) : Compiler<unit> =
             compileArgs arguments state
             |> Result.bind (fun ((), state) ->
                 let argCount = byte arguments.Length
-                emitBytes [| byte (opCodeToByte OP_CODE.CALL); argCount |] state)
+                emitBytes [| byte (opCodeToByte OP_CODE.CALL); argCount |] state))
 
 and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
     fun state ->
@@ -298,10 +297,30 @@ and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
         | Operator Slash -> emitBinaryOp OP_CODE.DIVIDE state
         | Operator EqualEqual -> emitBinaryOp OP_CODE.EQUAL state
         | Operator DotStar ->
-            let expression = ECall(EIdentifier({ op with Lexeme = Identifier "dotProduct" }, TAny), [left; right], TAny)
+            let expression =
+                ECall(
+                    EIdentifier(
+                        { op with
+                            Lexeme = Identifier "dotProduct" },
+                        TAny
+                    ),
+                    [ left; right ],
+                    TAny
+                )
+
             compileExpr expression state
         | Operator Cross ->
-            let expression = ECall(EIdentifier({ op with Lexeme = Identifier "crossProduct" }, TAny), [left; right], TAny)
+            let expression =
+                ECall(
+                    EIdentifier(
+                        { op with
+                            Lexeme = Identifier "crossProduct" },
+                        TAny
+                    ),
+                    [ left; right ],
+                    TAny
+                )
+
             compileExpr expression state
         | Operator BangEqual ->
             emitBinaryOp OP_CODE.EQUAL state
@@ -334,7 +353,6 @@ and compileIdentifier (token: Token) : Compiler<unit> =
 
         match state.CurrentFunction.Locals |> List.tryFind (fun local -> local.Name = name) with
         | Some local ->
-            printfn $"Local: {name}"
             emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte local.Index |] state
         | None ->
             let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
@@ -368,6 +386,7 @@ and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit
             else
                 let constIndex =
                     addConstant state.CurrentFunction.Chunk (Value.String(lexemeToString name.Lexeme))
+
                 emitBytes [| byte (opCodeToByte OP_CODE.DEFINE_GLOBAL); byte constIndex |] state)
 
 let compileProgramState (program: Program) (state: CompilerState) : CompilerResult<Chunk> =

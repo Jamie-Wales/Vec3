@@ -1,15 +1,11 @@
 module Vec3.Interpreter.Backend.VM
 
 open System
-open System.Collections.Generic
 open Microsoft.FSharp.Collections
 open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
-
-
-                
                 
 let createOutputStreams() = {
     ConstantPool = Seq.empty
