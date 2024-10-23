@@ -438,6 +438,13 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
                 | [ ELiteral(LNumber(LInteger x), TInteger) ] -> ELiteral(LNumber(LInteger(if x < 0 then 0 - x else x)), TInteger)
                 | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(if x < 0.0 then 0.0 - x else x)), TFloat)
                 | _ -> failwith "invalid"
+                
+            | Operator(ColonColon, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                match args with
+                | [ arg; EList(xs, _) ] -> EList(arg :: xs, None)
+                | _ -> failwith "invalid"
+                
             | Keyword kw ->
                 match kw with
                 | Keyword.And ->

@@ -132,7 +132,7 @@ if x > 0 then
         | Some vm when vm.Stack.Count > 0 ->
             let topValue = vm.Stack.[vm.Stack.Count - 1]
             match topValue with
-            | PlotData (title, xs, ys) ->
+            | VPlotData (title, xs, ys) ->
                 let xValues = 
                     xs |> List.choose (function
                         | VNumber (VFloat f) -> Some f

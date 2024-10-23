@@ -16,7 +16,7 @@ let printLiteral = function
     | LUnit -> "()"
 
 let lexemeToString = function
-    | Operator (op, _) -> operatorToString op
+    | Operator (op, _) -> operatorToString op 
     | Keyword kw -> keywordToString kw
     | Identifier id -> id
     | Number num -> numberToString num

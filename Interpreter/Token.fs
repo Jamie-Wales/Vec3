@@ -180,7 +180,7 @@ let lexemeToString (lex: Lexeme): string =
     | Number n -> $"Number(%s{numberToString n})"
     | String s -> $"String(\"%s{s}\")"
     | Keyword k -> $"Keyword({k})"
-    | Operator (op, _) -> $"Operator(%s{operatorToString op})"
+    | Operator (op, fix) -> $"""Operator(%s{operatorToString op}){Option.defaultValue "" (Option.map (fun p -> $"({p})") fix)}"""
     | Identifier i -> $"Identifier(%s{i})"
     | Punctuation p -> $"Punctuation({punctuationToString p})"
 
@@ -225,9 +225,6 @@ type BuiltInFunction =
     
     | Cons
     
-    
-
-
 let builtInFunctionMap =
     [ Identifier "print", BuiltInFunction.Print
       Identifier "input", BuiltInFunction.Input
