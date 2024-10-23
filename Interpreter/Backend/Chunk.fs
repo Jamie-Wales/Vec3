@@ -79,7 +79,6 @@ let disassembleInstruction (chunk: Chunk) offset =
     | OP_CODE.TRUE -> simpleInstruction "OP_TRUE" offset
     | OP_CODE.FALSE -> simpleInstruction "OP_FALSE" offset
     | OP_CODE.NOT -> simpleInstruction "OP_NOT" offset
-    | OP_CODE.PRINT -> simpleInstruction "OP_PRINT" offset
     | OP_CODE.POP -> simpleInstruction "OP_POP" offset
     | OP_CODE.DEFINE_GLOBAL -> constantInstruction chunk "OP_DEFINE_GLOBAL" offset
     | OP_CODE.GET_GLOBAL -> constantInstruction chunk "OP_GET_GLOBAL" offset
@@ -173,7 +172,6 @@ let disassembleChunkToString (chunk: Chunk) name =
         | OP_CODE.TRUE -> simpleInstruction "OP_TRUE" offset
         | OP_CODE.FALSE -> simpleInstruction "OP_FALSE" offset
         | OP_CODE.NOT -> simpleInstruction "OP_NOT" offset
-        | OP_CODE.PRINT -> simpleInstruction "OP_PRINT" offset
         | OP_CODE.POP -> simpleInstruction "OP_POP" offset
         | OP_CODE.DEFINE_GLOBAL -> constantInstruction chunk "OP_DEFINE_GLOBAL" offset
         | OP_CODE.GET_GLOBAL -> constantInstruction chunk "OP_GET_GLOBAL" offset

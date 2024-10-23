@@ -16,7 +16,6 @@ type OP_CODE =
     | EQUAL
     | GREATER
     | LESS
-    | PRINT
     | POP
     | DEFINE_GLOBAL
     | GET_GLOBAL
@@ -28,13 +27,11 @@ type OP_CODE =
     | LOOP
     | CALL
     | CLOSURE
-    | ASSERT
+    | ASSERT // make func call
     
     | COMPOUND_CREATE
     | COMPOUND_GET
     
-    | BLOCK_START
-    | BLOCK_END
     | MOD
     
 
@@ -55,26 +52,23 @@ let opCodeToByte =
     | EQUAL -> 12uy
     | GREATER -> 13uy
     | LESS -> 14uy
-    | PRINT -> 15uy
-    | POP -> 16uy
-    | DEFINE_GLOBAL -> 17uy
-    | GET_GLOBAL -> 18uy
-    | SET_GLOBAL -> 19uy
-    | GET_LOCAL -> 20uy
-    | SET_LOCAL -> 21uy
-    | JUMP -> 22uy
-    | JUMP_IF_FALSE -> 23uy
-    | LOOP -> 24uy
-    | CALL -> 25uy
-    | CLOSURE -> 26uy
-    | ASSERT -> 27uy
+    | POP -> 15uy
+    | DEFINE_GLOBAL -> 16uy
+    | GET_GLOBAL -> 17uy
+    | SET_GLOBAL -> 18uy
+    | GET_LOCAL -> 19uy
+    | SET_LOCAL -> 20uy
+    | JUMP -> 21uy
+    | JUMP_IF_FALSE -> 22uy
+    | LOOP -> 23uy
+    | CALL -> 24uy
+    | CLOSURE -> 25uy
+    | ASSERT -> 26uy
     
-    | COMPOUND_CREATE -> 28uy
-    | COMPOUND_GET -> 29uy
+    | COMPOUND_CREATE -> 27uy
+    | COMPOUND_GET -> 28uy
     
-    | BLOCK_START -> 30uy
-    | BLOCK_END -> 31uy
-    | MOD -> 32uy
+    | MOD -> 29uy
     
     
 
@@ -95,24 +89,21 @@ let byteToOpCode byte =
     | 12uy -> EQUAL
     | 13uy -> GREATER
     | 14uy -> LESS
-    | 15uy -> PRINT
-    | 16uy -> POP
-    | 17uy -> DEFINE_GLOBAL
-    | 18uy -> GET_GLOBAL
-    | 19uy -> SET_GLOBAL
-    | 20uy -> GET_LOCAL
-    | 21uy -> SET_LOCAL
-    | 22uy -> JUMP
-    | 23uy -> JUMP_IF_FALSE
-    | 24uy -> LOOP
-    | 25uy -> CALL
-    | 26uy -> CLOSURE
-    | 27uy -> ASSERT
-    | 28uy -> COMPOUND_CREATE
-    | 29uy -> COMPOUND_GET
-    | 30uy -> BLOCK_START
-    | 31uy -> BLOCK_END
-    | 32uy -> MOD
+    | 15uy -> POP
+    | 16uy -> DEFINE_GLOBAL
+    | 17uy -> GET_GLOBAL
+    | 18uy -> SET_GLOBAL
+    | 19uy -> GET_LOCAL
+    | 20uy -> SET_LOCAL
+    | 21uy -> JUMP
+    | 22uy -> JUMP_IF_FALSE
+    | 23uy -> LOOP
+    | 24uy -> CALL
+    | 25uy -> CLOSURE
+    | 26uy -> ASSERT
+    | 27uy -> COMPOUND_CREATE
+    | 28uy -> COMPOUND_GET
+    | 29uy -> MOD
     | _ -> failwith $"Unknown OP_CODE: {byte}"
 
 let opCodeToString =
@@ -132,7 +123,6 @@ let opCodeToString =
     | EQUAL -> "EQUAL"
     | GREATER -> "GREATER"
     | LESS -> "LESS"
-    | PRINT -> "PRINT"
     | POP -> "POP"
     | DEFINE_GLOBAL -> "DEFINE_GLOBAL"
     | GET_GLOBAL -> "GET_GLOBAL"
@@ -147,9 +137,6 @@ let opCodeToString =
     | ASSERT -> "ASSERT"
     | COMPOUND_CREATE -> "COMPOUND_CREATE"
     | COMPOUND_GET -> "COMPOUND_GET"
-    
-    | BLOCK_START -> "BLOCK_START"
-    | BLOCK_END -> "BLOCK_END"
     
     | MOD -> "MOD"
     

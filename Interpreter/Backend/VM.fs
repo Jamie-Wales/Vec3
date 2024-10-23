@@ -415,10 +415,6 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
     | NOT ->
         let value, vm = pop vm
         push vm (Boolean(not (isTruthy value)))
-    | PRINT ->
-        let value, vm = pop vm
-        let vm = appendOutput vm StandardOutput $"{valueToString value}"
-        vm
     | POP ->
         let _, vm = pop vm
         vm
@@ -559,22 +555,6 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             | _ -> push vm Nil
         | _ -> failwith "Invalid index"
 
-    | BLOCK_START ->
-        let vm =
-            { vm with
-                ScopeDepth = vm.ScopeDepth + 1 }
-
-        vm
-    | BLOCK_END ->
-        let result, vm = pop vm
-
-        let vm =
-            { vm with
-                ScopeDepth = vm.ScopeDepth - 1 }
-
-        let vm = push vm result
-        vm
-    
     | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
 
 and runLoop vm =
@@ -709,9 +689,6 @@ let stepVM (vm: VM) =
                 | NOT ->
                     let value, vm = pop vm
                     push vm (Boolean(not (isTruthy value)))
-                | PRINT ->
-                    let value, vm = pop vm
-                    appendOutput vm StandardOutput $"{valueToString value}"
                 | POP ->
                     let _, vm = pop vm
                     vm

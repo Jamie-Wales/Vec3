@@ -36,88 +36,11 @@ let foldConstants (program: Program) : Program =
         | ELiteral(lit, typ) -> ELiteral(lit, typ)
         | EBlock(stmts, typ) -> EBlock(foldStatements stmts, typ)
         | EIdentifier(token, typ) -> EIdentifier(token, typ)
-        | EBinary(lhs, opp, rhs, typ) ->
-            let lhss = foldExpr lhs
-            let rhss = foldExpr rhs
-            
-            match opp, lhss, rhss with
-            | { Lexeme = Operator op }, ELiteral(LNumber lhs, _), ELiteral(LNumber rhs, _) ->
-                match op with
-                | Operator.Plus ->
-                    match evalAddition(lhs, rhs) with
-                    | Ok res -> ELiteral(LNumber(res), typ)
-                    | Error _ -> EBinary(lhss, opp, rhss, typ)
-                 
-                | Operator.Minus ->
-                    match evalSubtraction(lhs, rhs) with
-                    | Ok res -> ELiteral(LNumber(res), typ)
-                    | Error _ -> EBinary(lhss, opp, rhss, typ)
-                    
-                | Operator.Star ->
-                    match evalMultiplication(lhs, rhs) with
-                    | Ok res -> ELiteral(LNumber(res), typ)
-                    | Error _ -> EBinary(lhss, opp, rhss, typ)
-                    
-                | Operator.Slash ->
-                    match evalDivision(lhs, rhs) with
-                    | Ok res -> ELiteral(LNumber(res), typ)
-                    | Error _ -> EBinary(lhss, opp, rhss, typ)
-                | Operator.Caret
-                | Operator.StarStar ->
-                    match evalPower(lhs, rhs) with
-                    | Ok res -> ELiteral(LNumber(res), typ)
-                    | Error _ -> EBinary(lhss, opp, rhss, typ)
-                    
-                | Operator.Percent ->
-                    match evalModulo(lhs, rhs) with
-                    | Ok res -> ELiteral(LNumber(res), typ)
-                    | Error _ -> EBinary(lhss, opp, rhss, typ)
-                | Operator.EqualEqual -> ELiteral(LBool(lhs = rhs), typ)
-                | Operator.BangEqual -> ELiteral(LBool(lhs <> rhs), typ)
-                | Operator.Less -> ELiteral(LBool(lhs < rhs), typ)
-                | Operator.LessEqual -> ELiteral(LBool(lhs <= rhs), typ)
-                | Operator.Greater -> ELiteral(LBool(lhs > rhs), typ)
-                | Operator.GreaterEqual -> ELiteral(LBool(lhs >= rhs), typ)
-                | _ -> EBinary(lhss, opp, rhss, typ)
-            | { Lexeme = Operator op }, ELiteral(LBool lhs, _), ELiteral(LBool rhs, _) ->
-                match op with
-                | Operator.EqualEqual -> ELiteral(LBool(lhs = rhs), typ)
-                | Operator.BangEqual -> ELiteral(LBool(lhs <> rhs), typ)
-                | Operator.AmpersandAmpersand -> ELiteral(LBool(lhs && rhs), typ) // SHORT CIRCUIT
-                | Operator.PipePipe -> ELiteral(LBool(lhs || rhs), typ) // SHORT CIRCUIT
-                | _ -> EBinary(lhss, opp, rhss, typ)
-            | _ -> EBinary(lhss, opp, rhss, typ)
-        | EUnary(opp, expr, typ) as un ->
-            let valuee = foldExpr expr
-            match opp, valuee with
-            | { Lexeme = Operator op }, ELiteral(value, _) ->
-                match op with
-                | Bang ->
-                match value with
-                    | LNumber(LInteger x) -> ELiteral(LNumber(LInteger(if x = 0 then 1 else 0)), typ)
-                    | LNumber(LFloat x) -> ELiteral(LNumber(LFloat(if x = 0.0 then 1.0 else 0.0)), typ)
-                    | LBool b -> ELiteral(LBool(not b), typ)
-                    | _ -> un
-                | Minus ->
-                    match value with
-                    | LNumber(LInteger x) -> ELiteral(LNumber(LInteger(-x)), typ)
-                    | LNumber(LFloat x) -> ELiteral(LNumber(LFloat(-x)), typ)
-                    | LNumber(LRational(n, d)) -> ELiteral(LNumber(LRational(-n, d)), typ)
-                    | _ -> un
-
-                | Plus ->
-                    match value with
-                    | LNumber(LInteger x) -> ELiteral(LNumber(LInteger(if x < 0 then 0 - x else x)), typ)
-                    | LNumber(LFloat x) -> ELiteral(LNumber(LFloat(if x < 0.0 then 0.0 - x else x)), typ)
-                    | LNumber(LRational(n, d)) -> ELiteral(LNumber(LRational(if n < 0 then 0 - n, d else n, d)), typ)
-                    | _ -> EUnary(opp, valuee, typ)
-                | _ -> EUnary(opp, valuee, typ)
-            | _ -> EUnary(opp, valuee, typ)
         | EGrouping (expr, typ) -> EGrouping(foldExpr expr, typ)
         | ECall (expr, args, typ) -> ECall(foldExpr expr, List.map foldExpr args, typ)
         | EList (elems, typ) -> EList(List.map foldExpr elems, typ)
         | EIndex (expr, index, typ) -> EIndex(foldExpr expr, foldExpr index, typ)
-        | ELambda(args, body, typ) -> ELambda(args, foldExpr body, typ)
+        | ELambda(args, body, rt, typ) -> ELambda(args, foldExpr body, rt, typ)
         | EIf(condEx, thenEx, elseEx, typ) ->
             let cond = foldExpr condEx
             match cond with
@@ -136,7 +59,7 @@ let foldConstants (program: Program) : Program =
             let stop = foldExpr stop
             match start, stop with
             | ELiteral(LNumber(LInteger s), _), ELiteral(LNumber(LInteger e), _) ->
-                let range = [for i in s..e -> ELiteral(LNumber(LInteger i), typ)]
+                let range = [for i in s..e -> ELiteral(LNumber(LInteger i), TInteger)]
                 EList(range, typ)
             | _ -> ERange(start, stop, typ)
 

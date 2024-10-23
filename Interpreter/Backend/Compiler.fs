@@ -86,11 +86,11 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
     fun state ->
         match expr with
         | ELiteral(lit, _) -> compileLiteral lit state
-        | EBinary(left, op, right, _) -> compileBinary left op right state
         | EIdentifier(i, _) -> compileIdentifier i state
         | EGrouping(e, _) -> compileGrouping e state
-        | EUnary(token, u, _) -> compileUnary token u state
-        | ELambda(parameters, body, _) -> compileLambda parameters body state
+        | ELambda(parameters, body, rt, _) ->
+            let parameters = List.map fst parameters
+            compileLambda parameters body state
         | ECall(callee, arguments, _) -> compileCall callee arguments state
         | EList(elements, _) -> compileList elements state
         | EIndex(list, index, _) -> compileIndex list index state
@@ -101,10 +101,10 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
                     EIdentifier(
                         { Lexeme = Identifier "range"
                           Position = { Line = 0; Column = 0 } },
-                        TAny
+                        Some TAny
                     ),
                     [ start; stop ],
-                    TAny
+                    Some TAny
                 )
 
             compileExpr expression state
@@ -231,9 +231,7 @@ and compileBlock (stmts: Stmt list) : Compiler<unit> =
                 compileStmt stmt state
                 |> Result.bind (fun ((), state) -> compileStmts rest state)
 
-        emitOpCode OP_CODE.BLOCK_START state
-        |> Result.bind (fun ((), newState) -> compileStmts stmts newState)
-        |> Result.bind (fun ((), newState) -> emitOpCode OP_CODE.BLOCK_END newState)
+        compileStmts stmts state
         |> Result.map (fun ((), newState) ->
             ((),
              { newState with
@@ -302,58 +300,58 @@ and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
             |> Result.bind (fun ((), state) -> emitOpCode opCode state)
 
         match op.Lexeme with
-        | Operator Plus -> emitBinaryOp OP_CODE.ADD state
-        | Operator Minus -> emitBinaryOp OP_CODE.SUBTRACT state
-        | Operator Star -> emitBinaryOp OP_CODE.MULTIPLY state
-        | Operator Slash -> emitBinaryOp OP_CODE.DIVIDE state
-        | Operator EqualEqual -> emitBinaryOp OP_CODE.EQUAL state
-        | Operator Percent -> emitBinaryOp OP_CODE.MOD state
-        | Operator Caret
-        | Operator StarStar ->
+        | Operator (Plus, _) -> emitBinaryOp OP_CODE.ADD state
+        | Operator (Minus, _) -> emitBinaryOp OP_CODE.SUBTRACT state
+        | Operator (Star, _) -> emitBinaryOp OP_CODE.MULTIPLY state
+        | Operator (Slash, _) -> emitBinaryOp OP_CODE.DIVIDE state
+        | Operator (EqualEqual, _) -> emitBinaryOp OP_CODE.EQUAL state
+        | Operator (Percent, _) -> emitBinaryOp OP_CODE.MOD state
+        | Operator (Caret, _)
+        | Operator (StarStar, _) ->
             let expression =
-                ECall(EIdentifier({ op with Lexeme = Identifier "power" }, TAny), [ left; right ], TAny)
+                ECall(EIdentifier({ op with Lexeme = Identifier "power" }, Some TAny), [ left; right ], Some TAny)
 
             compileExpr expression state
-        | Operator DotStar ->
+        | Operator (DotStar, _) ->
             let expression =
                 ECall(
                     EIdentifier(
                         { op with
                             Lexeme = Identifier "dotProduct" },
-                        TAny
+                        Some TAny
                     ),
                     [ left; right ],
-                    TAny
+                    Some TAny
                 )
 
             compileExpr expression state
-        | Operator Cross ->
+        | Operator (Cross, _) ->
             let expression =
                 ECall(
                     EIdentifier(
                         { op with
                             Lexeme = Identifier "crossProduct" },
-                        TAny
+                        Some TAny
                     ),
                     [ left; right ],
-                    TAny
+                    Some TAny
                 )
 
             compileExpr expression state
-        | Operator ColonColon ->
+        | Operator (ColonColon, _) ->
             let expression =
-                ECall(EIdentifier({ op with Lexeme = Identifier "cons" }, TAny), [ left; right ], TAny)
+                ECall(EIdentifier({ op with Lexeme = Identifier "cons" }, Some TAny), [ left; right ], Some TAny)
 
             compileExpr expression state
-        | Operator BangEqual ->
+        | Operator (BangEqual, _) ->
             emitBinaryOp OP_CODE.EQUAL state
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)
-        | Operator Greater -> emitBinaryOp OP_CODE.GREATER state
-        | Operator GreaterEqual ->
+        | Operator (Greater, _) -> emitBinaryOp OP_CODE.GREATER state
+        | Operator (GreaterEqual, _) ->
             emitBinaryOp OP_CODE.LESS state
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)
-        | Operator Less -> emitBinaryOp OP_CODE.LESS state
-        | Operator LessEqual ->
+        | Operator (Less, _) -> emitBinaryOp OP_CODE.LESS state
+        | Operator (LessEqual, _) ->
             emitBinaryOp OP_CODE.GREATER state
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)
         | _ -> Error($"Unsupported binary operator: {op.Lexeme}", state)
@@ -364,8 +362,8 @@ and compileUnary (op: Token) (expr: Expr) : Compiler<unit> =
         let emitUnaryOp opCode state = emitOpCode opCode state
 
         match op.Lexeme with
-        | Operator Bang -> emitUnaryOp OP_CODE.NOT state
-        | Operator Minus -> emitUnaryOp OP_CODE.NEGATE state
+        | Operator (Bang, _) -> emitUnaryOp OP_CODE.NOT state
+        | Operator (Minus, _) -> emitUnaryOp OP_CODE.NEGATE state
         | _ -> Error($"Unsupported unary operator: {op.Lexeme}", state)
 
 and compileGrouping grouping : Compiler<unit> = fun state -> compileExpr grouping state
