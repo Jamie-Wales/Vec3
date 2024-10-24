@@ -1,6 +1,7 @@
 module Vec3.Interpreter.Typing.Inference
 
 open Microsoft.FSharp.Core
+open Vec3.Interpreter
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open Builtins
@@ -139,6 +140,10 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
     | _, TAny -> Ok Map.empty
     
     | TTypeVariable tv, TTypeVariable tv' when tv = tv' -> Ok Map.empty
+    
+    | TTypeVariable tv, TConstrain(var, f)
+    | TConstrain(var, f), TTypeVariable tv ->
+        Ok <| Map.add tv (TConstrain(var, f)) Map.empty
 
     | TTypeVariable tv, t
     | t, TTypeVariable tv ->
@@ -146,12 +151,17 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
             Error [ TypeError.TypeMismatch(Empty, TTypeVariable tv, t) ]
         else
             Ok <| Map.add tv t Map.empty
-
+        
     | TConstrain(var1, f1), TConstrain(var2, f2) ->
-        if var1 <> var2 then
-            Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
-        else
+        if var1 = var2 then
             Ok Map.empty
+        else
+            let tv = freshTypeVar()
+            
+            let map = Map.add var1 (TConstrain(tv, fun t -> f1 t && f2 t)) Map.empty
+            let map = Map.add var2 (TConstrain(tv, fun t -> f1 t && f2 t)) map
+            
+            Ok map
 
     | TConstrain(var, f), t
     | t, TConstrain(var, f) ->
@@ -202,7 +212,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
     | TRecord row1, TRecord row2 -> unify row1 row2
     | TRowEmpty, TRowEmpty -> Ok Map.empty
     | TRowExtend(label1, typ1, rest_rows1), (TRowExtend _ as row2) ->
-        let rec rewrite_row row label field_typ =
+        let rec rewrite_row (row: Row) (label: Token) (field_typ: TType) =
             match row with
             | TRowEmpty -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
             | TRowExtend(label2, typ2, rest_rows2) when label1.Lexeme = label2.Lexeme -> Ok(typ2, rest_rows2)
@@ -218,6 +228,8 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
                 match resolved with
                 | Some(TRowExtend(label2, typ2, rest_rows2)) when label1.Lexeme = label2.Lexeme -> Ok(typ2, rest_rows2)
                 | _ -> Ok(TRowExtend(label1, field_typ, TTypeVariable v), TRowEmpty)
+            
+            | TConstrain(v, _) -> rewrite_row (TTypeVariable v) label field_typ
 
             | _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 
@@ -225,22 +237,26 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
         let rest_row_1_var =
             match rest_rows1 with
             | TTypeVariable v -> Some(TTypeVariable v)
+            | TConstrain(v, _) -> Some(TTypeVariable v)
             | _ -> None
 
         let rest_row_2_var =
             match row2 with
             | TRowExtend(_, _, TTypeVariable v) -> Some(TTypeVariable v)
+            | TRowExtend(_, _, TConstrain(v, _)) -> Some(TTypeVariable v)
             | _ -> None
 
         let rest_row_1 =
             match rest_row_1_var with
             | Some(TTypeVariable v) -> TTypeVariable v
+            | Some(TConstrain(v, _)) -> TTypeVariable v
             | Some _ -> rest_rows1
             | None -> rest_rows1
 
         let rest_row_2 =
             match rest_row_2_var with
             | Some(TTypeVariable v) -> TTypeVariable v
+            | Some(TConstrain(v, _)) -> TTypeVariable v
             | _ -> row2
 
         let rewritten = rewrite_row rest_row_2 label1 typ1
@@ -281,6 +297,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
                 Ok Map.empty
             else
                 let sub = Map.add v1 (TTensor(typ1, DVar v2)) Map.empty // this is wrong
+                resolvedDims.Value <- Map.add v1 (DVar v2) resolvedDims.Value
                 Ok sub
         | DVar v, DAny
         | DAny, DVar v ->
@@ -325,10 +342,9 @@ let rec unifyWithSubstitution
         let paramType = applySubstitution aliases currentSubs paramType
         let argType = applySubstitution aliases currentSubs argType
 
-        match unify aliases paramType argType with
-        | Error errors -> Error errors
-        | Ok newSub ->
-            let combinedSubs = combineMaps currentSubs newSub
+        unify aliases paramType argType
+        |> Result.bind (fun sub ->
+            let combinedSubs = combineMaps currentSubs sub
 
             let updatedRestParamTypes =
                 List.map (applySubstitution aliases combinedSubs) restParamTypes
@@ -337,6 +353,7 @@ let rec unifyWithSubstitution
                 List.map (applySubstitution aliases combinedSubs) restArgTypes
 
             unifyWithSubstitution aliases updatedRestParamTypes updatedRestArgTypes combinedSubs
+            )
 
     | _ ->
         Error

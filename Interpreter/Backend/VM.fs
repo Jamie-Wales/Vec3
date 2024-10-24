@@ -8,6 +8,8 @@ open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Token
 
+/// TODO: massibe problem with calling, think function gets left on the stack, maybe only builitns
+
 let createOutputStreams () =
     { ConstantPool = Seq.empty
       Disassembly = Seq.empty
@@ -91,7 +93,10 @@ let defineGlobal (vm: VM) (name: string) (value: Value) =
     let globalOutput = $"{name} = {valueToString value}"
     appendOutput updatedVM Globals globalOutput
 
-let getGlobal (vm: VM) (name: string) = Map.tryFind name vm.Globals
+let getGlobal (vm: VM) (name: string) =
+    printfn $"Getting global: {name}"
+    Map.iter (fun k v -> printfn $"Global: {k} = {valueToString v}") vm.Globals
+    Map.tryFind name vm.Globals
 
 let binaryOp (vm: VM) (op: Value -> Value -> Value) =
     let b, vm = pop vm
@@ -138,8 +143,13 @@ let callValue (vm: VM) (argCount: int) : VM =
             |> List.map (fun _ -> let value, _ = pop vm in value)
             |> List.rev
 
-        func args vm
+        let vm = func args vm
+        let res, vm = pop vm
+        let _, vm = pop vm
+        push vm res
     | _ -> failwith $"Can only call functions, got: {valueToString callee}"
+    
+    // remove function from stack
 
 let rec builtins () =
     [ Identifier "plot",
@@ -305,12 +315,14 @@ let rec builtins () =
 
       Operator(Plus, Some Infix),
       VBuiltin(fun args vm ->
+          printfn $"add: {args}"
           match args with
           | [ a; b ] -> add a b |> push vm
           | _ -> failwith "Expected two arguments for +")
 
       Operator(Minus, Some Infix),
       VBuiltin(fun args vm ->
+          printfn $"sub: {args}"
           match args with
           | [ a; b ] -> subtract a b |> push vm
           | _ -> failwith "Expected two arguments for -")
@@ -445,7 +457,6 @@ and createVM (mainFunc: Function) : VM =
         { Frames = ResizeArray<CallFrame>()
           Stack = ResizeArray<Value>(256)
           ScopeDepth = 0
-          // turn key to string
           Globals = builtins ()
           Streams =
             { ConstantPool = constantPool
@@ -506,44 +517,9 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
 
         vm.Stack[index] <- value
         vm
-    | ADD -> binaryOp vm add
-    | SUBTRACT -> binaryOp vm subtract
-    | MULTIPLY -> binaryOp vm multiply
-    | DIVIDE -> binaryOp vm divide
-    | NEGATE ->
-        let value, vm = pop vm
-        push vm (negate value)
-    | EQUAL ->
-        let b, vm = pop vm
-        let a, vm = pop vm
-        push vm (VBoolean(valuesEqual a b))
-    | GREATER ->
-        let b, vm = pop vm
-        let a, vm = pop vm
-
-        match (a, b) with
-        | VNumber x, VNumber y -> push vm (VBoolean(x > y))
-        | _ -> failwith "Operands must be numbers"
-    | LESS ->
-        let b, vm = pop vm
-        let a, vm = pop vm
-
-        match (a, b) with
-        | VNumber x, VNumber y -> push vm (VBoolean(x < y))
-        | _ -> failwith "Operands must be numbers"
-    | MOD ->
-        let b, vm = pop vm
-        let a, vm = pop vm
-
-        match (a, b) with
-        | VNumber(VInteger x), VNumber(VInteger y) -> push vm (VNumber(VInteger(x % y)))
-        | _ -> failwith "Operands must be integers"
     | TRUE -> push vm (VBoolean true)
     | FALSE -> push vm (VBoolean false)
     | NIL -> push vm VNil
-    | NOT ->
-        let value, vm = pop vm
-        push vm (VBoolean(not (isTruthy value)))
     | POP ->
         let _, vm = pop vm
         vm
@@ -585,8 +561,8 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         | _ -> failwith "Expected string constant for variable name in SET_GLOBAL"
     | CALL ->
         let vm, argCount = readByte vm
-        let vm = callValue vm (int argCount)
-        vm
+        
+        callValue vm (int argCount)
     | RETURN ->
         let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
         vm.Frames.RemoveAt(vm.Frames.Count - 1)
@@ -788,36 +764,8 @@ let stepVM (vm: VM) =
                 | CONSTANT_LONG ->
                     let constant, vm = readConstantLong vm
                     push vm constant
-                | ADD -> binaryOp vm add
-                | SUBTRACT -> binaryOp vm subtract
-                | MULTIPLY -> binaryOp vm multiply
-                | DIVIDE -> binaryOp vm divide
-                | NEGATE ->
-                    let value, vm = pop vm
-                    push vm (negate value)
-                | EQUAL ->
-                    let b, vm = pop vm
-                    let a, vm = pop vm
-                    push vm (VBoolean(valuesEqual a b))
-                | GREATER ->
-                    let b, vm = pop vm
-                    let a, vm = pop vm
-
-                    match (a, b) with
-                    | VNumber x, VNumber y -> push vm (VBoolean(x > y))
-                    | _ -> failwith "Operands must be numbers"
-                | LESS ->
-                    let b, vm = pop vm
-                    let a, vm = pop vm
-
-                    match (a, b) with
-                    | VNumber x, VNumber y -> push vm (VBoolean(x < y))
-                    | _ -> failwith "Operands must be numbers"
                 | TRUE -> push vm (VBoolean true)
                 | FALSE -> push vm (VBoolean false)
-                | NOT ->
-                    let value, vm = pop vm
-                    push vm (VBoolean(not (isTruthy value)))
                 | POP ->
                     let _, vm = pop vm
                     vm

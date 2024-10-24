@@ -12,9 +12,10 @@ let foldType =
     
 let consType =
     let listTyp = TTypeVariable (freshTypeVar())
-    let dimsVar = DVar (freshTypeVar())
+    let dimsVar1 = DVar (freshTypeVar())
+    let dimsVar2 = DVar (freshTypeVar())
     
-    TFunction([listTyp; TTensor(listTyp, DAny)], TTensor(listTyp, DAny))
+    TFunction([listTyp; TTensor(listTyp, dimsVar1)], TTensor(listTyp, dimsVar2))
     
 let plotType =
     let dimsVar = DVar (freshTypeVar ())
@@ -33,19 +34,19 @@ let minus =
     TFunction([constrain; constrain], constrain)
     
 let mul =
-    let typeVar = (freshTypeVar())
+    let typeVar = freshTypeVar()
     let constrain = TConstrain(typeVar, _.IsArithmetic)
     
     TFunction([constrain; constrain], constrain)
     
 let div =
-    let typeVar = (freshTypeVar())
+    let typeVar = freshTypeVar()
     let constrain = TConstrain(typeVar, _.IsArithmetic)
     
     TFunction([constrain; constrain], constrain)
     
 let pow =
-    let typeVar = (freshTypeVar())
+    let typeVar = freshTypeVar()
     let constrain = TConstrain(typeVar, _.IsArithmetic)
     
     TFunction([constrain; constrain], constrain)
@@ -57,19 +58,19 @@ let eq =
     TFunction([TAny; TAny], TBool)
     
 let lt =
-    let typeVar = (freshTypeVar())
+    let typeVar = freshTypeVar()
     let constrain = TConstrain(typeVar, _.IsArithmetic)
     
     TFunction([constrain; constrain], TBool)
     
 let gt =
-    let typeVar = (freshTypeVar())
+    let typeVar = freshTypeVar()
     let constrain = TConstrain(typeVar, _.IsArithmetic)
     
     TFunction([constrain; constrain], TBool)
     
 let lte =
-    let typeVar = (freshTypeVar())
+    let typeVar = freshTypeVar()
     let constrain = TConstrain(typeVar, _.IsArithmetic)
     
     TFunction([constrain; constrain], TBool)
@@ -96,11 +97,23 @@ let neg =
     TFunction([constrain], constrain)
     
 let unneg =
-    let typeVar = (freshTypeVar())
+    let typeVar = freshTypeVar()
     let constrain = TConstrain(typeVar, _.IsArithmetic)
     
     TFunction([constrain], constrain)
     
+let crossProduct =
+    let tensorTypeVar = TTypeVariable (freshTypeVar())
+    
+    TFunction([TTensor(tensorTypeVar, Dims [ 3 ]); TTensor(tensorTypeVar, Dims [ 3 ])], TTensor(tensorTypeVar, Dims[ 3 ]))
+    
+let dotProduct =
+    let tensorTypeVar = freshTypeVar()
+    let dimsVar = DVar (freshTypeVar())
+    let constrain = TConstrain(tensorTypeVar, _.IsArithmetic)
+    
+    TFunction([TTensor(constrain, dimsVar); TTensor(constrain, dimsVar)], constrain)
+        
 
 let BuiltinFunctions: Map<BuiltInFunction, TType> =
     [ Print, TFunction([ TAny ], TUnit)
@@ -136,8 +149,8 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       Gt, gt
       Gte, gte
       
-      CrossProduct, TNever
-      DotProduct, TNever // TODO
+      CrossProduct, crossProduct
+      DotProduct, dotProduct
         
       ]
     |> Map.ofList

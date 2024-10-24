@@ -88,7 +88,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | ELiteral(lit, _) -> compileLiteral lit state
         | EIdentifier(i, _) -> compileIdentifier i state
         | EGrouping(e, _) -> compileGrouping e state
-        | ELambda(parameters, body, rt, _) ->
+        | ELambda(parameters, body, _, _) ->
             let parameters = List.map fst parameters
             compileLambda parameters body state
         | ECall(callee, arguments, _) -> compileCall callee arguments state
@@ -101,10 +101,10 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
                     EIdentifier(
                         { Lexeme = Identifier "range"
                           Position = { Line = 0; Column = 0 } },
-                        Some TAny
+                        None
                     ),
                     [ start; stop ],
-                    Some TAny
+                    None
                 )
 
             compileExpr expression state
@@ -253,19 +253,17 @@ and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
             parameters
             |> List.fold
                 (fun state param ->
-                    let newState = addLocal (lexemeToString param.Lexeme) state
+                    let state = addLocal (lexemeToString param.Lexeme) state
 
-                    { newState with
+                    { state with
                         CurrentFunction =
-                            { newState.CurrentFunction with
-                                Arity = newState.CurrentFunction.Arity + 1 } })
+                            { state.CurrentFunction with
+                                Arity = state.CurrentFunction.Arity + 1 } })
                 lambdaState
 
 
-        let bodyResult = compileExpr body compiledParamsState
-
-        match bodyResult with
-        | Ok((), finalLambdaState) ->
+        compileExpr body compiledParamsState
+        |> Result.bind (fun ((), finalLambdaState) ->
             match emitOpCode OP_CODE.RETURN finalLambdaState with
             | Ok((), finalState) ->
                 let constIndex =
@@ -273,99 +271,22 @@ and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
 
                 emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
             | Error e -> Error e
-        | Error e -> Error e
+        )
 
 and compileCall (callee: Expr) (arguments: Expr list) : Compiler<unit> =
-    printfn $"{callee}"
+    printfn $"Compiling call: {callee} with arguments: {arguments}"
     fun state ->
+        let rec compileArguments arguments state =
+            match arguments with
+            | [] -> Ok((), state)
+            | arg :: rest ->
+                compileExpr arg state
+                |> Result.bind (fun ((), state) -> compileArguments rest state)
+                
         compileExpr callee state
+        |> Result.bind (fun ((), state) -> compileArguments arguments state)
         |> Result.bind (fun ((), state) ->
-            let rec compileArgs args state =
-                match args with
-                | [] -> Ok((), state)
-                | arg :: rest -> compileExpr arg state |> Result.bind (fun ((), state) -> compileArgs rest state)
-
-            compileArgs arguments state
-            |> Result.bind (fun ((), state) ->
-                let argCount = byte arguments.Length
-                emitBytes [| byte (opCodeToByte OP_CODE.CALL); argCount |] state))
-
-and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
-    fun state ->
-        let compileOperands state =
-            compileExpr left state
-            |> Result.bind (fun ((), state) -> compileExpr right state)
-
-        let emitBinaryOp opCode state =
-            compileOperands state
-            |> Result.bind (fun ((), state) -> emitOpCode opCode state)
-
-        match op.Lexeme with
-        | Operator (Plus, _) -> emitBinaryOp OP_CODE.ADD state
-        | Operator (Minus, _) -> emitBinaryOp OP_CODE.SUBTRACT state
-        | Operator (Star, _) -> emitBinaryOp OP_CODE.MULTIPLY state
-        | Operator (Slash, _) -> emitBinaryOp OP_CODE.DIVIDE state
-        | Operator (EqualEqual, _) -> emitBinaryOp OP_CODE.EQUAL state
-        | Operator (Percent, _) -> emitBinaryOp OP_CODE.MOD state
-        | Operator (Caret, _)
-        | Operator (StarStar, _) ->
-            let expression =
-                ECall(EIdentifier({ op with Lexeme = Identifier "power" }, Some TAny), [ left; right ], Some TAny)
-
-            compileExpr expression state
-        | Operator (DotStar, _) ->
-            let expression =
-                ECall(
-                    EIdentifier(
-                        { op with
-                            Lexeme = Identifier "dotProduct" },
-                        Some TAny
-                    ),
-                    [ left; right ],
-                    Some TAny
-                )
-
-            compileExpr expression state
-        | Operator (Cross, _) ->
-            let expression =
-                ECall(
-                    EIdentifier(
-                        { op with
-                            Lexeme = Identifier "crossProduct" },
-                        Some TAny
-                    ),
-                    [ left; right ],
-                    Some TAny
-                )
-
-            compileExpr expression state
-        | Operator (ColonColon, _) ->
-            let expression =
-                ECall(EIdentifier({ op with Lexeme = Identifier "cons" }, Some TAny), [ left; right ], Some TAny)
-
-            compileExpr expression state
-        | Operator (BangEqual, _) ->
-            emitBinaryOp OP_CODE.EQUAL state
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)
-        | Operator (Greater, _) -> emitBinaryOp OP_CODE.GREATER state
-        | Operator (GreaterEqual, _) ->
-            emitBinaryOp OP_CODE.LESS state
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)
-        | Operator (Less, _) -> emitBinaryOp OP_CODE.LESS state
-        | Operator (LessEqual, _) ->
-            emitBinaryOp OP_CODE.GREATER state
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)
-        | _ -> Error($"Unsupported binary operator: {op.Lexeme}", state)
-
-and compileUnary (op: Token) (expr: Expr) : Compiler<unit> =
-    fun state ->
-        let _ = compileExpr expr state
-        let emitUnaryOp opCode state = emitOpCode opCode state
-
-        match op.Lexeme with
-        | Operator (Bang, _) -> emitUnaryOp OP_CODE.NOT state
-        | Operator (Minus, _) -> emitUnaryOp OP_CODE.NEGATE state
-        | _ -> Error($"Unsupported unary operator: {op.Lexeme}", state)
+            emitBytes [| byte (opCodeToByte OP_CODE.CALL); byte (List.length arguments) |] state)
 
 and compileGrouping grouping : Compiler<unit> = fun state -> compileExpr grouping state
 
