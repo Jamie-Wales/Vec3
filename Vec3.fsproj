@@ -22,6 +22,9 @@
         <Compile Include="Interpreter\Backend\VM.fs" />
         <Compile Include="Interpreter\Backend\Compiler.fs" />
         <Compile Include="Interpreter\Typing\Exceptions.fs" />
+        <Compile Include="Interpreter\Typing\Types.fs" />
+        <Compile Include="Interpreter\Typing\Substitution.fs" />
+        <Compile Include="Interpreter\Typing\Generalisation.fs" />
         <Compile Include="Interpreter\Typing\Builtins.fs" />
         <Compile Include="Interpreter\Typing\Inference.fs" />
         <Compile Include="Interpreter\Eval.fs" />

@@ -1,7 +1,9 @@
 module Vec3.Interpreter.Typing.Inference
 
 open Microsoft.FSharp.Core
-open Vec3.Interpreter
+open Types
+open Substitution
+open Generalisation
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open Builtins
@@ -11,18 +13,14 @@ open Exceptions
 // or let x = (y) -> y() + y() should infer y as a function of TFunction([], TConstrain(var, [ TInteger; TFloat; TRational; TComplex ]))
 // but doesnt, very difficult to implement
 
-type TypeEnv = Map<Lexeme, TType>
-
-type TypeResult<'a> = Result<'a, TypeErrors>
-
-type Substitution = Map<TypeVar, TType>
-
-let defaultTypeEnv: TypeEnv =
-    builtInFunctionMap |> Map.map (fun _ builtIn -> BuiltinFunctions[builtIn])
+// let defaultTypeEnv: TypeEnv =
+//     builtInFunctionMap |> Map.map (fun _ builtIn ->
+//         let typ = BuiltinFunctions[builtIn]
+//         Forall([], typ))
+let defaultTypeEnv: TypeEnv = builtInFunctionMap |> Map.map(fun _ builtIn -> BuiltinFunctions[builtIn])
 
 let combineMaps map1 map2 =
     Map.fold (fun acc key value -> Map.add key value acc) map2 map1
-
 
 let rec occursCheck (tv: TypeVar) (t: TType) : bool =
     match t with
@@ -54,67 +52,8 @@ let checkLiteral (lit: Literal) : TType =
 let checkIdentifier (env: TypeEnv) (token: Token) : TType TypeResult =
     match Map.tryFind token.Lexeme env with
     | Some t -> Ok t
+        // Ok (instantiate t)
     | None -> Error [ TypeError.UndefinedVariable token ]
-
-type ResolvedType = Map<TypeVar, TType>
-type ResolvedDims = Map<TypeVar, Dims>
-type AliasMap = Map<Lexeme, TType>
-
-// make this immutable later, as it specialises functions too much
-let resolvedTypes: Ref<ResolvedType> = ref Map.empty
-let resolvedDims: Ref<ResolvedDims> = ref Map.empty
-
-let rec resolveAlias (typ: TType) (env: AliasMap) : TType =
-    match typ with
-    | TAlias(name, _) ->
-        let resolved = Map.tryFind name.Lexeme env
-
-        match resolved with
-        | Some t -> resolveAlias t env
-        | None -> typ
-    | TFunction(params', ret) -> TFunction(List.map (fun t -> resolveAlias t env) params', resolveAlias ret env)
-    | TTuple types -> TTuple(List.map (fun t -> resolveAlias t env) types)
-    | TTensor(typ, dims) -> TTensor(resolveAlias typ env, dims)
-    | TRecord row -> TRecord(resolveAlias row env)
-    | TRowExtend(label, typ, row) -> TRowExtend(label, resolveAlias typ env, resolveAlias row env)
-    | _ -> typ
-
-// attempts to substitute type variables with concrete types
-let rec applySubstitution (env: AliasMap) (sub: Substitution) (t: TType) : TType =
-    let t = resolveAlias t env
-
-    match t with
-    | TTypeVariable tv ->
-        match Map.tryFind tv sub with
-        | Some t' -> applySubstitution env sub t'
-        | None -> t
-    | TFunction(paramsTypes, retType) ->
-        let newParams = List.map (applySubstitution env sub) paramsTypes
-        let newRet = applySubstitution env sub retType
-        TFunction(newParams, newRet)
-    | TTuple types -> TTuple(List.map (applySubstitution env sub) types)
-    | TTensor(typ, dims) ->
-        let newTyp = applySubstitution env sub typ
-
-        match dims with
-        | DAny -> TTensor(newTyp, DAny)
-        | Dims sizes -> TTensor(newTyp, Dims sizes)
-        | DVar v ->
-            match Map.tryFind v resolvedDims.Value with
-            | Some t' -> TTensor(newTyp, t')
-            | None -> TTensor(newTyp, DVar v)
-    | TConstrain(var, f) ->
-        match Map.tryFind var sub with
-        | Some t' -> applySubstitution env sub t'
-        | None -> TConstrain(var, f)
-    | TRecord row -> TRecord(applySubstitution env sub row)
-    | TRowExtend(label, typ, row) -> TRowExtend(label, applySubstitution env sub typ, applySubstitution env sub row)
-    | t -> t
-
-// attempts to substitute type variables with concrete types in an environment
-let applySubstitutionToEnv (aliases: AliasMap) (sub: Substitution) (env: TypeEnv) : TypeEnv =
-    Map.map (fun _ -> applySubstitution aliases sub) env
-
 
 // attempts to unify two types
 let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeResult =
@@ -148,7 +87,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
     | TTypeVariable tv, t
     | t, TTypeVariable tv ->
         if occursCheck tv t then
-            Error [ TypeError.TypeMismatch(Empty, TTypeVariable tv, t) ]
+            Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
         else
             Ok <| Map.add tv t Map.empty
         
@@ -311,21 +250,6 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
     | _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 
 
-let rec freeTypeVars (typ: TType) : TypeVar list =
-    match typ with
-    | TTypeVariable tv -> [ tv ]
-    | TFunction(paramTypes, retType) -> List.collect freeTypeVars paramTypes @ freeTypeVars retType
-    | TTuple types -> List.collect freeTypeVars types
-    | TTensor(typ, dims) ->
-        match dims with
-        | DVar v -> v :: freeTypeVars typ
-        | _ -> freeTypeVars typ
-    | TConstrain(var, _) -> [var]
-    | TAlias(_, typ) -> Option.map freeTypeVars typ |> Option.defaultValue []
-    | _ -> []
-
-let freeTypeVarsInEnv (env: TypeEnv) : TypeVar list =
-    env |> Map.toList |> List.collect (fun (_, typ) -> freeTypeVars typ)
 
 // let defaultTypeEnv =
 //     List.fold (fun acc (name, typ) -> Map.add name (Forall([] ,typ)) acc) Map.empty BuiltinFunctions
@@ -395,21 +319,30 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         |> Result.bind (fun t -> Ok(t, Map.empty, EIdentifier(token, Some t)))
     | ELambda(paramList, body, returnT, _) ->
         let paramTypes = List.map snd paramList
-        let paramTypes = List.map (Option.defaultValue (TTypeVariable(freshTypeVar()))) paramTypes
+        
+        let newParamType typ =
+            match typ with
+            | Some t -> t
+            | None -> TTypeVariable(freshTypeVar())
+        let paramTypes = List.map newParamType paramTypes
         let paramList = List.map fst paramList
-
+        
         let newEnv =
             List.fold2
                 (fun acc param typ ->
                     match param.Lexeme with
-                    | Identifier _ as id -> Map.add id typ acc
+                    | Identifier _ as id ->
+                        // let typScheme = generalize acc typ
+                        Map.add id typ acc
                     | _ -> acc)
                 env
                 paramList
                 paramTypes
+        
 
         infer aliases newEnv body
         |> Result.bind (fun (bodyType, sub, expr) ->
+            
             let paramTypes = List.map (applySubstitution aliases sub) paramTypes
             let paramList = List.zip paramList paramTypes
             let paramList = List.map (fun (id, typ) -> (id, Some typ)) paramList
@@ -758,7 +691,9 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
 
                 let env =
                     match name with
-                    | { Lexeme = Identifier _ as id } -> Map.add id typ env
+                    | { Lexeme = Identifier _ as id } ->
+                        // let scheme = generalize env typ
+                        Map.add id typ env
                     | _ -> env
 
                 Ok(env, aliases, sub, SVariableDeclaration(name, expr, Some typ))))

@@ -2,6 +2,10 @@ module Vec3.Interpreter.Typing.Builtins
 
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
+open Vec3.Interpreter.Typing.Types
+
+    
+        
 
 let foldType =
     let listTyp = TTypeVariable (freshTypeVar())

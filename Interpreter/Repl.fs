@@ -6,6 +6,7 @@ open Vec3.Interpreter.Backend.Compiler
 open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Typing.Inference
+open Vec3.Interpreter.Typing.Types
 open Vec3.Interpreter.Typing.Exceptions
 open Vec3.Interpreter.Eval
 open Vec3.Interpreter.Preprocessor
