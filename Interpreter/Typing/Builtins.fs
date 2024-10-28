@@ -155,6 +155,17 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       
       CrossProduct, crossProduct
       DotProduct, dotProduct
-        
+      
+      BInt, TFunction([ TAny ], TInteger)
+      BFloat, TFunction([ TAny ], TFloat)
+      BComplex, TFunction([ TAny ], TComplex)
+      BRational, TFunction([TAny], TRational)
+      BString, TFunction([TAny], TString)
+      BBool, TFunction([TAny], TBool)
       ]
+    |> Map.ofList
+
+let BuiltinConstants: Map<Lexeme, TType> =
+    [ Identifier "PI", TFloat 
+      Identifier "E", TFloat ]
     |> Map.ofList

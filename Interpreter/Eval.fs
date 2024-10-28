@@ -11,6 +11,49 @@ type EvalError = string
 
 type EvalResult<'a> = Result<'a, EvalError>
 
+let defaultEnv: Env = [
+                        Identifier "PI", ELiteral(LNumber(LFloat(Math.PI)), TFloat)
+                        Identifier "E", ELiteral(LNumber(LFloat(Math.E)), TFloat)
+                        ] |> Map.ofList
+
+let coerceToInt arg =
+    match arg with
+    | ELiteral(LNumber(LInteger x), _) -> Ok(ELiteral(LNumber(LInteger x), TInteger))
+    | ELiteral(LNumber(LFloat x), _) -> Ok(ELiteral(LNumber(LInteger(int x)), TInteger))
+    | _ -> Error "invalid"
+
+let coerceToFloat arg =
+    match arg with
+    | ELiteral(LNumber(LInteger x), _) -> Ok(ELiteral(LNumber(LFloat(float x)), TFloat))
+    | ELiteral(LNumber(LFloat x), _) -> Ok(ELiteral(LNumber(LFloat x), TFloat))
+    | _ -> Error "invalid"
+    
+let coerceToComplex arg =
+    match arg with
+    | ELiteral(LNumber(LInteger x), _) -> Ok(ELiteral(LNumber(LComplex(float x, 0.0)), TComplex))
+    | ELiteral(LNumber(LFloat x), _) -> Ok(ELiteral(LNumber(LComplex(x, 0.0)), TComplex))
+    | ELiteral(LNumber(LComplex(r, i)), _) -> Ok(ELiteral(LNumber(LComplex(r, i)), TComplex))
+    | _ -> Error "invalid"
+    
+let coerceToRational arg =
+    match arg with
+    | ELiteral(LNumber(LInteger x), _) -> Ok(ELiteral(LNumber(LRational(x, 1)), TRational))
+    | ELiteral(LNumber(LFloat x), _) -> Ok(ELiteral(LNumber(LRational(int x, 1)), TRational))
+    | ELiteral(LNumber(LRational(n, d)), _) -> Ok(ELiteral(LNumber(LRational(n, d)), TRational))
+    | _ -> Error "invalid"
+    
+let coerceToBool arg =
+    match arg with
+    | ELiteral(LBool b, _) -> Ok(ELiteral(LBool b, TBool))
+    | _ -> Error "invalid"
+    
+let coerceToString arg =
+    match arg with
+    | ELiteral(LString s, _) -> Ok(ELiteral(LString s, TString))
+    | _ -> Error "invalid"
+
+// TODO: add more coerce cases above
+    
 let evalNumber =
     function
     | LInteger x -> Ok(LInteger x)
@@ -303,6 +346,43 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
                 | "exit" ->
                     Environment.Exit(0)
                     ELiteral(LUnit, TUnit)
+                
+                | "Int" ->
+                    let args = List.map (evalExpr env) args
+                    let res = coerceToInt (List.head args)
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                | "Float" ->
+                    let args = List.map (evalExpr env) args
+                    let res = coerceToFloat (List.head args)
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                | "Complex" ->
+                    let args = List.map (evalExpr env) args
+                    let res = coerceToComplex (List.head args)
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                | "Rational" ->
+                    let args = List.map (evalExpr env) args
+                    let res = coerceToRational (List.head args)
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                | "Bool" ->
+                    let args = List.map (evalExpr env) args
+                    let res = coerceToBool (List.head args)
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                | "String" ->
+                    let args = List.map (evalExpr env) args
+                    let res = coerceToString (List.head args)
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
                     
                 | _ -> failwith $"function {name} not found"
             | Operator(Plus, Some Infix) ->
@@ -479,6 +559,13 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
             | Identifier "fold"
             | Identifier "plot"
             | Identifier "ceil"
+            
+            | Identifier "Int"
+            | Identifier "Float"
+            | Identifier "Complex"
+            | Identifier "Rational"
+            | Identifier "Bool"
+            | Identifier "String"
             
             | Operator (Plus, _)
             | Operator (Minus, _)

@@ -312,6 +312,58 @@ let rec builtins () =
               let list = VList range
               push vm list
           | _ -> failwith "Range expects two integers")
+      
+      Identifier "len",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VList l ] -> push vm (VNumber(VInteger(List.length l)))
+            | _ -> failwith "len expects a list")
+        
+        Identifier "Int",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VNumber(VFloat f) ] -> push vm (VNumber(VInteger(int f)))
+            | _ -> failwith "Int expects a float")
+        
+        Identifier "Float",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VNumber(VInteger i) ] -> push vm (VNumber(VFloat(float i)))
+            | _ -> failwith "Float expects an integer")
+        
+        Identifier "String",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VNumber(VInteger i) ] -> push vm (VString(i.ToString()))
+            | [ VNumber(VFloat f) ] -> push vm (VString(f.ToString()))
+            | [ VBoolean b ] -> push vm (VString(b.ToString()))
+            | [ VString s ] -> push vm (VString(s))
+            | [ VList l ] -> push vm (VString(String.concat ", " (List.map valueToString l)))
+            | _ -> failwith "String expects a number, boolean, string, or list")
+        
+        Identifier "Complex",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VNumber(VFloat re) ] -> push vm (VNumber(VComplex(re, 0.0)))
+            | _ -> failwith "Complex expects two floats")
+        
+        Identifier "Rational",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VNumber(VInteger n) ] -> push vm (VNumber(VRational(n, 1)))
+            | _ -> failwith "Rational expects two integers")
+        
+        Identifier "Boolean",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VBoolean b ] -> push vm (VBoolean(b))
+            | _ -> failwith "Boolean expects a boolean") // TODO add more cases to coercions
+        
+        Identifier "PI",
+        VNumber(VFloat(Math.PI))
+        
+        Identifier "E",
+        VNumber(VFloat(Math.E))
 
       Operator(Plus, Some Infix),
       VBuiltin(fun args vm ->

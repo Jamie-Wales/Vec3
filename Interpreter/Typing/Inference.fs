@@ -17,7 +17,13 @@ open Exceptions
 //     builtInFunctionMap |> Map.map (fun _ builtIn ->
 //         let typ = BuiltinFunctions[builtIn]
 //         Forall([], typ))
-let defaultTypeEnv: TypeEnv = builtInFunctionMap |> Map.map(fun _ builtIn -> BuiltinFunctions[builtIn])
+let defaultTypeEnv: TypeEnv =
+    let funcMap = builtInFunctionMap |> Map.map(fun _ builtIn -> BuiltinFunctions[builtIn])
+    // add builin constants
+    Map.fold (fun acc name typ -> Map.add name typ acc) funcMap BuiltinConstants
+    
+    
+    
 
 let combineMaps map1 map2 =
     Map.fold (fun acc key value -> Map.add key value acc) map2 map1
@@ -362,7 +368,6 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                         ELambda(paramList, expr, Some returnType, Some (TFunction(paramTypes, returnType)))
                     )))
 
-    // todo, need to accoutn for type variables as the callee, then sub with a call type based on context
     | ECall(callee, args, _) ->
         infer aliases env callee
         |> Result.bind (fun (t, sub, expr) ->
@@ -748,3 +753,17 @@ let quickInferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : TypeEnv =
     match inferStmt aliases env stmt with
     | Ok(env, _, _, _) -> env
     | Error errors -> raise <| TypeException errors
+
+let rec IsPrimeMultipleTest (bbase: int) (other: int) : bool =
+        match bbase with
+        | 0 -> false
+        | _ when bbase > other -> false
+        | _ when bbase = other -> true
+        | _ -> IsPrimeMultipleTest (bbase * 2) other 
+        
+let rec RemoveAllMultiples (list : int list) : int list =
+    List.fold (fun acc head -> List.filter (IsPrimeMultipleTest head) acc) list list
+    
+let GetPrimesUpTo n =
+    RemoveAllMultiples [ 2 .. n ]
+    

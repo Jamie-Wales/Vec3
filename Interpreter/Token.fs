@@ -225,6 +225,13 @@ type BuiltInFunction =
     
     | Cons
     
+    | BInt
+    | BFloat
+    | BComplex
+    | BRational
+    | BBool
+    | BString
+    
 let builtInFunctionMap =
     [ Identifier "print", BuiltInFunction.Print
       Identifier "input", BuiltInFunction.Input
@@ -260,6 +267,13 @@ let builtInFunctionMap =
       Operator (Cross, Some Infix), BuiltInFunction.CrossProduct
       Operator (DotStar, Some Infix), BuiltInFunction.DotProduct
       Operator (ColonColon, Some Infix), BuiltInFunction.Cons
+      
+      Identifier "Int", BuiltInFunction.BInt
+      Identifier "Float", BuiltInFunction.BFloat
+      Identifier "Complex", BuiltInFunction.BComplex
+      Identifier "Rational", BuiltInFunction.BRational
+      Identifier "Boolean", BuiltInFunction.BBool
+      Identifier "String", BuiltInFunction.BString
       ]
     |> Map.ofList
     
