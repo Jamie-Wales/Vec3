@@ -11,6 +11,49 @@ type EvalError = string
 
 type EvalResult<'a> = Result<'a, EvalError>
 
+let defaultEnv: Env = [
+                        Identifier "PI", ELiteral(LNumber(LFloat(Math.PI)), TFloat)
+                        Identifier "E", ELiteral(LNumber(LFloat(Math.E)), TFloat)
+                        ] |> Map.ofList
+
+let coerceToInt arg =
+    match arg with
+    | ELiteral(LNumber(LInteger x), _) -> Ok(ELiteral(LNumber(LInteger x), TInteger))
+    | ELiteral(LNumber(LFloat x), _) -> Ok(ELiteral(LNumber(LInteger(int x)), TInteger))
+    | _ -> Error "invalid"
+
+let coerceToFloat arg =
+    match arg with
+    | ELiteral(LNumber(LInteger x), _) -> Ok(ELiteral(LNumber(LFloat(float x)), TFloat))
+    | ELiteral(LNumber(LFloat x), _) -> Ok(ELiteral(LNumber(LFloat x), TFloat))
+    | _ -> Error "invalid"
+    
+let coerceToComplex arg =
+    match arg with
+    | ELiteral(LNumber(LInteger x), _) -> Ok(ELiteral(LNumber(LComplex(float x, 0.0)), TComplex))
+    | ELiteral(LNumber(LFloat x), _) -> Ok(ELiteral(LNumber(LComplex(x, 0.0)), TComplex))
+    | ELiteral(LNumber(LComplex(r, i)), _) -> Ok(ELiteral(LNumber(LComplex(r, i)), TComplex))
+    | _ -> Error "invalid"
+    
+let coerceToRational arg =
+    match arg with
+    | ELiteral(LNumber(LInteger x), _) -> Ok(ELiteral(LNumber(LRational(x, 1)), TRational))
+    | ELiteral(LNumber(LFloat x), _) -> Ok(ELiteral(LNumber(LRational(int x, 1)), TRational))
+    | ELiteral(LNumber(LRational(n, d)), _) -> Ok(ELiteral(LNumber(LRational(n, d)), TRational))
+    | _ -> Error "invalid"
+    
+let coerceToBool arg =
+    match arg with
+    | ELiteral(LBool b, _) -> Ok(ELiteral(LBool b, TBool))
+    | _ -> Error "invalid"
+    
+let coerceToString arg =
+    match arg with
+    | ELiteral(LString s, _) -> Ok(ELiteral(LString s, TString))
+    | _ -> Error "invalid"
+
+// TODO: add more coerce cases above
+    
 let evalNumber =
     function
     | LInteger x -> Ok(LInteger x)
@@ -61,7 +104,84 @@ let evalModulo =
     function
     | LInteger x, LInteger y -> Ok(LInteger(x % y))
     | _ -> Error "invalid"
+    
+let rec addVectors (lhs: Expr list) (rhs: Expr list) =
+    match lhs, rhs with
+    | [], [] -> []
+    | l :: ls, r :: rs ->
+        match l, r with
+        | ELiteral(LNumber(LInteger x), _), ELiteral(LNumber(LInteger y), _) ->
+            ELiteral(LNumber(LInteger(x + y)), TInteger) :: addVectors ls rs
+        | ELiteral(LNumber(LFloat x), _), ELiteral(LNumber(LFloat y), _) ->
+            ELiteral(LNumber(LFloat(x + y)), TFloat) :: addVectors ls rs
+        | ELiteral(LNumber(LRational(n1, d1)), _), ELiteral(LNumber(LRational(n2, d2)), _) ->
+            ELiteral(LNumber(LRational(n1 * d2 + n2 * d1, d1 * d2)), TRational)
+            :: addVectors ls rs
+        | ELiteral(LNumber(LComplex(r1, i1)), _), ELiteral(LNumber(LComplex(r2, i2)), _) ->
+            ELiteral(LNumber(LComplex(r1 + r2, i1 + i2)), TComplex) :: addVectors ls rs
+        | _ -> failwith "invalid"
+    | _ -> failwith "invalid"
 
+let rec subVectors (lhs: Expr list) (rhs: Expr list) =
+    match lhs, rhs with
+    | [], [] -> []
+    | l :: ls, r :: rs ->
+        match l, r with
+        | ELiteral(LNumber(LInteger x), _), ELiteral(LNumber(LInteger y), _) ->
+            ELiteral(LNumber(LInteger(x - y)), TInteger) :: subVectors ls rs
+        | ELiteral(LNumber(LFloat x), _), ELiteral(LNumber(LFloat y), _) ->
+            ELiteral(LNumber(LFloat(x - y)), TFloat) :: subVectors ls rs
+        | ELiteral(LNumber(LRational(n1, d1)), _), ELiteral(LNumber(LRational(n2, d2)), _) ->
+            ELiteral(LNumber(LRational(n1 * d2 - n2 * d1, d1 * d2)), TRational)
+            :: subVectors ls rs
+        | ELiteral(LNumber(LComplex(r1, i1)), _), ELiteral(LNumber(LComplex(r2, i2)), _) ->
+            ELiteral(LNumber(LComplex(r1 - r2, i1 - i2)), TComplex) :: subVectors ls rs
+        | _ -> failwith "invalid"
+    | _ -> failwith "invalid"
+    
+let rec mulVectors (lhs: Expr list) (rhs: Expr list) =
+    match lhs, rhs with
+    | [], [] -> []
+    | l :: ls, r :: rs ->
+        match l, r with
+        | ELiteral(LNumber(LInteger x), _), ELiteral(LNumber(LInteger y), _) ->
+            ELiteral(LNumber(LInteger(x * y)), TInteger) :: mulVectors ls rs
+        | ELiteral(LNumber(LFloat x), _), ELiteral(LNumber(LFloat y), _) ->
+            ELiteral(LNumber(LFloat(x * y)), TFloat) :: mulVectors ls rs
+        | ELiteral(LNumber(LRational(n1, d1)), _), ELiteral(LNumber(LRational(n2, d2)), _) ->
+            ELiteral(LNumber(LRational(n1 * n2, d1 * d2)), TRational) :: mulVectors ls rs
+        | ELiteral(LNumber(LComplex(r1, i1)), _), ELiteral(LNumber(LComplex(r2, i2)), _) ->
+            ELiteral(LNumber(LComplex(r1 * r2 - i1 * i2, r1 * i2 + r2 * i1)), TComplex)
+            :: mulVectors ls rs
+        | _ -> failwith "invalid"
+    | _ -> failwith "invalid"
+    
+let rec dotVectors (lhs: Expr list) (rhs: Expr list) =
+    match lhs, rhs with
+    | [], [] -> 0
+    | l :: ls, r :: rs ->
+        match l, r with
+        | ELiteral(LNumber(LInteger x), _), ELiteral(LNumber(LInteger y), _) -> x * y + dotVectors ls rs
+        | _ -> failwith "invalid"
+    | _ -> failwith "invalid"
+    
+let rec crossVectors (lhs: Expr list) (rhs: Expr list) =
+    match lhs, rhs with
+    | [ ELiteral(LNumber(LInteger x1), _)
+        ELiteral(LNumber(LInteger y1), _)
+        ELiteral(LNumber(LInteger z1), _) ],
+      [ ELiteral(LNumber(LInteger x2), _)
+        ELiteral(LNumber(LInteger y2), _)
+        ELiteral(LNumber(LInteger z2), _) ] ->
+        let x = y1 * z2 - z1 * y2
+        let y = z1 * x2 - x1 * z2
+        let z = x1 * y2 - y1 * x2
+
+        [ ELiteral(LNumber(LInteger x), TInteger)
+          ELiteral(LNumber(LInteger y), TInteger)
+          ELiteral(LNumber(LInteger z), TInteger) ]
+    | _ -> failwith "invalid"
+    
 let evalLiteral =
     function
     | LNumber x ->
@@ -71,109 +191,6 @@ let evalLiteral =
     | LString s -> Ok(LString s)
     | LBool b -> Ok(LBool b)
     | LUnit -> Ok(LUnit)
-
-let evalListOp (op: Lexeme) (lhs: Expr) (rhs: Expr) =
-    match op, lhs, rhs with
-    | Operator op, EList(lhs, _), EList(rhs, _) ->
-        // want vector addition
-        match op with
-        | Operator.Plus ->
-            let rec addVectors (lhs: Expr list) (rhs: Expr list) =
-                match lhs, rhs with
-                | [], [] -> []
-                | l :: ls, r :: rs ->
-                    match l, r with
-                    | ELiteral(LNumber(LInteger x), _), ELiteral(LNumber(LInteger y), _) ->
-                        ELiteral(LNumber(LInteger(x + y)), TInteger) :: addVectors ls rs
-                    | ELiteral(LNumber(LFloat x), _), ELiteral(LNumber(LFloat y), _) ->
-                        ELiteral(LNumber(LFloat(x + y)), TFloat) :: addVectors ls rs
-                    | ELiteral(LNumber(LRational(n1, d1)), _), ELiteral(LNumber(LRational(n2, d2)), _) ->
-                        ELiteral(LNumber(LRational(n1 * d2 + n2 * d1, d1 * d2)), TRational)
-                        :: addVectors ls rs
-                    | ELiteral(LNumber(LComplex(r1, i1)), _), ELiteral(LNumber(LComplex(r2, i2)), _) ->
-                        ELiteral(LNumber(LComplex(r1 + r2, i1 + i2)), TComplex) :: addVectors ls rs
-                    | _ -> failwith "invalid"
-                | _ -> failwith "invalid"
-
-            Ok(EList(addVectors lhs rhs, TInteger))
-
-        | Operator.Minus ->
-            let rec subVectors (lhs: Expr list) (rhs: Expr list) =
-                match lhs, rhs with
-                | [], [] -> []
-                | l :: ls, r :: rs ->
-                    match l, r with
-                    | ELiteral(LNumber(LInteger x), _), ELiteral(LNumber(LInteger y), _) ->
-                        ELiteral(LNumber(LInteger(x - y)), TInteger) :: subVectors ls rs
-                    | ELiteral(LNumber(LFloat x), _), ELiteral(LNumber(LFloat y), _) ->
-                        ELiteral(LNumber(LFloat(x - y)), TFloat) :: subVectors ls rs
-                    | ELiteral(LNumber(LRational(n1, d1)), _), ELiteral(LNumber(LRational(n2, d2)), _) ->
-                        ELiteral(LNumber(LRational(n1 * d2 - n2 * d1, d1 * d2)), TRational)
-                        :: subVectors ls rs
-                    | ELiteral(LNumber(LComplex(r1, i1)), _), ELiteral(LNumber(LComplex(r2, i2)), _) ->
-                        ELiteral(LNumber(LComplex(r1 - r2, i1 - i2)), TComplex) :: subVectors ls rs
-                    | _ -> failwith "invalid"
-                | _ -> failwith "invalid"
-
-            Ok(EList(subVectors lhs rhs, TInteger))
-
-        | Operator.Star ->
-            // element wise
-            let rec mulVectors (lhs: Expr list) (rhs: Expr list) =
-                match lhs, rhs with
-                | [], [] -> []
-                | l :: ls, r :: rs ->
-                    match l, r with
-                    | ELiteral(LNumber(LInteger x), _), ELiteral(LNumber(LInteger y), _) ->
-                        ELiteral(LNumber(LInteger(x * y)), TInteger) :: mulVectors ls rs
-                    | ELiteral(LNumber(LFloat x), _), ELiteral(LNumber(LFloat y), _) ->
-                        ELiteral(LNumber(LFloat(x * y)), TFloat) :: mulVectors ls rs
-                    | ELiteral(LNumber(LRational(n1, d1)), _), ELiteral(LNumber(LRational(n2, d2)), _) ->
-                        ELiteral(LNumber(LRational(n1 * n2, d1 * d2)), TRational) :: mulVectors ls rs
-                    | ELiteral(LNumber(LComplex(r1, i1)), _), ELiteral(LNumber(LComplex(r2, i2)), _) ->
-                        ELiteral(LNumber(LComplex(r1 * r2 - i1 * i2, r1 * i2 + r2 * i1)), TComplex)
-                        :: mulVectors ls rs
-                    | _ -> failwith "invalid"
-                | _ -> failwith "invalid"
-
-            Ok(EList(mulVectors lhs rhs, TInteger))
-
-        // dot product
-        | Operator.Dot ->
-            let rec dotVectors (lhs: Expr list) (rhs: Expr list) =
-                match lhs, rhs with
-                | [], [] -> 0
-                | l :: ls, r :: rs ->
-                    match l, r with
-                    | ELiteral(LNumber(LInteger x), _), ELiteral(LNumber(LInteger y), _) -> x * y + dotVectors ls rs
-                    | _ -> failwith "invalid"
-                | _ -> failwith "invalid"
-
-            // fix for non ints
-            Ok(ELiteral(LNumber(LInteger(dotVectors lhs rhs)), TInteger))
-
-        | Operator.Cross ->
-            let rec crossVectors (lhs: Expr list) (rhs: Expr list) =
-                match lhs, rhs with
-                | [ ELiteral(LNumber(LInteger x1), _)
-                    ELiteral(LNumber(LInteger y1), _)
-                    ELiteral(LNumber(LInteger z1), _) ],
-                  [ ELiteral(LNumber(LInteger x2), _)
-                    ELiteral(LNumber(LInteger y2), _)
-                    ELiteral(LNumber(LInteger z2), _) ] ->
-                    let x = y1 * z2 - z1 * y2
-                    let y = z1 * x2 - x1 * z2
-                    let z = x1 * y2 - y1 * x2
-
-                    [ ELiteral(LNumber(LInteger x), TInteger)
-                      ELiteral(LNumber(LInteger y), TInteger)
-                      ELiteral(LNumber(LInteger z), TInteger) ]
-                | _ -> failwith "invalid"
-
-            Ok(EList(crossVectors lhs rhs, TInteger))
-
-        | _ -> Error "invalid"
-    | _ -> Error "invalid"
 
 let rec evalExpr (env: Env) (expr: Expr) : Expr =
     match expr with
@@ -188,7 +205,7 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
                 if start > end_ then []
                 else start :: range (start + 1) end_
 
-            EList(List.map (fun x -> ELiteral(LNumber(LInteger x), TInteger)) (range start end_), TInteger)
+            EList(List.map (fun x -> ELiteral(LNumber(LInteger x), TInteger)) (range start end_), Some TInteger)
         | _ -> failwith "invalid"
         
     | ERecordEmpty typ -> ERecordEmpty typ
@@ -197,7 +214,7 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
         let record = evalExpr env record
 
         match record with
-        | ERecordExtend((name', value, _), record, _) when name.Lexeme = name'.Lexeme -> record
+        | ERecordExtend((name', _, _), record, _) when name.Lexeme = name'.Lexeme -> record
         | ERecordExtend((_, _, _), record, _) -> evalExpr env (ERecordRestrict(record, name, typ))
         | _ -> failwith "invalid"
 
@@ -235,7 +252,8 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
         let expr = evalExpr env expr
 
         match expr with
-        | ELambda(params', body, _) ->
+        | ELambda(params', body, _, _) ->
+            let params' = List.map fst params'
             let rec evalParams (env: Env) (params': Token list) (args: Expr list) =
                 match params', args with
                 | [], [] -> env
@@ -298,12 +316,22 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
                     match args with
                     | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(Math.Floor(x))), TFloat)
                     | _ -> failwith "invalid"
+                
+                | "ceil" ->
+                    let args = List.map (evalExpr env) args
+                    
+                    match args with
+                    | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(Math.Ceiling(x))), TFloat)
+                    | _ -> failwith "invalid"
                     
                 | "fold" ->
                     let args = List.map (evalExpr env) args
                     
                     match args with
-                    | [ EList(exprs', _); init; ELambda([listParam; accParam], body, _); ] ->
+                    | [ EList(exprs', _); init; ELambda([listParam; accParam], body, _, _); ] ->
+                        let listParam = fst listParam
+                        let accParam = fst accParam
+                        
                         let rec fold (env: Env) (exprs: Expr list) (acc: Expr) =
                             match exprs with
                             | [] -> acc
@@ -318,11 +346,201 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
                 | "exit" ->
                     Environment.Exit(0)
                     ELiteral(LUnit, TUnit)
+                
+                | "Int" ->
+                    let args = List.map (evalExpr env) args
+                    let res = coerceToInt (List.head args)
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                | "Float" ->
+                    let args = List.map (evalExpr env) args
+                    let res = coerceToFloat (List.head args)
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                | "Complex" ->
+                    let args = List.map (evalExpr env) args
+                    let res = coerceToComplex (List.head args)
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                | "Rational" ->
+                    let args = List.map (evalExpr env) args
+                    let res = coerceToRational (List.head args)
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                | "Bool" ->
+                    let args = List.map (evalExpr env) args
+                    let res = coerceToBool (List.head args)
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                | "String" ->
+                    let args = List.map (evalExpr env) args
+                    let res = coerceToString (List.head args)
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
                     
                 | _ -> failwith $"function {name} not found"
+            | Operator(Plus, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                
+                match args with
+                | [ ELiteral(LNumber lhs, _); ELiteral(LNumber rhs, _) ] ->
+                    let res = evalAddition(lhs, rhs)
+                                |> Result.bind (fun res -> Ok(ELiteral(LNumber res, TInteger)))
+                    
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                    
+                | [ EList(lhs, _); EList(rhs, _) ] -> EList(addVectors lhs rhs, None)
+                | _ -> failwith "invalid"
+            | Operator(Minus, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                
+                match args with
+                | [ ELiteral(LNumber lhs, _); ELiteral(LNumber rhs, _) ] ->
+                    let res = evalSubtraction(lhs, rhs)
+                                |> Result.bind (fun res -> Ok(ELiteral(LNumber res, TInteger)))
+                    
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                    
+                | [ EList(lhs, _); EList(rhs, _) ] -> EList(subVectors lhs rhs, None)
+                | _ -> failwith "invalid"
+            | Operator(Star, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                
+                match args with
+                | [ ELiteral(LNumber lhs, _); ELiteral(LNumber rhs, _) ] ->
+                    let res = evalMultiplication(lhs, rhs)
+                                |> Result.bind (fun res -> Ok(ELiteral(LNumber res, TInteger)))
+                    
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                    
+                | [ EList(lhs, _); EList(rhs, _) ] -> EList(mulVectors lhs rhs, None)
+                | _ -> failwith "invalid"
+            | Operator(Slash, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                
+                match args with
+                | [ ELiteral(LNumber lhs, _); ELiteral(LNumber rhs, _) ] ->
+                    let res = evalDivision(lhs, rhs)
+                                |> Result.bind (fun res -> Ok(ELiteral(LNumber res, TInteger)))
+                    
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                | _ -> failwith "invalid"
+            | Operator(Caret, Some Infix)
+            | Operator(StarStar, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                
+                match args with
+                | [ ELiteral(LNumber lhs, _); ELiteral(LNumber rhs, _) ] ->
+                    let res = evalPower(lhs, rhs)
+                                |> Result.bind (fun res -> Ok(ELiteral(LNumber res, TInteger)))
+                    
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                | _ -> failwith "invalid"
+                
+            | Operator(Percent, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                
+                match args with
+                | [ ELiteral(LNumber lhs, _); ELiteral(LNumber rhs, _) ] ->
+                    let res = evalModulo(lhs, rhs)
+                                |> Result.bind (fun res -> Ok(ELiteral(LNumber res, TInteger)))
+                    
+                    match res with
+                    | Ok res -> res
+                    | Error s -> failwith s
+                | _ -> failwith "invalid"
+            | Operator(EqualEqual, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                
+                match args with
+                | [ ELiteral(lhs, _); ELiteral(rhs, _) ] -> ELiteral(LBool(lhs = rhs), TBool)
+                | _ -> failwith "invalid"
+                
+            | Operator(BangEqual, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                
+                match args with
+                | [ ELiteral(lhs, _); ELiteral(rhs, _) ] -> ELiteral(LBool(lhs <> rhs), TBool)
+                | _ -> failwith "invalid"
+            | Operator(Less, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                
+                match args with
+                | [ ELiteral(LNumber lhs, _); ELiteral(LNumber rhs, _) ] -> ELiteral(LBool(lhs < rhs), TBool)
+                | _ -> failwith "invalid"
+            | Operator(LessEqual, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                match args with
+                | [ ELiteral(LNumber lhs, _); ELiteral(LNumber rhs, _) ] -> ELiteral(LBool(lhs <= rhs), TBool)
+                | _ -> failwith "invalid"
+            | Operator(Greater, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                match args with
+                | [ ELiteral(LNumber lhs, _); ELiteral(LNumber rhs, _) ] -> ELiteral(LBool(lhs > rhs), TBool)
+                | _ -> failwith "invalid"
+            | Operator(GreaterEqual, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                match args with
+                | [ ELiteral(LNumber lhs, _); ELiteral(LNumber rhs, _) ] -> ELiteral(LBool(lhs >= rhs), TBool)
+                | _ -> failwith "invalid"
+            | Operator(Bang, Some Prefix) ->
+                let args = List.map (evalExpr env) args
+                match args with
+                | [ ELiteral(LNumber(LInteger x), TInteger) ] -> ELiteral(LNumber(LInteger(if x = 0 then 1 else 0)), TInteger)
+                | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(if x = 0.0 then 1.0 else 0.0)), TFloat)
+                | [ ELiteral(LBool b, TBool) ] -> ELiteral(LBool(not b), TBool)
+                | _ -> failwith "invalid"
+            | Operator(Minus, Some Prefix) ->
+                let args = List.map (evalExpr env) args
+                match args with
+                | [ ELiteral(LNumber(LInteger x), TInteger) ] -> ELiteral(LNumber(LInteger(-x)), TInteger)
+                | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(-x)), TFloat)
+                | _ -> failwith "invalid"
+            | Operator(Plus, Some Prefix) ->
+                let args = List.map (evalExpr env) args
+                match args with
+                | [ ELiteral(LNumber(LInteger x), TInteger) ] -> ELiteral(LNumber(LInteger(if x < 0 then 0 - x else x)), TInteger)
+                | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(if x < 0.0 then 0.0 - x else x)), TFloat)
+                | _ -> failwith "invalid"
+                
+            | Operator(ColonColon, Some Infix) ->
+                let args = List.map (evalExpr env) args
+                match args with
+                | [ arg; EList(xs, _) ] -> EList(arg :: xs, None)
+                | _ -> failwith "invalid"
+                
+            | Keyword kw ->
+                match kw with
+                | Keyword.And ->
+                    let args = List.map (evalExpr env) args
+                    match args with
+                    | [ ELiteral(LBool lhs, TBool); ELiteral(LBool rhs, _) ] -> ELiteral(LBool(lhs && rhs), TBool)
+                    | _ -> failwith "invalid"
+                | Keyword.Or ->
+                    let args = List.map (evalExpr env) args
+                    match args with
+                    | [ ELiteral(LBool lhs, TBool); ELiteral(LBool rhs, _) ] -> ELiteral(LBool(lhs || rhs), TBool)
+                    | _ -> failwith "invalid"
+                | _ -> failwith "invalid"
             | _ -> failwith $"function {name} not found"
         | _ -> failwith "invalid"
-    | ELambda(params', body, t') -> ELambda(params', body, t')
+    | ELambda(params', body, rt, t') -> ELambda(params', body, rt, t')
     | EIdentifier(name, typ) ->
         match env.TryGetValue name.Lexeme with
         | true, expr -> expr
@@ -338,103 +556,39 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
             | Identifier "sqrt"
             | Identifier "abs"
             | Identifier "floor"
-            | Identifier "fold" ->
+            | Identifier "fold"
+            | Identifier "plot"
+            | Identifier "ceil"
+            
+            | Identifier "Int"
+            | Identifier "Float"
+            | Identifier "Complex"
+            | Identifier "Rational"
+            | Identifier "Bool"
+            | Identifier "String"
+            
+            | Operator (Plus, _)
+            | Operator (Minus, _)
+            | Operator (Star, _)
+            | Operator (Slash, _)
+            | Operator (Caret, _)
+            | Operator (StarStar, _)
+            | Operator (Percent, _)
+            | Operator (EqualEqual, _)
+            | Operator (BangEqual, _)
+            | Operator (Less, _)
+            | Operator (LessEqual, _)
+            | Operator (Greater, _)
+            | Operator (GreaterEqual, _)
+            | Operator (AmpersandAmpersand, _)
+            | Operator (PipePipe, _)
+            | Operator (Bang, _)
+            | Operator (Minus, _)
+            | Operator (Plus, _)
+            | Operator (ColonColon, _)
+             ->
                 EIdentifier(name, typ)
             | _ -> failwith $"variable {name} not found"
-    | EBinary(lhs, op, rhs, typ) ->
-        let lhs = evalExpr env lhs
-        let rhs = evalExpr env rhs
-
-        match op, lhs, rhs with
-        | { Lexeme = Operator op }, ELiteral(LNumber lhs, _), ELiteral(LNumber rhs, _) ->
-            match op with
-            | Operator.Plus ->
-                match evalAddition (lhs, rhs) with
-                | Ok res -> ELiteral(LNumber(res), typ)
-                | Error s -> failwith s
-
-
-            | Operator.Minus ->
-                match evalSubtraction (lhs, rhs) with
-                | Ok res -> ELiteral(LNumber(res), typ)
-                | Error s -> failwith s
-
-            | Operator.Star ->
-                match evalMultiplication (lhs, rhs) with
-                | Ok res -> ELiteral(LNumber(res), typ)
-                | Error s -> failwith s
-
-            | Operator.Slash ->
-                match evalDivision (lhs, rhs) with
-                | Ok res -> ELiteral(LNumber(res), typ)
-                | Error s -> failwith s
-            | Operator.Caret
-            | Operator.StarStar ->
-                match evalPower (lhs, rhs) with
-                | Ok res -> ELiteral(LNumber(res), typ)
-                | Error s -> failwith s
-
-            | Operator.Percent ->
-                match evalModulo (lhs, rhs) with
-                | Ok res -> ELiteral(LNumber(res), typ)
-                | Error s -> failwith s
-            | Operator.EqualEqual -> ELiteral(LBool(lhs = rhs), typ)
-            | Operator.BangEqual -> ELiteral(LBool(lhs <> rhs), typ)
-            | Operator.Less -> ELiteral(LBool(lhs < rhs), typ)
-            | Operator.LessEqual -> ELiteral(LBool(lhs <= rhs), typ)
-            | Operator.Greater -> ELiteral(LBool(lhs > rhs), typ)
-            | Operator.GreaterEqual -> ELiteral(LBool(lhs >= rhs), typ)
-            | _ -> failwith "invalid"
-        | { Lexeme = Operator op }, ELiteral(LBool lhs, _), ELiteral(LBool rhs, _) ->
-            match op with
-            | Operator.AmpersandAmpersand -> ELiteral(LBool(lhs && rhs), typ) // should short circuit ?
-            | Operator.PipePipe -> ELiteral(LBool(lhs || rhs), typ)
-
-            | Operator.EqualEqual -> ELiteral(LBool(lhs = rhs), typ)
-            | Operator.BangEqual -> ELiteral(LBool(not (lhs = rhs)), typ)
-            | _ -> failwith "invalid"
-        | { Lexeme = Keyword kw }, ELiteral(LBool lhs, _), ELiteral(LBool rhs, _) ->
-            match kw with
-            | Keyword.And -> ELiteral(LBool(lhs && rhs), typ) // should short circuit ?
-            | Keyword.Or -> ELiteral(LBool(lhs || rhs), typ)
-            | _ -> failwith "invalid"
-
-        | { Lexeme = op }, (EList _ as lhs), (EList _ as rhs) ->
-            let res = evalListOp op lhs rhs
-
-            match res with
-            | Ok res -> res
-            | Error s -> failwith s
-        | { Lexeme = Operator ColonColon }, lhs, EList(elems, typ) ->
-            EList(lhs :: elems, typ)
-        | _ -> failwith "invalid"
-    | EUnary(op, expr, typ) ->
-        let value = evalExpr env expr
-
-        match op, value with
-        | { Lexeme = Operator op }, ELiteral(value, _) ->
-            match op with
-            | Bang ->
-                match value with
-                | LNumber(LInteger x) -> ELiteral(LNumber(LInteger(if x = 0 then 1 else 0)), typ)
-                | LNumber(LFloat x) -> ELiteral(LNumber(LFloat(if x = 0.0 then 1.0 else 0.0)), typ)
-                | LBool b -> ELiteral(LBool(not b), typ)
-                | _ -> failwith "invalid"
-            | Minus ->
-                match value with
-                | LNumber(LInteger x) -> ELiteral(LNumber(LInteger(-x)), typ)
-                | LNumber(LFloat x) -> ELiteral(LNumber(LFloat(-x)), typ)
-                | LNumber(LRational(n, d)) -> ELiteral(LNumber(LRational(-n, d)), typ)
-                | _ -> failwith "invalid"
-
-            | Plus ->
-                match value with
-                | LNumber(LInteger x) -> ELiteral(LNumber(LInteger(if x < 0 then 0 - x else x)), typ)
-                | LNumber(LFloat x) -> ELiteral(LNumber(LFloat(if x < 0.0 then 0.0 - x else x)), typ)
-                | LNumber(LRational(n, d)) -> ELiteral(LNumber(LRational(if n < 0 then 0 - n, d else n, d)), typ)
-                | _ -> failwith "invalid"
-            | _ -> failwith "invalid"
-        | _ -> failwith "invalid"
     | EIf(cond, then', else', _) ->
         let cond = evalExpr env cond
 
@@ -471,7 +625,7 @@ and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
 
             ELiteral(LUnit, TUnit), env
         | _ -> failwith "invalid"
-    | STypeDeclaration(name, typ, _) -> ELiteral(LUnit, TUnit), Map.add name.Lexeme (ELiteral(LUnit, TUnit)) env
+    | STypeDeclaration(name, _, _) -> ELiteral(LUnit, TUnit), Map.add name.Lexeme (ELiteral(LUnit, TUnit)) env
 
 let evalStatement (env: Env) (stmt: Stmt) : Expr * Env =
     match evalStmt env stmt with

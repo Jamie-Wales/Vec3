@@ -28,7 +28,7 @@
                                  VerticalAlignment="Stretch"
                                  HorizontalScrollBarVisibility="Auto"
                                  VerticalScrollBarVisibility="Visible" />
-
+        
         <TabControl Grid.Row="1" Grid.Column="1">
             <TabItem Header="Constant Pool">
                 <ScrollViewer>

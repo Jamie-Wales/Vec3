@@ -31,23 +31,26 @@ type Operator =
     | Equal
     | Bang
     
-    | LeftParen
-    | RightParen
     | Arrow
-    | LeftBrace
-    | RightBrace
-    | LeftBracket
-    | RightBracket
-    | DotDot
     | Dot
+    | DotDot
     
     | Cross
     | DotStar
     
+    | ColonColon
+    | Custom of string
+    
+type Punctuation =
     | Comma
     | Semicolon
     | Colon
-    | ColonColon
+    | LeftParen
+    | RightParen
+    | LeftBrace
+    | RightBrace
+    | LeftBracket
+    | RightBracket
     
 type Keyword =
     | Let
@@ -87,15 +90,18 @@ let keywordMap =
 let isKeyword (s: string): bool =
     Map.containsKey s keywordMap
 
-
-
+let getKeyword (s: string): Keyword =
+    Map.find s keywordMap
+    
 type Lexeme =
     | Number of TNumber
     | String of string
     | Keyword of Keyword
-    | Operator of Operator
+    | Operator of Operator * Placement option
+    | Punctuation of Punctuation
     | Identifier of string
     
+and Placement = Prefix | Infix | Postfix
 
 type Position = { Line: int; Column: int; }
 type Token = { Lexeme: Lexeme; Position: Position; }
@@ -125,28 +131,20 @@ let operatorToString (op: Operator): string =
     | LessEqual -> "<="
     | Greater -> ">"
     | GreaterEqual -> ">="
-    | LeftParen -> "("
-    | RightParen -> ")"
     | Bang -> "!"
     | Arrow -> "->"
-    | LeftBrace -> "{"
-    | RightBrace -> "}"
-    | LeftBracket -> "["
-    | RightBracket -> "]"
     | Dot -> "."
-    | DotDot -> ".."
     | Percent -> "%"
     | AmpersandAmpersand -> "&&"
     | PipePipe -> "||"
     | Caret -> "^"
     | Cross -> "X"
     | DotStar -> ".*"
-    | Comma -> ","
-    | Semicolon -> ";"
-    | Colon -> ":"
     | Ampersand -> "&"
     | Pipe -> "|"
     | ColonColon -> "::"
+    | DotDot -> ".."
+    | Custom s -> s
 
 let keywordToString (kw: Keyword): string =
     match kw with
@@ -165,14 +163,26 @@ let keywordToString (kw: Keyword): string =
     | With -> "with"
     | Type -> "type"
 
+let punctuationToString (p: Punctuation): string =
+    match p with
+    | Comma -> ","
+    | Semicolon -> ";"
+    | Colon -> ":"
+    | LeftParen -> "("
+    | RightParen -> ")"
+    | LeftBrace -> "{"
+    | RightBrace -> "}"
+    | LeftBracket -> "["
+    | RightBracket -> "]"
 
 let lexemeToString (lex: Lexeme): string =
     match lex with
     | Number n -> $"Number(%s{numberToString n})"
     | String s -> $"String(\"%s{s}\")"
     | Keyword k -> $"Keyword({k})"
-    | Operator op -> $"Operator(%s{operatorToString op})"
+    | Operator (op, fix) -> $"""Operator(%s{operatorToString op}){Option.defaultValue "" (Option.map (fun p -> $"({p})") fix)}"""
     | Identifier i -> $"Identifier(%s{i})"
+    | Punctuation p -> $"Punctuation({punctuationToString p})"
 
 let tokenToString (token: Token): string =
     $"{{ lexeme: %s{lexemeToString token.Lexeme}; line: %d{token.Position.Line} }}"
@@ -191,8 +201,37 @@ type BuiltInFunction =
     | Fold
     | Plot
     | Ceil
-
-
+    
+    | Add
+    | Sub
+    | Mul
+    | Div
+    | Mod
+    | Pow
+    | And
+    | Or
+    | Not
+    | Neg
+    | Unneg
+    | Eq
+    | Neq
+    | Lt
+    | Lte
+    | Gt
+    | Gte
+    
+    | CrossProduct
+    | DotProduct
+    
+    | Cons
+    
+    | BInt
+    | BFloat
+    | BComplex
+    | BRational
+    | BBool
+    | BString
+    
 let builtInFunctionMap =
     [ Identifier "print", BuiltInFunction.Print
       Identifier "input", BuiltInFunction.Input
@@ -207,6 +246,34 @@ let builtInFunctionMap =
       Identifier "fold", BuiltInFunction.Fold
       Identifier "plot", BuiltInFunction.Plot
       Identifier "ceil", BuiltInFunction.Ceil
+      
+      Operator (Plus, Some Infix), BuiltInFunction.Add
+      Operator (Minus, Some Infix), BuiltInFunction.Sub
+      Operator (Star, Some Infix), BuiltInFunction.Mul
+      Operator (Slash, Some Infix), BuiltInFunction.Div
+      Operator (Percent, Some Infix), BuiltInFunction.Mod
+      Operator (StarStar, Some Infix), BuiltInFunction.Pow
+      Operator (AmpersandAmpersand, Some Infix), BuiltInFunction.And
+      Operator (PipePipe, Some Infix), BuiltInFunction.Or
+      Operator (Bang, Some Prefix), BuiltInFunction.Not
+      Operator (Minus, Some Prefix), BuiltInFunction.Neg
+      Operator (Plus, Some Prefix), BuiltInFunction.Unneg
+      Operator (EqualEqual, Some Infix), BuiltInFunction.Eq
+      Operator (BangEqual, Some Infix), BuiltInFunction.Neq
+      Operator (Less, Some Infix), BuiltInFunction.Lt
+      Operator (LessEqual, Some Infix), BuiltInFunction.Lte
+      Operator (Greater, Some Infix), BuiltInFunction.Gt
+      Operator (GreaterEqual, Some Infix), BuiltInFunction.Gte
+      Operator (Cross, Some Infix), BuiltInFunction.CrossProduct
+      Operator (DotStar, Some Infix), BuiltInFunction.DotProduct
+      Operator (ColonColon, Some Infix), BuiltInFunction.Cons
+      
+      Identifier "Int", BuiltInFunction.BInt
+      Identifier "Float", BuiltInFunction.BFloat
+      Identifier "Complex", BuiltInFunction.BComplex
+      Identifier "Rational", BuiltInFunction.BRational
+      Identifier "Boolean", BuiltInFunction.BBool
+      Identifier "String", BuiltInFunction.BString
       ]
     |> Map.ofList
     

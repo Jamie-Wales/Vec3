@@ -126,7 +126,7 @@ let lexer (input: string) : LexerResult<Token list> =
                         Line = line }
         | '-' :: '>' :: tail ->
             Ok
-                { Lexeme = Operator Arrow
+                { Lexeme = Operator (Arrow, None)
                   Position = position }
             :: scan
                 tail
@@ -134,7 +134,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 2 }
         | '*' :: '*' :: tail ->
             Ok
-                { Lexeme = Operator StarStar
+                { Lexeme = Operator (StarStar, None)
                   Position = position }
             :: scan
                 tail
@@ -142,7 +142,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 2 }
         | '+' :: tail ->
             Ok
-                { Lexeme = Operator Plus
+                { Lexeme = Operator (Plus, None)
                   Position = position }
             :: scan
                 tail
@@ -150,7 +150,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | '-' :: tail ->
             Ok
-                { Lexeme = Operator Minus
+                { Lexeme = Operator (Minus, None)
                   Position = position }
             :: scan
                 tail
@@ -158,7 +158,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | '*' :: tail ->
             Ok
-                { Lexeme = Operator Star
+                { Lexeme = Operator (Star, None)
                   Position = position }
             :: scan
                 tail
@@ -166,7 +166,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | 'X' :: tail ->
             Ok
-                { Lexeme = Operator Cross
+                { Lexeme = Operator (Cross, None)
                   Position = position }
             :: scan
                 tail
@@ -174,7 +174,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | '/' :: tail ->
             Ok
-                { Lexeme = Operator Slash
+                { Lexeme = Operator (Slash, None)
                   Position = position }
             :: scan
                 tail
@@ -182,7 +182,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | '%' :: tail ->
             Ok
-                { Lexeme = Operator Percent
+                { Lexeme = Operator (Percent, None)
                   Position = position }
             :: scan
                 tail
@@ -190,7 +190,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | '^' :: tail ->
             Ok
-                { Lexeme = Operator Caret
+                { Lexeme = Operator (Caret, None)
                   Position = position }
             :: scan
                 tail
@@ -199,7 +199,7 @@ let lexer (input: string) : LexerResult<Token list> =
 
         | '(' :: tail ->
             Ok
-                { Lexeme = Operator LeftParen
+                { Lexeme = Punctuation LeftParen
                   Position = position }
             :: scan
                 tail
@@ -207,7 +207,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | ')' :: tail ->
             Ok
-                { Lexeme = Operator RightParen
+                { Lexeme = Punctuation RightParen
                   Position = position }
             :: scan
                 tail
@@ -215,7 +215,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | '[' :: tail ->
             Ok
-                { Lexeme = Operator LeftBracket
+                { Lexeme = Punctuation LeftBracket
                   Position = position }
             :: scan
                 tail
@@ -223,7 +223,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | ']' :: tail ->
             Ok
-                { Lexeme = Operator RightBracket
+                { Lexeme = Punctuation RightBracket 
                   Position = position }
             :: scan
                 tail
@@ -231,7 +231,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | '{' :: tail ->
             Ok
-                { Lexeme = Operator LeftBrace
+                { Lexeme = Punctuation LeftBrace
                   Position = position }
             :: scan
                 tail
@@ -239,7 +239,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | '}' :: tail ->
             Ok
-                { Lexeme = Operator RightBrace
+                { Lexeme = Punctuation RightBrace
                   Position = position }
             :: scan
                 tail
@@ -248,7 +248,7 @@ let lexer (input: string) : LexerResult<Token list> =
         
         | ':' :: ':' :: tail ->
             Ok
-                { Lexeme = Operator ColonColon
+                { Lexeme = Operator (ColonColon, None)
                   Position = position }
             :: scan
                 tail
@@ -256,20 +256,20 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 2 }
 
         | ':' :: tail ->
-            Ok { Lexeme = Operator Colon; Position = position }
+            Ok { Lexeme = Punctuation Colon; Position = position }
             :: scan
                 tail
                 { position with
                     Column = position.Column + 1 }
         | ',' :: tail ->
-            Ok { Lexeme = Operator Comma; Position = position }
+            Ok { Lexeme = Punctuation Comma; Position = position }
             :: scan
                 tail
                 { position with
                     Column = position.Column + 1 }
         | ';' :: tail ->
             Ok
-                { Lexeme = Operator Semicolon
+                { Lexeme = Punctuation Semicolon
                   Position = position }
             :: scan
                 tail
@@ -278,7 +278,7 @@ let lexer (input: string) : LexerResult<Token list> =
 
         | '#' :: tail ->
             Ok
-                { Lexeme = Operator Hash
+                { Lexeme = Operator (Hash, None)
                   Position = position }
             :: scan
                 tail
@@ -287,7 +287,7 @@ let lexer (input: string) : LexerResult<Token list> =
         
         | '.' :: '*' :: tail ->
             Ok
-                { Lexeme = Operator DotStar
+                { Lexeme = Operator (DotStar, None)
                   Position = position }
             :: scan
                 tail
@@ -296,7 +296,7 @@ let lexer (input: string) : LexerResult<Token list> =
                 
         | '.' :: '.' :: tail ->
             Ok
-                { Lexeme = Operator DotDot
+                { Lexeme = Operator (DotDot, None)
                   Position = position }
             :: scan
                 tail
@@ -325,7 +325,7 @@ let lexer (input: string) : LexerResult<Token list> =
 
         | '.' :: tail ->
             Ok
-                { Lexeme = Operator Dot
+                { Lexeme = Operator (Dot, None)
                   Position = position }
             :: scan
                 tail
@@ -333,7 +333,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | '=' :: '=' :: tail ->
             Ok
-                { Lexeme = Operator EqualEqual
+                { Lexeme = Operator (EqualEqual, None)
                   Position = position }
             :: scan
                 tail
@@ -341,7 +341,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 2 }
         | '!' :: '=' :: tail ->
             Ok
-                { Lexeme = Operator BangEqual
+                { Lexeme = Operator (BangEqual, None)
                   Position = position }
             :: scan
                 tail
@@ -349,7 +349,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 2 }
         | '<' :: '=' :: tail ->
             Ok
-                { Lexeme = Operator LessEqual
+                { Lexeme = Operator (LessEqual, None)
                   Position = position }
             :: scan
                 tail
@@ -357,7 +357,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 2 }
         | '<' :: tail ->
             Ok
-                { Lexeme = Operator Less
+                { Lexeme = Operator (Less, None)
                   Position = position }
             :: scan
                 tail
@@ -365,7 +365,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | '>' :: '=' :: tail ->
             Ok
-                { Lexeme = Operator GreaterEqual
+                { Lexeme = Operator (GreaterEqual, None)
                   Position = position }
             :: scan
                 tail
@@ -373,7 +373,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 2 }
         | '>' :: tail ->
             Ok
-                { Lexeme = Operator Greater
+                { Lexeme = Operator (Greater, None)
                   Position = position }
             :: scan
                 tail
@@ -381,7 +381,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | '=' :: tail ->
             Ok
-                { Lexeme = Operator Equal
+                { Lexeme = Operator (Equal, None)
                   Position = position }
             :: scan
                 tail
@@ -389,7 +389,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | '!' :: tail ->
             Ok
-                { Lexeme = Operator Bang
+                { Lexeme = Operator (Bang, None)
                   Position = position }
             :: scan
                 tail
@@ -398,7 +398,7 @@ let lexer (input: string) : LexerResult<Token list> =
         
         | '&' :: '&' :: tail ->
             Ok
-                { Lexeme = Operator AmpersandAmpersand
+                { Lexeme = Operator (AmpersandAmpersand, None)
                   Position = position }
             :: scan
                 tail
@@ -406,7 +406,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 2 }
         | '|' :: '|' :: tail ->
             Ok
-                { Lexeme = Operator PipePipe
+                { Lexeme = Operator (PipePipe, None)
                   Position = position }
             :: scan
                 tail
@@ -415,7 +415,7 @@ let lexer (input: string) : LexerResult<Token list> =
                 
         | '&' :: tail ->
             Ok
-                { Lexeme = Operator Ampersand
+                { Lexeme = Operator (Ampersand, None)
                   Position = position }
             :: scan
                 tail
@@ -423,7 +423,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
                 
         | '|' :: tail ->
-            Ok { Lexeme = Operator Pipe; Position = position }
+            Ok { Lexeme = Operator (Pipe, None); Position = position }
             :: scan
                 tail
                 { position with

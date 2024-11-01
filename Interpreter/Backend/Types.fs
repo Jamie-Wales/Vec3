@@ -27,14 +27,14 @@ type Chunk =
     
 and Value =
     | VNumber of VNumber
-    | String of string
-    | Boolean of bool
-    | Function of Function
-    | Closure of Closure
-    | Nil
-    | List of Value list
-    | Builtin of (Value list -> VM -> VM)
-    | PlotData of string * Value list * Value list  
+    | VString of string
+    | VBoolean of bool
+    | VFunction of Function
+    | VClosure of Closure
+    | VNil
+    | VList of Value list
+    | VBuiltin of (Value list -> VM -> VM)
+    | VPlotData of string * Value list * Value list  
 
 
 and VNumber =
@@ -78,11 +78,11 @@ let rec valueToString =
     | VNumber(VFloat f) -> string f
     | VNumber(VRational(n, d)) -> $"%d{n}/%d{d}"
     | VNumber(VComplex(r, i)) -> $"%f{r} + %f{i}i"
-    | Boolean b -> string b
-    | String s -> s
-    | Function f -> $"<fn {f.Name}>"
-    | Closure c -> $"<closure {c.Function.Name}>"
-    | Nil -> "nil"
-    | List l -> $"""[{String.concat ", " (List.map valueToString l)}]"""
-    | Builtin _ -> "<builtin>"
-    | PlotData _ -> "<plot data>"
+    | VBoolean b -> string b
+    | VString s -> s
+    | VFunction f -> $"<fn {f.Name}>"
+    | VClosure c -> $"<closure {c.Function.Name}>"
+    | VNil -> "nil"
+    | VList l -> $"""[{String.concat ", " (List.map valueToString l)}]"""
+    | VBuiltin _ -> "<builtin>"
+    | VPlotData _ -> "<plot data>"

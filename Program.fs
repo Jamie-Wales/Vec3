@@ -41,7 +41,7 @@ module Program =
                 match typeCheck with
                 | Ok(_, _, _, program) ->
                     let program = ConstantFolding.foldConstants program
-                    let value, _ = evalProgram Map.empty program
+                    let value, _ = evalProgram defaultEnv program
                     printfn $"{exprToString value}"
                     0
                 | Error errors ->

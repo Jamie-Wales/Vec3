@@ -12,8 +12,6 @@ and printASTWithIndent expr indent (sb: StringBuilder) =
     let indentStr = String.replicate indent "  "
     match expr with
     | ELiteral (lit, _) -> printLiteral lit indentStr sb
-    | EUnary (op, expr, _) -> printUnary op expr indentStr indent sb
-    | EBinary (left, op, right, _) -> printBinary left op right indentStr indent sb
     | EGrouping (expr, _) -> printGrouping expr indentStr indent sb
     | EIdentifier (name, _) -> sb.AppendLine($"{indentStr}Identifier: {name.Lexeme}") |> ignore
     | ECall (callee, args, _) ->
@@ -25,8 +23,12 @@ and printASTWithIndent expr indent (sb: StringBuilder) =
     | EBlock (stmts, _) ->
         sb.AppendLine($"{indentStr}Block") |> ignore
         
-        
-        
+and numberToString (n: Number) =
+    match n with
+    | LFloat f -> $"Float({f})"
+    | LInteger i -> $"Integer({i})"
+    | LRational (n, d) -> $"Rational({n}/{d})"
+    | LComplex (r, i) -> $"Complex({r}i{i})"
         
 
 and printLiteral (lit: Literal) indentStr (sb: StringBuilder) =

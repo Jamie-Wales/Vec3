@@ -68,18 +68,8 @@ let disassembleInstruction (chunk: Chunk) offset =
     | OP_CODE.RETURN -> simpleInstruction "OP_RETURN" offset
     | OP_CODE.CONSTANT -> constantInstruction chunk "OP_CONSTANT" offset
     | OP_CODE.CONSTANT_LONG -> constantLongInstruction chunk "OP_CONSTANT_LONG" offset
-    | OP_CODE.ADD -> simpleInstruction "OP_ADD" offset
-    | OP_CODE.SUBTRACT -> simpleInstruction "OP_SUBTRACT" offset
-    | OP_CODE.MULTIPLY -> simpleInstruction "OP_MULTIPLY" offset
-    | OP_CODE.DIVIDE -> simpleInstruction "OP_DIVIDE" offset
-    | OP_CODE.NEGATE -> simpleInstruction "OP_NEGATE" offset
-    | OP_CODE.EQUAL -> simpleInstruction "OP_EQUAL" offset
-    | OP_CODE.GREATER -> simpleInstruction "OP_GREATER" offset
-    | OP_CODE.LESS -> simpleInstruction "OP_LESS" offset
     | OP_CODE.TRUE -> simpleInstruction "OP_TRUE" offset
     | OP_CODE.FALSE -> simpleInstruction "OP_FALSE" offset
-    | OP_CODE.NOT -> simpleInstruction "OP_NOT" offset
-    | OP_CODE.PRINT -> simpleInstruction "OP_PRINT" offset
     | OP_CODE.POP -> simpleInstruction "OP_POP" offset
     | OP_CODE.DEFINE_GLOBAL -> constantInstruction chunk "OP_DEFINE_GLOBAL" offset
     | OP_CODE.GET_GLOBAL -> constantInstruction chunk "OP_GET_GLOBAL" offset
@@ -162,18 +152,8 @@ let disassembleChunkToString (chunk: Chunk) name =
         | OP_CODE.RETURN -> simpleInstruction "OP_RETURN" offset
         | OP_CODE.CONSTANT -> constantInstruction chunk "OP_CONSTANT" offset
         | OP_CODE.CONSTANT_LONG -> constantLongInstruction chunk "OP_CONSTANT_LONG" offset
-        | OP_CODE.ADD -> simpleInstruction "OP_ADD" offset
-        | OP_CODE.SUBTRACT -> simpleInstruction "OP_SUBTRACT" offset
-        | OP_CODE.MULTIPLY -> simpleInstruction "OP_MULTIPLY" offset
-        | OP_CODE.DIVIDE -> simpleInstruction "OP_DIVIDE" offset
-        | OP_CODE.NEGATE -> simpleInstruction "OP_NEGATE" offset
-        | OP_CODE.EQUAL -> simpleInstruction "OP_EQUAL" offset
-        | OP_CODE.GREATER -> simpleInstruction "OP_GREATER" offset
-        | OP_CODE.LESS -> simpleInstruction "OP_LESS" offset
         | OP_CODE.TRUE -> simpleInstruction "OP_TRUE" offset
         | OP_CODE.FALSE -> simpleInstruction "OP_FALSE" offset
-        | OP_CODE.NOT -> simpleInstruction "OP_NOT" offset
-        | OP_CODE.PRINT -> simpleInstruction "OP_PRINT" offset
         | OP_CODE.POP -> simpleInstruction "OP_POP" offset
         | OP_CODE.DEFINE_GLOBAL -> constantInstruction chunk "OP_DEFINE_GLOBAL" offset
         | OP_CODE.GET_GLOBAL -> constantInstruction chunk "OP_GET_GLOBAL" offset

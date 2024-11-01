@@ -74,23 +74,23 @@ let rec compileLiteral (lit: Literal) : Compiler<unit> =
     fun state ->
         match lit with
         | LNumber n -> compileNumber n state
-        | LString s -> emitConstant (Value.String s) state
+        | LString s -> emitConstant (VString s) state
         | LBool b ->
             if b then
                 emitOpCode OP_CODE.TRUE state
             else
                 emitOpCode OP_CODE.FALSE state
-        | LUnit -> emitConstant Value.Nil state
+        | LUnit -> emitConstant VNil state
 
 let rec compileExpr (expr: Expr) : Compiler<unit> =
     fun state ->
         match expr with
         | ELiteral(lit, _) -> compileLiteral lit state
-        | EBinary(left, op, right, _) -> compileBinary left op right state
         | EIdentifier(i, _) -> compileIdentifier i state
         | EGrouping(e, _) -> compileGrouping e state
-        | EUnary(token, u, _) -> compileUnary token u state
-        | ELambda(parameters, body, _) -> compileLambda parameters body state
+        | ELambda(parameters, body, _, _) ->
+            let parameters = List.map fst parameters
+            compileLambda parameters body state
         | ECall(callee, arguments, _) -> compileCall callee arguments state
         | EList(elements, _) -> compileList elements state
         | EIndex(list, index, _) -> compileIndex list index state
@@ -101,17 +101,17 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
                     EIdentifier(
                         { Lexeme = Identifier "range"
                           Position = { Line = 0; Column = 0 } },
-                        TAny
+                        None
                     ),
                     [ start; stop ],
-                    TAny
+                    None
                 )
 
             compileExpr expression state
 
         | ERecordEmpty _ ->
             emitConstant (VNumber(VInteger 0)) state
-            |> Result.bind (fun ((), state) -> emitConstant (Value.List []) state)
+            |> Result.bind (fun ((), state) -> emitConstant (VList []) state)
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
 
         | ERecordExtend((name, value, _), record, _) ->
@@ -125,12 +125,12 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             // might be better to have specific value for pair, but then the compound create would need to be changed
             // or extra instruction for create pair, otherwise any two eleemnt list would be a pair
 
-            let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
+            let constIndex = addConstant state.CurrentFunction.Chunk (VString name)
 
             emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
             |> Result.bind (fun ((), state) -> compileExpr value state)
             |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 2)) state)
-            |> Result.bind (fun ((), state) -> emitConstant (Value.List []) state)
+            |> Result.bind (fun ((), state) -> emitConstant (VList []) state)
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
             |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 1)) state)
             |> Result.bind (fun ((), state) -> compileExpr record state)
@@ -146,7 +146,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             // same as index, but with a string and a record (push string)
             compileExpr expr state
             |> Result.bind (fun ((), state) ->
-                let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
+                let constIndex = addConstant state.CurrentFunction.Chunk (VString name)
 
                 emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
                 |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_GET state))
@@ -176,7 +176,7 @@ and compileTuple (elements: Expr list) : Compiler<unit> =
         // same as list
         compileElements elements state
         |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger elements.Length)) state)
-        |> Result.bind (fun ((), state) -> emitConstant (Value.List []) state)
+        |> Result.bind (fun ((), state) -> emitConstant (VList []) state)
         |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
 
 and compileList (elements: Expr list) : Compiler<unit> =
@@ -190,7 +190,7 @@ and compileList (elements: Expr list) : Compiler<unit> =
 
         compileElements elements state
         |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger elements.Length)) state)
-        |> Result.bind (fun ((), state) -> emitConstant (Value.List []) state)
+        |> Result.bind (fun ((), state) -> emitConstant (VList []) state)
         |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
 
 
@@ -225,15 +225,13 @@ and compileBlock (stmts: Stmt list) : Compiler<unit> =
                 | SExpression(expr, _) -> compileExpr expr state
                 | _ ->
                     compileStmt stmt state
-                    |> Result.bind (fun ((), state) -> emitConstant Value.Nil state)
+                    |> Result.bind (fun ((), state) -> emitConstant VNil state)
 
             | stmt :: rest ->
                 compileStmt stmt state
                 |> Result.bind (fun ((), state) -> compileStmts rest state)
 
-        emitOpCode OP_CODE.BLOCK_START state
-        |> Result.bind (fun ((), newState) -> compileStmts stmts newState)
-        |> Result.bind (fun ((), newState) -> emitOpCode OP_CODE.BLOCK_END newState)
+        compileStmts stmts state
         |> Result.map (fun ((), newState) ->
             ((),
              { newState with
@@ -255,118 +253,39 @@ and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
             parameters
             |> List.fold
                 (fun state param ->
-                    let newState = addLocal (lexemeToString param.Lexeme) state
+                    let state = addLocal (lexemeToString param.Lexeme) state
 
-                    { newState with
+                    { state with
                         CurrentFunction =
-                            { newState.CurrentFunction with
-                                Arity = newState.CurrentFunction.Arity + 1 } })
+                            { state.CurrentFunction with
+                                Arity = state.CurrentFunction.Arity + 1 } })
                 lambdaState
 
 
-        let bodyResult = compileExpr body compiledParamsState
-
-        match bodyResult with
-        | Ok((), finalLambdaState) ->
+        compileExpr body compiledParamsState
+        |> Result.bind (fun ((), finalLambdaState) ->
             match emitOpCode OP_CODE.RETURN finalLambdaState with
             | Ok((), finalState) ->
                 let constIndex =
-                    addConstant state.CurrentFunction.Chunk (Value.Function finalState.CurrentFunction)
+                    addConstant state.CurrentFunction.Chunk (VFunction finalState.CurrentFunction)
 
                 emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
             | Error e -> Error e
-        | Error e -> Error e
+        )
 
 and compileCall (callee: Expr) (arguments: Expr list) : Compiler<unit> =
     fun state ->
+        let rec compileArguments arguments state =
+            match arguments with
+            | [] -> Ok((), state)
+            | arg :: rest ->
+                compileExpr arg state
+                |> Result.bind (fun ((), state) -> compileArguments rest state)
+                
         compileExpr callee state
+        |> Result.bind (fun ((), state) -> compileArguments arguments state)
         |> Result.bind (fun ((), state) ->
-            let rec compileArgs args state =
-                match args with
-                | [] -> Ok((), state)
-                | arg :: rest -> compileExpr arg state |> Result.bind (fun ((), state) -> compileArgs rest state)
-
-            compileArgs arguments state
-            |> Result.bind (fun ((), state) ->
-                let argCount = byte arguments.Length
-                emitBytes [| byte (opCodeToByte OP_CODE.CALL); argCount |] state))
-
-and compileBinary (left: Expr) (op: Token) (right: Expr) : Compiler<unit> =
-    fun state ->
-        let compileOperands state =
-            compileExpr left state
-            |> Result.bind (fun ((), state) -> compileExpr right state)
-
-        let emitBinaryOp opCode state =
-            compileOperands state
-            |> Result.bind (fun ((), state) -> emitOpCode opCode state)
-
-        match op.Lexeme with
-        | Operator Plus -> emitBinaryOp OP_CODE.ADD state
-        | Operator Minus -> emitBinaryOp OP_CODE.SUBTRACT state
-        | Operator Star -> emitBinaryOp OP_CODE.MULTIPLY state
-        | Operator Slash -> emitBinaryOp OP_CODE.DIVIDE state
-        | Operator EqualEqual -> emitBinaryOp OP_CODE.EQUAL state
-        | Operator Percent -> emitBinaryOp OP_CODE.MOD state
-        | Operator Caret
-        | Operator StarStar ->
-            let expression =
-                ECall(EIdentifier({ op with Lexeme = Identifier "power" }, TAny), [ left; right ], TAny)
-
-            compileExpr expression state
-        | Operator DotStar ->
-            let expression =
-                ECall(
-                    EIdentifier(
-                        { op with
-                            Lexeme = Identifier "dotProduct" },
-                        TAny
-                    ),
-                    [ left; right ],
-                    TAny
-                )
-
-            compileExpr expression state
-        | Operator Cross ->
-            let expression =
-                ECall(
-                    EIdentifier(
-                        { op with
-                            Lexeme = Identifier "crossProduct" },
-                        TAny
-                    ),
-                    [ left; right ],
-                    TAny
-                )
-
-            compileExpr expression state
-        | Operator ColonColon ->
-            let expression =
-                ECall(EIdentifier({ op with Lexeme = Identifier "cons" }, TAny), [ left; right ], TAny)
-
-            compileExpr expression state
-        | Operator BangEqual ->
-            emitBinaryOp OP_CODE.EQUAL state
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)
-        | Operator Greater -> emitBinaryOp OP_CODE.GREATER state
-        | Operator GreaterEqual ->
-            emitBinaryOp OP_CODE.LESS state
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)
-        | Operator Less -> emitBinaryOp OP_CODE.LESS state
-        | Operator LessEqual ->
-            emitBinaryOp OP_CODE.GREATER state
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.NOT state)
-        | _ -> Error($"Unsupported binary operator: {op.Lexeme}", state)
-
-and compileUnary (op: Token) (expr: Expr) : Compiler<unit> =
-    fun state ->
-        let _ = compileExpr expr state
-        let emitUnaryOp opCode state = emitOpCode opCode state
-
-        match op.Lexeme with
-        | Operator Bang -> emitUnaryOp OP_CODE.NOT state
-        | Operator Minus -> emitUnaryOp OP_CODE.NEGATE state
-        | _ -> Error($"Unsupported unary operator: {op.Lexeme}", state)
+            emitBytes [| byte (opCodeToByte OP_CODE.CALL); byte (List.length arguments) |] state)
 
 and compileGrouping grouping : Compiler<unit> = fun state -> compileExpr grouping state
 
@@ -377,7 +296,7 @@ and compileIdentifier (token: Token) : Compiler<unit> =
         match state.CurrentFunction.Locals |> List.tryFind (fun local -> local.Name = name) with
         | Some local -> emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte local.Index |] state
         | None ->
-            let constIndex = addConstant state.CurrentFunction.Chunk (Value.String name)
+            let constIndex = addConstant state.CurrentFunction.Chunk (VString name)
             emitBytes [| byte (opCodeToByte OP_CODE.GET_GLOBAL); byte constIndex |] state
 
 and compileStmt (stmt: Stmt) : Compiler<unit> =
@@ -390,7 +309,7 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
             |> Result.bind (fun ((), state) ->
                 match msg with
                 | Some m -> compileExpr m state
-                | None -> emitConstant Value.Nil state)
+                | None -> emitConstant VNil state)
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.ASSERT state)
         | STypeDeclaration _ -> Ok((), state)
 
@@ -403,7 +322,7 @@ and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit
                 Ok((), newState)
             else
                 let constIndex =
-                    addConstant state.CurrentFunction.Chunk (Value.String(lexemeToString name.Lexeme))
+                    addConstant state.CurrentFunction.Chunk (VString(lexemeToString name.Lexeme))
 
                 emitBytes [| byte (opCodeToByte OP_CODE.DEFINE_GLOBAL); byte constIndex |] state)
 

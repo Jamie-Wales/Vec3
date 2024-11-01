@@ -12,8 +12,6 @@ let freshTypeVar =
         counter.Value
 
 type Type =
-    | TInfer
-    
     | TInteger
     | TFloat
     | TRational
@@ -32,7 +30,7 @@ type Type =
     
     | TTypeVariable of TypeVar
     
-    | TConstrain of TypeVar * Type list
+    | TConstrain of TypeVar * (Type -> bool)
     
     | TTuple of Type list
     
@@ -42,8 +40,27 @@ type Type =
     | TRowEmpty
     | TRowExtend of Token * Type * Row
     
-    | TAlias of Token * Type
-
+    | TAlias of Token * Type option
+    
+    member this.IsPrimitive =
+        match this with
+        | TInteger | TFloat | TRational | TComplex | TBool | TString | TUnit | TNever -> true
+        | _ -> false
+    
+    member this.IsNumeric =
+        match this with
+        | TInteger | TFloat | TRational | TComplex -> true
+        | TAlias(_, Some t) -> t.IsNumeric
+        | _ -> false
+    
+    member this.IsArithmetic =
+        match this with
+        | TInteger | TFloat | TRational | TComplex -> true
+        | TAlias(_, Some t) -> t.IsArithmetic
+        | TTensor(typ, _) -> typ.IsArithmetic
+        | _ -> false
+        
+        
 and Dims = Dims of int list | DAny | DVar of TypeVar
 
 and Row = Type // Row | RowEmpty | RowExtend
@@ -64,40 +81,32 @@ type Literal =
 
 type Expr =
     | ELiteral of Literal * Type
-    | EIdentifier of Token * Type
-    | EUnary of Token * Expr * Type
-    | EBinary of Expr * Token * Expr * Type
-    | EGrouping of Expr * Type
-    | EIf of Expr * Expr * Expr * Type
-    | ETernary of Expr * Expr * Expr * Type
+    | EIdentifier of Token * Type option
+    | EGrouping of Expr * Type option
+    | EIf of Expr * Expr * Expr * Type option
+    | ETernary of Expr * Expr * Expr * Type option
     
-    | EList of Expr list * Type
-    | ETuple of Expr list * Type
+    | EList of Expr list * Type option
+    | ETuple of Expr list * Type option
     
-    | ECall of Expr * Expr list * Type
-    | EIndex of Expr * Expr * Type
+    | ECall of Expr * Expr list * Type option
+    | EIndex of Expr * Expr * Type option
     
-    | ELambda of Token list * Expr * Type
-    | EBlock of Stmt list * Type
-    | ERange of Expr * Expr * Type
+    | ELambda of ((Token * Type option) list) * Expr * Type option * Type option
+    | EBlock of Stmt list * Type option
+    | ERange of Expr * Expr * Type option
     
-    | ERecordSelect of Expr * Token * Type
-    | ERecordExtend of (Token * Expr * Type) * Expr * Type
-    | ERecordRestrict of Expr * Token * Type
+    | ERecordSelect of Expr * Token * Type option
+    | ERecordExtend of (Token * Expr * Type option) * Expr * Type option
+    | ERecordRestrict of Expr * Token * Type option
     | ERecordEmpty of Type
     
 and Stmt =
-    | SExpression of Expr * Type
-    | SVariableDeclaration of Token * Expr * Type
-    | SAssertStatement of Expr * Expr option * Type
-    | STypeDeclaration of Token * Type * Type
+    | SExpression of Expr * Type option
+    | SVariableDeclaration of Token * Expr * Type option
+    | SAssertStatement of Expr * Expr option * Type option
+    | STypeDeclaration of Token * Type * Type option
 
 type Program = Stmt list
 
-let numberToString (n: Number) =
-    match n with
-    | LFloat f -> $"Float({f})"
-    | LInteger i -> $"Integer({i})"
-    | LRational (n, d) -> $"Rational({n}/{d})"
-    | LComplex (r, i) -> $"Complex({r}i{i})"
 
