@@ -1,5 +1,6 @@
 namespace Vec3
 
+open System
 open System.Text.Encodings.Web
 open Avalonia.Controls
 open Avalonia.Markup.Xaml
@@ -14,6 +15,10 @@ open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Compiler
 open Vec3.Interpreter.Parser
 open Vec3.Interpreter.PrettyPrinter
+open Vec3.Interpreter.Typing
+open System.Threading.Tasks
+open System.Threading
+open System.Threading.Tasks
 
 
 type MainWindow () as this =
@@ -35,6 +40,11 @@ type MainWindow () as this =
     let mutable globalsOutput: TextBlock = null
     let mutable replState = createInitialState()
     let mutable debugVM: VM option = None
+    
+    let debounceTime = 500
+    let mutable debounceTimer = None : Timer option
+
+    
     do
         AvaloniaXamlLoader.Load(this)
         this.InitializeComponent()
@@ -85,7 +95,37 @@ if x > 0 then
         stepBackButton.Click.AddHandler(fun _ _ -> this.StepBack())
         stepForwardButton.Click.AddHandler(fun _ _ -> this.StepForward())
         exitDebugButton.Click.AddHandler(fun _ _ -> this.ExitDebugMode())
-
+        // trigger text changed on new line
+        textEditor.TextChanged.AddHandler(fun _ _ -> this.TextChanged())
+    
+    member private this.TextChanged() =
+        debounceTimer |> Option.iter (_.Dispose())
+        
+        let callback = fun _ ->
+            Task.Run(fun () ->
+                Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                    let code = textEditor.Text
+                    if String.IsNullOrEmpty(code) then
+                        standardOutput.Foreground <- SolidColorBrush(Colors.Black)
+                        standardOutput.Text <- ""
+                    else
+                        match parse code with
+                        | Ok (_, ast) ->
+                            match Inference.inferProgram1 ast with
+                            | Ok _ ->
+                                    standardOutput.Foreground <- SolidColorBrush(Colors.Black)
+                                    standardOutput.Text <- ""
+                            | Error err ->
+                                    standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                                    standardOutput.Text <- Exceptions.formatTypeErrors err
+                        | Error (err, state) ->
+                            standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                            standardOutput.Text <- formatParserError err state
+                ) |> ignore
+            ) |> ignore
+        
+        debounceTimer <- Some(new Timer(callback, null, debounceTime, Timeout.Infinite))
+    
     member private this.ApplyColorScheme() =
         if textMateInstallation <> null then
             let applyColor colorKey (action: IBrush -> unit) =
@@ -219,7 +259,7 @@ if x > 0 then
             let currentFrame = getCurrentFrame vm
             this.HighlightCurrentInstruction(currentFrame.IP)
         else
-            ignore()
+            ()
     member private this.SetButtonStates(isRepl: bool, isDebug: bool, ?canStepBack: bool, ?canStepForward: bool) =
         switchToReplButton.IsEnabled <- not isRepl && not isDebug
         switchToStandardButton.IsEnabled <- not isDebug

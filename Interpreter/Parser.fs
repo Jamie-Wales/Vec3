@@ -807,7 +807,7 @@ let parseStmt (input: string) : Result<Stmt, ParserError> =
         match stmt with
         | Ok(_, stmt) -> Ok(stmt)
         | Error(f, _) -> Error f
-    | Error f -> raise (LexerException(f))
+    | Error f -> Error (LexerError f)
 
 let parseProgram (state: ParserState) : ParseResult<Program> =
     let rec loop (state: ParserState) (stmts: Stmt list) : ParseResult<Program> =
@@ -817,7 +817,7 @@ let parseProgram (state: ParserState) : ParseResult<Program> =
 
     loop state []
 
-let parseTokens (tokens: Token list) =
+let parseTokens (tokens: Token list): Program ParseResult =
     let initialState = createParserState tokens
     parseProgram initialState
 

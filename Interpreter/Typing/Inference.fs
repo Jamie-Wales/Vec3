@@ -43,6 +43,7 @@ let rec occursCheck (tv: TypeVar) (t: TType) : bool =
     | TRowExtend(_, typ, row) -> occursCheck tv typ || occursCheck tv row
     | TAlias(_, typ) -> Option.map (occursCheck tv) typ |> Option.defaultValue false
     | _ -> false
+    
 
 let checkLiteral (lit: Literal) : TType =
     match lit with
@@ -754,16 +755,8 @@ let quickInferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : TypeEnv =
     | Ok(env, _, _, _) -> env
     | Error errors -> raise <| TypeException errors
 
-let rec IsPrimeMultipleTest (bbase: int) (other: int) : bool =
-        match bbase with
-        | 0 -> false
-        | _ when bbase > other -> false
-        | _ when bbase = other -> true
-        | _ -> IsPrimeMultipleTest (bbase * 2) other 
-        
-let rec RemoveAllMultiples (list : int list) : int list =
-    List.fold (fun acc head -> List.filter (IsPrimeMultipleTest head) acc) list list
+let inferProgram1 (stmts: Program) : (TypeEnv * AliasMap * Substitution * Program) TypeResult =
+    let env = defaultTypeEnv
+    let aliases = Map.empty
     
-let GetPrimesUpTo n =
-    RemoveAllMultiples [ 2 .. n ]
-    
+    inferProgram aliases env stmts

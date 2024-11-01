@@ -263,12 +263,9 @@ let rec builtins () =
                   function
                   | [] -> acc, vm
                   | x :: xs ->
-                      printfn $"Folding: {valueToString acc} {valueToString x}"
 
-                      // let vm = push vm f
                       let vm = push vm x
                       let vm = push vm acc
-                      // add result back to stack
                       let frame =
                           { Function = f
                             IP = 0
@@ -278,8 +275,6 @@ let rec builtins () =
                       vm.Frames.Add(frame)
 
                       let result, vm = runCurrentFrame vm
-                      // let result, vm = pop vm
-                      printfn $"Folded: {valueToString result}"
 
                       fold result vm xs
 

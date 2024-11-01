@@ -274,7 +274,6 @@ and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
         )
 
 and compileCall (callee: Expr) (arguments: Expr list) : Compiler<unit> =
-    printfn $"Compiling call: {callee} with arguments: {arguments}"
     fun state ->
         let rec compileArguments arguments state =
             match arguments with
