@@ -26,7 +26,7 @@ type Type =
     
     | TAny
     
-    | TFunction of Type list * Type
+    | TFunction of Type list * Type * bool // bool is pure flag
     
     | TTypeVariable of TypeVar
     
@@ -45,6 +45,7 @@ type Type =
     member this.IsPrimitive =
         match this with
         | TInteger | TFloat | TRational | TComplex | TBool | TString | TUnit | TNever -> true
+        | TAlias(_, Some t) -> t.IsPrimitive
         | _ -> false
     
     member this.IsNumeric =
@@ -58,6 +59,15 @@ type Type =
         | TInteger | TFloat | TRational | TComplex -> true
         | TAlias(_, Some t) -> t.IsArithmetic
         | TTensor(typ, _) -> typ.IsArithmetic
+        | _ -> false
+    
+    member this.IsPure =
+        match this with
+        | TFunction(_, _, pure') -> pure'
+        | TAlias(_, Some t) -> t.IsPure
+        | TInteger | TFloat | TRational | TComplex -> true
+        | TTypeVariable _ -> true
+        | TConstrain _ -> true
         | _ -> false
         
         
@@ -92,7 +102,7 @@ type Expr =
     | ECall of Expr * Expr list * Type option
     | EIndex of Expr * Expr * Type option
     
-    | ELambda of ((Token * Type option) list) * Expr * Type option * Type option
+    | ELambda of (Token * Type option) list * Expr * Type option * bool * Type option // bool is pure flag
     | EBlock of Stmt list * Type option
     | ERange of Expr * Expr * Type option
     

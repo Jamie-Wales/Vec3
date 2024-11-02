@@ -619,14 +619,14 @@ and lambda (state: ParserState) : ParseResult<Expr> =
                 |> Result.bind (fun (state, body) ->
                     let paramTypes = List.map snd params'
                     let paramNames = List.map fst params'
-                    Ok(state, ELambda(params', body, Some returnType, None))))
+                    Ok(state, ELambda(params', body, Some returnType, false, None))))
 
         | _ ->
             parseBody state
             |> Result.bind (fun (state, body) ->
                 let paramTypes = List.map snd params'
                 let paramNames = List.map fst params'
-                Ok(state, ELambda(params', body, None, None))))
+                Ok(state, ELambda(params', body, None, false, None))))
 
 and funcType (state: ParserState) : ParseResult<TType> =
     let state = setLabel state "FunctionType"
@@ -647,7 +647,7 @@ and funcType (state: ParserState) : ParseResult<TType> =
         expect state (Punctuation Colon)
         |> Result.bind (fun state ->
             typeHint state
-            |> Result.bind (fun (state, returnType) -> Ok(state, TFunction(paramList, returnType)))))
+            |> Result.bind (fun (state, returnType) -> Ok(state, TFunction(paramList, returnType, false)))))
 
 
 and tensorType (state: ParserState) : ParseResult<TType> =
@@ -825,7 +825,9 @@ let parse (input: string) =
     let tokens = tokenize input
 
     match tokens with
-    | Ok tokens -> parseTokens tokens
+    | Ok tokens ->
+        let ast = parseTokens tokens
+        ast
     | Error f -> Error(LexerError f, createParserState [])
 
 let parseFile (file: string) =

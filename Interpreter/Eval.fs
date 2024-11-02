@@ -252,7 +252,7 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
         let expr = evalExpr env expr
 
         match expr with
-        | ELambda(params', body, _, _) ->
+        | ELambda(params', body, _, _, _) ->
             let params' = List.map fst params'
             let rec evalParams (env: Env) (params': Token list) (args: Expr list) =
                 match params', args with
@@ -323,12 +323,32 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
                     match args with
                     | [ ELiteral(LNumber(LFloat x), TFloat) ] -> ELiteral(LNumber(LFloat(Math.Ceiling(x))), TFloat)
                     | _ -> failwith "invalid"
+                
+                | "map" ->
+                    let args = List.map (evalExpr env) args
+                    
+                    match args with
+                    | [ EList(exprs, _); ELambda([param], body, _, _, _) ] ->
+                        let param = fst param
+                        EList(List.map (fun e -> evalExpr (Map.add param.Lexeme e env) body) exprs, None)
+                    | [ EList(exprs, _); EIdentifier _ as id ] ->
+                        let args = List.map (evalExpr env) exprs
+                        let res = List.map (fun arg -> evalExpr env (ECall(id, [ arg ], None))) args
+                        EList(res, None)
+                    | _ -> failwith "invalid"
+                
+                | "len" ->
+                    let args = List.map (evalExpr env) args
+                    
+                    match args with
+                    | [ EList(exprs, _) ] -> ELiteral(LNumber(LInteger(List.length exprs)), TInteger)
+                    | _ -> failwith "invalid"
                     
                 | "fold" ->
                     let args = List.map (evalExpr env) args
                     
                     match args with
-                    | [ EList(exprs', _); init; ELambda([listParam; accParam], body, _, _); ] ->
+                    | [ EList(exprs', _); init; ELambda([listParam; accParam], body, _, _, _); ] ->
                         let listParam = fst listParam
                         let accParam = fst accParam
                         
@@ -540,7 +560,7 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
                 | _ -> failwith "invalid"
             | _ -> failwith $"function {name} not found"
         | _ -> failwith "invalid"
-    | ELambda(params', body, rt, t') -> ELambda(params', body, rt, t')
+    | ELambda(params', body, rt, pr, t') -> ELambda(params', body, rt, pr, t')
     | EIdentifier(name, typ) ->
         match env.TryGetValue name.Lexeme with
         | true, expr -> expr
@@ -559,6 +579,7 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
             | Identifier "fold"
             | Identifier "plot"
             | Identifier "ceil"
+            | Identifier "map"
             
             | Identifier "Int"
             | Identifier "Float"

@@ -15,7 +15,7 @@ let rec valuesEqual (a: Value) (b: Value) =
     | VNumber x, VNumber y -> numbersEqual x y
     | VBoolean x, VBoolean y -> x = y
     | VString x, VString y -> x = y
-    | VFunction f1, VFunction f2 -> f1.Name = f2.Name && f1.Arity = f2.Arity
+    | VFunction (f1, _), VFunction (f2, _) -> f1.Name = f2.Name && f1.Arity = f2.Arity
     | VClosure c1, VClosure c2 -> c1.Function = c2.Function
     | VNil, VNil -> true
     | VList l1, VList l2 -> 
@@ -146,6 +146,25 @@ let negate value =
     | VNumber(VRational(n, d)) -> VNumber(VRational(-n, d))
     | VNumber(VComplex(r, i)) -> VNumber(VComplex(-r, -i))
     | _ -> failwith "Can only negate numbers"
+
+let unnegate value =
+    match value with
+    | VNumber(VInteger n) -> VNumber(VInteger(if n < 0 then -n else n))
+    | VNumber(VFloat n) -> VNumber(VFloat(if n < 0.0 then -n else n))
+    | VNumber(VRational(n, d)) -> VNumber(VRational(if n < 0 then -n, d else n, d))
+    | _ -> failwith "Can only unnegate numbers"
+
+let power a b =
+    match (a, b) with
+    | VNumber(VInteger x), VNumber(VInteger y) -> VNumber(VInteger(int (float x ** float y)))
+    | VNumber(VFloat x), VNumber(VFloat y) -> VNumber(VFloat(x ** y))
+    | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) -> 
+        VNumber(VRational(int (float n1 ** float n2), int (float d1 ** float d2)))
+    | VNumber(VComplex(a, b)), VNumber(VComplex(c, d)) ->
+        failwith "todo"
+    | VNumber x, VNumber y ->
+        VNumber(VFloat(floatValue x ** floatValue y))
+    | _ -> failwith "Can only raise numbers to a power"
 
 let compare a b =
     match (a, b) with
