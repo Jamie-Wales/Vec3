@@ -7,7 +7,7 @@ open Vec3.Interpreter.Grammar
 let rec freeTypeVars (typ: TType) : TypeVar list =
     match typ with
     | TTypeVariable tv -> [ tv ]
-    | TFunction(paramTypes, retType) -> List.collect freeTypeVars paramTypes @ freeTypeVars retType
+    | TFunction(paramTypes, retType, _) -> List.collect freeTypeVars paramTypes @ freeTypeVars retType
     | TTuple types -> List.collect freeTypeVars types
     | TTensor(typ, dims) ->
         match dims with

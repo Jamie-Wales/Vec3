@@ -16,7 +16,7 @@ let rec resolveAlias (typ: TType) (env: AliasMap) : TType =
         match resolved with
         | Some t -> resolveAlias t env
         | None -> typ
-    | TFunction(params', ret) -> TFunction(List.map (fun t -> resolveAlias t env) params', resolveAlias ret env)
+    | TFunction(params', ret, pr) -> TFunction(List.map (fun t -> resolveAlias t env) params', resolveAlias ret env, pr)
     | TTuple types -> TTuple(List.map (fun t -> resolveAlias t env) types)
     | TTensor(typ, dims) -> TTensor(resolveAlias typ env, dims)
     | TRecord row -> TRecord(resolveAlias row env)
@@ -31,10 +31,10 @@ let rec applySubstitution (env: AliasMap) (sub: Substitution) (t: TType) : TType
         match Map.tryFind tv sub with
         | Some t' -> applySubstitution env sub t'
         | None -> t
-    | TFunction(paramsTypes, retType) ->
+    | TFunction(paramsTypes, retType, pr) ->
         let newParams = List.map (applySubstitution env sub) paramsTypes
         let newRet = applySubstitution env sub retType
-        TFunction(newParams, newRet)
+        TFunction(newParams, newRet, pr)
     | TTuple types -> TTuple(List.map (applySubstitution env sub) types)
     | TTensor(typ, dims) ->
         let newTyp = applySubstitution env sub typ

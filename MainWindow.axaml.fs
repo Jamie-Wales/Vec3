@@ -191,6 +191,13 @@ if x > 0 then
                 plotWindow.PlotControl.Plot.Title(title)
                 plotWindow.PlotControl.Refresh()
                 plotWindow.Show()
+            | VPlotFunction (title, f) ->
+                let plotWindow = PlotWindow()
+                plotWindow.PlotControl.Plot.Clear()
+                plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
+                plotWindow.PlotControl.Plot.Title(title)
+                plotWindow.PlotControl.Refresh()
+                plotWindow.Show()
             | _ -> ()
         | _ -> ()
 

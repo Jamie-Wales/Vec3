@@ -32,7 +32,7 @@ let rec printExpr = function
     | EIf (cond, thenBranch, elseBranch, _) -> $"""if {printExpr cond} then {printExpr thenBranch} else {printExpr elseBranch}"""
     | EIndex (expr, index, _) -> $"""{printExpr expr}[{printExpr index}]"""
     | EBlock (stmts, _) -> $"""{{ {String.concat "\n" (List.map printStmt stmts)} }}"""
-    | ELambda (params', body, rt, _) -> $"""({String.concat ", " (List.map (fun (param, _) -> lexemeToString param.Lexeme) params')}) -> {printExpr body}"""
+    | ELambda (params', body, rt, _, _) -> $"""({String.concat ", " (List.map (fun (param, _) -> lexemeToString param.Lexeme) params')}) -> {printExpr body}"""
     | ERecordSelect (expr, field, _) -> $"""{printExpr expr}.{lexemeToString field.Lexeme}"""
     | ETernary (cond, thenBranch, elseBranch, _) -> $"""{printExpr thenBranch} if {printExpr cond} else {printExpr elseBranch}"""
     

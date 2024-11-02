@@ -31,7 +31,7 @@ let combineMaps map1 map2 =
 let rec occursCheck (tv: TypeVar) (t: TType) : bool =
     match t with
     | TTypeVariable v -> v = tv
-    | TFunction(parameters, ret) -> List.exists (occursCheck tv) parameters || occursCheck tv ret
+    | TFunction(parameters, ret, _) -> List.exists (occursCheck tv) parameters || occursCheck tv ret
     | TTuple types -> List.exists (occursCheck tv) types
     | TTensor(typ, var) ->
         occursCheck tv typ
@@ -118,8 +118,8 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
         else
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 
-    | TFunction(params1, ret1), TFunction(params2, ret2) ->
-        if List.length params1 <> List.length params2 then
+    | TFunction(params1, ret1, pr1), TFunction(params2, ret2, pr2) ->
+        if List.length params1 <> List.length params2 || pr1 <> pr2 then
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
         else
             let paramResults = List.map2 unify params1 params2
@@ -235,6 +235,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
 
             match resolved with
             | Some(Dims sizes') when sizes = sizes' -> unify typ1 typ2
+            | Some(Dims _) -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
             | _ ->
                 resolvedDims.Value <- Map.add v (Dims sizes) resolvedDims.Value // this is wrong
                 unify typ1 typ2
@@ -242,7 +243,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
             if v1 = v2 then
                 Ok Map.empty
             else
-                let sub = Map.add v1 (TTensor(typ1, DVar v2)) Map.empty // this is wrong
+                let sub = Map.add v1 (TTensor(typ1, DVar v2)) Map.empty
                 resolvedDims.Value <- Map.add v1 (DVar v2) resolvedDims.Value
                 Ok sub
         | DVar v, DAny
@@ -255,7 +256,6 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
                 resolvedDims.Value <- Map.add v DAny resolvedDims.Value
                 unify typ1 typ2
     | _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
-
 
 
 // let defaultTypeEnv =
@@ -324,13 +324,14 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
     | EIdentifier(token, _) ->
         checkIdentifier env token
         |> Result.bind (fun t -> Ok(t, Map.empty, EIdentifier(token, Some t)))
-    | ELambda(paramList, body, returnT, _) ->
+    | ELambda(paramList, body, returnT, pr, _) ->
         let paramTypes = List.map snd paramList
         
         let newParamType typ =
             match typ with
             | Some t -> t
             | None -> TTypeVariable(freshTypeVar())
+            
         let paramTypes = List.map newParamType paramTypes
         let paramList = List.map fst paramList
         
@@ -346,6 +347,26 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                 paramList
                 paramTypes
         
+        // pure functions are composed of builtins
+        // for example,
+        // let f = (x) -> x + 1, pure because + is a builtin and pure
+        // let f = (x) -> x + x, pure because + is a builtin and pure
+        // let f = (x) -> x^2 + 1, pure because + and ^ are builtins and pure
+        // let f = (x) -> { x }, not pure
+        let rec isPure (body: Expr): bool =
+            match body with
+            | ELiteral _ -> true
+            | EIdentifier (name, _) -> 
+                checkIdentifier newEnv name
+                |> Result.map (_.IsPure)
+                |> Result.defaultValue false
+            | ECall(callee, args, _) ->
+                let callee = isPure callee
+                let args = List.forall isPure args
+                callee && args
+            | EBlock _ -> false
+            | EGrouping(expr, _) -> isPure expr
+            | _ -> false
 
         infer aliases newEnv body
         |> Result.bind (fun (bodyType, sub, expr) ->
@@ -353,9 +374,12 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             let paramTypes = List.map (applySubstitution aliases sub) paramTypes
             let paramList = List.zip paramList paramTypes
             let paramList = List.map (fun (id, typ) -> (id, Some typ)) paramList
+            let isPure = isPure expr
+            printfn "isPure: %A" isPure
 
             if Option.isNone returnT then
-                Ok(TFunction(paramTypes, bodyType), sub, ELambda(paramList, expr, Some bodyType, Some (TFunction(paramTypes, bodyType))))
+                Ok(TFunction(paramTypes, bodyType, isPure), sub, ELambda(paramList, expr, Some bodyType, isPure, Some 
+                (TFunction (paramTypes, bodyType, isPure))))
             else
                 let returnT = Option.defaultValue (TTypeVariable(freshTypeVar())) returnT
                 unify aliases bodyType returnT
@@ -364,9 +388,9 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                     let returnType = applySubstitution aliases sub returnT
 
                     Ok(
-                        TFunction(paramTypes, returnType),
+                        TFunction(paramTypes, returnType, isPure),
                         sub,
-                        ELambda(paramList, expr, Some returnType, Some (TFunction(paramTypes, returnType)))
+                        ELambda(paramList, expr, Some returnType, isPure, Some (TFunction(paramTypes, returnType, isPure)))
                     )))
 
     | ECall(callee, args, _) ->
@@ -375,7 +399,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             let t = applySubstitution aliases sub t
 
             match t with
-            | TFunction(paramTypes, ret) ->
+            | TFunction(paramTypes, ret, _) ->
                 if List.length paramTypes <> List.length args then
                     Error [ TypeError.InvalidArgumentCount(callee, List.length paramTypes, List.length args) ]
                 else
@@ -407,7 +431,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                     let argExprs = List.map (fun (_, _, expr) -> expr) argResults
 
                     let returnT = TTypeVariable(freshTypeVar ())
-                    let t = TFunction(argTypes, returnT)
+                    let t = TFunction(argTypes, returnT, false)
 
                     unify aliases t (TTypeVariable a)
                     |> Result.bind (fun sub ->
@@ -573,6 +597,10 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
     // let y = { a = 4.0 }
     // x(y), doesnt infer that a must be an int, so fials on +
     // annoying error stupid hard to fix
+    // above is fixed, new issue:
+    // let x = (x) -> x.a + 4
+    // let y = { a = 4, b = 4 }
+    // fails
     | ERecordEmpty _ -> Ok(TRecord(TRowEmpty), Map.empty, ERecordEmpty(TRecord(TRowEmpty)))
     | ERecordExtend((name, value, _), record, _) ->
         let valueResult = infer aliases env value
@@ -674,6 +702,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         | _ -> Error [ TypeError.InvalidField(name, TNever) ]
 
 
+
 and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * AliasMap * Substitution * Stmt) TypeResult =
     // make this immutable later, pass it around, or resolved in substitution
     resolvedTypes.Value <- Map.empty
@@ -681,7 +710,8 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
     match stmt with
     | SExpression(expr, _) ->
         infer aliases env expr
-        |> Result.map (fun (t, sub, expr) -> (env, aliases, sub, SExpression(expr, Some t)))
+        |> Result.map (fun (t, sub, expr) ->
+            (env, aliases, sub, SExpression(expr, Some t)))
     | SVariableDeclaration(name, expr, typ) ->
         infer aliases env expr
         |> Result.bind (fun (t, sub, expr) ->
@@ -691,14 +721,13 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
             |> Result.bind (fun sub' ->
                 let sub = combineMaps sub sub'
 
-                let env = applySubstitutionToEnv aliases sub env
+                // let env = applySubstitutionToEnv aliases sub env
 
                 let typ = applySubstitution aliases sub typ
 
                 let env =
                     match name with
                     | { Lexeme = Identifier _ as id } ->
-                        // let scheme = generalize env typ
                         Map.add id typ env
                     | _ -> env
 

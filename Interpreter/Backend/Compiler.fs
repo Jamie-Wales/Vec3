@@ -88,9 +88,9 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | ELiteral(lit, _) -> compileLiteral lit state
         | EIdentifier(i, _) -> compileIdentifier i state
         | EGrouping(e, _) -> compileGrouping e state
-        | ELambda(parameters, body, _, _) ->
+        | ELambda(parameters, body, _, pr, _) ->
             let parameters = List.map fst parameters
-            compileLambda parameters body state
+            compileLambda parameters body pr state
         | ECall(callee, arguments, _) -> compileCall callee arguments state
         | EList(elements, _) -> compileList elements state
         | EIndex(list, index, _) -> compileIndex list index state
@@ -238,7 +238,7 @@ and compileBlock (stmts: Stmt list) : Compiler<unit> =
                  ScopeDepth = newState.ScopeDepth - 1 }))
 
 
-and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
+and compileLambda (parameters: Token list) (body: Expr) (pur: bool) : Compiler<unit> =
     fun state ->
         let functionName = $"lambda_{state.CurrentFunction.Name}"
         let lambdaFunction = initFunction functionName
@@ -261,17 +261,85 @@ and compileLambda (parameters: Token list) (body: Expr) : Compiler<unit> =
                                 Arity = state.CurrentFunction.Arity + 1 } })
                 lambdaState
 
-
+        let builtin = if pur then Some <| compileAsBuiltin parameters body else None
+        
         compileExpr body compiledParamsState
         |> Result.bind (fun ((), finalLambdaState) ->
             match emitOpCode OP_CODE.RETURN finalLambdaState with
             | Ok((), finalState) ->
                 let constIndex =
-                    addConstant state.CurrentFunction.Chunk (VFunction finalState.CurrentFunction)
+                    addConstant state.CurrentFunction.Chunk (VFunction (finalState.CurrentFunction, builtin))
 
                 emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
             | Error e -> Error e
         )
+
+and compileAsBuiltin (parameters: Token list) (body: Expr): (double -> double) =
+    if parameters.Length <> 1 then
+        failwith "Builtin functions must have exactly one parameter"
+        
+    let parameter = parameters.Head
+    let parameterName = lexemeToString parameter.Lexeme
+    
+    let logBase (x: double) (y: double) = log y / log x
+    
+    let getBinaryOp (lexeme: Lexeme) =
+        match lexeme with
+        | Operator (Plus, _) -> (+)
+        | Operator (Minus, _) -> (-)
+        | Operator (Star, _) -> (*)
+        | Operator (Slash, _)  -> (/)
+        | Operator (Percent, _) -> (%)
+        | Operator (StarStar, _) -> ( ** )
+        | Operator (Caret, _) -> ( ** )
+        | Identifier i when i = "log" -> logBase
+        | _ -> failwith "Invalid operator"
+    
+    
+    let getUnaryOp (lexeme: Lexeme) : (double -> double) =
+        match lexeme with
+        | Identifier i when i = "abs" -> abs
+        | Identifier i when i = "sqrt" -> sqrt
+        | Identifier i when i = "sin" -> sin
+        | Identifier i when i = "cos" -> cos
+        | Identifier i when i = "tan" -> tan
+        | Identifier i when i = "asin" -> asin
+        | Identifier i when i = "acos" -> acos
+        | Identifier i when i = "atan" -> atan
+        | Identifier i when i = "exp" -> exp
+        | Identifier i when i = "log10" -> log10
+        | Identifier i when i = "ceil" -> ceil
+        | Identifier i when i = "floor" -> floor
+        | Identifier i when i = "round" -> round
+        | Identifier i when i = "trunc" -> truncate
+        | Operator (Minus, _) -> (~-)
+        | Operator (Plus, _) -> fun x -> if x < 0.0 then -1.0 else 1.0
+        | _ -> failwith "Invalid operator"
+    
+    let rec compileBuiltinBody (body: Expr) : (double -> double) =
+        match body with
+        | EIdentifier(i, _) when lexemeToString i.Lexeme = parameterName -> id
+        | ELiteral(LNumber(LInteger i), _) -> fun _ -> double i
+        | ELiteral(LNumber(LFloat f), _) -> fun _ -> f
+        | ELiteral(LNumber(LRational(n, d)), _) -> fun _ -> double n / double d
+        | ELiteral(LNumber(LComplex(r, i)), _) -> fun _ -> r
+        | ECall(name, args, _) ->
+            match name with
+            | EIdentifier(i, _) ->
+                let args = args |> List.map compileBuiltinBody
+                if args.Length = 2 then
+                    let op = getBinaryOp i.Lexeme
+                    fun x -> op (args.Head x) (args.Tail.Head x)
+                else if args.Length = 1 then
+                    let op = getUnaryOp i.Lexeme
+                    fun x -> op (args.Head x)
+                else
+                    failwith "Invalid number of arguments"
+            | _ -> failwith "Invalid operator"
+        | _ -> failwith "Invalid builtin function"
+        
+    compileBuiltinBody body
+        
 
 and compileCall (callee: Expr) (arguments: Expr list) : Compiler<unit> =
     fun state ->

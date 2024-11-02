@@ -191,16 +191,31 @@ type BuiltInFunction =
     | Print
     | Input
     | Exit
+    
     | Cos
     | Sin
     | Tan
+    | ACos
+    | ASin
+    | ATan
+    
+    | Log
+    | Exp
+    | Log10
+    
+    
     | Env
     | Sqrt
     | Abs
     | Floor
     | Fold
+    | Map
+    
     | Plot
+    | PlotFunction
+    
     | Ceil
+    | Len
     
     | Add
     | Sub
@@ -238,14 +253,25 @@ let builtInFunctionMap =
       Identifier "exit", BuiltInFunction.Exit
       Identifier "cos", BuiltInFunction.Cos
       Identifier "sin", BuiltInFunction.Sin
-      Identifier "tan", BuiltInFunction.Tan 
+      Identifier "tan", BuiltInFunction.Tan
+      Identifier "acos", BuiltInFunction.ACos
+      Identifier "atan", BuiltInFunction.ATan
+      Identifier "asin", BuiltInFunction.ASin
+      
+      Identifier "exp", BuiltInFunction.Exp
+      Identifier "log", BuiltInFunction.Log
+      Identifier "log10", BuiltInFunction.Log10
+      
       Identifier "env", BuiltInFunction.Env
       Identifier "sqrt", BuiltInFunction.Sqrt
       Identifier "abs", BuiltInFunction.Abs
       Identifier "floor", BuiltInFunction.Floor
       Identifier "fold", BuiltInFunction.Fold
       Identifier "plot", BuiltInFunction.Plot
+      Identifier "plotFunc", BuiltInFunction.PlotFunction
       Identifier "ceil", BuiltInFunction.Ceil
+      Identifier "map", BuiltInFunction.Map
+      Identifier "len", BuiltInFunction.Len
       
       Operator (Plus, Some Infix), BuiltInFunction.Add
       Operator (Minus, Some Infix), BuiltInFunction.Sub
@@ -253,6 +279,7 @@ let builtInFunctionMap =
       Operator (Slash, Some Infix), BuiltInFunction.Div
       Operator (Percent, Some Infix), BuiltInFunction.Mod
       Operator (StarStar, Some Infix), BuiltInFunction.Pow
+      Operator (Caret, Some Infix), BuiltInFunction.Pow
       Operator (AmpersandAmpersand, Some Infix), BuiltInFunction.And
       Operator (PipePipe, Some Infix), BuiltInFunction.Or
       Operator (Bang, Some Prefix), BuiltInFunction.Not

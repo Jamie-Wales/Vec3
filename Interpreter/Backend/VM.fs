@@ -109,7 +109,7 @@ let callValue (vm: VM) (argCount: int) : VM =
     printfn $"Calling value: {valueToString callee}"
 
     match callee with
-    | VFunction func ->
+    | VFunction (func, _) ->
         if argCount <> func.Arity then
             failwith $"Expected {func.Arity} arguments but got {argCount}"
 
@@ -161,6 +161,16 @@ let rec builtins () =
           | _ ->
               failwith
                   $"""plot expects a title, x values, and y values, got: {String.concat ", " (List.map valueToString args)}""")
+      
+      Identifier "plotFunc",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VString title; VFunction(_, Some f)] ->
+                let result = VPlotFunction(title, f)
+                push vm result
+            | _ ->
+                failwith
+                    $"""plotFunc expects a title, a function, a start, a stop, and a step, got: {String.concat ", " (List.map valueToString args)}""")
       Identifier "print",
       VBuiltin(fun args vm ->
           let vm =
@@ -215,6 +225,53 @@ let rec builtins () =
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(tan f)))
           | _ -> failwith $"""tan expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+      Identifier "acos",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(acos f)))
+            | _ -> failwith $"""acos expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+        
+        Identifier "atan",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(atan f)))
+            | _ -> failwith $"""atan expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+        
+        Identifier "asin",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(asin f)))
+            | _ -> failwith $"""asin expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+        
+        Identifier "exp",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(exp f)))
+            | _ -> failwith $"""exp expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+        
+        Identifier "log",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VNumber(VFloat f); VNumber(VFloat f1) ] -> push vm (VNumber(VFloat((log f1) / (log f))))
+            | _ -> failwith $"""log expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+        
+        Identifier "log10",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(log10 f)))
+            | _ -> failwith $"""log10 expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+        
+        Identifier "env",
+        VBuiltin(fun _ vm ->
+            let globals =
+                vm.Globals
+                |> Map.map (fun k v -> $"{k} = {valueToString v}")
+                |> Map.toSeq
+                |> Seq.map snd
+                |> Seq.toList
+            let globalsString = String.concat Environment.NewLine globals
+            printfn $"Globals: {globalsString}"
+            push vm (VString globalsString))
       Identifier "input",
       VBuiltin(fun _ vm ->
           let input = Console.ReadLine()
@@ -236,29 +293,7 @@ let rec builtins () =
       Identifier "fold",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList l; acc; VFunction f ] ->
-              let rec runCurrentFrame vm =
-                  let frame = getCurrentFrame vm
-
-                  if frame.IP >= frame.Function.Chunk.Code.Count then
-                      VNil, vm
-                  else
-                      let vm, instruction = readByte vm
-                      let opcode = byteToOpCode instruction
-                      printfn $"Executing: {opcode}"
-                      printfn " in runCurrentFrame in fold"
-
-                      match opcode with
-                      | RETURN ->
-                          printfn $"Returning from fold"
-                          let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
-                          vm.Frames.RemoveAt(vm.Frames.Count - 1)
-                          result, vm
-                      | _ ->
-                          let vm = executeOpcode vm opcode
-                          runCurrentFrame vm
-
-
+          | [ VList l; acc; VFunction (f, None) ] ->
               let rec fold acc vm =
                   function
                   | [] -> acc, vm
@@ -280,10 +315,59 @@ let rec builtins () =
 
               let result, vm = fold acc vm l
               push vm result
+          | [ VList l; acc; VBuiltin f ] ->
+              let rec fold acc vm =
+                  function
+                  | [] -> acc, vm
+                  | x :: xs ->
+                      let vm = f [ x; acc ] vm
+                      let result, vm = pop vm
+                      fold result vm xs
+              let result, vm = fold acc vm l
+              push vm result
           | _ ->
               failwith
                   $"""fold expects a list, an initial value, and a function, got: {String.concat ", " (List.map valueToString args)}""")
 
+      Identifier "map",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VList l'; VFunction (f, None) ] ->
+              let rec map acc vm =
+                  function
+                  | [] -> acc, vm
+                  | x :: xs ->
+
+                      let vm = push vm x
+                      let frame =
+                          { Function = f
+                            IP = 0
+                            StackBase = vm.Stack.Count - 1
+                            Locals = Array.zeroCreate f.Locals.Length }
+
+                      vm.Frames.Add(frame)
+
+                      let result, vm = runCurrentFrame vm
+
+                      let vm = push vm result
+                      map (result :: acc) vm xs
+
+              let result, vm = map [] vm l'
+              push vm (VList (List.rev result))
+              
+            | [ VList l'; VBuiltin f ] ->
+              let rec map acc vm =
+                  function
+                  | [] -> acc, vm
+                  | x :: xs ->
+                      let vm = f [ x ] vm
+                      let result, vm = pop vm
+                      map (result :: acc) vm xs
+              let result, vm = map [] vm l'
+              push vm (VList (List.rev result))
+            | _ ->
+                failwith
+                    $"""map expects a list and a function, got: {String.concat ", " (List.map valueToString args)}""")
       Identifier "dotProduct",
       VBuiltin(fun args vm ->
           match args with
@@ -335,6 +419,13 @@ let rec builtins () =
             | [ VString s ] -> push vm (VString(s))
             | [ VList l ] -> push vm (VString(String.concat ", " (List.map valueToString l)))
             | _ -> failwith "String expects a number, boolean, string, or list")
+        
+        Identifier "len",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VList l ] -> push vm (VNumber(VInteger(List.length l)))
+            | _ -> failwith "len expects a list")
+        
         
         Identifier "Complex",
         VBuiltin(fun args vm ->
@@ -459,13 +550,15 @@ let rec builtins () =
           | _ -> failwith "Expected one argument for -")
 
       Operator(Plus, Some Prefix),
-      VBuiltin(fun args _ ->
+      VBuiltin(fun args vm ->
           match args with
+          | [ a ] -> unnegate a |> push vm
           | _ -> failwith "Expected one argument for +")
 
       Operator(Caret, Some Infix),
-      VBuiltin(fun args _ ->
+      VBuiltin(fun args vm ->
           match args with
+          | [ a; b ] -> power a b |> push vm
           | _ -> failwith "Expected two arguments for ^")
 
       Operator(DotStar, Some Infix),
@@ -478,7 +571,6 @@ let rec builtins () =
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> crossProduct a b |> push vm
-
           | _ -> failwith "Expected two arguments for X")
 
       Operator(ColonColon, Some Infix),
@@ -490,6 +582,27 @@ let rec builtins () =
     |> List.map (fun (key, value) -> lexemeToString key, value)
     |> Map.ofList
 
+and  runCurrentFrame vm =
+  let frame = getCurrentFrame vm
+
+  if frame.IP >= frame.Function.Chunk.Code.Count then
+      VNil, vm
+  else
+      let vm, instruction = readByte vm
+      let opcode = byteToOpCode instruction
+      printfn $"Executing: {opcode}"
+      printfn " in runCurrentFrame in map"
+
+      match opcode with
+      | RETURN ->
+          printfn $"Returning from map"
+          let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
+          vm.Frames.RemoveAt(vm.Frames.Count - 1)
+          result, vm
+      | _ ->
+          let vm = executeOpcode vm opcode
+          runCurrentFrame vm
+          
 and createVM (mainFunc: Function) : VM =
     let constantPool =
         mainFunc.Chunk.ConstantPool
@@ -634,7 +747,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let constant, vm = readConstant vm
 
         match constant with
-        | VFunction func ->
+        | VFunction (func, _) ->
             let upValues =
                 func.Locals
                 |> Seq.filter (fun local -> local.Depth > 0)

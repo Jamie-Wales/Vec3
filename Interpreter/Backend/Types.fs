@@ -29,12 +29,13 @@ and Value =
     | VNumber of VNumber
     | VString of string
     | VBoolean of bool
-    | VFunction of Function
+    | VFunction of Function * (double -> double) option
     | VClosure of Closure
     | VNil
     | VList of Value list
     | VBuiltin of (Value list -> VM -> VM)
-    | VPlotData of string * Value list * Value list  
+    | VPlotData of string * Value list * Value list
+    | VPlotFunction of string * (double -> double)
 
 
 and VNumber =
@@ -80,9 +81,10 @@ let rec valueToString =
     | VNumber(VComplex(r, i)) -> $"%f{r} + %f{i}i"
     | VBoolean b -> string b
     | VString s -> s
-    | VFunction f -> $"<fn {f.Name}>"
+    | VFunction (f, _) -> $"<fn {f.Name}>"
     | VClosure c -> $"<closure {c.Function.Name}>"
     | VNil -> "nil"
     | VList l -> $"""[{String.concat ", " (List.map valueToString l)}]"""
     | VBuiltin _ -> "<builtin>"
     | VPlotData _ -> "<plot data>"
+    | VPlotFunction _ -> "<plot function>"
