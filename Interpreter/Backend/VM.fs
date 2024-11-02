@@ -109,7 +109,7 @@ let callValue (vm: VM) (argCount: int) : VM =
     printfn $"Calling value: {valueToString callee}"
 
     match callee with
-    | VFunction (func, _) ->
+    | VFunction(func, _) ->
         if argCount <> func.Arity then
             failwith $"Expected {func.Arity} arguments but got {argCount}"
 
@@ -148,43 +148,43 @@ let callValue (vm: VM) (argCount: int) : VM =
         let _, vm = pop vm
         push vm res
     | _ -> failwith $"Can only call functions, got: {valueToString callee}"
-    
-    // remove function from stack
+
+// remove function from stack
 
 let rec builtins () =
     [ Identifier "plot",
       VBuiltin(fun args vm ->
           match args with
-          | [ VString title; VList xs; VList ys ] ->
+          | [ VString title; VList (xs, _); VList (ys, _) ] ->
               let result = VPlotData(title, xs, ys)
               push vm result
           | _ ->
               failwith
                   $"""plot expects a title, x values, and y values, got: {String.concat ", " (List.map valueToString args)}""")
-      
+
       Identifier "plotFunc",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VString title; VFunction(_, Some f)] ->
-                let result = VPlotFunction(title, f)
-                push vm result
-            | _ ->
-                failwith
-                    $"""plotFunc expects a title, a function, a start, a stop, and a step, got: {String.concat ", " (List.map valueToString args)}""")
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VString title; VFunction(_, Some f) ] ->
+              let result = VPlotFunction(title, f)
+              push vm result
+          | _ ->
+              failwith
+                  $"""plotFunc expects a title, a function, a start, a stop, and a step, got: {String.concat ", " (List.map valueToString args)}""")
       Identifier "print",
       VBuiltin(fun args vm ->
           let vm =
               appendOutput vm StandardOutput $"""{String.concat " " (List.map valueToString args)}"""
 
           push vm VNil)
-      Identifier "sqrt",
+      Identifier "BUILTIN_SQRT",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] ->
               let result = VNumber(VFloat(sqrt f))
               push vm result
           | _ -> failwith $"""sqrt expects a float, got: {String.concat ", " (List.map valueToString args)}""")
-      Identifier "abs",
+      Identifier "BUILTIN_ABS",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(abs f)))
@@ -205,73 +205,74 @@ let rec builtins () =
               let result = VNumber(VInteger(pown x y))
               push vm result
           | _ -> failwith "Power expects two floats")
-      Identifier "floor",
+      Identifier "BUILTIN_FLOOR",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(floor f)))
           | _ -> failwith $"""floor expects a float, got: {String.concat ", " (List.map valueToString args)}""")
-      Identifier "cos",
+      Identifier "BUILTIN_COS",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(cos f)))
           | _ -> failwith $"""cos expects a float, got: {String.concat ", " (List.map valueToString args)}""")
-      Identifier "sin",
+      Identifier "BUILTIN_SIN",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(sin f)))
           | _ -> failwith $"""sin expects a float, got: {String.concat ", " (List.map valueToString args)}""")
-      Identifier "tan",
+      Identifier "BUILTIN_TAN",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(tan f)))
           | _ -> failwith $"""tan expects a float, got: {String.concat ", " (List.map valueToString args)}""")
-      Identifier "acos",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(acos f)))
-            | _ -> failwith $"""acos expects a float, got: {String.concat ", " (List.map valueToString args)}""")
-        
-        Identifier "atan",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(atan f)))
-            | _ -> failwith $"""atan expects a float, got: {String.concat ", " (List.map valueToString args)}""")
-        
-        Identifier "asin",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(asin f)))
-            | _ -> failwith $"""asin expects a float, got: {String.concat ", " (List.map valueToString args)}""")
-        
-        Identifier "exp",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(exp f)))
-            | _ -> failwith $"""exp expects a float, got: {String.concat ", " (List.map valueToString args)}""")
-        
-        Identifier "log",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VNumber(VFloat f); VNumber(VFloat f1) ] -> push vm (VNumber(VFloat((log f1) / (log f))))
-            | _ -> failwith $"""log expects a float, got: {String.concat ", " (List.map valueToString args)}""")
-        
-        Identifier "log10",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(log10 f)))
-            | _ -> failwith $"""log10 expects a float, got: {String.concat ", " (List.map valueToString args)}""")
-        
-        Identifier "env",
-        VBuiltin(fun _ vm ->
-            let globals =
-                vm.Globals
-                |> Map.map (fun k v -> $"{k} = {valueToString v}")
-                |> Map.toSeq
-                |> Seq.map snd
-                |> Seq.toList
-            let globalsString = String.concat Environment.NewLine globals
-            printfn $"Globals: {globalsString}"
-            push vm (VString globalsString))
+      Identifier "BUILTIN_ACOS",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(acos f)))
+          | _ -> failwith $"""acos expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+
+      Identifier "BUILTIN_ATAN",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(atan f)))
+          | _ -> failwith $"""atan expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+
+      Identifier "BUILTIN_ASIN",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(asin f)))
+          | _ -> failwith $"""asin expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+
+      Identifier "BUILTIN_EXP",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(exp f)))
+          | _ -> failwith $"""exp expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+
+      Identifier "BUILTIN_LOG",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VNumber(VFloat f); VNumber(VFloat f1) ] -> push vm (VNumber(VFloat((log f1) / (log f))))
+          | _ -> failwith $"""log expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+
+      Identifier "BUILTIN_LOG10",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(log10 f)))
+          | _ -> failwith $"""log10 expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+
+      Identifier "env",
+      VBuiltin(fun _ vm ->
+          let globals =
+              vm.Globals
+              |> Map.map (fun k v -> $"{k} = {valueToString v}")
+              |> Map.toSeq
+              |> Seq.map snd
+              |> Seq.toList
+
+          let globalsString = String.concat Environment.NewLine globals
+          printfn $"Globals: {globalsString}"
+          push vm (VString globalsString))
       Identifier "input",
       VBuiltin(fun _ vm ->
           let input = Console.ReadLine()
@@ -279,8 +280,8 @@ let rec builtins () =
       Identifier "cons",
       VBuiltin(fun args vm ->
           match args with
-          | [ value; VList l ] ->
-              let list = VList(value :: l)
+          | [ value; VList (l, t) ] ->
+              let list = VList(value :: l, t)
               push vm list
           | _ ->
               failwith $"""cons expects a value and a list, got: {String.concat ", " (List.map valueToString args)}""")
@@ -288,12 +289,10 @@ let rec builtins () =
       VBuiltin(fun _ vm ->
           Environment.Exit(0)
           vm)
-      // works if predefined func, fails if lambda, i suspect lambda is not being compiled correctly
-      // fails if function is complex, even let fun = (x, acc) -> x + acc, the plus gets called after ?????
       Identifier "fold",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList l; acc; VFunction (f, None) ] ->
+          | [ VList (l, _); acc; VFunction(f, None) ] ->
               let rec fold acc vm =
                   function
                   | [] -> acc, vm
@@ -301,6 +300,7 @@ let rec builtins () =
 
                       let vm = push vm x
                       let vm = push vm acc
+
                       let frame =
                           { Function = f
                             IP = 0
@@ -315,7 +315,7 @@ let rec builtins () =
 
               let result, vm = fold acc vm l
               push vm result
-          | [ VList l; acc; VBuiltin f ] ->
+          | [ VList (l, _); acc; VBuiltin f ] ->
               let rec fold acc vm =
                   function
                   | [] -> acc, vm
@@ -323,6 +323,7 @@ let rec builtins () =
                       let vm = f [ x; acc ] vm
                       let result, vm = pop vm
                       fold result vm xs
+
               let result, vm = fold acc vm l
               push vm result
           | _ ->
@@ -332,13 +333,14 @@ let rec builtins () =
       Identifier "map",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList l'; VFunction (f, None) ] ->
+          | [ VList (l', _); VFunction(f, None) ] ->
               let rec map acc vm =
                   function
                   | [] -> acc, vm
                   | x :: xs ->
 
                       let vm = push vm x
+
                       let frame =
                           { Function = f
                             IP = 0
@@ -353,9 +355,9 @@ let rec builtins () =
                       map (result :: acc) vm xs
 
               let result, vm = map [] vm l'
-              push vm (VList (List.rev result))
-              
-            | [ VList l'; VBuiltin f ] ->
+              push vm (VList(List.rev result, LIST))
+
+          | [ VList (l', _); VBuiltin f ] ->
               let rec map acc vm =
                   function
                   | [] -> acc, vm
@@ -363,97 +365,98 @@ let rec builtins () =
                       let vm = f [ x ] vm
                       let result, vm = pop vm
                       map (result :: acc) vm xs
+
               let result, vm = map [] vm l'
-              push vm (VList (List.rev result))
-            | _ ->
-                failwith
-                    $"""map expects a list and a function, got: {String.concat ", " (List.map valueToString args)}""")
+              push vm (VList(List.rev result, LIST))
+          | _ ->
+              failwith
+                  $"""map expects a list and a function, got: {String.concat ", " (List.map valueToString args)}""")
       Identifier "dotProduct",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList l1' as l1; VList l2' as l2 ] when List.length l1' = List.length l2' ->
+          | [ VList (l1', _) as l1; VList (l2', _) as l2 ] when List.length l1' = List.length l2' ->
               let result = dotProduct l1 l2
               push vm result
           | _ -> failwith "dotProduct expects two lists of the same length")
       Identifier "crossProduct",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList l1' as l1; VList l2' as l2 ] when List.length l1' = 3 && List.length l2' = 3 ->
+          | [ VList (l1', _) as l1; VList (l2', _) as l2 ] when List.length l1' = 3 && List.length l2' = 3 ->
               let result = crossProduct l1 l2
               push vm result
           | _ -> failwith "crossProduct expects two lists of length 3")
+
+      Identifier "BUILTIN_TRUNC",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VNumber(VFloat num) ] -> push vm (VNumber(VFloat(truncate num)))
+          | _ -> failwith "trunc expects a float")
 
       Identifier "range",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VInteger start); VNumber(VInteger stop) ] ->
               let range = [ for i in start..stop -> VNumber(VInteger i) ]
-              let list = VList range
+              let list = VList (range, LIST)
               push vm list
           | _ -> failwith "Range expects two integers")
-      
-      Identifier "len",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VList l ] -> push vm (VNumber(VInteger(List.length l)))
-            | _ -> failwith "len expects a list")
-        
-        Identifier "Int",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VNumber(VFloat f) ] -> push vm (VNumber(VInteger(int f)))
-            | _ -> failwith "Int expects a float")
-        
-        Identifier "Float",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VNumber(VInteger i) ] -> push vm (VNumber(VFloat(float i)))
-            | _ -> failwith "Float expects an integer")
-        
-        Identifier "String",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VNumber(VInteger i) ] -> push vm (VString(i.ToString()))
-            | [ VNumber(VFloat f) ] -> push vm (VString(f.ToString()))
-            | [ VBoolean b ] -> push vm (VString(b.ToString()))
-            | [ VString s ] -> push vm (VString(s))
-            | [ VList l ] -> push vm (VString(String.concat ", " (List.map valueToString l)))
-            | _ -> failwith "String expects a number, boolean, string, or list")
-        
-        Identifier "len",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VList l ] -> push vm (VNumber(VInteger(List.length l)))
-            | _ -> failwith "len expects a list")
-        
-        
-        Identifier "Complex",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VNumber(VFloat re) ] -> push vm (VNumber(VComplex(re, 0.0)))
-            | _ -> failwith "Complex expects two floats")
-        
-        Identifier "Rational",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VNumber(VInteger n) ] -> push vm (VNumber(VRational(n, 1)))
-            | _ -> failwith "Rational expects two integers")
-        
-        Identifier "Boolean",
-        VBuiltin(fun args vm ->
-            match args with
-            | [ VBoolean b ] -> push vm (VBoolean(b))
-            | _ -> failwith "Boolean expects a boolean") // TODO add more cases to coercions
-        
-        Identifier "PI",
-        VNumber(VFloat(Math.PI))
-        
-        Identifier "E",
-        VNumber(VFloat(Math.E))
+
+      Identifier "BUILTIN_LEN",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VList (l, _) ] -> push vm (VNumber(VInteger(List.length l)))
+          | _ -> failwith "len expects a list")
+
+      Identifier "Int",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VNumber(VFloat f) ] -> push vm (VNumber(VInteger(int f)))
+          | _ -> failwith "Int expects a float")
+
+      Identifier "Float",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VNumber(VInteger i) ] -> push vm (VNumber(VFloat(float i)))
+          | _ -> failwith "Float expects an integer")
+
+      Identifier "String",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VNumber(VInteger i) ] -> push vm (VString(i.ToString()))
+          | [ VNumber(VFloat f) ] -> push vm (VString(f.ToString()))
+          | [ VBoolean b ] -> push vm (VString(b.ToString()))
+          | [ VString s ] -> push vm (VString(s))
+          | [ VList (l, _) ] -> push vm (VString(String.concat ", " (List.map valueToString l)))
+          | _ -> failwith "String expects a number, boolean, string, or list")
+
+      Identifier "Complex",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VNumber(VFloat re) ] -> push vm (VNumber(VComplex(re, 0.0)))
+          | _ -> failwith "Complex expects two floats")
+
+      Identifier "Rational",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VNumber(VInteger n) ] -> push vm (VNumber(VRational(n, 1)))
+          | _ -> failwith "Rational expects two integers")
+
+      Identifier "Boolean",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VBoolean b ] -> push vm (VBoolean(b))
+          | _ -> failwith "Boolean expects a boolean") // TODO add more cases to coercions
+
+      Identifier "PI", VNumber(VFloat(Math.PI))
+
+      Identifier "E", VNumber(VFloat(Math.E))
+
+      Identifier "TAU", VNumber(VFloat(Math.Tau))
 
       Operator(Plus, Some Infix),
       VBuiltin(fun args vm ->
           printfn $"add: {args}"
+
           match args with
           | [ a; b ] -> add a b |> push vm
           | _ -> failwith "Expected two arguments for +")
@@ -461,6 +464,7 @@ let rec builtins () =
       Operator(Minus, Some Infix),
       VBuiltin(fun args vm ->
           printfn $"sub: {args}"
+
           match args with
           | [ a; b ] -> subtract a b |> push vm
           | _ -> failwith "Expected two arguments for -")
@@ -486,7 +490,7 @@ let rec builtins () =
       Operator(StarStar, Some Infix),
       VBuiltin(fun args vm ->
           match args with
-          | [ VNumber(VInteger a); VNumber(VInteger b) ] -> push vm (VNumber(VInteger(pown a b)))
+          | [ a; b ] -> power a b |> push vm
           | _ -> failwith "Expected two integers for **")
 
       Operator(Equal, Some Infix),
@@ -576,33 +580,33 @@ let rec builtins () =
       Operator(ColonColon, Some Infix),
       VBuiltin(fun args vm ->
           match args with
-          | [ a; VList l ] -> VList(a :: l) |> push vm
+          | [ a; VList (l, _) ] -> VList(a :: l, LIST) |> push vm
           | _ -> failwith "Expected a value and a list for ::") ]
 
     |> List.map (fun (key, value) -> lexemeToString key, value)
     |> Map.ofList
 
-and  runCurrentFrame vm =
-  let frame = getCurrentFrame vm
+and runCurrentFrame vm =
+    let frame = getCurrentFrame vm
 
-  if frame.IP >= frame.Function.Chunk.Code.Count then
-      VNil, vm
-  else
-      let vm, instruction = readByte vm
-      let opcode = byteToOpCode instruction
-      printfn $"Executing: {opcode}"
-      printfn " in runCurrentFrame in map"
+    if frame.IP >= frame.Function.Chunk.Code.Count then
+        VNil, vm
+    else
+        let vm, instruction = readByte vm
+        let opcode = byteToOpCode instruction
+        printfn $"Executing: {opcode}"
+        printfn " in runCurrentFrame in map"
 
-      match opcode with
-      | RETURN ->
-          printfn $"Returning from map"
-          let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
-          vm.Frames.RemoveAt(vm.Frames.Count - 1)
-          result, vm
-      | _ ->
-          let vm = executeOpcode vm opcode
-          runCurrentFrame vm
-          
+        match opcode with
+        | RETURN ->
+            printfn $"Returning from map"
+            let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
+            vm.Frames.RemoveAt(vm.Frames.Count - 1)
+            result, vm
+        | _ ->
+            let vm = executeOpcode vm opcode
+            runCurrentFrame vm
+
 and createVM (mainFunc: Function) : VM =
     let constantPool =
         mainFunc.Chunk.ConstantPool
@@ -721,7 +725,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         | _ -> failwith "Expected string constant for variable name in SET_GLOBAL"
     | CALL ->
         let vm, argCount = readByte vm
-        
+
         callValue vm (int argCount)
     | RETURN ->
         let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
@@ -747,7 +751,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let constant, vm = readConstant vm
 
         match constant with
-        | VFunction (func, _) ->
+        | VFunction(func, _) ->
             let upValues =
                 func.Locals
                 |> Seq.filter (fun local -> local.Depth > 0)
@@ -789,11 +793,11 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let count, vm = pop vm
 
         match (structure, count) with
-        | VList values, VNumber(VInteger n) when n >= 0 ->
+        | VList (values, typ), VNumber(VInteger n) when n >= 0 ->
             let values' =
                 [ 0 .. n - 1 ] |> List.map (fun _ -> let value, _ = pop vm in value) |> List.rev
 
-            let list = VList <| List.append values values'
+            let list = VList (List.append values values', typ)
             let vm = push vm list
             vm
         | _ -> failwith "Expected non-negative integer for list size"
@@ -803,20 +807,20 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let structure, vm = pop vm
 
         match (structure, key) with
-        | VList values, VNumber(VInteger i) when i >= 0 && i < List.length values ->
+        | VList (values, _), VNumber(VInteger i) when i >= 0 && i < List.length values ->
             let value = List.item i values
             let vm = push vm value
             vm
-        | VList values, VString key ->
+        | VList (values, _), VString key ->
             let value =
                 values
                 |> Seq.tryFind (fun value ->
                     match value with
-                    | VList [ VString k; _ ] when k = key -> true
+                    | VList ([ VString k; _ ], _) when k = key -> true
                     | _ -> false)
 
             match value with
-            | Some(VList [ _; v ]) -> push vm v
+            | Some(VList ([ _; v ], _)) -> push vm v
             | _ -> push vm VNil
         | _ -> failwith "Invalid index"
 

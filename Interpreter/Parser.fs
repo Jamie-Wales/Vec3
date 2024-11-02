@@ -647,7 +647,7 @@ and funcType (state: ParserState) : ParseResult<TType> =
         expect state (Punctuation Colon)
         |> Result.bind (fun state ->
             typeHint state
-            |> Result.bind (fun (state, returnType) -> Ok(state, TFunction(paramList, returnType, false)))))
+            |> Result.bind (fun (state, returnType) -> Ok(state, TFunction(paramList, returnType, false, false)))))
 
 
 and tensorType (state: ParserState) : ParseResult<TType> =

@@ -32,11 +32,12 @@ and Value =
     | VFunction of Function * (double -> double) option
     | VClosure of Closure
     | VNil
-    | VList of Value list
+    | VList of Value list * CompoundType
     | VBuiltin of (Value list -> VM -> VM)
     | VPlotData of string * Value list * Value list
     | VPlotFunction of string * (double -> double)
-
+ 
+and CompoundType = LIST | RECORD | TUPLE
 
 and VNumber =
     | VInteger of int
@@ -84,7 +85,7 @@ let rec valueToString =
     | VFunction (f, _) -> $"<fn {f.Name}>"
     | VClosure c -> $"<closure {c.Function.Name}>"
     | VNil -> "nil"
-    | VList l -> $"""[{String.concat ", " (List.map valueToString l)}]"""
+    | VList (l, typ) -> $"""[{String.concat ", " (List.map valueToString l)}]"""
     | VBuiltin _ -> "<builtin>"
     | VPlotData _ -> "<plot data>"
     | VPlotFunction _ -> "<plot function>"

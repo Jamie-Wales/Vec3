@@ -1,13 +1,13 @@
 module Vec3.Interpreter.Backend.Compiler
 
-open System.Collections.Generic
+open System
 open Microsoft.FSharp.Core
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Instructions
-open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
+open Vec3.Interpreter.Parser
 
 type CompilerState =
     { CurrentFunction: Function
@@ -111,7 +111,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
 
         | ERecordEmpty _ ->
             emitConstant (VNumber(VInteger 0)) state
-            |> Result.bind (fun ((), state) -> emitConstant (VList []) state)
+            |> Result.bind (fun ((), state) -> emitConstant (VList ([], RECORD)) state)
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
 
         | ERecordExtend((name, value, _), record, _) ->
@@ -130,7 +130,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
             |> Result.bind (fun ((), state) -> compileExpr value state)
             |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 2)) state)
-            |> Result.bind (fun ((), state) -> emitConstant (VList []) state)
+            |> Result.bind (fun ((), state) -> emitConstant (VList ([], RECORD)) state)
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
             |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 1)) state)
             |> Result.bind (fun ((), state) -> compileExpr record state)
@@ -176,7 +176,7 @@ and compileTuple (elements: Expr list) : Compiler<unit> =
         // same as list
         compileElements elements state
         |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger elements.Length)) state)
-        |> Result.bind (fun ((), state) -> emitConstant (VList []) state)
+        |> Result.bind (fun ((), state) -> emitConstant (VList ([], TUPLE)) state)
         |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
 
 and compileList (elements: Expr list) : Compiler<unit> =
@@ -190,7 +190,7 @@ and compileList (elements: Expr list) : Compiler<unit> =
 
         compileElements elements state
         |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger elements.Length)) state)
-        |> Result.bind (fun ((), state) -> emitConstant (VList []) state)
+        |> Result.bind (fun ((), state) -> emitConstant (VList ([], LIST)) state)
         |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
 
 
@@ -292,33 +292,41 @@ and compileAsBuiltin (parameters: Token list) (body: Expr): (double -> double) =
         | Operator (Percent, _) -> (%)
         | Operator (StarStar, _) -> ( ** )
         | Operator (Caret, _) -> ( ** )
-        | Identifier i when i = "log" -> logBase
+        | Identifier i when i = "log" || i = "BUILTIN_LOG" -> logBase
         | _ -> failwith "Invalid operator"
     
     
     let getUnaryOp (lexeme: Lexeme) : (double -> double) =
         match lexeme with
-        | Identifier i when i = "abs" -> abs
-        | Identifier i when i = "sqrt" -> sqrt
-        | Identifier i when i = "sin" -> sin
-        | Identifier i when i = "cos" -> cos
-        | Identifier i when i = "tan" -> tan
-        | Identifier i when i = "asin" -> asin
-        | Identifier i when i = "acos" -> acos
-        | Identifier i when i = "atan" -> atan
-        | Identifier i when i = "exp" -> exp
-        | Identifier i when i = "log10" -> log10
-        | Identifier i when i = "ceil" -> ceil
-        | Identifier i when i = "floor" -> floor
-        | Identifier i when i = "round" -> round
-        | Identifier i when i = "trunc" -> truncate
+        | Identifier i when i = "abs" || i = "BUILTIN_ABS" -> abs
+        | Identifier i when i = "sqrt" || i = "BUILTIN_SQRT" -> sqrt
+        | Identifier i when i = "sin" || i = "BUILTIN_SIN" -> sin
+        | Identifier i when i = "cos" || i = "BUILTIN_COS" -> cos
+        | Identifier i when i = "tan" || i = "BUILTIN_TAN" -> tan
+        | Identifier i when i = "asin" || i = "BUILTIN_ASIN" -> asin
+        | Identifier i when i = "acos" || i = "BUILTIN_ACOS" -> acos
+        | Identifier i when i = "atan" || i = "BUILTIN_ATAN" -> atan
+        | Identifier i when i = "exp" || i = "BUILTIN_EXP" -> exp
+        | Identifier i when i = "log10" || i = "BUILTIN_LOG10" -> log10
+        | Identifier i when i = "ceil" || i = "BUILTIN_CEIL" -> ceil
+        | Identifier i when i = "floor" || i = "BUILTIN_FLOOR" -> floor
+        | Identifier i when i = "round" || i = "BUILTIN_ROUND" -> round
+        | Identifier i when i = "trunc" || i = "BUILTIN_TRUNC" -> truncate
         | Operator (Minus, _) -> (~-)
         | Operator (Plus, _) -> fun x -> if x < 0.0 then -1.0 else 1.0
         | _ -> failwith "Invalid operator"
     
+    let getIdent (lexeme: Lexeme) : double =
+        match lexeme with
+        | Identifier i when i = "E" -> Math.E
+        | Identifier i when i = "PI" -> Math.PI
+        | Identifier i when i = "TAU" -> Math.Tau
+        | _ -> failwith "invalid"
+        
     let rec compileBuiltinBody (body: Expr) : (double -> double) =
         match body with
         | EIdentifier(i, _) when lexemeToString i.Lexeme = parameterName -> id
+        | EIdentifier(i, _) -> fun _ -> getIdent i.Lexeme
         | ELiteral(LNumber(LInteger i), _) -> fun _ -> double i
         | ELiteral(LNumber(LFloat f), _) -> fun _ -> f
         | ELiteral(LNumber(LRational(n, d)), _) -> fun _ -> double n / double d
@@ -336,6 +344,7 @@ and compileAsBuiltin (parameters: Token list) (body: Expr): (double -> double) =
                 else
                     failwith "Invalid number of arguments"
             | _ -> failwith "Invalid operator"
+        | EGrouping (expr, _) -> compileBuiltinBody expr 
         | _ -> failwith "Invalid builtin function"
         
     compileBuiltinBody body
@@ -426,3 +435,7 @@ let compileProgram (program: Program) : CompilerResult<Function> =
     |> Result.bind (fun ((), state) ->
         emitOpCode OP_CODE.RETURN state
         |> Result.map (fun ((), state) -> (state.CurrentFunction, state)))
+
+
+    
+    

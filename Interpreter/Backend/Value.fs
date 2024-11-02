@@ -18,8 +18,8 @@ let rec valuesEqual (a: Value) (b: Value) =
     | VFunction (f1, _), VFunction (f2, _) -> f1.Name = f2.Name && f1.Arity = f2.Arity
     | VClosure c1, VClosure c2 -> c1.Function = c2.Function
     | VNil, VNil -> true
-    | VList l1, VList l2 -> 
-        if List.length l1 <> List.length l2 then false
+    | VList (l1, typ1), VList (l2, typ2) -> 
+        if List.length l1 <> List.length l2 || typ1 <> typ2 then false
         else List.forall2 valuesEqual l1 l2
     | _ -> false
 
@@ -57,10 +57,10 @@ let rec add a b =
         VNumber(VComplex(r1 + r2, i1 + i2))
     | VNumber x, VNumber y ->
         VNumber(VFloat(floatValue x + floatValue y))
-    | VList l1, VList l2 ->
+    | VList (l1, t), VList (l2, _) ->
         let zipped = List.zip l1 l2
         let added = List.map (fun (x, y) -> add x y) zipped
-        VList added
+        VList (added, t)
     | _ -> failwith "Can only add numbers"
 
 let rec subtract a b =
@@ -74,10 +74,10 @@ let rec subtract a b =
         VNumber(VComplex(r1 - r2, i1 - i2))
     | VNumber x, VNumber y ->
         VNumber(VFloat(floatValue x - floatValue y))
-    | VList l1, VList l2 ->
+    | VList (l1, t), VList (l2, _) ->
         let zipped = List.zip l1 l2
         let added = List.map (fun (x, y) -> subtract x y) zipped
-        VList added
+        VList (added, t)
     | _ -> failwith "Can only subtract numbers"
 
 let rec multiply a b =
@@ -89,10 +89,10 @@ let rec multiply a b =
         VNumber(VComplex(a*c - b*d, a*d + b*c))
     | VNumber x, VNumber y ->
         VNumber(VFloat(floatValue x * floatValue y))
-    | VList l1, VList l2 ->
+    | VList (l1, t), VList (l2, _) ->
         let zipped = List.zip l1 l2
         let added = List.map (fun (x, y) -> multiply x y) zipped
-        VList added
+        VList (added, t)
     | _ -> failwith "Can only multiply numbers"
 
 let rec divide a b =
@@ -108,15 +108,15 @@ let rec divide a b =
         let f1, f2 = floatValue x, floatValue y
         if f2 = 0.0 then failwith "Division by zero"
         VNumber(VFloat(f1 / f2))
-    | VList l1, VList l2 ->
+    | VList (l1, t), VList (l2, _) ->
         let zipped = List.zip l1 l2
         let added = List.map (fun (x, y) -> divide x y) zipped
-        VList added
+        VList (added, t)
     | _ -> failwith "Can only divide numbers"
 
 let dotProduct a b =
     match (a, b) with
-    | VList l1, VList l2 ->
+    | VList (l1, _), VList (l2, _) ->
             let rec dotVectors lhs rhs =
                 match lhs, rhs with
                 | [], [] -> 0
@@ -130,13 +130,13 @@ let dotProduct a b =
 
 let crossProduct a b =
     match (a, b) with
-    | VList l1, VList l2 ->
+    | VList (l1, t), VList (l2, _) ->
             let rec crossVectors lhs rhs =
                 match lhs, rhs with
                 | [VNumber(VInteger x); VNumber(VInteger y); VNumber(VInteger z)], [VNumber(VInteger a); VNumber(VInteger b); VNumber(VInteger c)] ->
                     [VNumber(VInteger(y * c - z * b)); VNumber(VInteger(z * a - x * c)); VNumber(VInteger(x * b - y * a))]
                 | _ -> failwith "invalid"
-            VList(crossVectors l1 l2)
+            VList(crossVectors l1 l2, t)
     | _ -> failwith "Can only take cross product of vectors"
 
 let negate value =
