@@ -1,5 +1,6 @@
 module Vec3.Interpreter.Backend.Compiler
 
+open System
 open Microsoft.FSharp.Core
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Chunk
@@ -315,9 +316,17 @@ and compileAsBuiltin (parameters: Token list) (body: Expr): (double -> double) =
         | Operator (Plus, _) -> fun x -> if x < 0.0 then -1.0 else 1.0
         | _ -> failwith "Invalid operator"
     
+    let getIdent (lexeme: Lexeme) : double =
+        match lexeme with
+        | Identifier i when i = "E" -> Math.E
+        | Identifier i when i = "PI" -> Math.PI
+        | Identifier i when i = "TAU" -> Math.Tau
+        | _ -> failwith "invalid"
+        
     let rec compileBuiltinBody (body: Expr) : (double -> double) =
         match body with
         | EIdentifier(i, _) when lexemeToString i.Lexeme = parameterName -> id
+        | EIdentifier(i, _) -> fun _ -> getIdent i.Lexeme
         | ELiteral(LNumber(LInteger i), _) -> fun _ -> double i
         | ELiteral(LNumber(LFloat f), _) -> fun _ -> f
         | ELiteral(LNumber(LRational(n, d)), _) -> fun _ -> double n / double d

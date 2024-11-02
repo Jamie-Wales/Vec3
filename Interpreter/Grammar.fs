@@ -70,6 +70,14 @@ type Type =
         | TConstrain _ -> true
         | _ -> false
     
+    member this.IsPolynomial =
+        match this with
+        | TFunction _ -> false 
+        | TTypeVariable _ -> true
+        | TConstrain _ -> true
+        | TAlias (_, Some t) -> t.IsPolynomial
+        | _ -> false
+    
     member this.IsBuiltinFunc =
         match this with
         | TFunction(_, _, _, bt) -> bt

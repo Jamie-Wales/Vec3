@@ -289,8 +289,6 @@ let rec builtins () =
       VBuiltin(fun _ vm ->
           Environment.Exit(0)
           vm)
-      // works if predefined func, fails if lambda, i suspect lambda is not being compiled correctly
-      // fails if function is complex, even let fun = (x, acc) -> x + acc, the plus gets called after ?????
       Identifier "fold",
       VBuiltin(fun args vm ->
           match args with
