@@ -118,6 +118,7 @@ let startRepl () =
     repl initialState
     
 let parseAndCompile (code: string) =
+    let code = Prelude.prelude + code
     let code = preprocessContent code
     match parse code with
     | Ok (_, program) ->

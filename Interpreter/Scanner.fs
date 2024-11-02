@@ -41,7 +41,7 @@ let scString (sStr: char list) : (char list * string) option =
 
 let rec scIdentifier (iStr: char list) (iVal: string) : (char list * string) option =
     match iStr with
-    | c :: tail when isLetter c -> scIdentifier tail (iVal + string c)
+    | c :: tail when isLetter c || isDigit c || c = '_' -> scIdentifier tail (iVal + string c)
     | _ -> Some(iStr, iVal)
 
 // float: 1.0, 1.0e-3, 1.0e3

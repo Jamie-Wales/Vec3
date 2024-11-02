@@ -203,6 +203,7 @@ type BuiltInFunction =
     | Exp
     | Log10
     
+    | Trunc
     
     | Env
     | Sqrt
@@ -246,32 +247,35 @@ type BuiltInFunction =
     | BRational
     | BBool
     | BString
+    | BList
+    | BTuple
     
 let builtInFunctionMap =
     [ Identifier "print", BuiltInFunction.Print
       Identifier "input", BuiltInFunction.Input
       Identifier "exit", BuiltInFunction.Exit
-      Identifier "cos", BuiltInFunction.Cos
-      Identifier "sin", BuiltInFunction.Sin
-      Identifier "tan", BuiltInFunction.Tan
-      Identifier "acos", BuiltInFunction.ACos
-      Identifier "atan", BuiltInFunction.ATan
-      Identifier "asin", BuiltInFunction.ASin
+      Identifier "BUILTIN_COS", BuiltInFunction.Cos
+      Identifier "BUILTIN_SIN", BuiltInFunction.Sin
+      Identifier "BUILTIN_TAN", BuiltInFunction.Tan
+      Identifier "BUILTIN_ACOS", BuiltInFunction.ACos
+      Identifier "BUILTIN_ATAN", BuiltInFunction.ATan
+      Identifier "BUILTIN_ASIN", BuiltInFunction.ASin
       
-      Identifier "exp", BuiltInFunction.Exp
-      Identifier "log", BuiltInFunction.Log
-      Identifier "log10", BuiltInFunction.Log10
+      Identifier "BUILTIN_EXP", BuiltInFunction.Exp
+      Identifier "BUILTIN_LOG", BuiltInFunction.Log
+      Identifier "BUILTIN_LOG10", BuiltInFunction.Log10
       
       Identifier "env", BuiltInFunction.Env
-      Identifier "sqrt", BuiltInFunction.Sqrt
-      Identifier "abs", BuiltInFunction.Abs
-      Identifier "floor", BuiltInFunction.Floor
+      Identifier "BUILTIN_SQRT", BuiltInFunction.Sqrt
+      Identifier "BUILTIN_ABS", BuiltInFunction.Abs
+      Identifier "BUILTIN_FLOOR", BuiltInFunction.Floor
       Identifier "fold", BuiltInFunction.Fold
       Identifier "plot", BuiltInFunction.Plot
       Identifier "plotFunc", BuiltInFunction.PlotFunction
-      Identifier "ceil", BuiltInFunction.Ceil
+      Identifier "BUILTIN_CEIL", BuiltInFunction.Ceil
       Identifier "map", BuiltInFunction.Map
-      Identifier "len", BuiltInFunction.Len
+      Identifier "BUILTIN_LEN", BuiltInFunction.Len
+      Identifier "BUILTIN_TRUNC", BuiltInFunction.Trunc
       
       Operator (Plus, Some Infix), BuiltInFunction.Add
       Operator (Minus, Some Infix), BuiltInFunction.Sub
@@ -301,6 +305,8 @@ let builtInFunctionMap =
       Identifier "Rational", BuiltInFunction.BRational
       Identifier "Boolean", BuiltInFunction.BBool
       Identifier "String", BuiltInFunction.BString
+      Identifier "List", BuiltInFunction.BList
+      Identifier "Tuple", BuiltInFunction.BTuple
       ]
     |> Map.ofList
     

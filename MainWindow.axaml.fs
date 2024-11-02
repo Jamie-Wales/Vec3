@@ -8,6 +8,7 @@ open AvaloniaEdit
 open Avalonia.Media
 open TextMateSharp.Grammars
 open AvaloniaEdit.TextMate
+open Vec3.Interpreter
 open Vec3.Interpreter.Repl
 open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Types
@@ -109,6 +110,7 @@ if x > 0 then
                         standardOutput.Foreground <- SolidColorBrush(Colors.Black)
                         standardOutput.Text <- ""
                     else
+                        let code = Prelude.prelude + code
                         match parse code with
                         | Ok (_, ast) ->
                             match Inference.inferProgram1 ast with
@@ -170,7 +172,7 @@ if x > 0 then
         
         match replState.VM with
         | Some vm when vm.Stack.Count > 0 ->
-            let topValue = vm.Stack.[vm.Stack.Count - 1]
+            let topValue = vm.Stack[vm.Stack.Count - 1]
             match topValue with
             | VPlotData (title, xs, ys) ->
                 let xValues = 

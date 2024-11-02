@@ -31,7 +31,7 @@ let combineMaps map1 map2 =
 let rec occursCheck (tv: TypeVar) (t: TType) : bool =
     match t with
     | TTypeVariable v -> v = tv
-    | TFunction(parameters, ret, _) -> List.exists (occursCheck tv) parameters || occursCheck tv ret
+    | TFunction(parameters, ret, _, _) -> List.exists (occursCheck tv) parameters || occursCheck tv ret
     | TTuple types -> List.exists (occursCheck tv) types
     | TTensor(typ, var) ->
         occursCheck tv typ
@@ -118,8 +118,8 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
         else
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 
-    | TFunction(params1, ret1, pr1), TFunction(params2, ret2, pr2) ->
-        if List.length params1 <> List.length params2 || pr1 <> pr2 then
+    | TFunction(params1, ret1, pr1, bt1), TFunction(params2, ret2, pr2, bt2) ->
+        if List.length params1 <> List.length params2 || pr1 <> pr2 || bt1 <> bt2 then
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
         else
             let paramResults = List.map2 unify params1 params2
@@ -353,6 +353,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         // let f = (x) -> x + x, pure because + is a builtin and pure
         // let f = (x) -> x^2 + 1, pure because + and ^ are builtins and pure
         // let f = (x) -> { x }, not pure
+        // add is builtin to this !!!! so that only simple functions work
         let rec isPure (body: Expr): bool =
             match body with
             | ELiteral _ -> true
@@ -375,11 +376,10 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             let paramList = List.zip paramList paramTypes
             let paramList = List.map (fun (id, typ) -> (id, Some typ)) paramList
             let isPure = isPure expr
-            printfn "isPure: %A" isPure
 
             if Option.isNone returnT then
-                Ok(TFunction(paramTypes, bodyType, isPure), sub, ELambda(paramList, expr, Some bodyType, isPure, Some 
-                (TFunction (paramTypes, bodyType, isPure))))
+                Ok(TFunction(paramTypes, bodyType, isPure, false), sub, ELambda(paramList, expr, Some bodyType, isPure, Some 
+                (TFunction (paramTypes, bodyType, isPure, false))))
             else
                 let returnT = Option.defaultValue (TTypeVariable(freshTypeVar())) returnT
                 unify aliases bodyType returnT
@@ -388,9 +388,10 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                     let returnType = applySubstitution aliases sub returnT
 
                     Ok(
-                        TFunction(paramTypes, returnType, isPure),
+                        TFunction(paramTypes, returnType, isPure, false),
                         sub,
-                        ELambda(paramList, expr, Some returnType, isPure, Some (TFunction(paramTypes, returnType, isPure)))
+                        ELambda(paramList, expr, Some returnType, isPure, Some (TFunction(paramTypes, returnType, 
+                        isPure, false)))
                     )))
 
     | ECall(callee, args, _) ->
@@ -399,7 +400,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             let t = applySubstitution aliases sub t
 
             match t with
-            | TFunction(paramTypes, ret, _) ->
+            | TFunction(paramTypes, ret, _, _) ->
                 if List.length paramTypes <> List.length args then
                     Error [ TypeError.InvalidArgumentCount(callee, List.length paramTypes, List.length args) ]
                 else
@@ -431,7 +432,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                     let argExprs = List.map (fun (_, _, expr) -> expr) argResults
 
                     let returnT = TTypeVariable(freshTypeVar ())
-                    let t = TFunction(argTypes, returnT, false)
+                    let t = TFunction(argTypes, returnT, false, false)
 
                     unify aliases t (TTypeVariable a)
                     |> Result.bind (fun sub ->

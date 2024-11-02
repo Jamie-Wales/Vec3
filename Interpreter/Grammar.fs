@@ -26,7 +26,7 @@ type Type =
     
     | TAny
     
-    | TFunction of Type list * Type * bool // bool is pure flag
+    | TFunction of Type list * Type * bool * bool// bool is pure flag, maybe also have builtin flag
     
     | TTypeVariable of TypeVar
     
@@ -63,13 +63,17 @@ type Type =
     
     member this.IsPure =
         match this with
-        | TFunction(_, _, pure') -> pure'
+        | TFunction(_, _, pure', _) -> pure'
         | TAlias(_, Some t) -> t.IsPure
         | TInteger | TFloat | TRational | TComplex -> true
         | TTypeVariable _ -> true
         | TConstrain _ -> true
         | _ -> false
-        
+    
+    member this.IsBuiltinFunc =
+        match this with
+        | TFunction(_, _, _, bt) -> bt
+        | _ -> false
         
 and Dims = Dims of int list | DAny | DVar of TypeVar
 
