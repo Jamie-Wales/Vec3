@@ -13,14 +13,11 @@ open Vec3.Interpreter
 open Vec3.Interpreter.Repl
 open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Types
-open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Compiler
 open Vec3.Interpreter.Parser
-open Vec3.Interpreter.PrettyPrinter
 open Vec3.Interpreter.Typing
 open System.Threading.Tasks
 open System.Threading
-open System.Threading.Tasks
 
 type MainWindow () as this =
     inherit Window ()
@@ -98,7 +95,7 @@ plotFunc("test", f)
                                     standardOutput.Foreground <- SolidColorBrush(Colors.White)
                                     standardOutput.Text <- "No errors"
                             | Error err ->
-                                    standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                                    standardOutput.Foreground <- SolidColorBrush(Colors.Yellow)
                                     standardOutput.Text <- Exceptions.formatTypeErrors err
                         | Error (err, state) ->
                             standardOutput.Foreground <- SolidColorBrush(Colors.Red)
