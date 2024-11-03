@@ -59,7 +59,20 @@ type MainWindow () as this =
 
             textEditor.Text <- """// Vec3 Editor Example
 let x: int = 5
-print(x)"""
+print(x)
+
+let f = (x) -> x^2.0 - 2.0
+let a = 1.0
+let b = 2.0
+let tolerance = 1e-6
+let max = 100
+
+let root = bisection(f, a, b, tolerance, max)
+
+print(root)
+
+plotFunc("test", f)
+"""
 
             this.ApplyColorScheme()
             

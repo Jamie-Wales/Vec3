@@ -27,7 +27,7 @@ let plotType =
     TFunction([TString; TTensor(constrain, dimsVar); TTensor(constrain, dimsVar)], TUnit, false, true)
 
 let plotFunType =
-    let funConstrain = TConstrain(freshTypeVar(), _.IsPure)
+    let funConstrain = TConstrain(freshTypeVar(), fun typ -> typ.IsPure && typ.NumArgsIs 1)
     
     TFunction([TString; funConstrain], TUnit, false, true)
 
@@ -162,8 +162,8 @@ let castType =
     TFunction([TAny; typ], typ, false, true)
 
 let newtonRaphsonType =
-    let funcT1 = TConstrain(freshTypeVar(), _.IsPure)
-    let funcT2 = TConstrain(freshTypeVar(), _.IsPure)
+    let funcT1 = TConstrain(freshTypeVar(), fun typ -> typ.IsPure && typ.NumArgsIs 1)
+    let funcT2 = TConstrain(freshTypeVar(), fun typ -> typ.IsPure && typ.NumArgsIs 1)
     
     TFunction([funcT1; funcT2; TFloat; TFloat; TInteger], TFloat, false, true)
 
