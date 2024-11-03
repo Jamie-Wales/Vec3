@@ -1,5 +1,7 @@
 module Vec3.Interpreter.Backend.Value
 
+open System.Collections.Generic
+open Microsoft.FSharp.Core
 open Vec3.Interpreter.Backend.Types
 open System
 
@@ -180,7 +182,18 @@ let compare a b =
         | _ -> compare (floatValue x) (floatValue y)
     | _ -> failwith "Can only compare numbers"
 
-let castToBool a =
+let rec cast org castTyp =
+      match castTyp with
+      | VBoolean _ -> castToBool org
+      | VNumber(VInteger _) -> castToInt org
+      | VNumber(VFloat _) -> castToFloat org
+      | VNumber(VRational _) -> castToRat org
+      | VNumber(VComplex _) -> castToComp org
+      | VString _ -> castToString org
+      | VList (l, LIST) -> castToList org (List.tryHead l)
+      | _ -> org
+      
+and castToBool a =
     match a with
     | VBoolean v -> VBoolean v
     | VNil -> VBoolean false
@@ -188,18 +201,110 @@ let castToBool a =
     | VNumber n -> VBoolean true
     | VList (l, _) -> if (List.isEmpty l) then (VBoolean false) else VBoolean true
     | _ -> VBoolean true
+
+and castToList a typ =
+    match a with
+    | VList (l, _) -> if Option.isSome typ then VList (List.map (fun el -> cast el (Option.get typ)) l, LIST) else VList (l, LIST)
+    | _ -> failwith "todo"
     
-let castToInt a =
-    failwith "todo"
+and castToInt a =
+    match a with
+    | VNumber (VInteger i) -> VNumber (VInteger i)
+    | VNumber (VFloat f) -> VNumber (VInteger (int f))
+    | VNumber (VRational (num, denom)) -> VNumber (VInteger (num / denom))
+    | VNumber (VComplex (r, _)) -> VNumber (VInteger (int r))
+    | VString s -> 
+        match Int32.TryParse(s) with
+        | true, i -> VNumber (VInteger i)
+        | _ -> failwith "Invalid string for integer conversion"
+    | VBoolean b -> VNumber (VInteger (if b then 1 else 0))
+    | _ -> failwith "Cannot cast to integer"
     
-let castToFloat a =
-    failwith "todo"
+and castToFloat a =
+    match a with
+    | VNumber (VFloat f) -> VNumber (VFloat f)
+    | VNumber (VInteger i) -> VNumber (VFloat (float i))
+    | VNumber (VRational (num, denom)) -> VNumber (VFloat ((float num) / (float denom)))
+    | VNumber (VComplex (r, _)) -> VNumber (VFloat r)
+    | VString s ->
+        match Double.TryParse(s) with
+        | (true, f) -> VNumber (VFloat f)
+        | _ -> failwith "Invalid string for float conversion"
+    | VBoolean b -> VNumber (VFloat (if b then 1.0 else 0.0))
+    | _ -> failwith "Cannot cast to float"
     
-let castToRat a =
-    failwith "todo"
+and castToRat a =
+    match a with
+    | VNumber (VRational (num, denom)) -> VNumber (VRational (num, denom))
+    | VNumber (VInteger i) -> VNumber (VRational (i, 1))
+    | VNumber (VFloat f) ->
+        let num = int (f * 10000.0) // Example of approximating to 4 decimal places
+        let denom = 10000
+        VNumber (VRational (num, denom))
+    | VNumber (VComplex (r, _)) -> VNumber (VRational (int (r * 10000.0), 10000))
+    | VString s ->
+        match Double.TryParse(s) with
+        | true, f ->
+            let num = int (f * 10000.0)
+            let denom = 10000
+            VNumber (VRational (num, denom))
+        | _ -> failwith "Invalid string for rational conversion"
+    | VBoolean b -> VNumber (VRational (if b then (1, 1) else 0, 1))
+    | _ -> failwith "Cannot cast to rational"
     
-let castToComp a =
-    failwith "todo"
+and castToComp a =
+    match a with
+    | VNumber (VComplex (r, i)) -> VNumber (VComplex (r, i))
+    | VNumber (VInteger i) -> VNumber (VComplex (float i, 0.0))
+    | VNumber (VFloat f) -> VNumber (VComplex (f, 0.0))
+    | VNumber (VRational (num, denom)) -> VNumber (VComplex ((float num) / (float denom), 0.0))
+    | VString s ->
+        match Double.TryParse(s) with
+        | (true, f) -> VNumber (VComplex (f, 0.0))
+        | _ -> failwith "Invalid string for complex conversion"
+    | VBoolean b -> VNumber (VComplex (if b then 1.0, 0.0 else 0.0, 0.0))
+    | _ -> failwith "Cannot cast to complex"
     
-let castToString a =
-    failwith "todo"
+and castToString a =
+    match a with
+    | VString s -> VString s
+    | VBoolean b -> VString (if b then "true" else "false")
+    | VNumber (VInteger i) -> VString (string i)
+    | VNumber (VFloat f) -> VString (string f)
+    | VNumber (VRational (num, denom)) -> VString ($"%d{num}/%d{denom}")
+    | VNumber (VComplex (r, i)) -> VString $"%f{r} + %f{i}"
+    | VList (l, _) -> VString ("[" + String.concat ", " (List.map (fun el -> match castToString el with VString s -> s | _ -> "") l) + "]")
+    | _ -> VString ""
+
+let newtonRaphson (f: float -> float) (f' : float -> float) (initialGuess: float) (tolerance: float) (maxIterations: int) =
+    let rec iterate x n =
+        if n >= maxIterations then
+            failwith "Exceeded maximum number of iterations."
+        else
+            let fx = f x
+            if abs fx < tolerance then
+                x
+            else
+                let xNew = x - fx / (f' x)
+                iterate xNew (n + 1)
+
+    iterate initialGuess 0
+
+let bisection (f: float -> float) (a: float) (b: float) (tolerance: float) (maxIterations: int) =
+    let rec iterate (a: float) (b: float) (n: int) =
+        let midpoint = (a + b) / 2.0
+        let fMid = f midpoint
+
+        if abs fMid < tolerance then
+            midpoint // Root found within tolerance
+        elif n >= maxIterations then
+            failwith "Exceeded maximum number of iterations."
+        elif f a * fMid < 0.0 then
+            iterate a midpoint (n + 1) // Root is in the left half
+        else
+            iterate midpoint b (n + 1) // Root is in the right half
+
+    if f a * f b >= 0.0 then
+        failwith "The function must have opposite signs at a and b."
+    else
+        iterate a b 0

@@ -67,6 +67,7 @@ type Keyword =
     | Assert
     | With
     | Type
+    | Rec
     
     
 let keywordMap = 
@@ -84,6 +85,7 @@ let keywordMap =
       "assert", Keyword.Assert
       "with", Keyword.With
       "type", Keyword.Type
+      "rec", Keyword.Rec
        ]
     |> Map.ofList
 
@@ -162,6 +164,7 @@ let keywordToString (kw: Keyword): string =
     | Assert -> "assert"
     | With -> "with"
     | Type -> "type"
+    | Rec -> "rec"
 
 let punctuationToString (p: Punctuation): string =
     match p with
@@ -252,6 +255,9 @@ type BuiltInFunction =
     | BList
     | BTuple
     
+    | NewtonRaphson
+    | Bisection
+    
 let builtInFunctionMap =
     [ Identifier "print", BuiltInFunction.Print
       Identifier "input", BuiltInFunction.Input
@@ -278,6 +284,9 @@ let builtInFunctionMap =
       Identifier "map", BuiltInFunction.Map
       Identifier "BUILTIN_LEN", BuiltInFunction.Len
       Identifier "BUILTIN_TRUNC", BuiltInFunction.Trunc
+      
+      Identifier "newtonRaphson", BuiltInFunction.NewtonRaphson
+      Identifier "bisection", BuiltInFunction.Bisection
       
       Operator (Plus, Some Infix), BuiltInFunction.Add
       Operator (Minus, Some Infix), BuiltInFunction.Sub

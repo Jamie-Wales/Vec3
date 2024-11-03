@@ -153,7 +153,7 @@ let rec builtins () =
     [ Identifier "plot",
       VBuiltin(fun args vm ->
           match args with
-          | [ VString title; VList (xs, _); VList (ys, _) ] ->
+          | [ VString title; VList(xs, _); VList(ys, _) ] ->
               let result = VPlotData(title, xs, ys)
               push vm result
           | _ ->
@@ -278,7 +278,7 @@ let rec builtins () =
       Identifier "cons",
       VBuiltin(fun args vm ->
           match args with
-          | [ value; VList (l, t) ] ->
+          | [ value; VList(l, t) ] ->
               let list = VList(value :: l, t)
               push vm list
           | _ ->
@@ -290,7 +290,7 @@ let rec builtins () =
       Identifier "fold",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList (l, _); acc; VFunction(f, None) ] ->
+          | [ VList(l, _); acc; VFunction(f, None) ] ->
               let rec fold acc vm =
                   function
                   | [] -> acc, vm
@@ -313,7 +313,7 @@ let rec builtins () =
 
               let result, vm = fold acc vm l
               push vm result
-          | [ VList (l, _); acc; VBuiltin f ] ->
+          | [ VList(l, _); acc; VBuiltin f ] ->
               let rec fold acc vm =
                   function
                   | [] -> acc, vm
@@ -331,7 +331,7 @@ let rec builtins () =
       Identifier "map",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList (l', _); VFunction(f, None) ] ->
+          | [ VList(l', _); VFunction(f, None) ] ->
               let rec map acc vm =
                   function
                   | [] -> acc, vm
@@ -355,7 +355,7 @@ let rec builtins () =
               let result, vm = map [] vm l'
               push vm (VList(List.rev result, LIST))
 
-          | [ VList (l', _); VBuiltin f ] ->
+          | [ VList(l', _); VBuiltin f ] ->
               let rec map acc vm =
                   function
                   | [] -> acc, vm
@@ -372,14 +372,14 @@ let rec builtins () =
       Identifier "dotProduct",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList (l1', _) as l1; VList (l2', _) as l2 ] when List.length l1' = List.length l2' ->
+          | [ VList(l1', _) as l1; VList(l2', _) as l2 ] when List.length l1' = List.length l2' ->
               let result = dotProduct l1 l2
               push vm result
           | _ -> failwith "dotProduct expects two lists of the same length")
       Identifier "crossProduct",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList (l1', _) as l1; VList (l2', _) as l2 ] when List.length l1' = 3 && List.length l2' = 3 ->
+          | [ VList(l1', _) as l1; VList(l2', _) as l2 ] when List.length l1' = 3 && List.length l2' = 3 ->
               let result = crossProduct l1 l2
               push vm result
           | _ -> failwith "crossProduct expects two lists of length 3")
@@ -395,14 +395,14 @@ let rec builtins () =
           match args with
           | [ VNumber(VInteger start); VNumber(VInteger stop) ] ->
               let range = [ for i in start..stop -> VNumber(VInteger i) ]
-              let list = VList (range, LIST)
+              let list = VList(range, LIST)
               push vm list
           | _ -> failwith "Range expects two integers")
 
       Identifier "BUILTIN_LEN",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList (l, _) ] -> push vm (VNumber(VInteger(List.length l)))
+          | [ VList(l, _) ] -> push vm (VNumber(VInteger(List.length l)))
           | _ -> failwith "len expects a list")
 
       Identifier "Int",
@@ -424,7 +424,7 @@ let rec builtins () =
           | [ VNumber(VFloat f) ] -> push vm (VString(f.ToString()))
           | [ VBoolean b ] -> push vm (VString(b.ToString()))
           | [ VString s ] -> push vm (VString(s))
-          | [ VList (l, _) ] -> push vm (VString(String.concat ", " (List.map valueToString l)))
+          | [ VList(l, _) ] -> push vm (VString(String.concat ", " (List.map valueToString l)))
           | _ -> failwith "String expects a number, boolean, string, or list")
 
       Identifier "Complex",
@@ -450,29 +450,34 @@ let rec builtins () =
       Identifier "E", VNumber(VFloat(Math.E))
 
       Identifier "TAU", VNumber(VFloat(Math.Tau))
-      
+
       Identifier "cast",
       VBuiltin(fun args vm ->
           let org = args.Head
           let castTyp = List.item 1 args
           
-          match castTyp with
-          | VBoolean _ ->
-              castToBool org |> push vm
-          | VNumber(VInteger _) ->
-              castToInt org |> push vm
-          | VNumber(VFloat _) ->
-              castToFloat org |> push vm
-          | VNumber(VRational _) ->
-              castToRat org |> push vm
-          | VNumber(VComplex _) ->
-              castToComp org |> push vm
-          | VString _ ->
-              castToString org |> push vm
-          | _ ->
-              // TODO more
-              push vm org
-          )
+          cast org castTyp |> push vm
+      )
+
+      Identifier "newtonRaphson",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VFunction(_, Some f1)
+              VFunction(_, Some f2)
+              VNumber(VFloat init)
+              VNumber(VFloat tol)
+              VNumber(VInteger it) ] ->
+              let res = newtonRaphson f1 f2 init tol it
+              push vm (VNumber(VFloat(res)))
+          | _ -> failwith "invalid")
+
+      Identifier "bisection",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VFunction(_, Some f); VNumber(VFloat(a)); VNumber(VFloat(b)); VNumber(VFloat(tol)); VNumber(VInteger(it)) ] ->
+              let res = bisection f a b tol it
+              push vm (VNumber(VFloat(res)))
+          | _ -> failwith "invalid")
 
       Operator(Plus, Some Infix),
       VBuiltin(fun args vm ->
@@ -597,7 +602,7 @@ let rec builtins () =
       Operator(ColonColon, Some Infix),
       VBuiltin(fun args vm ->
           match args with
-          | [ a; VList (l, _) ] -> VList(a :: l, LIST) |> push vm
+          | [ a; VList(l, _) ] -> VList(a :: l, LIST) |> push vm
           | _ -> failwith "Expected a value and a list for ::") ]
 
     |> List.map (fun (key, value) -> lexemeToString key, value)
@@ -810,11 +815,11 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let count, vm = pop vm
 
         match (structure, count) with
-        | VList (values, typ), VNumber(VInteger n) when n >= 0 ->
+        | VList(values, typ), VNumber(VInteger n) when n >= 0 ->
             let values' =
                 [ 0 .. n - 1 ] |> List.map (fun _ -> let value, _ = pop vm in value) |> List.rev
 
-            let list = VList (List.append values values', typ)
+            let list = VList(List.append values values', typ)
             let vm = push vm list
             vm
         | _ -> failwith "Expected non-negative integer for list size"
@@ -824,20 +829,20 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let structure, vm = pop vm
 
         match (structure, key) with
-        | VList (values, _), VNumber(VInteger i) when i >= 0 && i < List.length values ->
+        | VList(values, _), VNumber(VInteger i) when i >= 0 && i < List.length values ->
             let value = List.item i values
             let vm = push vm value
             vm
-        | VList (values, _), VString key ->
+        | VList(values, _), VString key ->
             let value =
                 values
                 |> Seq.tryFind (fun value ->
                     match value with
-                    | VList ([ VString k; _ ], _) when k = key -> true
+                    | VList([ VString k; _ ], _) when k = key -> true
                     | _ -> false)
 
             match value with
-            | Some(VList ([ _; v ], _)) -> push vm v
+            | Some(VList([ _; v ], _)) -> push vm v
             | _ -> push vm VNil
         | _ -> failwith "Invalid index"
 
