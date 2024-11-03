@@ -7,58 +7,34 @@
         x:Class="Vec3.MainWindow"
         Title="Vec3 Editor"
         Width="1200" Height="800">
-
-    <Grid ColumnDefinitions="*, *" RowDefinitions="Auto,*,*">
+    <Grid ColumnDefinitions="*, *" RowDefinitions="Auto,*">
+        <!-- Top toolbar -->
         <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="10">
-            <Button Name="SwitchToReplButton" Content="Switch to REPL Mode" />
-            <Button Name="SwitchToStandardButton" Content="Switch to Standard Mode" />
             <Button Name="ExecuteButton" Content="Execute" />
-            <Button Name="DebugButton" Content="Debug" />
-            <Button Name="StepBackButton" Content="⬅" />
-            <Button Name="StepForwardButton" Content="➡" />
-            <Button Name="ExitDebugButton" Content="Exit Debug Mode" IsEnabled="False" />
         </StackPanel>
-
-        <avaloniaEdit:TextEditor Grid.Row="1" Grid.Column="0" Grid.RowSpan="2"
-                                 Name="Editor"
-                                 FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
-                                 FontSize="14"
-                                 FontWeight="Light"
-                                 HorizontalAlignment="Stretch"
-                                 VerticalAlignment="Stretch"
-                                 HorizontalScrollBarVisibility="Auto"
-                                 VerticalScrollBarVisibility="Visible" />
         
-        <TabControl Grid.Row="1" Grid.Column="1">
-            <TabItem Header="Constant Pool">
-                <ScrollViewer>
-                    <TextBlock Name="ConstantPoolOutput" TextWrapping="Wrap" />
-                </ScrollViewer>
-            </TabItem>
-            <TabItem Header="Disassembly">
-                <ScrollViewer>
-                    <TextBlock Name="DisassemblyOutput" TextWrapping="Wrap" />
-                </ScrollViewer>
-            </TabItem>
-            <TabItem Header="Execution">
-                <ScrollViewer>
-                    <TextBlock Name="ExecutionOutput" TextWrapping="Wrap" />
-                </ScrollViewer>
-            </TabItem>
-        </TabControl>
-
-        <TabControl Grid.Row="2" Grid.Column="1">
-            <TabItem Header="Standard Output">
-                <ScrollViewer>
-                    <TextBlock Name="StandardOutput" TextWrapping="Wrap" />
-                </ScrollViewer>
-            </TabItem>
-            <TabItem Header="Globals">
-                <ScrollViewer>
-                    <TextBlock Name="GlobalsOutput" TextWrapping="Wrap" />
-                </ScrollViewer>
-            </TabItem>
-        </TabControl>
+        <!-- Left side: Code Editor -->
+        <avaloniaEdit:TextEditor 
+            Grid.Row="1" 
+            Grid.Column="0"
+            Name="Editor"
+            FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+            FontSize="14"
+            FontWeight="Light"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            HorizontalScrollBarVisibility="Auto"
+            VerticalScrollBarVisibility="Visible" />
+        
+        <!-- Right side: Standard Output -->
+        <ScrollViewer Grid.Row="1" Grid.Column="1">
+            <TextBlock Name="StandardOutput" 
+                      TextWrapping="Wrap"
+                      Background="#1E1E1E"
+                      Foreground="White"
+                      FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+                      FontSize="14"
+                      Padding="10" />
+        </ScrollViewer>
     </Grid>
-
 </Window>

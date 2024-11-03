@@ -645,37 +645,6 @@ and runCurrentFrame vm =
             let vm = executeOpcode vm opcode
             runCurrentFrame vm
 
-and createVM (mainFunc: Function) : VM =
-    let constantPool =
-        mainFunc.Chunk.ConstantPool
-        |> Seq.indexed
-        |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
-
-    let disassembly =
-        disassembleChunkToString mainFunc.Chunk mainFunc.Name
-        |> fun s -> s.Split(Environment.NewLine) |> Seq.ofArray
-
-    let vm =
-        { Frames = ResizeArray<CallFrame>()
-          Stack = ResizeArray<Value>(256)
-          ScopeDepth = 0
-          Globals = builtins ()
-          Streams =
-            { ConstantPool = constantPool
-              Disassembly = disassembly
-              Execution = Seq.empty
-              StandardOutput = Seq.empty
-              Globals = Seq.empty }
-          ExecutionHistory = ResizeArray<VM>() }
-
-    let mainFrame =
-        { Function = mainFunc
-          IP = 0
-          StackBase = 0
-          Locals = [||] }
-
-    vm.Frames.Add(mainFrame)
-    vm
 
 and executeOpcode (vm: VM) (opcode: OP_CODE) =
     let vm = appendOutput vm Execution $"Executing: {opCodeToString opcode}"
@@ -873,10 +842,9 @@ and runLoop vm =
                 let vm = push vm result
                 runLoop vm
             else
-                // Last frame has finished execution
                 vm.Frames.RemoveAt(vm.Frames.Count - 1)
                 let vm = if vm.Stack.Count = 0 then push vm VNil else vm
-                vm // Do not call runLoop again since there are no frames left
+                vm 
         else
             saveVMState vm
             let vm, instruction = readByte vm
@@ -892,29 +860,29 @@ and runLoop vm =
 and run (vm: VM) = runLoop vm
 
 
-let interpretWithMode (func: Function) (vm: VM option) (isRepl: bool) =
-    let vm =
-        match vm with
-        | Some existingVM ->
-            let newFrame =
-                { Function = func
-                  IP = 0
-                  StackBase = existingVM.Stack.Count
-                  Locals = [||] }
+// let interpretWithMode (func: Function) (vm: VM option) (isRepl: bool) =
+//     let vm =
+//         match vm with
+//         | Some existingVM ->
+//             let newFrame =
+//                 { Function = func
+//                   IP = 0
+//                   StackBase = existingVM.Stack.Count
+//                   Locals = [||] }
+//
+//             existingVM.Frames.Add(newFrame)
+//             existingVM
+//         | None ->
+//             let newVM = createVM func
+//             appendOutput newVM ConstantPool "=== Constant Pool ==="
+//
+//     let vm = appendOutput vm Execution "\n=== Program Execution ==="
+//     let finalVm = run vm
+//     (finalVm, finalVm.Streams)
+//
+// let interpret (func: Function) (vm: VM option) = interpretWithMode func vm false
 
-            existingVM.Frames.Add(newFrame)
-            existingVM
-        | None ->
-            let newVM = createVM func
-            appendOutput newVM ConstantPool "=== Constant Pool ==="
-
-    let vm = appendOutput vm Execution "\n=== Program Execution ==="
-    let finalVm = run vm
-    (finalVm, finalVm.Streams)
-
-let interpret (func: Function) (vm: VM option) = interpretWithMode func vm false
-
-let replExecute (func: Function) (vm: VM option) = interpretWithMode func vm true
+// let replExecute (func: Function) (vm: VM option) = interpretWithMode func vm true
 
 let getStreamContent (stream: seq<string>) =
     String.concat Environment.NewLine (Seq.toArray stream)
@@ -1008,3 +976,44 @@ let stepBackVM (vm: VM) =
         previousState
     else
         vm
+        
+let createNewVM (mainFunc: Function) : VM =
+    let constantPool =
+        mainFunc.Chunk.ConstantPool
+        |> Seq.indexed
+        |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
+    let disassembly =
+        disassembleChunkToString mainFunc.Chunk mainFunc.Name
+        |> fun s -> s.Split(Environment.NewLine) |> Seq.ofArray
+    let vm =
+        { Frames = ResizeArray<CallFrame>()
+          Stack = ResizeArray<Value>(256)
+          ScopeDepth = 0
+          Globals = builtins()
+          Streams =
+            { ConstantPool = constantPool
+              Disassembly = disassembly
+              Execution = Seq.empty
+              StandardOutput = Seq.empty
+              Globals = Seq.empty }
+          ExecutionHistory = ResizeArray<VM>() }
+
+    let mainFrame =
+        { Function = mainFunc
+          IP = 0
+          StackBase = 0
+          Locals = [||] }
+
+    vm.Frames.Add(mainFrame)
+    vm
+
+let loadFunction (vm: VM) (func: Function) : VM =
+    let frame = {
+        Function = func
+        IP = 0
+        StackBase = vm.Stack.Count
+        Locals = [||]
+    }
+    vm.Frames.Add(frame)
+    vm
+

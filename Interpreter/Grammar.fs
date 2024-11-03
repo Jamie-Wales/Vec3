@@ -98,6 +98,11 @@ type Type =
         match this with
         | TFunction(_, _, _, bt) -> bt
         | _ -> false
+    
+    member this.NumArgsIs num =
+        match this with
+        | TFunction(args, _, _, _) -> List.length args = num
+        | _ -> false
 
 and Dims =
     | Dims of int list
