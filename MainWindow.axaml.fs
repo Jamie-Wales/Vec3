@@ -25,7 +25,7 @@ type MainWindow () as this =
     let mutable textEditor: TextEditor = null
     let mutable textMateInstallation: TextMate.Installation = null
     let mutable executeButton: Button = null
-    
+    let mutable replInput: TextEditor = null
     let mutable loadButton: Button = null
     let mutable standardOutput: TextBlock = null
     let mutable replState: VM = createNewVM(initFunction("Main"))
@@ -36,13 +36,15 @@ type MainWindow () as this =
     do
         AvaloniaXamlLoader.Load(this)
         this.InitializeComponent()
-
     member private this.InitializeComponent() =
         textEditor <- this.FindControl<TextEditor>("Editor")
         executeButton <- this.FindControl<Button>("ExecuteButton")
         loadButton <- this.FindControl<Button>("LoadButton")
         standardOutput <- this.FindControl<TextBlock>("StandardOutput")
+        replInput <- this.FindControl<TextEditor>("ReplInput")
 
+        let registryOptions = RegistryOptions(ThemeName.QuietLight)
+        
         if textEditor <> null then
             textEditor.ShowLineNumbers <- true
             textEditor.Options.ShowTabs <- false 
@@ -50,7 +52,6 @@ type MainWindow () as this =
             textEditor.Options.ShowEndOfLine <- false 
             textEditor.Options.HighlightCurrentLine <- false 
 
-            let registryOptions = RegistryOptions(ThemeName.QuietLight)
             textMateInstallation <- TextMate.Installation(textEditor, registryOptions)
             
             let fsharpLanguage = registryOptions.GetLanguageByExtension(".fs")
@@ -58,28 +59,52 @@ type MainWindow () as this =
             textMateInstallation.SetGrammar(scopeName)
 
             textEditor.Text <- """// Vec3 Editor Example
-let x: int = 5
-print(x)
+    let x: int = 5
+    print(x)
 
-let f = (x) -> x^2.0 - 2.0
-let a = 1.0
-let b = 2.0
-let tolerance = 1e-6
-let max = 100
+    let f = (x) -> x^2.0 - 2.0
+    let a = 1.0
+    let b = 2.0
+    let tolerance = 1e-6
+    let max = 100
 
-let root = bisection(f, a, b, tolerance, max)
+    let root = bisection(f, a, b, tolerance, max)
 
-print(root)
+    print(root)
 
-plotFunc("test", f)
-"""
+    plotFunc("test", f)
+    """
 
             this.ApplyColorScheme()
-            
+                
+        if replInput <> null then
+            replInput.ShowLineNumbers <- false
+            replInput.Options.ShowTabs <- false 
+            replInput.Options.ShowSpaces <- false 
+            replInput.Options.ShowEndOfLine <- false 
+            replInput.Options.HighlightCurrentLine <- false
+                
+            // Add syntax highlighting to REPL input with matching color scheme
+            let replTextMate = TextMate.Installation(replInput, registryOptions)
+            let fsharpLanguage = registryOptions.GetLanguageByExtension(".fs")
+            let scopeName = registryOptions.GetScopeByLanguageId(fsharpLanguage.Id)
+            replTextMate.SetGrammar(scopeName)
+                
+            // Apply the same color scheme
+            let mutable colorString = ""
+            if textMateInstallation.TryGetThemeColor("editor.background", &colorString) then
+                match Color.TryParse(colorString) with
+                | true, color -> replInput.Background <- SolidColorBrush(color)
+                | _ -> ()
+                    
+            if textMateInstallation.TryGetThemeColor("editor.foreground", &colorString) then
+                match Color.TryParse(colorString) with
+                | true, color -> replInput.Foreground <- SolidColorBrush(color)
+                | _ -> ()
+                
         executeButton.Click.AddHandler(fun _ _ -> this.ExecuteCode())
         loadButton.Click.AddHandler(fun _ _ -> this.LoadCode())
         textEditor.TextChanged.AddHandler(fun _ _ -> this.TextChanged())
-    
     member private this.LoadCode() =
         replState <- createNewVM(initFunction("Main"))
         let code = this.GetEditorText()

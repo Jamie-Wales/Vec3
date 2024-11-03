@@ -10,34 +10,131 @@
         Background="Transparent"
         ExtendClientAreaToDecorationsHint="True"
         Width="1200" Height="800">
-    <Grid ColumnDefinitions="0.6*, 0.4*" RowDefinitions="Auto,*" Margin="10">
-        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="1, 20, 1, 5">
-            <Button Name="ExecuteButton" Content="Execute" Background="Coral" />
-            <Button Name="LoadButton" Content="Load Code" Background="MidnightBlue" Foreground="White"/>
-        </StackPanel>
 
-        <avaloniaEdit:TextEditor
-            Grid.Row="1"
-            Grid.Column="0"
-            Margin="0, 0, 10, 0"
-            Name="Editor"
-            FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
-            FontSize="14"
-            FontWeight="Light"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            HorizontalScrollBarVisibility="Auto"
-            VerticalScrollBarVisibility="Visible" />
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="15,8"/>
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Opacity" Value="0.8"/>
+            <Setter Property="RenderTransform" Value="scale(1.02)"/>
+        </Style>
+        <Style Selector="Button:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.98)"/>
+        </Style>
+        <Style Selector="Border.card">
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#20FFFFFF"/>
+            <Setter Property="Background" Value="#1E1E1E"/>
+        </Style>
+    </Window.Styles>
 
-        <!-- Right side: Standard Output -->
-        <ScrollViewer Grid.Row="1" Grid.Column="1">
-            <TextBlock Name="StandardOutput"
-                       TextWrapping="Wrap"
-                       Background="#1E1E1E"
-                       Foreground="White"
-                       FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
-                       FontSize="14"
-                       Padding="10" />
-        </ScrollViewer>
-    </Grid>
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="#2D2D2D"
+                    TintOpacity="1"
+                    MaterialOpacity="0.65" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <Grid ColumnDefinitions="0.6*, 0.4*" RowDefinitions="Auto,*, Auto" Margin="10, 30, 10, 10">
+            <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+                <Button Name="ExecuteButton" 
+                        Content="Execute" 
+                        Background="Coral">
+                    <Button.Transitions>
+                        <Transitions>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15"/>
+                        </Transitions>
+                    </Button.Transitions>
+                </Button>
+                <Button Name="LoadButton" 
+                        Content="Load Code" 
+                        Background="MidnightBlue" 
+                        Foreground="White">
+                    <Button.Transitions>
+                        <Transitions>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15"/>
+                        </Transitions>
+                    </Button.Transitions>
+                </Button>
+            </StackPanel>
+
+            <Border Grid.Row="1"
+                    Grid.Column="0"
+                    Margin="0,0,10,10"
+                    Classes="card"
+                    Background="White"
+                    ClipToBounds="True">
+                <avaloniaEdit:TextEditor
+                    Name="Editor"
+                    FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+                    FontSize="14"
+                    FontWeight="Light"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Visible" />
+            </Border>
+
+            <!-- Right side: Standard Output -->
+            <Border Grid.Row="1"
+                    Grid.Column="1"
+                    Classes="card"
+                    Margin="0,0,0,10">
+                <ScrollViewer Margin="10">
+                    <TextBlock Name="StandardOutput"
+                             TextWrapping="Wrap"
+                             Foreground="White"
+                             FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+                             FontSize="14" />
+                </ScrollViewer>
+            </Border>
+
+            <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="Auto, *, Auto" Margin="0">
+                <TextBlock Grid.Column="0"
+                          Text="V3>"
+                          FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+                          FontSize="16"
+                          FontWeight="Bold"
+                          Foreground="White"
+                          VerticalAlignment="Center"
+                          Margin="10,0" />
+                <Border Grid.Column="1"
+                        Classes="card"
+                        Margin="0,0,10,0"
+                        ClipToBounds="True">
+                    <avaloniaEdit:TextEditor
+                        Name="ReplInput"
+                        FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+                        FontSize="14"
+                        FontWeight="Light"
+                        Height="40"
+                        Padding="10,8,10,8"
+                        HorizontalScrollBarVisibility="Auto"
+                        VerticalScrollBarVisibility="Disabled" />
+                </Border>
+                <Button Grid.Column="2"
+                        Name="ReplExecuteButton"
+                        Content="Run"
+                        Height="40"
+                        Width="60"
+                        Background="ForestGreen"
+                        Foreground="White"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center">
+                    <Button.Transitions>
+                        <Transitions>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15"/>
+                        </Transitions>
+                    </Button.Transitions>
+                </Button>
+            </Grid>
+        </Grid>
+    </Panel>
 </Window>
