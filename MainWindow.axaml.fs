@@ -120,6 +120,7 @@ type MainWindow () as this =
     member private this.TextChanged() =
         debounceTimer |> Option.iter (_.Dispose())
         
+        // probably be better to not reparse old code, but would involve diffing, complex
         let callback = fun _ ->
             Task.Run(fun () ->
                 Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
@@ -128,10 +129,11 @@ type MainWindow () as this =
                         standardOutput.Foreground <- SolidColorBrush(Colors.White)
                         standardOutput.Text <- ""
                     else
-                        let code = Prelude.prelude + code
                         match parse code with
                         | Ok (_, ast) ->
-                            match Inference.inferProgram1 ast with
+                            let env, aliases, _, _ = Prelude.preludeChecked
+                            
+                            match Inference.inferProgram aliases env ast with
                             | Ok _ ->
                                     standardOutput.Foreground <- SolidColorBrush(Colors.White)
                                     standardOutput.Text <- "No errors"
