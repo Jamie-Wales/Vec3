@@ -1,6 +1,7 @@
 module Vec3.Interpreter.Backend.Value
 
 open Vec3.Interpreter.Backend.Types
+open System
 
 let printValue value = printfn $"Printed value: {valueToString value}"
 
@@ -32,6 +33,7 @@ and numbersEqual (a: VNumber) (b: VNumber) =
     | _ -> 
         let f1, f2 = (floatValue a, floatValue b)
         f1 = f2
+        
 and floatValue =
     function
     | VInteger n -> float n
@@ -177,3 +179,27 @@ let compare a b =
             failwith "Cannot compare complex numbers"
         | _ -> compare (floatValue x) (floatValue y)
     | _ -> failwith "Can only compare numbers"
+
+let castToBool a =
+    match a with
+    | VBoolean v -> VBoolean v
+    | VNil -> VBoolean false
+    | VString s -> if String.IsNullOrEmpty s then VBoolean false else VBoolean true
+    | VNumber n -> VBoolean true
+    | VList (l, _) -> if (List.isEmpty l) then (VBoolean false) else VBoolean true
+    | _ -> VBoolean true
+    
+let castToInt a =
+    failwith "todo"
+    
+let castToFloat a =
+    failwith "todo"
+    
+let castToRat a =
+    failwith "todo"
+    
+let castToComp a =
+    failwith "todo"
+    
+let castToString a =
+    failwith "todo"

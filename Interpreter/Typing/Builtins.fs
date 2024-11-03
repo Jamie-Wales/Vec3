@@ -156,6 +156,11 @@ let tupleCast =
     
     TFunction([listType], TTuple([listType]), false, true)
 
+let castType =
+    let typ = TTypeVariable (freshTypeVar ())
+    
+    TFunction([TAny; typ], typ, false, true)
+
 let BuiltinFunctions: Map<BuiltInFunction, TType> =
     [ Print, TFunction([ TAny ], TUnit, false, true)
       Input, TFunction([], TString, false, true)
@@ -212,6 +217,9 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       BBool, TFunction([TAny], TBool, false, true)
       BList, listCast
       BTuple, tupleCast
+      
+      Cast, castType
+      
       ]
     |> Map.ofList
 

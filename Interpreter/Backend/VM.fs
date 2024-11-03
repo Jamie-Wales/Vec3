@@ -450,19 +450,38 @@ let rec builtins () =
       Identifier "E", VNumber(VFloat(Math.E))
 
       Identifier "TAU", VNumber(VFloat(Math.Tau))
+      
+      Identifier "cast",
+      VBuiltin(fun args vm ->
+          let org = args.Head
+          let castTyp = List.item 1 args
+          
+          match castTyp with
+          | VBoolean _ ->
+              castToBool org |> push vm
+          | VNumber(VInteger _) ->
+              castToInt org |> push vm
+          | VNumber(VFloat _) ->
+              castToFloat org |> push vm
+          | VNumber(VRational _) ->
+              castToRat org |> push vm
+          | VNumber(VComplex _) ->
+              castToComp org |> push vm
+          | VString _ ->
+              castToString org |> push vm
+          | _ ->
+              // TODO more
+              push vm org
+          )
 
       Operator(Plus, Some Infix),
       VBuiltin(fun args vm ->
-          printfn $"add: {args}"
-
           match args with
           | [ a; b ] -> add a b |> push vm
           | _ -> failwith "Expected two arguments for +")
 
       Operator(Minus, Some Infix),
       VBuiltin(fun args vm ->
-          printfn $"sub: {args}"
-
           match args with
           | [ a; b ] -> subtract a b |> push vm
           | _ -> failwith "Expected two arguments for -")
