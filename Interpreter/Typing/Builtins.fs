@@ -161,6 +161,17 @@ let castType =
     
     TFunction([TAny; typ], typ, false, true)
 
+let newtonRaphsonType =
+    let funcT1 = TConstrain(freshTypeVar(), _.IsPure)
+    let funcT2 = TConstrain(freshTypeVar(), _.IsPure)
+    
+    TFunction([funcT1; funcT2; TFloat; TFloat; TInteger], TFloat, false, true)
+
+let bisectionTyp =
+    let funcT = TConstrain(freshTypeVar(), _.IsPure)
+    
+    TFunction([funcT; TFloat; TFloat; TFloat; TInteger], TFloat, false, true)
+
 let BuiltinFunctions: Map<BuiltInFunction, TType> =
     [ Print, TFunction([ TAny ], TUnit, false, true)
       Input, TFunction([], TString, false, true)
@@ -186,6 +197,9 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       Map, mapType
       Plot, plotType
       PlotFunction, plotFunType
+      
+      NewtonRaphson, newtonRaphsonType
+      Bisection, bisectionTyp
       
       Cons, consType
       Add, plus
