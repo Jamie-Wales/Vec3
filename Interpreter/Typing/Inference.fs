@@ -759,8 +759,49 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
         let aliases = Map.add name.Lexeme typ aliases
         Ok(env, aliases, Map.empty, STypeDeclaration(name, alias, Some TUnit))
     
-    | SRecFunc(name, parameters, body, typ) -> // TODO
-        Ok(env, aliases, Map.empty, SRecFunc(name, parameters, body, typ))
+    | SRecFunc(name, parameters, body, returnT) -> // TODO, this is probably wrong
+        let paramTypes = List.map snd parameters
+        
+        let newParamType typ =
+            match typ with
+            | Some t -> t
+            | None -> TTypeVariable(freshTypeVar())
+            
+        let paramTypes = List.map newParamType paramTypes
+        let paramList = List.map fst parameters
+        
+        let newEnv =
+            List.fold2
+                (fun acc param typ ->
+                    match param.Lexeme with
+                    | Identifier _ as id ->
+                        Map.add id typ acc
+                    | _ -> acc)
+                env
+                paramList
+                paramTypes
+        
+        let newEnv = Map.add name.Lexeme (TFunction(paramTypes, TTypeVariable (freshTypeVar()), false, false)) newEnv
+        
+        infer aliases newEnv body
+        |> Result.bind (fun (bodyType, sub, expr) ->
+            
+            let paramTypes = List.map (applySubstitution aliases sub) paramTypes
+            let paramList = List.zip paramList paramTypes
+            let paramList = List.map (fun (id, typ) -> (id, Some typ)) paramList
+
+            if Option.isNone returnT then
+                Ok(newEnv, aliases, sub, SRecFunc(name, paramList, expr, Some (TFunction (paramTypes, bodyType, false,false))))
+            else
+                let returnT = Option.defaultValue (TTypeVariable(freshTypeVar())) returnT
+                unify aliases bodyType returnT
+                |> Result.bind (fun sub' ->
+                    let sub = combineMaps sub sub'
+                    let returnType = applySubstitution aliases sub returnT
+                    
+                    Ok(newEnv, aliases, sub, SRecFunc(name, paramList, expr, Some (TFunction (paramTypes, bodyType, false,false))))
+                ))
+
 
 and inferProgram
     (aliases: AliasMap)
