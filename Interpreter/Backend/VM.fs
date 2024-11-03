@@ -8,8 +8,6 @@ open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Token
 
-/// TODO: massibe problem with calling, think function gets left on the stack, maybe only builitns
-
 let createOutputStreams () =
     { ConstantPool = Seq.empty
       Disassembly = Seq.empty
