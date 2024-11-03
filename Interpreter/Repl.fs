@@ -57,67 +57,45 @@ let evalRepl =
     repl' Map.empty Map.empty defaultTypeEnv
     ()
 
-type ReplState = {
-    VM: VM option
-}
-
-let createInitialState () = {
-    VM = None
-}
-
-let executeInRepl (state: ReplState) (input: string) : ReplState =
+let executeInRepl (input: string) (vm: VM) : VM =
     try
         let parsed = parse input
         match parsed with
         | Ok(_, program) ->
             match compileProgram program with
             | Ok (func, _) ->
-                let vm = 
-                    match state.VM with
-                    | Some existingVM ->
-                        let newFrame = {
-                            Function = func
-                            IP = 0
-                            StackBase = existingVM.Stack.Count
-                            Locals = [||] 
-                        }
-                        existingVM.Frames.Add(newFrame)
-                        existingVM
-                    | None -> createVM func
-                let updatedVM, _ = interpretWithMode func (Some vm) true
-                { VM = Some updatedVM }
+                loadFunction vm func
             | Error (msg, _) ->
                 printfn $"Compilation error: {msg}"
-                state
+                vm
         | Error (msg, _) ->
             printfn $"Parsing error: {msg}"
-            state
+            vm
     with
     | :? ArgumentException as e ->
         printfn $"Parsing error: {e.Message}"
-        state
+        vm
     | e ->
         printfn $"An error occurred: {e.Message}"
-        state
+        vm
 
-let rec repl (state: ReplState) =
+let rec repl (state: VM) =
     Console.Write ">> "
     let input = Console.ReadLine()
     
     if input.ToLower() = "exit" then
         printfn "Exiting REPL..."
     else
-        let newState = executeInRepl state input
+        let newState = executeInRepl input state
         repl newState
 
 let startRepl () =
     printfn "Welcome to the Vec3 REPL!"
     printfn "Type your code and press Enter to execute."
     printfn "Type 'exit' to quit the REPL."
-    let initialState = createInitialState()
-    repl initialState
+    repl (createNewVM (initFunction "Main"))
     
-let parseAndCompile (code: string) =
+let parseAndCompile (code: string) (vm:VM) =
     let code = Prelude.prelude + code
     let code = preprocessContent code
     match parse code with
@@ -125,7 +103,7 @@ let parseAndCompile (code: string) =
         match inferProgram Map.empty defaultTypeEnv program with
         | Ok (_, _, _, program) ->
             match compileProgram program with
-            | Ok (func, _) -> Some func
+            | Ok (func, _) -> Some(loadFunction vm func)
             | Error (msg, _) ->
                 printfn $"Compilation error: {msg}"
                 None
