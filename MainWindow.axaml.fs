@@ -40,7 +40,7 @@ type MainWindow () as this =
     member private this.InitializeComponent() =
         textEditor <- this.FindControl<TextEditor>("Editor")
         executeButton <- this.FindControl<Button>("ExecuteButton")
-        loadButton <- this.FindControl<Button>("LoadCodeButton")
+        loadButton <- this.FindControl<Button>("LoadButton")
         standardOutput <- this.FindControl<TextBlock>("StandardOutput")
 
         if textEditor <> null then
@@ -77,8 +77,21 @@ plotFunc("test", f)
             this.ApplyColorScheme()
             
         executeButton.Click.AddHandler(fun _ _ -> this.ExecuteCode())
+        loadButton.Click.AddHandler(fun _ _ -> this.LoadCode())
         textEditor.TextChanged.AddHandler(fun _ _ -> this.TextChanged())
     
+    member private this.LoadCode() =
+        replState <- createNewVM(initFunction("Main"))
+        let code = this.GetEditorText()
+        match parseAndCompile code replState with
+        | Some vm ->
+            replState <- vm
+            standardOutput.Foreground <- SolidColorBrush(Colors.GreenYellow)
+            standardOutput.Text <- "Vec3 code -> Loaded"
+        | None -> 
+            standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+            standardOutput.Text <- "Failed to compile code"
+            
     member private this.TextChanged() =
         debounceTimer |> Option.iter (_.Dispose())
         
@@ -124,46 +137,40 @@ plotFunc("test", f)
             applyColor "editorLineNumber.foreground" (fun brush -> textEditor.LineNumbersForeground <- brush)
 
     member private this.ExecuteCode() =
-        let code = this.GetEditorText()
-        match parseAndCompile code replState with
-        | Some vm ->
-            replState <- run vm
-            standardOutput.Foreground <- SolidColorBrush(Colors.White)
-            let outputText = String.concat "\n" replState.Streams.StandardOutput
-            standardOutput.Text <- sprintf "Output:\n%s" outputText
-            if replState.Stack.Count > 0 then
-                        let topValue = replState.Stack[replState.Stack.Count - 1]
-                        match topValue with
-                            | VPlotData (title, xs, ys) ->
-                                let xValues = 
-                                    xs |> List.choose (function
-                                        | VNumber (VFloat f) -> Some f
-                                        | VNumber (VInteger i) -> Some (float i)
-                                        | _ -> None)
-                                    |> Array.ofList
-                                let yValues = 
-                                    ys |> List.choose (function
-                                        | VNumber (VFloat f) -> Some f
-                                        | VNumber (VInteger i) -> Some (float i)
-                                        | _ -> None)
-                                    |> Array.ofList
-                                let plotWindow = PlotWindow()
-                                plotWindow.PlotControl.Plot.Clear()
-                                plotWindow.PlotControl.Plot.Add.Scatter(xValues, yValues) |> ignore
-                                plotWindow.PlotControl.Plot.Title(title)
-                                plotWindow.PlotControl.Refresh()
-                                plotWindow.Show()
-                            | VPlotFunction (title, f) ->
-                                let plotWindow = PlotWindow()
-                                plotWindow.PlotControl.Plot.Clear()
-                                plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
-                                plotWindow.PlotControl.Plot.Title(title)
-                                plotWindow.PlotControl.Refresh()
-                                plotWindow.Show()
-                            | _ -> ()
-        | None -> 
-            standardOutput.Foreground <- SolidColorBrush(Colors.Red)
-            standardOutput.Text <- "Failed to compile code"
+        replState <- run replState 
+        standardOutput.Foreground <- SolidColorBrush(Colors.White)
+        let outputText = String.concat "\n" replState.Streams.StandardOutput
+        standardOutput.Text <- sprintf "Output:\n%s" outputText
+        if replState.Stack.Count > 0 then
+                    let topValue = replState.Stack[replState.Stack.Count - 1]
+                    match topValue with
+                        | VPlotData (title, xs, ys) ->
+                            let xValues = 
+                                xs |> List.choose (function
+                                    | VNumber (VFloat f) -> Some f
+                                    | VNumber (VInteger i) -> Some (float i)
+                                    | _ -> None)
+                                |> Array.ofList
+                            let yValues = 
+                                ys |> List.choose (function
+                                    | VNumber (VFloat f) -> Some f
+                                    | VNumber (VInteger i) -> Some (float i)
+                                    | _ -> None)
+                                |> Array.ofList
+                            let plotWindow = PlotWindow()
+                            plotWindow.PlotControl.Plot.Clear()
+                            plotWindow.PlotControl.Plot.Add.Scatter(xValues, yValues) |> ignore
+                            plotWindow.PlotControl.Plot.Title(title)
+                            plotWindow.PlotControl.Refresh()
+                            plotWindow.Show()
+                        | VPlotFunction (title, f) ->
+                            let plotWindow = PlotWindow()
+                            plotWindow.PlotControl.Plot.Clear()
+                            plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
+                            plotWindow.PlotControl.Plot.Title(title)
+                            plotWindow.PlotControl.Refresh()
+                            plotWindow.Show()
+                        | _ -> ()
 
     member private this.GetEditorText() : string =
         if textEditor <> null then

@@ -12,7 +12,8 @@
         Width="1200" Height="800">
     <Grid ColumnDefinitions="0.6*, 0.4*" RowDefinitions="Auto,*" Margin="10">
         <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="1, 20, 1, 5">
-            <Button Name="ExecuteButton" Content="Execute" />
+            <Button Name="ExecuteButton" Content="Execute" Background="Coral" />
+            <Button Name="LoadButton" Content="Load Code" Background="MidnightBlue" Foreground="White"/>
         </StackPanel>
 
         <avaloniaEdit:TextEditor
