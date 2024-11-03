@@ -6,17 +6,19 @@
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="Vec3.MainWindow"
         Title="Vec3 Editor"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
         Width="1200" Height="800">
-    <Grid ColumnDefinitions="*, *" RowDefinitions="Auto,*">
-        <!-- Top toolbar -->
-        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="10">
+    <Grid ColumnDefinitions="0.6*, 0.4*" RowDefinitions="Auto,*" Margin="10">
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="1, 20, 1, 5">
             <Button Name="ExecuteButton" Content="Execute" />
         </StackPanel>
-        
-        <!-- Left side: Code Editor -->
-        <avaloniaEdit:TextEditor 
-            Grid.Row="1" 
+
+        <avaloniaEdit:TextEditor
+            Grid.Row="1"
             Grid.Column="0"
+            Margin="0, 0, 10, 0"
             Name="Editor"
             FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
             FontSize="14"
@@ -25,16 +27,16 @@
             VerticalAlignment="Stretch"
             HorizontalScrollBarVisibility="Auto"
             VerticalScrollBarVisibility="Visible" />
-        
+
         <!-- Right side: Standard Output -->
         <ScrollViewer Grid.Row="1" Grid.Column="1">
-            <TextBlock Name="StandardOutput" 
-                      TextWrapping="Wrap"
-                      Background="#1E1E1E"
-                      Foreground="White"
-                      FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
-                      FontSize="14"
-                      Padding="10" />
+            <TextBlock Name="StandardOutput"
+                       TextWrapping="Wrap"
+                       Background="#1E1E1E"
+                       Foreground="White"
+                       FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+                       FontSize="14"
+                       Padding="10" />
         </ScrollViewer>
     </Grid>
 </Window>

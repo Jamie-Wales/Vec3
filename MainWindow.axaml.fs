@@ -25,6 +25,8 @@ type MainWindow () as this =
     let mutable textEditor: TextEditor = null
     let mutable textMateInstallation: TextMate.Installation = null
     let mutable executeButton: Button = null
+    
+    let mutable loadButton: Button = null
     let mutable standardOutput: TextBlock = null
     let mutable replState: VM = createNewVM(initFunction("Main"))
     
@@ -38,6 +40,7 @@ type MainWindow () as this =
     member private this.InitializeComponent() =
         textEditor <- this.FindControl<TextEditor>("Editor")
         executeButton <- this.FindControl<Button>("ExecuteButton")
+        loadButton <- this.FindControl<Button>("LoadCodeButton")
         standardOutput <- this.FindControl<TextBlock>("StandardOutput")
 
         if textEditor <> null then
@@ -47,7 +50,7 @@ type MainWindow () as this =
             textEditor.Options.ShowEndOfLine <- false 
             textEditor.Options.HighlightCurrentLine <- false 
 
-            let registryOptions = RegistryOptions(ThemeName.DarkPlus)
+            let registryOptions = RegistryOptions(ThemeName.QuietLight)
             textMateInstallation <- TextMate.Installation(textEditor, registryOptions)
             
             let fsharpLanguage = registryOptions.GetLanguageByExtension(".fs")
