@@ -134,12 +134,6 @@ let number (state: ParserState) : ParseResult<Expr> =
         | Complex(r, i) -> Ok(state, ELiteral(LNumber(LComplex(r, i)), TComplex))
     | _ -> Error(Expected "Number", state)
 
-let ident (state: ParserState) : ParseResult<Expr> =
-    let state = setLabel state "Ident"
-
-    match previous state with
-    | Some id -> Ok(state, EIdentifier(id, None))
-    | _ -> Error(Expected("Identifier"), state)
 
 let rec getRule (lexeme: Lexeme) : ParseRule =
     let getPunctuationRule (punc: Punctuation) =
@@ -159,6 +153,13 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
               Infix = None
               Postfix = Some index
               Precedence = Precedence.Index }
+        | Colon ->
+            {
+                Prefix = None
+                Infix = Some cast
+                Postfix = None
+                Precedence = Precedence.Call 
+            }
         | _ -> defaultRule
 
 
@@ -284,6 +285,46 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
           Postfix = None
           Precedence = Precedence.None }
 
+and cast (state: ParserState) (left: Expr) : ParseResult<Expr> =
+    typeHint state
+    |> Result.bind(fun (state, typ) ->
+                let defaultPos = { Line = 0; Column = 0 }
+                // clean this up too much repititon
+                let id = match typ with
+                         | TBool -> Some "Boolean"
+                         | TInteger -> Some "Int"
+                         | TFloat -> Some "Float"
+                         | TRational -> Some "Rational"
+                         | TComplex -> Some "Complex"
+                         | TString -> Some "String"
+                         | _ -> None
+                
+                match id with
+                | Some id ->
+                    let expr =
+                        ECall(
+                            EIdentifier(
+                                { Lexeme = Identifier id
+                                  Position = defaultPos },
+                                None
+                            ),
+                            [ left ],
+                            None
+                        )
+                
+                    Ok(state, expr)
+                | _ -> Ok(state, left)
+        
+        )
+
+and ident (state: ParserState) : ParseResult<Expr> =
+    let state = setLabel state "Ident"
+
+    match previous state with
+    | Some id ->
+        let expr = EIdentifier(id, None)
+        Ok(state, expr)
+    | _ -> Error(Expected("Identifier"), state)
 
 and expression (state: ParserState) (precedence: Precedence) : ParseResult<Expr> =
     let state = setLabel state "Expression"
@@ -761,12 +802,21 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
                     if Option.isSome varType then
                         let defaultPos = { Line = 0; Column = 0 }
                         // clean this up too much repititon
-                        match Option.get varType with
-                        | TBool ->
+                        let id = match Option.get varType with
+                                 | TBool -> Some "Boolean"
+                                 | TInteger -> Some "Int"
+                                 | TFloat -> Some "Float"
+                                 | TRational -> Some "Rational"
+                                 | TComplex -> Some "Complex"
+                                 | TString -> Some "String"
+                                 | _ -> None
+                        
+                        match id with
+                        | Some id ->
                             let expr =
                                 ECall(
                                     EIdentifier(
-                                        { Lexeme = Identifier "Boolean"
+                                        { Lexeme = Identifier id
                                           Position = defaultPos },
                                         None
                                     ),
@@ -775,72 +825,8 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
                                 )
 
                             Ok(state, SVariableDeclaration(name, expr, varType))
-                        | TInteger ->
-                            let expr =
-                                ECall(
-                                    EIdentifier(
-                                        { Lexeme = Identifier "Int"
-                                          Position = defaultPos },
-                                        None
-                                    ),
-                                    [ expr ],
-                                    None
-                                )
-
+                        | None ->
                             Ok(state, SVariableDeclaration(name, expr, varType))
-                        | TFloat ->
-                            let expr =
-                                ECall(
-                                    EIdentifier(
-                                        { Lexeme = Identifier "Float"
-                                          Position = defaultPos },
-                                        None
-                                    ),
-                                    [ expr ],
-                                    None
-                                )
-
-                            Ok(state, SVariableDeclaration(name, expr, varType))
-                        | TRational ->
-                            let expr =
-                                ECall(
-                                    EIdentifier(
-                                        { Lexeme = Identifier "Rational"
-                                          Position = defaultPos },
-                                        None
-                                    ),
-                                    [ expr ],
-                                    None
-                                )
-
-                            Ok(state, SVariableDeclaration(name, expr, varType))
-                        | TComplex ->
-                            let expr =
-                                ECall(
-                                    EIdentifier(
-                                        { Lexeme = Identifier "Complex"
-                                          Position = defaultPos },
-                                        None
-                                    ),
-                                    [ expr ],
-                                    None
-                                )
-
-                            Ok(state, SVariableDeclaration(name, expr, varType))
-                        | TString ->
-                            let expr =
-                                ECall(
-                                    EIdentifier(
-                                        { Lexeme = Identifier "String"
-                                          Position = defaultPos },
-                                        None
-                                    ),
-                                    [ expr ],
-                                    None
-                                )
-
-                            Ok(state, SVariableDeclaration(name, expr, varType))
-                        | _ -> Ok(state, SVariableDeclaration(name, expr, varType))
                     else
                         Ok(state, SVariableDeclaration(name, expr, varType)))))
     | _ -> Error(Expected "variable name", state)
