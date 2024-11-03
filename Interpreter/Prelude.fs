@@ -1,5 +1,8 @@
 module Vec3.Interpreter.Prelude
 
+open Parser
+open Vec3.Interpreter.Typing
+
 let prelude = """
 let cos = (x) -> BUILTIN_COS(x)
 let sin = (x) -> BUILTIN_SIN(x)
@@ -21,3 +24,12 @@ let id = (x) -> x
 
 """
 
+let preludeParsed =
+    match parse prelude with
+    | Ok(_, program) -> program
+    | _ -> failwith "error parsing"
+
+let preludeChecked =
+    match Inference.inferProgram1 preludeParsed with
+    | Ok(env, aliases, sub, program) -> env, aliases, sub, program
+    | _ -> failwith "error type checking"

@@ -478,6 +478,22 @@ let rec builtins () =
               let res = bisection f a b tol it
               push vm (VNumber(VFloat(res)))
           | _ -> failwith "invalid")
+      
+      Identifier "assert",
+      VBuiltin(fun args vm ->
+          match args with
+          | [msg; cond] ->
+              if not (isTruthy cond) then
+                 failwithf $"Assertion failed: {valueToString msg}"
+              else
+                  push vm VNil
+          | [cond] ->
+              if not (isTruthy cond) then
+                 failwithf $"Assertion failed: {valueToString cond}"
+              else
+                  push vm VNil
+          | _ -> failwith "invalid"
+          )
 
       Operator(Plus, Some Infix),
       VBuiltin(fun args vm ->
@@ -730,14 +746,6 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             vm.Stack.RemoveRange(callerFrame.StackBase, vm.Stack.Count - callerFrame.StackBase)
             let vm = push vm result
             runLoop vm
-    | ASSERT ->
-        let msg, vm = pop vm
-        let value, vm = pop vm
-
-        if not (isTruthy value) then
-            failwithf $"Assertion failed: {valueToString msg}"
-
-        vm
     | CLOSURE ->
         let constant, vm = readConstant vm
 
@@ -776,8 +784,10 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             let frame = getCurrentFrame vm
             let frame = { frame with IP = frame.IP + jump }
             vm.Frames[vm.Frames.Count - 1] <- frame
-
-        vm
+            
+            vm
+        else
+            vm
 
     | COMPOUND_CREATE ->
         let structure, vm = pop vm
