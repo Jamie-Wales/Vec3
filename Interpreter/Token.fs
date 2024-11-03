@@ -67,6 +67,7 @@ type Keyword =
     | Assert
     | With
     | Type
+    | Rec
     
     
 let keywordMap = 
@@ -84,6 +85,7 @@ let keywordMap =
       "assert", Keyword.Assert
       "with", Keyword.With
       "type", Keyword.Type
+      "rec", Keyword.Rec
        ]
     |> Map.ofList
 
@@ -162,6 +164,7 @@ let keywordToString (kw: Keyword): string =
     | Assert -> "assert"
     | With -> "with"
     | Type -> "type"
+    | Rec -> "rec"
 
 let punctuationToString (p: Punctuation): string =
     match p with

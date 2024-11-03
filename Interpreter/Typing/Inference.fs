@@ -1,5 +1,6 @@
 module Vec3.Interpreter.Typing.Inference
 
+open Microsoft.FSharp.Collections
 open Microsoft.FSharp.Core
 open Types
 open Substitution
@@ -459,6 +460,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                     | SVariableDeclaration _ -> TUnit
                     | SAssertStatement _ -> TUnit
                     | STypeDeclaration _ -> TUnit
+                    | SRecFunc _ -> TUnit
 
                 Ok(lastStmtType, sub, EBlock(stmts, Some lastStmtType))))
 
@@ -756,6 +758,9 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
         let alias = TAlias(name, Some typ)
         let aliases = Map.add name.Lexeme typ aliases
         Ok(env, aliases, Map.empty, STypeDeclaration(name, alias, Some TUnit))
+    
+    | SRecFunc(name, parameters, body, typ) -> // TODO
+        Ok(env, aliases, Map.empty, SRecFunc(name, parameters, body, typ))
 
 and inferProgram
     (aliases: AliasMap)

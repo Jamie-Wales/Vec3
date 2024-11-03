@@ -90,6 +90,8 @@ let max = 100
 let root = bisection(f, a, b, tolerance, max)
 
 print(root)
+
+plotFunc("test", f)
 """
 
             this.ApplyColorScheme()

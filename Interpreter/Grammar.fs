@@ -153,11 +153,13 @@ type Expr =
     | ERecordExtend of (Token * Expr * Type option) * Expr * Type option
     | ERecordRestrict of Expr * Token * Type option
     | ERecordEmpty of Type
+    
 
 and Stmt =
     | SExpression of Expr * Type option
     | SVariableDeclaration of Token * Expr * Type option
     | SAssertStatement of Expr * Expr option * Type option
     | STypeDeclaration of Token * Type * Type option
+    | SRecFunc of Token * (Token * Type option) list * Expr * Type option
 
 type Program = Stmt list

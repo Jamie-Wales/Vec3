@@ -289,15 +289,23 @@ and cast (state: ParserState) (left: Expr) : ParseResult<Expr> =
     typeHint state
     |> Result.bind(fun (state, typ) ->
                 let defaultPos = { Line = 0; Column = 0 }
-                let id = match typ with
-                         | TBool -> Some (ELiteral(LBool true, TBool))
-                         | TInteger -> Some (ELiteral(LNumber(LInteger 0), TInteger))
-                         | TFloat -> Some (ELiteral(LNumber(LFloat 0), TFloat))
-                         | TRational -> Some (ELiteral(LNumber(LRational (0, 0)), TRational))
-                         | TComplex -> Some (ELiteral(LNumber(LComplex (0, 0)), TComplex))
-                         | TString -> Some (ELiteral((LString ""), TString))
-                         // todo: more
-                         | _ -> None
+                
+                let rec getDefault = function
+                                     | TBool -> Some (ELiteral(LBool true, TBool))
+                                     | TInteger -> Some (ELiteral(LNumber(LInteger 0), TInteger))
+                                     | TFloat -> Some (ELiteral(LNumber(LFloat 0), TFloat))
+                                     | TRational -> Some (ELiteral(LNumber(LRational (0, 0)), TRational))
+                                     | TComplex -> Some (ELiteral(LNumber(LComplex (0, 0)), TComplex))
+                                     | TString -> Some (ELiteral((LString ""), TString))
+                                     | TTensor(typ1, _) ->
+                                         let def = getDefault typ1
+                                         
+                                         if Option.isSome def then
+                                            Some(EList([Option.get def], None))
+                                         else None
+                                     | _ -> None
+                                     
+                let id = getDefault typ
                 
                 match id with
                 | Some id ->
@@ -327,6 +335,7 @@ and ident (state: ParserState) : ParseResult<Expr> =
 
 and expression (state: ParserState) (precedence: Precedence) : ParseResult<Expr> =
     let state = setLabel state "Expression"
+    
     prefix state |> Result.bind (fun (state, expr) -> infix precedence state expr)
 
 
@@ -676,15 +685,11 @@ and lambda (state: ParserState) : ParseResult<Expr> =
             |> Result.bind (fun (state, returnType) ->
                 parseBody state
                 |> Result.bind (fun (state, body) ->
-                    let paramTypes = List.map snd params'
-                    let paramNames = List.map fst params'
                     Ok(state, ELambda(params', body, Some returnType, false, None))))
 
         | _ ->
             parseBody state
             |> Result.bind (fun (state, body) ->
-                let paramTypes = List.map snd params'
-                let paramNames = List.map fst params'
                 Ok(state, ELambda(params', body, None, false, None))))
 
 and funcType (state: ParserState) : ParseResult<TType> =
@@ -799,17 +804,23 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
                 expression state Precedence.Assignment
                 |> Result.bind (fun (state, expr) ->
                     if Option.isSome varType then
+                        let rec getDefault = function
+                                             | TBool -> Some (ELiteral(LBool true, TBool))
+                                             | TInteger -> Some (ELiteral(LNumber(LInteger 0), TInteger))
+                                             | TFloat -> Some (ELiteral(LNumber(LFloat 0), TFloat))
+                                             | TRational -> Some (ELiteral(LNumber(LRational (0, 0)), TRational))
+                                             | TComplex -> Some (ELiteral(LNumber(LComplex (0, 0)), TComplex))
+                                             | TString -> Some (ELiteral((LString ""), TString))
+                                             | TTensor(typ1, _) ->
+                                                 let def = getDefault typ1
+                                                 
+                                                 if Option.isSome def then
+                                                    Some(EList([Option.get def], None))
+                                                 else None
+                                             | _ -> None
                         let defaultPos = { Line = 0; Column = 0 }
                         // clean this up too much repititon
-                        let id = match Option.get varType with
-                                 | TBool -> Some (ELiteral(LBool true, TBool))
-                                 | TInteger -> Some (ELiteral(LNumber(LInteger 0), TInteger))
-                                 | TFloat -> Some (ELiteral(LNumber(LFloat 0), TFloat))
-                                 | TRational -> Some (ELiteral(LNumber(LRational (0, 0)), TRational))
-                                 | TComplex -> Some (ELiteral(LNumber(LComplex (0, 0)), TComplex))
-                                 | TString -> Some (ELiteral((LString ""), TString))
-                                 // todo: more
-                                 | _ -> None
+                        let id = getDefault <| Option.get varType
                         
                         match id with
                         | Some id ->
@@ -854,6 +865,49 @@ and typeDecl (state: ParserState) : ParseResult<Stmt> =
             |> Result.bind (fun (state, typ) -> Ok(state, STypeDeclaration(name, typ, None))))
     | _ -> Error(Expected "type name", state)
 
+and recFunc (state: ParserState) : ParseResult<Stmt> =
+    let state = setLabel state "Rec Func"
+    
+    let rec parseParameters
+        (state: ParserState)
+        (params': (Token * TType option) list)
+        : ParseResult<(Token * TType option) list> =
+        match nextToken state with
+        | Some(state, { Lexeme = Punctuation RightParen }) -> Ok(state, List.rev params')
+        | Some(state, ({ Lexeme = Identifier _ } as token)) ->
+            let paramType, state =
+                match peek state with
+                | Some { Lexeme = Punctuation Colon } ->
+                    let state = advance state
+
+                    match typeHint state with
+                    | Ok(state, paramType) -> Some paramType, state
+                    | Error _ -> None, state
+                | _ -> None, state
+
+            match peek state with
+            | Some { Lexeme = Punctuation RightParen } -> Ok(advance state, (List.rev ((token, paramType) :: params')))
+            | Some { Lexeme = Punctuation Comma } -> parseParameters (advance state) ((token, paramType) :: params')
+            | _ -> Error(Expected "',' or ')'.", state)
+        | _ -> Error(Expected "parameter name.", state)
+    
+    match nextToken state with
+    | Some(state, ({ Lexeme = Identifier _ } as name)) ->
+        expect state (Punctuation LeftParen)
+        |> Result.bind(fun state ->
+            parseParameters state []
+            |> Result.bind (fun (state, parameters) ->
+                expect state (Operator (Equal, None))
+                |> Result.bind(fun state ->
+                    expression state Precedence.Assignment
+                    |> Result.bind(fun (state, expr) ->
+                        let f = SRecFunc(name, parameters, expr, None)
+                        Ok(state, f)
+                    )
+                )
+            ))
+    | _ -> Error(Expected "Identifier", state)
+
 and statement (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Statement"
 
@@ -865,6 +919,7 @@ and statement (state: ParserState) : ParseResult<Stmt> =
             | Keyword.Let -> varDecl (advance state)
             | Keyword.Assert -> assertStatement (advance state)
             | Keyword.Type -> typeDecl (advance state)
+            | Keyword.Rec -> recFunc (advance state)
             | _ ->
                 expression state Precedence.None
                 |> Result.bind (fun (state, expr) -> Ok(state, SExpression(expr, None)))
@@ -915,8 +970,7 @@ let parse (input: string) =
 
     match tokens with
     | Ok tokens ->
-        let ast = parseTokens tokens
-        ast
+        parseTokens tokens
     | Error f -> Error(LexerError f, createParserState [])
 
 let parseFile (file: string) =

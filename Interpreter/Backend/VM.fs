@@ -455,17 +455,9 @@ let rec builtins () =
       VBuiltin(fun args vm ->
           let org = args.Head
           let castTyp = List.item 1 args
-
-          match castTyp with
-          | VBoolean _ -> castToBool org |> push vm
-          | VNumber(VInteger _) -> castToInt org |> push vm
-          | VNumber(VFloat _) -> castToFloat org |> push vm
-          | VNumber(VRational _) -> castToRat org |> push vm
-          | VNumber(VComplex _) -> castToComp org |> push vm
-          | VString _ -> castToString org |> push vm
-          | _ ->
-              // TODO more
-              push vm org)
+          
+          cast org castTyp |> push vm
+      )
 
       Identifier "newtonRaphson",
       VBuiltin(fun args vm ->
