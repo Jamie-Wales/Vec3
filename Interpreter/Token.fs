@@ -241,6 +241,8 @@ type BuiltInFunction =
     
     | Cons
     
+    | Cast
+    
     | BInt
     | BFloat
     | BComplex
@@ -298,6 +300,8 @@ let builtInFunctionMap =
       Operator (Cross, Some Infix), BuiltInFunction.CrossProduct
       Operator (DotStar, Some Infix), BuiltInFunction.DotProduct
       Operator (ColonColon, Some Infix), BuiltInFunction.Cons
+      
+      Identifier "cast", BuiltInFunction.Cast
       
       Identifier "Int", BuiltInFunction.BInt
       Identifier "Float", BuiltInFunction.BFloat

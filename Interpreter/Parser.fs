@@ -289,14 +289,14 @@ and cast (state: ParserState) (left: Expr) : ParseResult<Expr> =
     typeHint state
     |> Result.bind(fun (state, typ) ->
                 let defaultPos = { Line = 0; Column = 0 }
-                // clean this up too much repititon
                 let id = match typ with
-                         | TBool -> Some "Boolean"
-                         | TInteger -> Some "Int"
-                         | TFloat -> Some "Float"
-                         | TRational -> Some "Rational"
-                         | TComplex -> Some "Complex"
-                         | TString -> Some "String"
+                         | TBool -> Some (ELiteral(LBool true, TBool))
+                         | TInteger -> Some (ELiteral(LNumber(LInteger 0), TInteger))
+                         | TFloat -> Some (ELiteral(LNumber(LFloat 0), TFloat))
+                         | TRational -> Some (ELiteral(LNumber(LRational (0, 0)), TRational))
+                         | TComplex -> Some (ELiteral(LNumber(LComplex (0, 0)), TComplex))
+                         | TString -> Some (ELiteral((LString ""), TString))
+                         // todo: more
                          | _ -> None
                 
                 match id with
@@ -304,15 +304,14 @@ and cast (state: ParserState) (left: Expr) : ParseResult<Expr> =
                     let expr =
                         ECall(
                             EIdentifier(
-                                { Lexeme = Identifier id
+                                { Lexeme = Identifier "cast"
                                   Position = defaultPos },
                                 None
                             ),
-                            [ left ],
+                            [ left; id ],
                             None
                         )
-                
-                    Ok(state, expr)
+                    Ok (state, expr)
                 | _ -> Ok(state, left)
         
         )
@@ -803,12 +802,13 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
                         let defaultPos = { Line = 0; Column = 0 }
                         // clean this up too much repititon
                         let id = match Option.get varType with
-                                 | TBool -> Some "Boolean"
-                                 | TInteger -> Some "Int"
-                                 | TFloat -> Some "Float"
-                                 | TRational -> Some "Rational"
-                                 | TComplex -> Some "Complex"
-                                 | TString -> Some "String"
+                                 | TBool -> Some (ELiteral(LBool true, TBool))
+                                 | TInteger -> Some (ELiteral(LNumber(LInteger 0), TInteger))
+                                 | TFloat -> Some (ELiteral(LNumber(LFloat 0), TFloat))
+                                 | TRational -> Some (ELiteral(LNumber(LRational (0, 0)), TRational))
+                                 | TComplex -> Some (ELiteral(LNumber(LComplex (0, 0)), TComplex))
+                                 | TString -> Some (ELiteral((LString ""), TString))
+                                 // todo: more
                                  | _ -> None
                         
                         match id with
@@ -816,11 +816,11 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
                             let expr =
                                 ECall(
                                     EIdentifier(
-                                        { Lexeme = Identifier id
+                                        { Lexeme = Identifier "cast"
                                           Position = defaultPos },
                                         None
                                     ),
-                                    [ expr ],
+                                    [ expr; id ],
                                     None
                                 )
 
