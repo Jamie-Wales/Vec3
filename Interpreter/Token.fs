@@ -252,6 +252,9 @@ type BuiltInFunction =
     | BList
     | BTuple
     
+    | NewtonRaphson
+    | Bisection
+    
 let builtInFunctionMap =
     [ Identifier "print", BuiltInFunction.Print
       Identifier "input", BuiltInFunction.Input
@@ -278,6 +281,9 @@ let builtInFunctionMap =
       Identifier "map", BuiltInFunction.Map
       Identifier "BUILTIN_LEN", BuiltInFunction.Len
       Identifier "BUILTIN_TRUNC", BuiltInFunction.Trunc
+      
+      Identifier "newtonRaphson", BuiltInFunction.NewtonRaphson
+      Identifier "bisection", BuiltInFunction.Bisection
       
       Operator (Plus, Some Infix), BuiltInFunction.Add
       Operator (Minus, Some Infix), BuiltInFunction.Sub

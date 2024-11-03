@@ -203,3 +203,36 @@ let castToComp a =
     
 let castToString a =
     failwith "todo"
+
+let newtonRaphson (f: float -> float) (f' : float -> float) (initialGuess: float) (tolerance: float) (maxIterations: int) =
+    let rec iterate x n =
+        if n >= maxIterations then
+            failwith "Exceeded maximum number of iterations."
+        else
+            let fx = f x
+            if abs fx < tolerance then
+                x
+            else
+                let xNew = x - fx / (f' x)
+                iterate xNew (n + 1)
+
+    iterate initialGuess 0
+
+let bisection (f: float -> float) (a: float) (b: float) (tolerance: float) (maxIterations: int) =
+    let rec iterate (a: float) (b: float) (n: int) =
+        let midpoint = (a + b) / 2.0
+        let fMid = f midpoint
+
+        if abs fMid < tolerance then
+            midpoint // Root found within tolerance
+        elif n >= maxIterations then
+            failwith "Exceeded maximum number of iterations."
+        elif f a * fMid < 0.0 then
+            iterate a midpoint (n + 1) // Root is in the left half
+        else
+            iterate midpoint b (n + 1) // Root is in the right half
+
+    if f a * f b >= 0.0 then
+        failwith "The function must have opposite signs at a and b."
+    else
+        iterate a b 0

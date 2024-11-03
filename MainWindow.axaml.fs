@@ -22,8 +22,8 @@ open System.Threading
 open System.Threading.Tasks
 
 
-type MainWindow () as this =
-    inherit Window ()
+type MainWindow() as this =
+    inherit Window()
 
     let mutable textEditor: TextEditor = null
     let mutable textMateInstallation: TextMate.Installation = null
@@ -39,13 +39,13 @@ type MainWindow () as this =
     let mutable executionOutput: TextBlock = null
     let mutable standardOutput: TextBlock = null
     let mutable globalsOutput: TextBlock = null
-    let mutable replState = createInitialState()
+    let mutable replState = createInitialState ()
     let mutable debugVM: VM option = None
-    
-    let debounceTime = 500
-    let mutable debounceTimer = None : Timer option
 
-    
+    let debounceTime = 500
+    let mutable debounceTimer = None: Timer option
+
+
     do
         AvaloniaXamlLoader.Load(this)
         this.InitializeComponent()
@@ -64,27 +64,33 @@ type MainWindow () as this =
         standardOutput <- this.FindControl<TextBlock>("StandardOutput")
         exitDebugButton <- this.FindControl<Button>("ExitDebugButton")
         globalsOutput <- this.FindControl<TextBlock>("GlobalsOutput")
-            
+
         if textEditor <> null then
             textEditor.ShowLineNumbers <- true
-            textEditor.Options.ShowTabs <- false 
-            textEditor.Options.ShowSpaces <- false 
-            textEditor.Options.ShowEndOfLine <- false 
-            textEditor.Options.HighlightCurrentLine <- false 
+            textEditor.Options.ShowTabs <- false
+            textEditor.Options.ShowSpaces <- false
+            textEditor.Options.ShowEndOfLine <- false
+            textEditor.Options.HighlightCurrentLine <- false
 
             let registryOptions = RegistryOptions(ThemeName.DarkPlus)
             textMateInstallation <- TextMate.Installation(textEditor, registryOptions)
-            
+
             let fsharpLanguage = registryOptions.GetLanguageByExtension(".fs")
             let scopeName = registryOptions.GetScopeByLanguageId(fsharpLanguage.Id)
             textMateInstallation.SetGrammar(scopeName)
 
-            textEditor.Text <- """// Vec3 Editor Example
-let x: int = 5
-let y: float = 3.14
-if x > 0 then
-    // Do something
-    ()"""
+            textEditor.Text <-
+                """// Vec3 Editor Example
+let f = (x) -> x^2.0 - 2.0
+let a = 1.0
+let b = 2.0
+let tolerance = 1e-6
+let max = 100
+
+let root = bisection(f, a, b, tolerance, max)
+
+print(root)
+"""
 
             this.ApplyColorScheme()
 
@@ -98,45 +104,49 @@ if x > 0 then
         exitDebugButton.Click.AddHandler(fun _ _ -> this.ExitDebugMode())
         // trigger text changed on new line
         textEditor.TextChanged.AddHandler(fun _ _ -> this.TextChanged())
-    
+
     member private this.TextChanged() =
         debounceTimer |> Option.iter (_.Dispose())
-        
-        let callback = fun _ ->
-            Task.Run(fun () ->
-                Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
-                    let code = textEditor.Text
-                    if String.IsNullOrEmpty(code) then
-                        standardOutput.Foreground <- SolidColorBrush(Colors.Black)
-                        standardOutput.Text <- ""
-                    else
-                        let code = Prelude.prelude + code
-                        match parse code with
-                        | Ok (_, ast) ->
-                            match Inference.inferProgram1 ast with
-                            | Ok _ ->
+
+        let callback =
+            fun _ ->
+                Task.Run(fun () ->
+                    Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                        let code = textEditor.Text
+
+                        if String.IsNullOrEmpty(code) then
+                            standardOutput.Foreground <- SolidColorBrush(Colors.Black)
+                            standardOutput.Text <- ""
+                        else
+                            let code = Prelude.prelude + code
+
+                            match parse code with
+                            | Ok(_, ast) ->
+                                match Inference.inferProgram1 ast with
+                                | Ok _ ->
                                     standardOutput.Foreground <- SolidColorBrush(Colors.Black)
                                     standardOutput.Text <- ""
-                            | Error err ->
+                                | Error err ->
                                     standardOutput.Foreground <- SolidColorBrush(Colors.Red)
                                     standardOutput.Text <- Exceptions.formatTypeErrors err
-                        | Error (err, state) ->
-                            standardOutput.Foreground <- SolidColorBrush(Colors.Red)
-                            standardOutput.Text <- formatParserError err state
-                ) |> ignore
-            ) |> ignore
-        
+                            | Error(err, state) ->
+                                standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                                standardOutput.Text <- formatParserError err state)
+                    |> ignore)
+                |> ignore
+
         debounceTimer <- Some(new Timer(callback, null, debounceTime, Timeout.Infinite))
-    
+
     member private this.ApplyColorScheme() =
         if textMateInstallation <> null then
             let applyColor colorKey (action: IBrush -> unit) =
                 let mutable colorString = ""
+
                 if textMateInstallation.TryGetThemeColor(colorKey, &colorString) then
                     match Color.TryParse(colorString) with
                     | true, color ->
                         let brush = SolidColorBrush(color)
-                        action(brush)
+                        action (brush)
                     | _ -> ()
 
             applyColor "editor.background" (fun brush -> textEditor.Background <- brush)
@@ -145,55 +155,62 @@ if x > 0 then
 
     member private this.SwitchToReplMode() =
         textEditor.Text <- "// REPL Mode"
-        replState <- createInitialState()
+        replState <- createInitialState ()
         debugVM <- None
         this.UpdateOutputStreams()
         this.SetButtonStates(isRepl = true, isDebug = false)
 
     member private this.SwitchToStandardMode() =
         textEditor.Text <- "// Standard Mode"
-        replState <- createInitialState()
+        replState <- createInitialState ()
         debugVM <- None
         this.UpdateOutputStreams()
         this.SetButtonStates(isRepl = false, isDebug = false)
-        
+
 
     member private this.ExecuteCode() =
         let code = this.GetEditorText()
+
         let vm =
             match replState.VM with
             | Some vm -> vm
             | None -> createVM (initFunction "Main")
+
         match parseAndCompile code with
         | Some func ->
-            let newVM, _ = interpretWithMode func (Some vm) false  // Use false for isRepl
+            let newVM, _ = interpretWithMode func (Some vm) false // Use false for isRepl
             replState <- { replState with VM = Some newVM }
         | None -> printfn "Failed to compile code"
-        
+
         match replState.VM with
         | Some vm when vm.Stack.Count > 0 ->
             let topValue = vm.Stack[vm.Stack.Count - 1]
+
             match topValue with
-            | VPlotData (title, xs, ys) ->
-                let xValues = 
-                    xs |> List.choose (function
-                        | VNumber (VFloat f) -> Some f
-                        | VNumber (VInteger i) -> Some (float i)
+            | VPlotData(title, xs, ys) ->
+                let xValues =
+                    xs
+                    |> List.choose (function
+                        | VNumber(VFloat f) -> Some f
+                        | VNumber(VInteger i) -> Some(float i)
                         | _ -> None)
                     |> Array.ofList
-                let yValues = 
-                    ys |> List.choose (function
-                        | VNumber (VFloat f) -> Some f
-                        | VNumber (VInteger i) -> Some (float i)
+
+                let yValues =
+                    ys
+                    |> List.choose (function
+                        | VNumber(VFloat f) -> Some f
+                        | VNumber(VInteger i) -> Some(float i)
                         | _ -> None)
                     |> Array.ofList
+
                 let plotWindow = PlotWindow()
                 plotWindow.PlotControl.Plot.Clear()
                 plotWindow.PlotControl.Plot.Add.Scatter(xValues, yValues) |> ignore
                 plotWindow.PlotControl.Plot.Title(title)
                 plotWindow.PlotControl.Refresh()
                 plotWindow.Show()
-            | VPlotFunction (title, f) ->
+            | VPlotFunction(title, f) ->
                 let plotWindow = PlotWindow()
                 plotWindow.PlotControl.Plot.Clear()
                 plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
@@ -217,24 +234,25 @@ if x > 0 then
             switchToReplButton.IsEnabled <- false
             switchToStandardButton.IsEnabled <- false
             exitDebugButton.IsEnabled <- true
-        | None ->
-            printfn "Failed to compile code for debugging"
-            
+        | None -> printfn "Failed to compile code for debugging"
+
     member private this.ExitDebugMode() =
         debugVM <- None
         this.SetButtonStates(isRepl = false, isDebug = false)
         switchToReplButton.IsEnabled <- true
         switchToStandardButton.IsEnabled <- true
         exitDebugButton.IsEnabled <- false
-        
+
     member private this.StepForward() =
         match debugVM with
         | Some vm ->
             let steppedVM = stepVM vm
             debugVM <- Some steppedVM
             let currentFrame = getCurrentFrame steppedVM
+
             if currentFrame.IP >= currentFrame.Function.Chunk.Code.Count then
                 this.SetButtonStates(isRepl = false, isDebug = true, canStepForward = false)
+
             this.UpdateOutputStreams()
         | None -> ()
 
@@ -244,31 +262,36 @@ if x > 0 then
             let previousVM = stepBackVM vm
             debugVM <- Some previousVM
             let currentFrame = getCurrentFrame previousVM
+
             if currentFrame.IP = 0 then
                 this.SetButtonStates(isRepl = false, isDebug = true, canStepBack = false)
             else
                 this.SetButtonStates(isRepl = false, isDebug = true, canStepForward = true)
+
             this.UpdateOutputStreams()
         | None -> ()
 
     member private this.UpdateOutputStreams() =
-        let vm = 
+        let vm =
             match debugVM with
             | Some vm -> vm
-            | None -> 
+            | None ->
                 match replState.VM with
                 | Some vm -> vm
                 | None -> createVM (initFunction "Main")
+
         constantPoolOutput.Text <- getStreamContent vm.Streams.ConstantPool
         disassemblyOutput.Text <- getStreamContent vm.Streams.Disassembly
         executionOutput.Text <- getStreamContent vm.Streams.Execution
         standardOutput.Text <- getStreamContent vm.Streams.StandardOutput
         globalsOutput.Text <- getStreamContent vm.Streams.Globals
+
         if vm.Frames.Count > 0 then
             let currentFrame = getCurrentFrame vm
             this.HighlightCurrentInstruction(currentFrame.IP)
         else
             ()
+
     member private this.SetButtonStates(isRepl: bool, isDebug: bool, ?canStepBack: bool, ?canStepForward: bool) =
         switchToReplButton.IsEnabled <- not isRepl && not isDebug
         switchToStandardButton.IsEnabled <- not isDebug
@@ -277,15 +300,11 @@ if x > 0 then
         stepBackButton.IsEnabled <- isDebug && (defaultArg canStepBack true)
         stepForwardButton.IsEnabled <- isDebug && (defaultArg canStepForward true)
         exitDebugButton.IsEnabled <- isDebug
-        
-    member private this.HighlightCurrentInstruction(ip: int) =
-        ()
+
+    member private this.HighlightCurrentInstruction(ip: int) = ()
 
     member this.GetEditorText() : string =
-        if textEditor <> null then
-            textEditor.Text
-        else
-            ""
+        if textEditor <> null then textEditor.Text else ""
 
     member this.SetEditorText(text: string) =
         if textEditor <> null then
