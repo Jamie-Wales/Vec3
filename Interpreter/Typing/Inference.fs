@@ -324,7 +324,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
     | EIdentifier(token, _) ->
         checkIdentifier env token
         |> Result.bind (fun t -> Ok(t, Map.empty, EIdentifier(token, Some t)))
-    | ELambda(paramList, body, returnT, pr, _) ->
+    | ELambda(paramList, body, returnT, _, _) ->
         let paramTypes = List.map snd paramList
         
         let newParamType typ =

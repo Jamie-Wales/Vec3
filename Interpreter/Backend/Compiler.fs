@@ -9,6 +9,8 @@ open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open Vec3.Interpreter.Parser
 
+let identMap: Map<Lexeme, Value> ref  = ref Map.empty
+
 type CompilerState =
     { CurrentFunction: Function
       CurrentLine: int
@@ -275,6 +277,10 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) : Compiler<u
         )
 
 and compileAsBuiltin (parameters: Token list) (body: Expr): (double -> double) =
+    // what we could do is make every unit return its compiled value
+    // add to a map of lexeme to builtins on function def
+    // then we would be able to use other values and other functions in this (type checker verifies that this is valid)
+    
     if parameters.Length <> 1 then
         failwith "Builtin functions must have exactly one parameter"
         
@@ -349,7 +355,6 @@ and compileAsBuiltin (parameters: Token list) (body: Expr): (double -> double) =
         
     compileBuiltinBody body
         
-
 and compileCall (callee: Expr) (arguments: Expr list) : Compiler<unit> =
     fun state ->
         let rec compileArguments arguments state =
