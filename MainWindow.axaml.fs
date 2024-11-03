@@ -142,35 +142,35 @@ plotFunc("test", f)
         let outputText = String.concat "\n" replState.Streams.StandardOutput
         standardOutput.Text <- sprintf "Output:\n%s" outputText
         if replState.Stack.Count > 0 then
-                    let topValue = replState.Stack[replState.Stack.Count - 1]
-                    match topValue with
-                        | VPlotData (title, xs, ys) ->
-                            let xValues = 
-                                xs |> List.choose (function
-                                    | VNumber (VFloat f) -> Some f
-                                    | VNumber (VInteger i) -> Some (float i)
-                                    | _ -> None)
-                                |> Array.ofList
-                            let yValues = 
-                                ys |> List.choose (function
-                                    | VNumber (VFloat f) -> Some f
-                                    | VNumber (VInteger i) -> Some (float i)
-                                    | _ -> None)
-                                |> Array.ofList
-                            let plotWindow = PlotWindow()
-                            plotWindow.PlotControl.Plot.Clear()
-                            plotWindow.PlotControl.Plot.Add.Scatter(xValues, yValues) |> ignore
-                            plotWindow.PlotControl.Plot.Title(title)
-                            plotWindow.PlotControl.Refresh()
-                            plotWindow.Show()
-                        | VPlotFunction (title, f) ->
-                            let plotWindow = PlotWindow()
-                            plotWindow.PlotControl.Plot.Clear()
-                            plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
-                            plotWindow.PlotControl.Plot.Title(title)
-                            plotWindow.PlotControl.Refresh()
-                            plotWindow.Show()
-                        | _ -> ()
+            let topValue = replState.Stack[replState.Stack.Count - 1]
+            match topValue with
+                | VPlotData (title, xs, ys) ->
+                    let xValues = 
+                        xs |> List.choose (function
+                            | VNumber (VFloat f) -> Some f
+                            | VNumber (VInteger i) -> Some (float i)
+                            | _ -> None)
+                        |> Array.ofList
+                    let yValues = 
+                        ys |> List.choose (function
+                            | VNumber (VFloat f) -> Some f
+                            | VNumber (VInteger i) -> Some (float i)
+                            | _ -> None)
+                        |> Array.ofList
+                    let plotWindow = PlotWindow()
+                    plotWindow.PlotControl.Plot.Clear()
+                    plotWindow.PlotControl.Plot.Add.Scatter(xValues, yValues) |> ignore
+                    plotWindow.PlotControl.Plot.Title(title)
+                    plotWindow.PlotControl.Refresh()
+                    plotWindow.Show()
+                | VPlotFunction (title, f) ->
+                    let plotWindow = PlotWindow()
+                    plotWindow.PlotControl.Plot.Clear()
+                    plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
+                    plotWindow.PlotControl.Plot.Title(title)
+                    plotWindow.PlotControl.Refresh()
+                    plotWindow.Show()
+                | _ -> ()
 
     member private this.GetEditorText() : string =
         if textEditor <> null then

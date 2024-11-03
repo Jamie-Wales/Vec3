@@ -3,8 +3,11 @@
         xmlns:scottPlot="clr-namespace:ScottPlot.Avalonia;assembly=ScottPlot.Avalonia"
         x:Class="Vec3.PlotWindow"
         Title="Plot Window"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
         Width="800" Height="600">
-    <Grid>
+    <Grid Margin="10, 30">
         <scottPlot:AvaPlot Name="PlotControl" />
     </Grid>
 </Window>
