@@ -208,7 +208,7 @@ and compileIf (condition: Expr) (thenBranch: Expr) (elseBranch: Expr) : Compiler
                 let endJump = emitJump OP_CODE.JUMP state
 
                 emitJumpBack elseJump state
-                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.POP state)
+                // |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.POP state)
                 |> Result.bind (fun ((), state) -> compileExpr elseBranch state)
                 |> Result.bind (fun ((), state) -> emitJumpBack endJump state)))
 
@@ -387,12 +387,9 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
         | SExpression(expr, _) -> compileExpr expr state
         | SVariableDeclaration(name, initializer, _) -> compileVariableDeclaration name initializer state
         | SAssertStatement(expr, msg, _) ->
-            compileExpr expr state
-            |> Result.bind (fun ((), state) ->
-                match msg with
-                | Some m -> compileExpr m state
-                | None -> emitConstant VNil state)
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.ASSERT state)
+            let callee = EIdentifier({Lexeme = Identifier "assert"; Position = {Column = 0; Line=0} }, None)
+            let args = if Option.isNone msg then [expr] else [Option.get msg; expr]
+            compileCall callee args state
         | STypeDeclaration _ -> Ok((), state)
 
 and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit> =

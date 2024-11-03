@@ -18,7 +18,6 @@ type OP_CODE =
     | LOOP
     | CALL
     | CLOSURE
-    | ASSERT // make func call
     
     | COMPOUND_CREATE
     | COMPOUND_GET
@@ -42,10 +41,9 @@ let opCodeToByte =
     | LOOP -> 23uy
     | CALL -> 24uy
     | CLOSURE -> 25uy
-    | ASSERT -> 26uy
     
-    | COMPOUND_CREATE -> 27uy
-    | COMPOUND_GET -> 28uy
+    | COMPOUND_CREATE -> 26uy
+    | COMPOUND_GET -> 27uy
     
 
 let byteToOpCode byte =
@@ -67,9 +65,8 @@ let byteToOpCode byte =
     | 23uy -> LOOP
     | 24uy -> CALL
     | 25uy -> CLOSURE
-    | 26uy -> ASSERT
-    | 27uy -> COMPOUND_CREATE
-    | 28uy -> COMPOUND_GET
+    | 26uy -> COMPOUND_CREATE
+    | 27uy -> COMPOUND_GET
     | _ -> failwith $"Unknown OP_CODE: {byte}"
 
 let opCodeToString =
@@ -91,7 +88,6 @@ let opCodeToString =
     | LOOP -> "LOOP"
     | CALL -> "CALL"
     | CLOSURE -> "CLOSURE"
-    | ASSERT -> "ASSERT"
     | COMPOUND_CREATE -> "COMPOUND_CREATE"
     | COMPOUND_GET -> "COMPOUND_GET"
     
