@@ -819,7 +819,6 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
                                                  else None
                                              | _ -> None
                         let defaultPos = { Line = 0; Column = 0 }
-                        // clean this up too much repititon
                         let id = getDefault <| Option.get varType
                         
                         match id with
