@@ -160,6 +160,13 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
                 Postfix = None
                 Precedence = Precedence.Call 
             }
+        | Dollar ->
+            {
+                Prefix = Some codeBlock
+                Infix = None
+                Postfix = None
+                Precedence = Precedence.Assignment 
+            }
         | _ -> defaultRule
 
 
@@ -324,6 +331,16 @@ and cast (state: ParserState) (left: Expr) : ParseResult<Expr> =
         
         )
 
+and codeBlock (state: ParserState) : ParseResult<Expr> =
+    let state = setLabel state "Code Block"
+    
+    expect state (Punctuation LeftBrace)
+    |> Result.bind(fun state ->
+        block state
+        )
+    
+    
+    
 and ident (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Ident"
 

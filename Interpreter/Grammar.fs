@@ -159,6 +159,7 @@ type Expr =
     | ERecordRestrict of Expr * Token * Type option
     | ERecordEmpty of Type
     
+    | ECodeBlock of Expr
 
 and Stmt =
     | SExpression of Expr * Type option
