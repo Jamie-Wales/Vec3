@@ -7,7 +7,6 @@ open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Token
-open Vec3.Interpreter.PrettyPrinter
 let createOutputStreams () =
     { ConstantPool = Seq.empty
       Disassembly = Seq.empty
