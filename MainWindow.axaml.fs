@@ -213,6 +213,7 @@ plot(data)
                                     standardOutput.Foreground <- SolidColorBrush(Colors.Yellow)
                                     standardOutput.Text <- Exceptions.formatTypeErrors err
                         | Error (err, state) ->
+                            printfn $"{err}"
                             standardOutput.Foreground <- SolidColorBrush(Colors.Red)
                             standardOutput.Text <- formatParserError err state
                 ) |> ignore

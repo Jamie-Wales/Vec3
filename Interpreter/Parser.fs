@@ -154,19 +154,15 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
               Postfix = Some index
               Precedence = Precedence.Index }
         | Colon ->
-            {
-                Prefix = None
-                Infix = Some cast
-                Postfix = None
-                Precedence = Precedence.Call 
-            }
+            { Prefix = None
+              Infix = Some cast
+              Postfix = None
+              Precedence = Precedence.Call }
         | Dollar ->
-            {
-                Prefix = Some codeBlock
-                Infix = None
-                Postfix = None
-                Precedence = Precedence.Assignment 
-            }
+            { Prefix = Some codeBlock
+              Infix = None
+              Postfix = None
+              Precedence = Precedence.Assignment }
         | _ -> defaultRule
 
 
@@ -294,53 +290,53 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
 
 and cast (state: ParserState) (left: Expr) : ParseResult<Expr> =
     typeHint state
-    |> Result.bind(fun (state, typ) ->
-                let defaultPos = { Line = 0; Column = 0 }
-                
-                let rec getDefault = function
-                                     | TBool -> Some (ELiteral(LBool true, TBool))
-                                     | TInteger -> Some (ELiteral(LNumber(LInteger 0), TInteger))
-                                     | TFloat -> Some (ELiteral(LNumber(LFloat 0), TFloat))
-                                     | TRational -> Some (ELiteral(LNumber(LRational (0, 0)), TRational))
-                                     | TComplex -> Some (ELiteral(LNumber(LComplex (0, 0)), TComplex))
-                                     | TString -> Some (ELiteral((LString ""), TString))
-                                     | TTensor(typ1, _) ->
-                                         let def = getDefault typ1
-                                         
-                                         if Option.isSome def then
-                                            Some(EList([Option.get def], None))
-                                         else None
-                                     | _ -> None
-                                     
-                let id = getDefault typ
-                
-                match id with
-                | Some id ->
-                    let expr =
-                        ECall(
-                            EIdentifier(
-                                { Lexeme = Identifier "cast"
-                                  Position = defaultPos },
-                                None
-                            ),
-                            [ left; id ],
-                            None
-                        )
-                    Ok (state, expr)
-                | _ -> Ok(state, left)
-        
-        )
+    |> Result.bind (fun (state, typ) ->
+        let defaultPos = { Line = 0; Column = 0 }
+
+        let rec getDefault =
+            function
+            | TBool -> Some(ELiteral(LBool true, TBool))
+            | TInteger -> Some(ELiteral(LNumber(LInteger 0), TInteger))
+            | TFloat -> Some(ELiteral(LNumber(LFloat 0), TFloat))
+            | TRational -> Some(ELiteral(LNumber(LRational(0, 0)), TRational))
+            | TComplex -> Some(ELiteral(LNumber(LComplex(0, 0)), TComplex))
+            | TString -> Some(ELiteral((LString ""), TString))
+            | TTensor(typ1, _) ->
+                let def = getDefault typ1
+
+                if Option.isSome def then
+                    Some(EList([ Option.get def ], None))
+                else
+                    None
+            | _ -> None
+
+        let id = getDefault typ
+
+        match id with
+        | Some id ->
+            let expr =
+                ECall(
+                    EIdentifier(
+                        { Lexeme = Identifier "cast"
+                          Position = defaultPos },
+                        None
+                    ),
+                    [ left; id ],
+                    None
+                )
+
+            Ok(state, expr)
+        | _ -> Ok(state, left)
+
+    )
 
 and codeBlock (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Code Block"
-    
+
     expect state (Punctuation LeftBrace)
-    |> Result.bind(fun state ->
-        block state
-        )
-    
-    
-    
+    |> Result.bind (fun state -> block state |> Result.bind (fun (state, expr) ->Ok(state, ECodeBlock expr)))
+
+
 and ident (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Ident"
 
@@ -352,7 +348,7 @@ and ident (state: ParserState) : ParseResult<Expr> =
 
 and expression (state: ParserState) (precedence: Precedence) : ParseResult<Expr> =
     let state = setLabel state "Expression"
-    
+
     prefix state |> Result.bind (fun (state, expr) -> infix precedence state expr)
 
 
@@ -701,13 +697,11 @@ and lambda (state: ParserState) : ParseResult<Expr> =
             typeHint state
             |> Result.bind (fun (state, returnType) ->
                 parseBody state
-                |> Result.bind (fun (state, body) ->
-                    Ok(state, ELambda(params', body, Some returnType, false, None))))
+                |> Result.bind (fun (state, body) -> Ok(state, ELambda(params', body, Some returnType, false, None))))
 
         | _ ->
             parseBody state
-            |> Result.bind (fun (state, body) ->
-                Ok(state, ELambda(params', body, None, false, None))))
+            |> Result.bind (fun (state, body) -> Ok(state, ELambda(params', body, None, false, None))))
 
 and funcType (state: ParserState) : ParseResult<TType> =
     let state = setLabel state "FunctionType"
@@ -798,6 +792,7 @@ and block (state: ParserState) : ParseResult<Expr> =
     let rec loop (state: ParserState) (stmts: Stmt list) : ParseResult<Expr> =
         match peek state with
         | Some { Lexeme = Punctuation RightBrace } -> Ok(advance state, EBlock(List.rev stmts, None))
+        | None -> Error (UnexpectedEndOfInput, state)
         | _ -> statement state |> Result.bind (fun (state, stmt) -> loop state (stmt :: stmts))
 
     loop state []
@@ -821,23 +816,26 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
                 expression state Precedence.Assignment
                 |> Result.bind (fun (state, expr) ->
                     if Option.isSome varType then
-                        let rec getDefault = function
-                                             | TBool -> Some (ELiteral(LBool true, TBool))
-                                             | TInteger -> Some (ELiteral(LNumber(LInteger 0), TInteger))
-                                             | TFloat -> Some (ELiteral(LNumber(LFloat 0), TFloat))
-                                             | TRational -> Some (ELiteral(LNumber(LRational (0, 0)), TRational))
-                                             | TComplex -> Some (ELiteral(LNumber(LComplex (0, 0)), TComplex))
-                                             | TString -> Some (ELiteral((LString ""), TString))
-                                             | TTensor(typ1, _) ->
-                                                 let def = getDefault typ1
-                                                 
-                                                 if Option.isSome def then
-                                                    Some(EList([Option.get def], None))
-                                                 else None
-                                             | _ -> None
+                        let rec getDefault =
+                            function
+                            | TBool -> Some(ELiteral(LBool true, TBool))
+                            | TInteger -> Some(ELiteral(LNumber(LInteger 0), TInteger))
+                            | TFloat -> Some(ELiteral(LNumber(LFloat 0), TFloat))
+                            | TRational -> Some(ELiteral(LNumber(LRational(0, 0)), TRational))
+                            | TComplex -> Some(ELiteral(LNumber(LComplex(0, 0)), TComplex))
+                            | TString -> Some(ELiteral((LString ""), TString))
+                            | TTensor(typ1, _) ->
+                                let def = getDefault typ1
+
+                                if Option.isSome def then
+                                    Some(EList([ Option.get def ], None))
+                                else
+                                    None
+                            | _ -> None
+
                         let defaultPos = { Line = 0; Column = 0 }
                         let id = getDefault <| Option.get varType
-                        
+
                         match id with
                         | Some id ->
                             let expr =
@@ -852,8 +850,7 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
                                 )
 
                             Ok(state, SVariableDeclaration(name, expr, varType))
-                        | None ->
-                            Ok(state, SVariableDeclaration(name, expr, varType))
+                        | None -> Ok(state, SVariableDeclaration(name, expr, varType))
                     else
                         Ok(state, SVariableDeclaration(name, expr, varType)))))
     | _ -> Error(Expected "variable name", state)
@@ -883,7 +880,7 @@ and typeDecl (state: ParserState) : ParseResult<Stmt> =
 
 and recFunc (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Rec Func"
-    
+
     let rec parseParameters
         (state: ParserState)
         (params': (Token * TType option) list)
@@ -906,22 +903,19 @@ and recFunc (state: ParserState) : ParseResult<Stmt> =
             | Some { Lexeme = Punctuation Comma } -> parseParameters (advance state) ((token, paramType) :: params')
             | _ -> Error(Expected "',' or ')'.", state)
         | _ -> Error(Expected "parameter name.", state)
-    
+
     match nextToken state with
     | Some(state, ({ Lexeme = Identifier _ } as name)) ->
         expect state (Punctuation LeftParen)
-        |> Result.bind(fun state ->
+        |> Result.bind (fun state ->
             parseParameters state []
             |> Result.bind (fun (state, parameters) ->
-                expect state (Operator (Equal, None))
-                |> Result.bind(fun state ->
+                expect state (Operator(Equal, None))
+                |> Result.bind (fun state ->
                     expression state Precedence.Assignment
-                    |> Result.bind(fun (state, expr) ->
+                    |> Result.bind (fun (state, expr) ->
                         let f = SRecFunc(name, parameters, expr, None)
-                        Ok(state, f)
-                    )
-                )
-            ))
+                        Ok(state, f)))))
     | _ -> Error(Expected "Identifier", state)
 
 and statement (state: ParserState) : ParseResult<Stmt> =
@@ -985,8 +979,7 @@ let parse (input: string) =
     let tokens = tokenize input
 
     match tokens with
-    | Ok tokens ->
-        parseTokens tokens
+    | Ok tokens -> parseTokens tokens
     | Error f -> Error(LexerError f, createParserState [])
 
 let parseFile (file: string) =

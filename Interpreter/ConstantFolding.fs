@@ -62,5 +62,6 @@ let foldConstants (program: Program) : Program =
                 let range = [for i in s..e -> ELiteral(LNumber(LInteger i), TInteger)]
                 EList(range, typ)
             | _ -> ERange(start, stop, typ)
+        | ECodeBlock e -> ECodeBlock e
 
     foldStatements program
