@@ -222,6 +222,8 @@ type BuiltInFunction =
     | Ceil
     | Len
     
+    | Eval
+    
     | Add
     | Sub
     | Mul
@@ -312,6 +314,8 @@ let builtInFunctionMap =
       Operator (ColonColon, Some Infix), BuiltInFunction.Cons
       
       Identifier "cast", BuiltInFunction.Cast
+      
+      Identifier "eval", BuiltInFunction.Eval
       
       Identifier "Int", BuiltInFunction.BInt
       Identifier "Float", BuiltInFunction.BFloat

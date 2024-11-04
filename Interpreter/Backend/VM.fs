@@ -6,8 +6,19 @@ open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
+open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 
+let loadFunction (vm: VM) (func: Function) : VM =
+    let frame = {
+        Function = func
+        IP = 0
+        StackBase = vm.Stack.Count
+        Locals = [||]
+    }
+    vm.Frames.Add(frame)
+    vm
+    
 let createOutputStreams () =
     { ConstantPool = Seq.empty
       Disassembly = Seq.empty
@@ -162,7 +173,36 @@ let parsePlotType = function
         printf "Parsing Bar" 
         Bar 
     | unknown -> failwith $"Unknown plot type: {unknown}"
-let rec builtins () =
+    
+let rec createNewVM (mainFunc: Function) : VM =
+    let constantPool =
+        mainFunc.Chunk.ConstantPool
+        |> Seq.indexed
+        |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
+    let disassembly =
+        disassembleChunkToString mainFunc.Chunk mainFunc.Name
+        |> fun s -> s.Split(Environment.NewLine) |> Seq.ofArray
+    let vm =
+        { Frames = ResizeArray<CallFrame>()
+          Stack = ResizeArray<Value>(256)
+          ScopeDepth = 0
+          Globals = builtins()
+          Streams =
+            { ConstantPool = constantPool
+              Disassembly = disassembly
+              Execution = Seq.empty
+              StandardOutput = Seq.empty
+              Globals = Seq.empty }
+          ExecutionHistory = ResizeArray<VM>()
+          Plots = ResizeArray<Value>() }  
+    let mainFrame =
+        { Function = mainFunc
+          IP = 0
+          StackBase = 0
+          Locals = [||] }
+    vm.Frames.Add(mainFrame)
+    vm
+and builtins () =
     [ Identifier "plot",
       VBuiltin(fun args vm ->
       match args with
@@ -260,6 +300,23 @@ let rec builtins () =
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(sin f)))
           | _ -> failwith $"""sin expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+      
+      Identifier "eval",
+      VBuiltin(fun args vm ->
+          match args with
+          | [VBlock e] ->
+              match e with
+              | EBlock (stmts, _) ->
+                  let compiled = Compiler.compileProgram stmts
+                  match compiled with
+                  | Ok(func, state) ->
+                      let block = createNewVM(func)
+                      let vm' = run block
+                      let lst = vm'.Stack[vm'.Stack.Count - 1]
+                      push vm lst
+                  | Error err -> failwith $"{err}"
+          )
+      
       Identifier "BUILTIN_TAN",
       VBuiltin(fun args vm ->
           match args with
@@ -1015,42 +1072,5 @@ let stepBackVM (vm: VM) =
     else
         vm
         
-let createNewVM (mainFunc: Function) : VM =
-    let constantPool =
-        mainFunc.Chunk.ConstantPool
-        |> Seq.indexed
-        |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
-    let disassembly =
-        disassembleChunkToString mainFunc.Chunk mainFunc.Name
-        |> fun s -> s.Split(Environment.NewLine) |> Seq.ofArray
-    let vm =
-        { Frames = ResizeArray<CallFrame>()
-          Stack = ResizeArray<Value>(256)
-          ScopeDepth = 0
-          Globals = builtins()
-          Streams =
-            { ConstantPool = constantPool
-              Disassembly = disassembly
-              Execution = Seq.empty
-              StandardOutput = Seq.empty
-              Globals = Seq.empty }
-          ExecutionHistory = ResizeArray<VM>()
-          Plots = ResizeArray<Value>() }  
-    let mainFrame =
-        { Function = mainFunc
-          IP = 0
-          StackBase = 0
-          Locals = [||] }
-    vm.Frames.Add(mainFrame)
-    vm
 
-let loadFunction (vm: VM) (func: Function) : VM =
-    let frame = {
-        Function = func
-        IP = 0
-        StackBase = vm.Stack.Count
-        Locals = [||]
-    }
-    vm.Frames.Add(frame)
-    vm
 

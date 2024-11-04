@@ -221,6 +221,8 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       Gt, gt
       Gte, gte
       
+      Eval, TFunction([TAny], TAny, false, true)
+      
       CrossProduct, crossProduct
       DotProduct, dotProduct
       

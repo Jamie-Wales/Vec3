@@ -441,6 +441,22 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
 
                         let sub = List.fold combineMaps sub argSubs
                         Ok(t', sub, ECall(expr, argExprs, Some t))))
+            | TAny -> 
+                inferArgs aliases env args
+                |> Result.bind (fun argResults ->
+                    let argTypes = List.map (fun (t, _, _) -> t) argResults
+                    let argSubs = List.map (fun (_, sub, _) -> sub) argResults
+                    let argExprs = List.map (fun (_, _, expr) -> expr) argResults
+                    
+                    let returnT = TTypeVariable(freshTypeVar ())
+                    let t = TFunction(argTypes, returnT, false, false)
+
+                    unify aliases t TAny
+                    |> Result.bind (fun sub ->
+                        let t' = applySubstitution aliases sub TAny
+
+                        let sub = List.fold combineMaps sub argSubs
+                        Ok(t', sub, ECall(expr, argExprs, Some t))))
             | _ -> Error [ TypeError.InvalidCall(callee, t) ])
     | EBlock(stmts, _) ->
         inferProgram aliases env stmts
