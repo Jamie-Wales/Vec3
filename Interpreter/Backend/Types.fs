@@ -1,8 +1,8 @@
 module Vec3.Interpreter.Backend.Types
 
-open System
-open ScottPlot
+open Vec3.Interpreter
 open Vec3.Interpreter.Grammar
+open Vec3.Interpreter.PrettyPrinter
 
 type LineInfo = { Offset: int; LineNumber: int }
 
@@ -79,7 +79,7 @@ and VM =
       Globals: Map<string, Value>
       Streams: OutputStreams
       ExecutionHistory: ResizeArray<VM>
-      Plots: ResizeArray<Value> }  // New field for plots
+      Plots: ResizeArray<Value> }  
 
 let rec valueToString =
     function
@@ -96,3 +96,4 @@ let rec valueToString =
     | VBuiltin _ -> "<builtin>"
     | VPlotData _ -> "<plot data>"
     | VPlotFunction _ -> "<plot function>"
+    | VBlock v-> printExpr v
