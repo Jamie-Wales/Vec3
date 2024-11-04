@@ -18,7 +18,7 @@
             <Setter Property="Padding" Value="15,8"/>
         </Style>
         <Style Selector="Button:pointerover">
-            <Setter Property="Opacity" Value="0.8"/>
+            <Setter Property="Background" Value="OrangeRed"/>
             <Setter Property="RenderTransform" Value="scale(1.02)"/>
         </Style>
         <Style Selector="Button:pressed">
@@ -27,7 +27,7 @@
         <Style Selector="Border.card">
             <Setter Property="CornerRadius" Value="4"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#20FFFFFF"/>
+            <Setter Property="BorderBrush" Value="DarkOrange"/>
             <Setter Property="Background" Value="#1E1E1E"/>
         </Style>
     </Window.Styles>
@@ -77,8 +77,6 @@
                     HorizontalScrollBarVisibility="Auto"
                     VerticalScrollBarVisibility="Visible" />
             </Border>
-
-            <!-- Right side: Standard Output -->
             <Border Grid.Row="1"
                     Grid.Column="1"
                     Classes="card"
@@ -110,7 +108,7 @@
                         FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
                         FontSize="14"
                         FontWeight="Light"
-                        Height="40"
+                        Height="60"
                         Padding="10,8,10,8"
                         HorizontalScrollBarVisibility="Auto"
                         VerticalScrollBarVisibility="Disabled" />
@@ -118,13 +116,16 @@
                 <Button Grid.Column="2"
                         HotKey="Shift+Enter"
                         Name="RunButton"
-                        Height="40"
-                        Width="60"
+                        Height="60"
+                        Width="80"
                         Background="ForestGreen"
                         Foreground="White"
                         HorizontalContentAlignment="Center"
                         VerticalContentAlignment="Center">
-                    <PathIcon Data="{StaticResource PlayRegular}"/>
+                    <StackPanel Orientation="Vertical" Spacing="4">
+                        <PathIcon Data="{StaticResource PlayRegular}" Foreground="White"/>
+                        <TextBlock Text="Run"/>
+                    </StackPanel>
                     <Button.Transitions>
                         <Transitions>
                             <TransformOperationsTransition Property="RenderTransform" Duration="0.15"/>

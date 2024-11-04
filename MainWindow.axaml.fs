@@ -34,7 +34,8 @@ type MainWindow () as this =
     
     let welcomeMessage = """Welcome to Vec3 Editor!
 Use the editor on the left to write your Vec3 code.
-Click 'Load' to execute the code or use the REPL below for quick commands.
+Click 'Load' or 'Shift+L' to execute the code.
+REPL for quick commands click 'Play' or Shift+Enter.
 Type 'help()' in the REPL for more information."""
 
     let initialCode = """// Vec3 Editor Example
@@ -45,7 +46,7 @@ let f = (x) -> x^2.0 - 2.0
 
 let y = (z) -> cos(z)
 
-let r = (t) -> tan(t)
+let r = (t) -> 2.9 * tan(t) 
 let a = 1.0
 let b = 2.0
 let tolerance = 1e-6
@@ -175,7 +176,7 @@ plot(data)
             | _ -> ()
                 
         vm.Plots.Clear()
-            
+        
     member private this.LoadCode() =
         replState <- createNewVM(initFunction("Main"))
         let code = this.GetEditorText()

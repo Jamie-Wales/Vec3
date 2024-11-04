@@ -874,10 +874,9 @@ and runLoop vm =
         vm
     else
         let frame = getCurrentFrame vm
-
         if frame.IP >= frame.Function.Chunk.Code.Count then
             if vm.Frames.Count > 1 then
-                let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm // Default to Nil if the stack is empty
+                let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm 
                 vm.Frames.RemoveAt(vm.Frames.Count - 1)
                 let callerFrame = getCurrentFrame vm
                 vm.Stack.RemoveRange(callerFrame.StackBase, vm.Stack.Count - callerFrame.StackBase)
