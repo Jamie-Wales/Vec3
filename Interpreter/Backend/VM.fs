@@ -7,7 +7,7 @@ open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Token
-open Vec3.Interpreter.PrettyPrinter
+
 let createOutputStreams () =
     { ConstantPool = Seq.empty
       Disassembly = Seq.empty
@@ -162,6 +162,7 @@ let parsePlotType = function
         printf "Parsing Bar" 
         Bar 
     | unknown -> failwith $"Unknown plot type: {unknown}"
+    
 let rec builtins () =
     [ Identifier "plot",
       VBuiltin(fun args vm ->
@@ -213,6 +214,7 @@ let rec builtins () =
                   $"""plotFunc expects a title, a function, a start, a stop, and a step, got: {String.concat ", " (List.map valueToString args)}""")
       Identifier "print",
       VBuiltin(fun args vm ->
+          printfn $"{args}"
           let vm =
               appendOutput vm StandardOutput $"""{String.concat " " (List.map valueToString args)}"""
 
@@ -1027,7 +1029,7 @@ let createNewVM (mainFunc: Function) : VM =
         { Frames = ResizeArray<CallFrame>()
           Stack = ResizeArray<Value>(256)
           ScopeDepth = 0
-          Globals = builtins()
+          Globals = builtins ()
           Streams =
             { ConstantPool = constantPool
               Disassembly = disassembly
