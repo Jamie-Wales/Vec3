@@ -308,3 +308,4 @@ let bisection (f: float -> float) (a: float) (b: float) (tolerance: float) (maxI
         failwith "The function must have opposite signs at a and b."
     else
         iterate a b 0
+ 

@@ -84,6 +84,8 @@ let rec compileLiteral (lit: Literal) : Compiler<unit> =
                 emitOpCode OP_CODE.FALSE state
         | LUnit -> emitConstant VNil state
 
+let compileCodeBlock (expr: Expr) state: CompilerResult<unit> =
+        emitConstant (VBlock(expr)) state
 let rec compileExpr (expr: Expr) : Compiler<unit> =
     fun state ->
         match expr with
@@ -97,6 +99,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | EList(elements, _) -> compileList elements state
         | EIndex(list, index, _) -> compileIndex list index state
         | ETuple(elements, _) -> compileTuple elements state
+        | ECodeBlock(expr)  -> compileCodeBlock expr state
         | ERange(start, stop, _) ->
             let expression =
                 ECall(

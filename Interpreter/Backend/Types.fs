@@ -2,6 +2,7 @@ module Vec3.Interpreter.Backend.Types
 
 open System
 open ScottPlot
+open Vec3.Interpreter.Grammar
 
 type LineInfo = { Offset: int; LineNumber: int }
 
@@ -41,6 +42,7 @@ and Value =
     | VBuiltin of (Value list -> VM -> VM)
     | VPlotData of string * Value list * Value list * PlotType
     | VPlotFunction of string * (double -> double)
+    | VBlock of Expr
  
 and CompoundType = LIST | RECORD | TUPLE
 
