@@ -7,7 +7,7 @@ open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Token
-
+open Vec3.Interpreter.PrettyPrinter
 let createOutputStreams () =
     { ConstantPool = Seq.empty
       Disassembly = Seq.empty
@@ -820,17 +820,14 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let condition, vm = pop vm
 
         printfn $"Condition: {valueToString condition}"
-
         if not (isTruthy condition) then
             printfn $"Jumping"
             let frame = getCurrentFrame vm
             let frame = { frame with IP = frame.IP + jump }
             vm.Frames[vm.Frames.Count - 1] <- frame
-            
             vm
         else
             vm
-
     | COMPOUND_CREATE ->
         let structure, vm = pop vm
         let count, vm = pop vm
