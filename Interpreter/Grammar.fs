@@ -105,7 +105,7 @@ type Type =
         | _ -> false
 
 and Dims =
-    | Dims of int list
+    | Dims of int
     | DAny
     | DVar of TypeVar
 
@@ -150,7 +150,7 @@ type Expr =
     | ECall of Expr * Expr list * Type option
     | EIndex of Expr * Expr * Type option
 
-    | ELambda of (Token * Type option) list * Expr * Type option * bool * Type option // bool is pure flag
+    | ELambda of (Token * Type option) list * Expr * Type option * bool * Type option // bool is pure flag, is this needed ?
     | EBlock of Stmt list * Type option
     | ERange of Expr * Expr * Type option
 

@@ -226,7 +226,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
         | DAny, Dims _
         | Dims _, DAny -> unify typ1 typ2
         | Dims sizes1, Dims sizes2 ->
-            if sizes1 = sizes2 || List.isEmpty sizes1 || List.isEmpty sizes2 then
+            if sizes1 = sizes2 then
                 unify typ1 typ2
             else
                 Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
@@ -561,7 +561,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                         TTypeVariable(freshTypeVar ())
 
                 let returnType =
-                    TTensor(applySubstitution aliases combinedSubs head, Dims [ List.length types ])
+                    TTensor(applySubstitution aliases combinedSubs head, Dims (List.length types))
 
                 Ok(returnType, combinedSubs, EList(exprs, Some returnType))))
     | ERange(start, end_, _) ->

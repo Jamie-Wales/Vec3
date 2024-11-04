@@ -10,15 +10,15 @@ open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 
 let loadFunction (vm: VM) (func: Function) : VM =
-    let frame = {
-        Function = func
-        IP = 0
-        StackBase = vm.Stack.Count
-        Locals = [||]
-    }
+    let frame =
+        { Function = func
+          IP = 0
+          StackBase = vm.Stack.Count
+          Locals = [||] }
+
     vm.Frames.Add(frame)
     vm
-    
+
 let createOutputStreams () =
     { ConstantPool = Seq.empty
       Disassembly = Seq.empty
@@ -160,33 +160,36 @@ let callValue (vm: VM) (argCount: int) : VM =
 
 // remove function from stack
 
-    
 
-let parsePlotType = function
+
+let parsePlotType =
+    function
     | "scatter" ->
-         printf "Parsing Scatter" 
-         Scatter
-    | "line" -> 
-        printf "Parsing line" 
-        Line 
-    | "bar" -> 
-        printf "Parsing Bar" 
-        Bar 
+        printf "Parsing Scatter"
+        Scatter
+    | "line" ->
+        printf "Parsing line"
+        Line
+    | "bar" ->
+        printf "Parsing Bar"
+        Bar
     | unknown -> failwith $"Unknown plot type: {unknown}"
-    
+
 let rec createNewVM (mainFunc: Function) : VM =
     let constantPool =
         mainFunc.Chunk.ConstantPool
         |> Seq.indexed
         |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
+
     let disassembly =
         disassembleChunkToString mainFunc.Chunk mainFunc.Name
         |> fun s -> s.Split(Environment.NewLine) |> Seq.ofArray
+
     let vm =
         { Frames = ResizeArray<CallFrame>()
           Stack = ResizeArray<Value>(256)
           ScopeDepth = 0
-          Globals = builtins()
+          Globals = builtins ()
           Streams =
             { ConstantPool = constantPool
               Disassembly = disassembly
@@ -194,60 +197,63 @@ let rec createNewVM (mainFunc: Function) : VM =
               StandardOutput = Seq.empty
               Globals = Seq.empty }
           ExecutionHistory = ResizeArray<VM>()
-          Plots = ResizeArray<Value>() }  
+          Plots = ResizeArray<Value>() }
+
     let mainFrame =
         { Function = mainFunc
           IP = 0
           StackBase = 0
           Locals = [||] }
+
     vm.Frames.Add(mainFrame)
     vm
+
 and builtins () =
     [ Identifier "plot",
       VBuiltin(fun args vm ->
-      match args with
-      | [ VList(config, _) ] ->
-          let findField fieldName defaultValue = 
-              config 
-              |> List.tryFind (function 
-                  | VList([VString k; _], _) when k = fieldName -> true 
-                  | _ -> false)
-              |> function
-                  | Some(VList([_; v], _)) -> v
-                  | _ -> defaultValue
+          match args with
+          | [ VList(config, _) ] ->
+              let findField fieldName defaultValue =
+                  config
+                  |> List.tryFind (function
+                      | VList([ VString k; _ ], _) when k = fieldName -> true
+                      | _ -> false)
+                  |> function
+                      | Some(VList([ _; v ], _)) -> v
+                      | _ -> defaultValue
 
-          let title = 
-              match findField "title" (VString "Plot") with
-              | VString t -> t
-              | _ -> failwith "title must be a string"
+              let title =
+                  match findField "title" (VString "Plot") with
+                  | VString t -> t
+                  | _ -> failwith "title must be a string"
 
-          let xs = 
-              match findField "x" (VList([], LIST)) with
-              | VList(xs, _) -> xs
-              | _ -> failwith "x must be a list"
+              let xs =
+                  match findField "x" (VList([], LIST)) with
+                  | VList(xs, _) -> xs
+                  | _ -> failwith "x must be a list"
 
-          let ys = 
-              match findField "y" (VList([], LIST)) with
-              | VList(ys, _) -> ys
-              | _ -> failwith "y must be a list"
+              let ys =
+                  match findField "y" (VList([], LIST)) with
+                  | VList(ys, _) -> ys
+                  | _ -> failwith "y must be a list"
 
-          let plotType = 
-              match findField "ptype" (VString "scatter") with
-               | VString t -> parsePlotType(t.ToLowerInvariant())
-               | _ -> failwith "type must be a string"
-          let plotData = VPlotData(title, xs, ys, plotType)
-          vm.Plots.Add(plotData)
-          push vm VNil
+              let plotType =
+                  match findField "ptype" (VString "scatter") with
+                  | VString t -> parsePlotType (t.ToLowerInvariant())
+                  | _ -> failwith "type must be a string"
 
-      | _ ->
-        failwith "plot expects a record with title, x, y, and optional type fields")
+              let plotData = VPlotData(title, xs, ys, plotType)
+              vm.Plots.Add(plotData)
+              push vm VNil
+
+          | _ -> failwith "plot expects a record with title, x, y, and optional type fields")
       Identifier "plotFunc",
       VBuiltin(fun args vm ->
           match args with
           | [ VString title; VFunction(_, Some f) ] ->
               let plotData = VPlotFunction(title, f)
-              vm.Plots.Add(plotData)  
-              push vm VNil  
+              vm.Plots.Add(plotData)
+              push vm VNil
           | _ ->
               failwith
                   $"""plotFunc expects a title, a function, a start, a stop, and a step, got: {String.concat ", " (List.map valueToString args)}""")
@@ -290,6 +296,33 @@ and builtins () =
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(floor f)))
           | _ -> failwith $"""floor expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+
+      Identifier "BUILTIN_IF",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VBoolean b; VFunction(thenn, _) as thennn; VFunction(elsee, _) as elseee ] ->
+              if b then
+                  let frame =
+                      { Function = thenn
+                        IP = 0
+                        StackBase = vm.Stack.Count - 2
+                        Locals = Array.zeroCreate thenn.Locals.Length }
+
+                  vm.Frames.Add(frame)
+
+                  let result, vm = runCurrentFrame vm
+                  push vm result
+              else
+                  let frame =
+                      { Function = elsee
+                        IP = 0
+                        StackBase = vm.Stack.Count - 2
+                        Locals = Array.zeroCreate elsee.Locals.Length }
+
+                  vm.Frames.Add(frame)
+
+                  let result, vm = runCurrentFrame vm
+                  push vm result)
       Identifier "BUILTIN_COS",
       VBuiltin(fun args vm ->
           match args with
@@ -300,23 +333,27 @@ and builtins () =
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(sin f)))
           | _ -> failwith $"""sin expects a float, got: {String.concat ", " (List.map valueToString args)}""")
-      
+
       Identifier "eval",
       VBuiltin(fun args vm ->
           match args with
-          | [VBlock e] ->
+          | [ VBlock e ] ->
               match e with
-              | EBlock (stmts, _) ->
+              | EBlock(stmts, _) ->
                   let compiled = Compiler.compileProgram stmts
+
                   match compiled with
-                  | Ok(func, state) ->
-                      let block = createNewVM(func)
+                  | Ok(func, _) ->
+                      let block = createNewVM (func)
                       let vm' = run block
                       let lst = vm'.Stack[vm'.Stack.Count - 1]
                       push vm lst
                   | Error err -> failwith $"{err}"
-          )
-      
+              | _ -> failwith "expected a block"
+          | [ VString s ] -> failwith "parse and compile later"
+          | [ a ] -> push vm a
+          | _ -> failwith "at least 1 arg")
+
       Identifier "BUILTIN_TAN",
       VBuiltin(fun args vm ->
           match args with
@@ -554,9 +591,8 @@ and builtins () =
       VBuiltin(fun args vm ->
           let org = args.Head
           let castTyp = List.item 1 args
-          
-          cast org castTyp |> push vm
-      )
+
+          cast org castTyp |> push vm)
 
       Identifier "newtonRaphson",
       VBuiltin(fun args vm ->
@@ -577,22 +613,21 @@ and builtins () =
               let res = bisection f a b tol it
               push vm (VNumber(VFloat(res)))
           | _ -> failwith "invalid")
-      
+
       Identifier "assert",
       VBuiltin(fun args vm ->
           match args with
-          | [msg; cond] ->
+          | [ msg; cond ] ->
               if not (isTruthy cond) then
-                 failwithf $"Assertion failed: {valueToString msg}"
+                  failwithf $"Assertion failed: {valueToString msg}"
               else
                   push vm VNil
-          | [cond] ->
+          | [ cond ] ->
               if not (isTruthy cond) then
-                 failwithf $"Assertion failed: {valueToString cond}"
+                  failwithf $"Assertion failed: {valueToString cond}"
               else
                   push vm VNil
-          | _ -> failwith "invalid"
-          )
+          | _ -> failwith "invalid")
 
       Operator(Plus, Some Infix),
       VBuiltin(fun args vm ->
@@ -863,24 +898,21 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
     | JUMP ->
         printfn $"Jumping"
         let vm, byte1 = readByte vm
-        let vm, byte2 = readByte vm
-        let jump = (int byte1 <<< 8) ||| int byte2
         let frame = getCurrentFrame vm
-        let frame = { frame with IP = frame.IP + jump }
+        let frame = { frame with IP = frame.IP + int byte1 }
         vm.Frames[vm.Frames.Count - 1] <- frame
         vm
     | JUMP_IF_FALSE ->
-        printfn $"Jumping if false"
-        let vm, byte1 = readByte vm
-        let vm, byte2 = readByte vm
-        let jump = (int byte1 <<< 8) ||| int byte2
         let condition, vm = pop vm
+        let vm, offset = readByte vm
 
-        printfn $"Condition: {valueToString condition}"
         if not (isTruthy condition) then
-            printfn $"Jumping"
             let frame = getCurrentFrame vm
-            let frame = { frame with IP = frame.IP + jump }
+
+            let frame =
+                { frame with
+                    IP = frame.IP + int offset }
+
             vm.Frames[vm.Frames.Count - 1] <- frame
             vm
         else
@@ -928,9 +960,10 @@ and runLoop vm =
         vm
     else
         let frame = getCurrentFrame vm
+
         if frame.IP >= frame.Function.Chunk.Code.Count then
             if vm.Frames.Count > 1 then
-                let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm 
+                let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
                 vm.Frames.RemoveAt(vm.Frames.Count - 1)
                 let callerFrame = getCurrentFrame vm
                 vm.Stack.RemoveRange(callerFrame.StackBase, vm.Stack.Count - callerFrame.StackBase)
@@ -939,7 +972,7 @@ and runLoop vm =
             else
                 vm.Frames.RemoveAt(vm.Frames.Count - 1)
                 let vm = if vm.Stack.Count = 0 then push vm VNil else vm
-                vm 
+                vm
         else
             saveVMState vm
             let vm, instruction = readByte vm
@@ -1071,6 +1104,3 @@ let stepBackVM (vm: VM) =
         previousState
     else
         vm
-        
-
-
