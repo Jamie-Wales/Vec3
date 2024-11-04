@@ -95,6 +95,26 @@ let startRepl () =
     printfn "Type 'exit' to quit the REPL."
     repl (createNewVM (initFunction "Main"))
     
+(* Note for Jake and Bake
+ Repl input doest get type checked, because if variables
+ are defined in the code editor they cant be found
+ maybe worth being able to turn of variable resolution
+ OR pass vm to parser to check env
+*)
+let noTcParseAndCompile (code: string) (vm:VM) =
+    let code = Prelude.prelude + code
+    let code = preprocessContent code
+    match parse code with
+    | Ok (_, program) ->
+            match compileProgram program with
+            | Ok (func, _) -> Some(loadFunction vm func)
+            | Error (msg, _) ->
+                printfn $"Compilation error: {msg}"
+                None
+    | Error (e, s) ->
+        printfn $"Parsing error: {formatParserError e s}"
+        None
+        
 let parseAndCompile (code: string) (vm:VM) =
     let code = Prelude.prelude + code
     let code = preprocessContent code

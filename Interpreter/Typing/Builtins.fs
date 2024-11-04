@@ -21,11 +21,12 @@ let consType =
     TFunction([listTyp; TTensor(listTyp, dimsVar1)], TTensor(listTyp, dimsVar2), false, true)
     
 let plotType =
-    let dimsVar = DVar (freshTypeVar ())
-    let constrain = TConstrain(freshTypeVar(), _.IsArithmetic)
-    
-    TFunction([TString; TTensor(constrain, dimsVar); TTensor(constrain, dimsVar)], TUnit, false, true)
-
+    // Jake plz fix <3
+    // let dimsVar = DVar (freshTypeVar ())
+    // let constrain = TConstrain(freshTypeVar(), _.IsArithmetic)
+    //
+    // TFunction([TString; TTensor(constrain, dimsVar); TTensor(constrain, dimsVar)], TUnit, false, true)
+    TFunction([TAny;], TUnit, false, true)
 let plotFunType =
     let funConstrain = TConstrain(freshTypeVar(), fun typ -> typ.IsPure && typ.NumArgsIs 1)
     

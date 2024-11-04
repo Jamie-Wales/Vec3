@@ -149,23 +149,65 @@ let callValue (vm: VM) (argCount: int) : VM =
 
 // remove function from stack
 
+    
+
+let parsePlotType = function
+    | "scatter" ->
+         printf "Parsing Scatter" 
+         Scatter
+    | "line" -> 
+        printf "Parsing line" 
+        Line 
+    | "bar" -> 
+        printf "Parsing Bar" 
+        Bar 
+    | unknown -> failwith $"Unknown plot type: {unknown}"
 let rec builtins () =
     [ Identifier "plot",
       VBuiltin(fun args vm ->
-          match args with
-          | [ VString title; VList(xs, _); VList(ys, _) ] ->
-              let result = VPlotData(title, xs, ys)
-              push vm result
-          | _ ->
-              failwith
-                  $"""plot expects a title, x values, and y values, got: {String.concat ", " (List.map valueToString args)}""")
+      match args with
+      | [ VList(config, _) ] ->
+          let findField fieldName defaultValue = 
+              config 
+              |> List.tryFind (function 
+                  | VList([VString k; _], _) when k = fieldName -> true 
+                  | _ -> false)
+              |> function
+                  | Some(VList([_; v], _)) -> v
+                  | _ -> defaultValue
 
+          let title = 
+              match findField "title" (VString "Plot") with
+              | VString t -> t
+              | _ -> failwith "title must be a string"
+
+          let xs = 
+              match findField "x" (VList([], LIST)) with
+              | VList(xs, _) -> xs
+              | _ -> failwith "x must be a list"
+
+          let ys = 
+              match findField "y" (VList([], LIST)) with
+              | VList(ys, _) -> ys
+              | _ -> failwith "y must be a list"
+
+          let plotType = 
+              match findField "ptype" (VString "scatter") with
+               | VString t -> parsePlotType(t.ToLowerInvariant())
+               | _ -> failwith "type must be a string"
+          let plotData = VPlotData(title, xs, ys, plotType)
+          vm.Plots.Add(plotData)
+          push vm VNil
+
+      | _ ->
+        failwith "plot expects a record with title, x, y, and optional type fields")
       Identifier "plotFunc",
       VBuiltin(fun args vm ->
           match args with
           | [ VString title; VFunction(_, Some f) ] ->
-              let result = VPlotFunction(title, f)
-              push vm result
+              let plotData = VPlotFunction(title, f)
+              vm.Plots.Add(plotData)  
+              push vm VNil  
           | _ ->
               failwith
                   $"""plotFunc expects a title, a function, a start, a stop, and a step, got: {String.concat ", " (List.map valueToString args)}""")
@@ -996,14 +1038,13 @@ let createNewVM (mainFunc: Function) : VM =
               Execution = Seq.empty
               StandardOutput = Seq.empty
               Globals = Seq.empty }
-          ExecutionHistory = ResizeArray<VM>() }
-
+          ExecutionHistory = ResizeArray<VM>()
+          Plots = ResizeArray<Value>() }  
     let mainFrame =
         { Function = mainFunc
           IP = 0
           StackBase = 0
           Locals = [||] }
-
     vm.Frames.Add(mainFrame)
     vm
 

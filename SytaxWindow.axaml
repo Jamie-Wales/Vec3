@@ -1,0 +1,19 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ae="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+        x:Class="Vec3.SyntaxWindow"
+        Title="Vec3 Syntax Guide"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
+        Width="800" Height="600">
+    <Grid Margin="10, 30">
+        <ae:TextEditor Name="SyntaxEditor"
+                      FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+                      FontSize="13"
+                      ShowLineNumbers="True"
+                      IsReadOnly="True"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Visible" />
+    </Grid>
+</Window>

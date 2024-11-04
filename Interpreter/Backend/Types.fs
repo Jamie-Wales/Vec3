@@ -19,12 +19,17 @@ type OutputStreams = {
     StandardOutput: seq<string>
     Globals: seq<string>
 }
-
 type Chunk =
     { Code: ResizeArray<byte>
       Lines: ResizeArray<LineInfo>
       ConstantPool: ResizeArray<Value> }
     
+    
+and PlotType = 
+    | Scatter
+    | Line
+    | Bar
+    | Histogram
 and Value =
     | VNumber of VNumber
     | VString of string
@@ -34,7 +39,7 @@ and Value =
     | VNil
     | VList of Value list * CompoundType
     | VBuiltin of (Value list -> VM -> VM)
-    | VPlotData of string * Value list * Value list
+    | VPlotData of string * Value list * Value list * PlotType
     | VPlotFunction of string * (double -> double)
  
 and CompoundType = LIST | RECORD | TUPLE
@@ -65,14 +70,14 @@ and CallFrame = {
     Locals: Value array
 }
 
-and VM = {
-    Frames: ResizeArray<CallFrame>
-    Stack: ResizeArray<Value>
-    ScopeDepth: int
-    Globals: Map<String, Value>
-    Streams: OutputStreams
-    ExecutionHistory: ResizeArray<VM>  
-}
+and VM = 
+    { Frames: ResizeArray<CallFrame>
+      Stack: ResizeArray<Value>
+      ScopeDepth: int
+      Globals: Map<string, Value>
+      Streams: OutputStreams
+      ExecutionHistory: ResizeArray<VM>
+      Plots: ResizeArray<Value> }  // New field for plots
 
 let rec valueToString =
     function
