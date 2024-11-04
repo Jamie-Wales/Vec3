@@ -82,7 +82,7 @@ and VM =
 let rec valueToString =
     function
     | VNumber(VInteger n) -> string n
-    | VNumber(VFloat f) -> string f
+    | VNumber(VFloat f) -> $"%f{f}"
     | VNumber(VRational(n, d)) -> $"%d{n}/%d{d}"
     | VNumber(VComplex(r, i)) -> $"%f{r} + %f{i}i"
     | VBoolean b -> string b

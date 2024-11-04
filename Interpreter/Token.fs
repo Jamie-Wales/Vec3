@@ -51,6 +51,7 @@ type Punctuation =
     | RightBrace
     | LeftBracket
     | RightBracket
+    | Dollar
     
 type Keyword =
     | Let
