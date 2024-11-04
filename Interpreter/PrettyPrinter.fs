@@ -35,6 +35,7 @@ let rec printExpr = function
     | ELambda (params', body, rt, _, _) -> $"""({String.concat ", " (List.map (fun (param, _) -> lexemeToString param.Lexeme) params')}) -> {printExpr body}"""
     | ERecordSelect (expr, field, _) -> $"""{printExpr expr}.{lexemeToString field.Lexeme}"""
     | ETernary (cond, thenBranch, elseBranch, _) -> $"""{printExpr thenBranch} if {printExpr cond} else {printExpr elseBranch}"""
+    | ECodeBlock e -> printExpr(e)
     
 and printStmt = function
     | SExpression (expr, _) -> printExpr expr
