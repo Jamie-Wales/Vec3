@@ -334,7 +334,7 @@ and codeBlock (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Code Block"
 
     expect state (Punctuation LeftBrace)
-    |> Result.bind (fun state -> block state |> Result.bind (fun (state, expr) -> Ok(state, ECodeBlock expr)))
+    |> Result.bind (fun state -> block state |> Result.bind (fun (state, expr) ->Ok(state, ECodeBlock expr)))
 
 
 and ident (state: ParserState) : ParseResult<Expr> =
@@ -792,6 +792,7 @@ and block (state: ParserState) : ParseResult<Expr> =
     let rec loop (state: ParserState) (stmts: Stmt list) : ParseResult<Expr> =
         match peek state with
         | Some { Lexeme = Punctuation RightBrace } -> Ok(advance state, EBlock(List.rev stmts, None))
+        | None -> Error (UnexpectedEndOfInput, state)
         | _ -> statement state |> Result.bind (fun (state, stmt) -> loop state (stmt :: stmts))
 
     loop state []

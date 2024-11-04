@@ -703,8 +703,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
 
         | Error errors -> Error errors
         | _ -> Error [ TypeError.InvalidField(name, TNever) ]
-
-
+    | ECodeBlock e -> Ok (TAny, Map.empty, ECodeBlock e)
 
 and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * AliasMap * Substitution * Stmt) TypeResult =
     // make this immutable later, pass it around, or resolved in substitution
