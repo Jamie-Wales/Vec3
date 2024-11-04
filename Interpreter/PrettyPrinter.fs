@@ -21,6 +21,7 @@ let lexemeToString = function
     | Identifier id -> id
     | Number num -> numberToString num
     | String str -> $"\"{str}\""
+    | Punctuation op -> $"{op}"
 
 let rec printExpr = function
     | ELiteral (lit, _) -> printLiteral lit
@@ -35,12 +36,16 @@ let rec printExpr = function
     | ELambda (params', body, rt, _, _) -> $"""({String.concat ", " (List.map (fun (param, _) -> lexemeToString param.Lexeme) params')}) -> {printExpr body}"""
     | ERecordSelect (expr, field, _) -> $"""{printExpr expr}.{lexemeToString field.Lexeme}"""
     | ETernary (cond, thenBranch, elseBranch, _) -> $"""{printExpr thenBranch} if {printExpr cond} else {printExpr elseBranch}"""
+    | ECodeBlock expr -> printExpr expr
+    | ERange(start, stop, _) -> $"""[{printExpr start}..{printExpr stop}]"""
+    | ERecordEmpty _ -> "{}"
     
 and printStmt = function
     | SExpression (expr, _) -> printExpr expr
     | SVariableDeclaration (name, expr, _) -> $"""let {lexemeToString name.Lexeme} = {printExpr expr}"""
     | SAssertStatement (expr, msg, _) -> $"""assert {printExpr expr}, "{msg}" """
-    
+    | SRecFunc (name, args, body, _) -> $"""rec {name}({List.map (fun (name, _) -> lexemeToString name.Lexeme) args}) = {printExpr body}"""
+    | STypeDeclaration (name, typ, _) -> $"""type {lexemeToString name.Lexeme} = {typ}"""
     
     
 let printProgram (program: Program) =
