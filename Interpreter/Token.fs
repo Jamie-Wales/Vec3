@@ -52,6 +52,7 @@ type Punctuation =
     | LeftBracket
     | RightBracket
     | Dollar
+    | Newline
     
 type Keyword =
     | Let
@@ -178,6 +179,8 @@ let punctuationToString (p: Punctuation): string =
     | RightBrace -> "}"
     | LeftBracket -> "["
     | RightBracket -> "]"
+    | Dollar -> "$"
+    | Newline -> "\n"
 
 let lexemeToString (lex: Lexeme): string =
     match lex with

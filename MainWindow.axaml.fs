@@ -64,7 +64,7 @@ let data = {
     title="My Plot",
     x=[1, 2, 3, 4],
     y=[1, 4, 9, 16],
-    ptype="bar" 
+    ptype="bar",
 }
 plot(data)
 """
@@ -203,6 +203,7 @@ plot(data)
                     else
                         match parse code with
                         | Ok (_, ast) ->
+                            printfn $"{ast}"
                             let env, aliases, _, _ = Prelude.preludeChecked
                             
                             match Inference.inferProgram aliases env ast with

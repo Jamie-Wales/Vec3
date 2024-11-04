@@ -92,6 +92,14 @@ let lexer (input: string) : LexerResult<Token list> =
     let rec scan (input: char list) (position: Position) : LexerResult<Token> list =
         match input with
         | [] -> []
+        | '\n' :: tail ->
+            Ok
+                { Lexeme = Punctuation Newline
+                  Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = 0; Line = position.Line + 1 }
         | '/' :: '/' :: tail ->
             let rec discardComment (input: char list) (column: int) : char list * int =
                 match input with
