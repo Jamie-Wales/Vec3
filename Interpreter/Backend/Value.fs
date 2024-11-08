@@ -18,8 +18,8 @@ let rec valuesEqual (a: Value) (b: Value) =
     | VNumber x, VNumber y -> numbersEqual x y
     | VBoolean x, VBoolean y -> x = y
     | VString x, VString y -> x = y
-    | VFunction (f1, _), VFunction (f2, _) -> f1.Name = f2.Name && f1.Arity = f2.Arity
-    | VClosure c1, VClosure c2 -> c1.Function = c2.Function
+    | VFunction f1, VFunction f2 -> f1.Name = f2.Name && f1.Arity = f2.Arity
+    | VClosure c1, VClosure c2 -> c1.Function.Name = c2.Function.Name && c1.Function.Arity = c2.Function.Arity
     | VNil, VNil -> true
     | VList (l1, typ1), VList (l2, typ2) -> 
         if List.length l1 <> List.length l2 || typ1 <> typ2 then false
@@ -56,7 +56,7 @@ let rec add a b =
     | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) -> 
         let n = n1 * d2 + n2 * d1
         let d = d1 * d2
-        VNumber(VRational(n, d))  // Consider simplifying the fraction
+        VNumber(VRational(n, d)) 
     | VNumber(VComplex(r1, i1)), VNumber(VComplex(r2, i2)) -> 
         VNumber(VComplex(r1 + r2, i1 + i2))
     | VNumber x, VNumber y ->
@@ -65,7 +65,7 @@ let rec add a b =
         let zipped = List.zip l1 l2
         let added = List.map (fun (x, y) -> add x y) zipped
         VList (added, t)
-    | _ -> failwith "Can only add numbers"
+    | _ -> failwith $"Can only add numbers {a} {b}"
 
 let rec subtract a b =
     match (a, b) with

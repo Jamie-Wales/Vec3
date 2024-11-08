@@ -1,10 +1,10 @@
 module Vec3.Interpreter.Token
 
-type TNumber =
-    | Float of float
-    | Integer of int
-    | Rational of int * int
-    | Complex of float * float
+type Number =
+    | LFloat of float
+    | LInteger of int
+    | LRational of int * int
+    | LComplex of float * float
 
 type Operator =
     | Plus
@@ -98,7 +98,7 @@ let getKeyword (s: string): Keyword =
     Map.find s keywordMap
     
 type Lexeme =
-    | Number of TNumber
+    | Number of Number
     | String of string
     | Keyword of Keyword
     | Operator of Operator * Placement option
@@ -112,12 +112,12 @@ type Token = { Lexeme: Lexeme; Position: Position; }
 
 let Empty = { Lexeme = Identifier ""; Position = { Line = 0; Column = 0; } }
 
-let numberToString (n: TNumber): string =
+let numberToString (n: Number): string =
     match n with
-    | Float f -> $"Float({f})"
-    | Integer i -> $"Integer({i})"
-    | Rational (n, d) -> $"Rational({n}/{d})"
-    | Complex (r, i) -> $"Complex({r}i{i})"
+    | LFloat f -> $"Float({f})"
+    | LInteger i -> $"Integer({i})"
+    | LRational (n, d) -> $"Rational({n}/{d})"
+    | LComplex (r, i) -> $"Complex({r}i{i})"
 
 
 let operatorToString (op: Operator): string =

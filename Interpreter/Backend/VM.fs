@@ -9,6 +9,8 @@ open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 
+// TODO essential -- fix lambdas (closures) !!!!!
+
 let loadFunction (vm: VM) (func: Function) : VM =
     let frame =
         { Function = func
@@ -102,10 +104,7 @@ let defineGlobal (vm: VM) (name: string) (value: Value) =
     let globalOutput = $"{name} = {valueToString value}"
     appendOutput updatedVM Globals globalOutput
 
-let getGlobal (vm: VM) (name: string) =
-    printfn $"Getting global: {name}"
-    Map.iter (fun k v -> printfn $"Global: {k} = {valueToString v}") vm.Globals
-    Map.tryFind name vm.Globals
+let getGlobal (vm: VM) (name: string) = Map.tryFind name vm.Globals
 
 let binaryOp (vm: VM) (op: Value -> Value -> Value) =
     let b, vm = pop vm
@@ -115,10 +114,9 @@ let binaryOp (vm: VM) (op: Value -> Value -> Value) =
 
 let callValue (vm: VM) (argCount: int) : VM =
     let callee = peek vm argCount
-    printfn $"Calling value: {valueToString callee}"
 
     match callee with
-    | VFunction(func, _) ->
+    | VFunction func ->
         if argCount <> func.Arity then
             failwith $"Expected {func.Arity} arguments but got {argCount}"
 
@@ -141,11 +139,8 @@ let callValue (vm: VM) (argCount: int) : VM =
               Locals = Array.zeroCreate closure.Function.Locals.Length }
 
         vm.Frames.Add(frame)
-        let frame = getCurrentFrame vm
-        closure.UpValues |> Seq.iteri (fun i upValue -> frame.Locals[i] <- upValue)
         vm
     | VBuiltin func ->
-        printfn $"Calling builtin function: {func}"
 
         let args =
             [ 0 .. argCount - 1 ]
@@ -250,10 +245,14 @@ and builtins () =
       Identifier "plotFunc",
       VBuiltin(fun args vm ->
           match args with
-          | [ VString title; VFunction(_, Some f) ] ->
-              let plotData = VPlotFunction(title, f)
-              vm.Plots.Add(plotData)
-              push vm VNil
+          | [ VString title; VFunction f ]
+          | [ VString title; VClosure { Function = f } ] ->
+              match f with
+              | { BuiltIn = Some f } ->
+                  let plotData = VPlotFunction(title, f)
+                  vm.Plots.Add(plotData)
+                  push vm VNil
+              | _ -> failwith "plotFunc expects a function"
           | _ ->
               failwith
                   $"""plotFunc expects a title, a function, a start, a stop, and a step, got: {String.concat ", " (List.map valueToString args)}""")
@@ -300,7 +299,8 @@ and builtins () =
       Identifier "BUILTIN_IF",
       VBuiltin(fun args vm ->
           match args with
-          | [ VBoolean b; VFunction(thenn, _) as thennn; VFunction(elsee, _) as elseee ] ->
+          | [ VBoolean b; VFunction thenn; VFunction elsee ]
+          | [ VBoolean b; VClosure { Function = thenn }; VClosure { Function = elsee } ] ->
               if b then
                   let frame =
                       { Function = thenn
@@ -322,7 +322,48 @@ and builtins () =
                   vm.Frames.Add(frame)
 
                   let result, vm = runCurrentFrame vm
-                  push vm result)
+                  push vm result
+          | [ VBoolean b; VFunction thenn; VBuiltin elsee ]
+          | [ VBoolean b; VClosure { Function = thenn }; VBuiltin elsee ] ->
+              if b then
+                  let frame =
+                      { Function = thenn
+                        IP = 0
+                        StackBase = vm.Stack.Count - 2
+                        Locals = Array.zeroCreate thenn.Locals.Length }
+
+                  vm.Frames.Add(frame)
+
+                  let result, vm = runCurrentFrame vm
+                  push vm result
+              else
+                  let vm = elsee [] vm
+                  let result, vm = pop vm
+                  push vm result
+          | [ VBoolean b; VBuiltin thenn; VFunction elsee ]
+          | [ VBoolean b; VBuiltin thenn; VClosure { Function = elsee } ] ->
+              if b then
+                  let vm = thenn [] vm
+                  let result, vm = pop vm
+                  push vm result
+              else
+                  let frame =
+                      { Function = elsee
+                        IP = 0
+                        StackBase = vm.Stack.Count - 2
+                        Locals = Array.zeroCreate elsee.Locals.Length }
+
+                  vm.Frames.Add(frame)
+
+                  let result, vm = runCurrentFrame vm
+                  push vm result
+
+          | [ VBoolean b; VBuiltin thenn; VBuiltin elsee ] ->
+              let vm = if b then thenn [] vm else elsee [] vm
+              let result, vm = pop vm
+              push vm result
+          | _ -> failwith "if expects a boolean and two functions")
+
       Identifier "BUILTIN_COS",
       VBuiltin(fun args vm ->
           match args with
@@ -426,7 +467,8 @@ and builtins () =
       Identifier "fold",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList(l, _); acc; VFunction(f, None) ] ->
+          | [ VList(l, _); acc; VFunction f ]
+          | [ VList(l, _); acc; VClosure { Function = f } ] ->
               let rec fold acc vm =
                   function
                   | [] -> acc, vm
@@ -467,7 +509,8 @@ and builtins () =
       Identifier "map",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList(l', _); VFunction(f, None) ] ->
+          | [ VList(l', _); VFunction f ]
+          | [ VList(l', _); VClosure { Function = f } ] ->
               let rec map acc vm =
                   function
                   | [] -> acc, vm
@@ -597,21 +640,33 @@ and builtins () =
       Identifier "newtonRaphson",
       VBuiltin(fun args vm ->
           match args with
-          | [ VFunction(_, Some f1)
-              VFunction(_, Some f2)
+          | [ VFunction(f1); VFunction(f2); VNumber(VFloat init); VNumber(VFloat tol); VNumber(VInteger it) ]
+          | [ VClosure { Function = f1 }
+              VClosure { Function = f2 }
               VNumber(VFloat init)
               VNumber(VFloat tol)
               VNumber(VInteger it) ] ->
-              let res = newtonRaphson f1 f2 init tol it
-              push vm (VNumber(VFloat(res)))
+              match f1, f2 with
+              | { BuiltIn = Some f1 }, { BuiltIn = Some f2 } ->
+                  let res = newtonRaphson f1 f2 init tol it
+                  push vm (VNumber(VFloat(res)))
+              | _ -> failwith "invalid"
           | _ -> failwith "invalid")
 
       Identifier "bisection",
       VBuiltin(fun args vm ->
           match args with
-          | [ VFunction(_, Some f); VNumber(VFloat(a)); VNumber(VFloat(b)); VNumber(VFloat(tol)); VNumber(VInteger(it)) ] ->
-              let res = bisection f a b tol it
-              push vm (VNumber(VFloat(res)))
+          | [ VFunction f; VNumber(VFloat(a)); VNumber(VFloat(b)); VNumber(VFloat(tol)); VNumber(VInteger(it)) ]
+          | [ VClosure { Function = f }
+              VNumber(VFloat(a))
+              VNumber(VFloat(b))
+              VNumber(VFloat(tol))
+              VNumber(VInteger(it)) ] ->
+              match f.BuiltIn with
+              | Some f ->
+                  let res = bisection f a b tol it
+                  push vm (VNumber(VFloat(res)))
+              | _ -> failwith "invalid"
           | _ -> failwith "invalid")
 
       Identifier "assert",
@@ -766,12 +821,9 @@ and runCurrentFrame vm =
     else
         let vm, instruction = readByte vm
         let opcode = byteToOpCode instruction
-        printfn $"Executing: {opcode}"
-        printfn " in runCurrentFrame in map"
 
         match opcode with
         | RETURN ->
-            printfn $"Returning from map"
             let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
             vm.Frames.RemoveAt(vm.Frames.Count - 1)
             result, vm
@@ -809,6 +861,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             failwith $"GET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}"
 
         let value = vm.Stack[index]
+
         let vm = push vm value
         vm
     | SET_LOCAL ->
@@ -822,6 +875,27 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
 
         vm.Stack[index] <- value
         vm
+    | GET_UPVALUE ->
+        let vm, slot = readByte vm
+        let closure = peek vm 1
+
+        match closure with
+        | VClosure { UpValues = upValues } ->
+            let upValue = upValues[int slot]
+            let vm = push vm upValue
+            vm
+        | _ -> failwith "Expected closure for GET_UPVALUE"
+    | SET_UPVALUE ->
+        let vm, slot = readByte vm
+        let value, vm = pop vm
+        let closure = peek vm 0
+
+        match closure with
+        | VClosure { UpValues = upValues } ->
+            upValues.[int slot] <- value
+            vm
+        | _ -> failwith "Expected closure for SET_UPVALUE"
+
     | TRUE -> push vm (VBoolean true)
     | FALSE -> push vm (VBoolean false)
     | NIL -> push vm VNil
@@ -846,9 +920,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         match constant with
         | VString name ->
             match getGlobal vm name with
-            | Some value ->
-                printfn $"GET_GLOBAL: {name} = {valueToString value}"
-                push vm value
+            | Some value -> push vm value
             | None -> failwith $"Undefined variable '{name}'"
         | _ -> failwith "Expected string constant for variable name in GET_GLOBAL"
     | SET_GLOBAL ->
@@ -884,19 +956,51 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let constant, vm = readConstant vm
 
         match constant with
-        | VFunction(func, _) ->
-            let upValues =
-                func.Locals
-                |> Seq.filter (fun local -> local.Depth > 0)
-                |> Seq.map (fun local -> vm.Stack[local.Index])
-                |> Seq.toList
+        | VFunction func ->
+            // let upValues =
+            //     func.Locals
+            //     |> Seq.filter (fun local -> local.Depth > 0)
+            //     |> Seq.map (fun local -> vm.Stack[local.Index])
+            //     |> Seq.toList
 
-            let closure = VClosure { Function = func; UpValues = upValues }
+            let vm, upValueCount = readByte vm
+
+            // pop all upvalues
+            let rec popUpValues (vm: VM) (count: int) : (VM * Value list) =
+                match count with
+                | n when n > 0 ->
+                    let vm, index = readByte vm
+                    let vm, depth = readByte vm
+
+                    let upValue = findUpValue vm (int depth) (int index)
+
+                    let vm, upValues = popUpValues vm (n - 1)
+
+                    vm, upValue :: upValues
+
+                | _ -> vm, []
+
+
+            let vm, vals = popUpValues vm (int upValueCount)
+            
+            // doesnt work, finds current frames up val in that loc, how can i look in previous frames for it, or know where to look???
+            // also why cant i just add them as locals ? everything is immutable, so no issue
+            let vm, prevUpValueCount = readByte vm
+            
+            let vm, prevUpValues = popUpValues vm (int prevUpValueCount)
+            
+            let vals = List.append prevUpValues vals
+            
+            let closure =
+                VClosure
+                    { Function = func
+                      UpValues = List.toArray vals }
+
             let vm = push vm closure
+
             vm
         | _ -> failwith "Expected function constant for closure"
     | JUMP ->
-        printfn $"Jumping"
         let vm, byte1 = readByte vm
         let frame = getCurrentFrame vm
         let frame = { frame with IP = frame.IP + int byte1 }
@@ -955,6 +1059,18 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
 
     | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
 
+and findUpValue (vm: VM) (depth: int) (index: int) =
+    let frame = getCurrentFrame vm
+
+    let rec findUpValue' frame depth index =
+        if depth = 0 then
+            vm.Stack[frame.StackBase + index]
+        else
+            let frame = vm.Frames[vm.Frames.Count - depth]
+            findUpValue' frame (depth - 1) index
+
+    findUpValue' frame depth index
+
 and runLoop vm =
     if vm.Frames.Count = 0 then
         vm
@@ -979,7 +1095,6 @@ and runLoop vm =
 
             let vm =
                 let opcode = byteToOpCode instruction
-                printfn $"Executing: {opcode}"
                 executeOpcode vm opcode
 
             runLoop vm

@@ -128,10 +128,10 @@ let number (state: ParserState) : ParseResult<Expr> =
     match previous state with
     | Some { Lexeme = Lexeme.Number n } ->
         match n with
-        | Integer i -> Ok(state, ELiteral(LNumber(LInteger(i)), TInteger))
-        | Float f -> Ok(state, ELiteral(LNumber(LFloat(f)), TFloat))
-        | Rational(n, d) -> Ok(state, ELiteral(LNumber(LRational(n, d)), TRational))
-        | Complex(r, i) -> Ok(state, ELiteral(LNumber(LComplex(r, i)), TComplex))
+        | LInteger i -> Ok(state, ELiteral(LNumber(LInteger(i)), TInteger))
+        | LFloat f -> Ok(state, ELiteral(LNumber(LFloat(f)), TFloat))
+        | LRational(n, d) -> Ok(state, ELiteral(LNumber(LRational(n, d)), TRational))
+        | LComplex(r, i) -> Ok(state, ELiteral(LNumber(LComplex(r, i)), TComplex))
     | _ -> Error(Expected "Number", state)
 
 
@@ -424,7 +424,6 @@ and binary (state: ParserState) (left: Expr) : ParseResult<Expr> =
 
 and unary (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Unary"
-    printfn "unary"
     
     match previous state with
     | Some op ->
@@ -459,7 +458,6 @@ and recordFields
     (state: ParserState)
     (fields: (Token * Expr * TType option) list)
     : ParseResult<(Token * Expr * TType option) list> =
-    printfn $"{fields}"
     match peek state with
     | Some { Lexeme = Punctuation Newline } -> Ok(advance state, fields)
     | Some { Lexeme = Punctuation RightBrace } -> Ok(advance state, List.rev fields)

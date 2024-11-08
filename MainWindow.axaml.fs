@@ -27,7 +27,7 @@ type MainWindow () as this =
     let mutable loadButton: Button = null
     let mutable runButton: Button = null
     let mutable standardOutput: TextBlock = null
-    let mutable replState: VM = createNewVM(initFunction("Main"))
+    let mutable replState: VM = createNewVM(initFunction "Main" None )
     
     let debounceTime = 500
     let mutable debounceTimer = None : Timer option
@@ -178,7 +178,7 @@ plot(data)
         vm.Plots.Clear()
         
     member private this.LoadCode() =
-        replState <- createNewVM(initFunction("Main"))
+        replState <- createNewVM(initFunction "Main" None)
         let code = this.GetEditorText()
         match parseAndCompile code replState with
         | Some vm ->

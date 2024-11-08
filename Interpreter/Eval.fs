@@ -200,12 +200,10 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
         let end_ = evalExpr env end_
         
         match start, end_ with
-        | ELiteral(LNumber(LInteger start), _), ELiteral(LNumber(LInteger end_), _) ->
-            let rec range (start: int) (end_: int) =
-                if start > end_ then []
-                else start :: range (start + 1) end_
-
-            EList(List.map (fun x -> ELiteral(LNumber(LInteger x), TInteger)) (range start end_), Some TInteger)
+        | ELiteral(LNumber(LInteger s), _), ELiteral(LNumber(LInteger e), _) ->
+            let range = [for i in s..e -> ELiteral(LNumber(LInteger i), TInteger)]
+            
+            EList(range, None)
         | _ -> failwith "invalid"
         
     | ERecordEmpty typ -> ERecordEmpty typ

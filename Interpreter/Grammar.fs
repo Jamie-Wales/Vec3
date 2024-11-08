@@ -125,12 +125,6 @@ let typeMap =
       "never", TNever ]
     |> Map.ofList
 
-type Number =
-    | LInteger of int
-    | LFloat of float
-    | LRational of int * int
-    | LComplex of float * float
-
 type Literal =
     | LNumber of Number
     | LString of string

@@ -49,7 +49,7 @@ let rec scIdentifier (iStr: char list) (iVal: string) : (char list * string) opt
 // rational: 1/2, 1/3, 1/4
 // complex: 1+2i, 1-2i, 1+2i, 1-2i, i, -i, 2i, etc TODO
 // int return is length of the number string
-let scNumber (nStr: char list) : (char list * TNumber * int) option =
+let scNumber (nStr: char list) : (char list * Number * int) option =
     let rec scInt (iStr: char list) (iVal: int) (len: int) : char list * int * int =
         match iStr with
         | c :: tail when isDigit c -> scInt tail (10 * iVal + intVal c) (len + 1)
@@ -71,7 +71,11 @@ let scNumber (nStr: char list) : (char list * TNumber * int) option =
         match iStr with
         | '/' :: ratTail ->
             let fStr, fVal, fLen = scInt ratTail 0 0
-            Some(fStr, TNumber.Rational(iVal, int fVal), iLen + fLen + 1)
+            
+            if fVal = 0 then
+                Some(iStr, LInteger(iVal), iLen)
+            else
+                Some(fStr, LRational(iVal, int fVal), iLen + fLen + 1)
         | '.' :: d :: fracTail when isDigit d ->
             let fStr, fVal, fLen = scFraction (d :: fracTail) 0.0 10.0 0
 
@@ -79,12 +83,12 @@ let scNumber (nStr: char list) : (char list * TNumber * int) option =
             | 'e' :: expTail
             | 'E' :: expTail ->
                 let eStr, expVal, eLen = scInt expTail 0 0
-                Some(eStr, TNumber.Float((float iVal + fVal) * (10.0 ** float expVal)), iLen + fLen + eLen + 2)
-            | _ -> Some(fStr, TNumber.Float(float iVal + fVal), iLen + fLen + 1)
+                Some(eStr, LFloat((float iVal + fVal) * (10.0 ** float expVal)), iLen + fLen + eLen + 2)
+            | _ -> Some(fStr, LFloat(float iVal + fVal), iLen + fLen + 1)
         | 'e' :: expTail ->
             let eStr, expVal, eLen = scInt expTail 0 0
-            Some(eStr, TNumber.Float(float iVal * (10.0 ** float expVal)), iLen + eLen + 1)
-        | _ -> Some(iStr, TNumber.Integer iVal, iLen)
+            Some(eStr, LFloat(float iVal * (10.0 ** float expVal)), iLen + eLen + 1)
+        | _ -> Some(iStr, LInteger iVal, iLen)
     | _ -> None
 
 
@@ -148,6 +152,41 @@ let lexer (input: string) : LexerResult<Token list> =
                 tail
                 { position with
                     Column = position.Column + 2 }
+        
+        // | '+' :: c :: tail when isDigit c ->
+        //     let nRes = scNumber (c :: tail)
+        //     
+        //     match nRes with
+        //     | None ->
+        //         Ok { Lexeme = Operator (Plus, None); Position = position }
+        //         :: scan
+        //             tail
+        //             { position with
+        //                 Column = position.Column + 1 }
+        //     | Some(nStr, nVal, nLen) ->
+        //         Ok { Lexeme = Number nVal; Position = position }
+        //         :: scan
+        //             nStr
+        //             { position with
+        //                 Column = position.Column + nLen }
+        
+        // | '-' :: c :: tail when isDigit c ->
+        //     let nRes = scNumber (c :: tail)
+        //     
+        //     match nRes with
+        //     | None ->
+        //         Ok { Lexeme = Operator (Minus, None); Position = position }
+        //         :: scan
+        //             tail
+        //             { position with
+        //                 Column = position.Column + 1 }
+        //     | Some(nStr, nVal, nLen) ->
+        //         Ok { Lexeme = Number nVal; Position = position }
+        //         :: scan
+        //             nStr
+        //             { position with
+        //                 Column = position.Column + nLen }
+        
         | '+' :: tail ->
             Ok
                 { Lexeme = Operator (Plus, None)
