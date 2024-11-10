@@ -24,6 +24,8 @@ type MainWindow () as this =
     let mutable textEditor: TextEditor = null
     let mutable textMateInstallation: TextMate.Installation = null
     let mutable replInput: TextEditor = null
+    
+    let mutable openNotebookButton: Button = null
     let mutable loadButton: Button = null
     let mutable runButton: Button = null
     let mutable standardOutput: TextBlock = null
@@ -113,13 +115,14 @@ plot(data)
                 match Color.TryParse(colorString) with
                 | true, color -> replInput.Foreground <- SolidColorBrush(color)
                 | _ -> ()
-
     member private this.InitializeComponent() =
         textEditor <- this.FindControl<TextEditor>("Editor")
         loadButton <- this.FindControl<Button>("LoadButton")
         standardOutput <- this.FindControl<TextBlock>("StandardOutput")
         replInput <- this.FindControl<TextEditor>("ReplInput")
         runButton <- this.FindControl<Button>("RunButton")
+        openNotebookButton <- this.FindControl<Button>("OpenNotebookButton")
+        
         standardOutput.Foreground <- SolidColorBrush(Colors.White)
         standardOutput.Text <- welcomeMessage
 
@@ -130,7 +133,11 @@ plot(data)
         loadButton.Click.AddHandler(fun _ _ -> this.LoadCode())
         textEditor.TextChanged.AddHandler(fun _ _ -> this.TextChanged())
         runButton.Click.AddHandler(fun _ _ -> this.run() |> ignore)
-
+        openNotebookButton.Click.AddHandler(fun _ _ -> this.OpenNotebook())
+        
+    member private this.OpenNotebook() =
+        let notebookWindow = NotebookWindow()
+        notebookWindow.Show()
     member private this.CreatePlotWindow(title: string) =
         let plotWindow = PlotWindow()
         plotWindow.Title <- title
