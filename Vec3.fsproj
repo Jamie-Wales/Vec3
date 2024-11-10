@@ -32,6 +32,7 @@
         <Compile Include="Interpreter\ConstantFolding.fs" />
         <Compile Include="Interpreter\Prelude.fs" />
         <Compile Include="Interpreter\Repl.fs" />
+        <Compile Include="Interpreter\SymbolicExpression.fs" />
         <Compile Include="PlotWindow.axaml.fs" />
         <Compile Include="MainWindow.axaml.fs" />
         <Compile Include="App.axaml.fs" />
