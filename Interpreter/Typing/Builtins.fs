@@ -230,9 +230,15 @@ let drawType =
                           (Identifier "x", fun t -> t = TFloat)
                           (Identifier "y", fun t -> t = TFloat)
                           (Identifier "colour", fun t -> t = TString) ]
-            )
-        )
-
+                   || (t.IsList && match t with
+                                    | TTensor (t, _) -> t.hasFieldsThat [ (Identifier "width", fun t -> t = TFloat)
+                                                                          (Identifier "height", fun t -> t = TFloat)
+                                                                          (Identifier "x", fun t -> t = TFloat)
+                                                                          (Identifier "y", fun t -> t = TFloat)
+                                                                          (Identifier "colour", fun t -> t = TString) ] 
+                                    | _ -> false
+                        )))
+    
     TFunction([ recTyp ], TUnit, false, true)
 
 let findIntegralType =
