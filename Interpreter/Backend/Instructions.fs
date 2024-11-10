@@ -18,6 +18,7 @@ type OP_CODE =
     | LOOP
     | CALL
     | CLOSURE
+    | Exception
     
     | COMPOUND_CREATE
     | COMPOUND_GET
@@ -45,6 +46,8 @@ let opCodeToByte =
     | COMPOUND_CREATE -> 26uy
     | COMPOUND_GET -> 27uy
     
+    | Exception -> 255uy
+    
 
 let byteToOpCode byte =
     match byte with
@@ -67,7 +70,8 @@ let byteToOpCode byte =
     | 25uy -> CLOSURE
     | 26uy -> COMPOUND_CREATE
     | 27uy -> COMPOUND_GET
-    | _ -> failwith $"Unknown OP_CODE: {byte}"
+    | 255uy -> Exception
+    | _ -> raise (System.Exception("Unknown OpCode"))
 
 let opCodeToString =
     function
@@ -90,5 +94,7 @@ let opCodeToString =
     | CLOSURE -> "CLOSURE"
     | COMPOUND_CREATE -> "COMPOUND_CREATE"
     | COMPOUND_GET -> "COMPOUND_GET"
+    
+    | Exception -> "Exception"
     
     

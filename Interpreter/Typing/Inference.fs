@@ -586,7 +586,18 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             let sub2 = Map.add n (TTensor(TTypeVariable typeVar, DVar dimsTypeVar)) sub
             Ok(TTypeVariable typeVar, sub2, EIndex(expr2, expr1, Some (TTypeVariable typeVar)))
 
-        | Ok(TInteger, _, _), Ok(TTuple _, _, _) -> failwith "todo"
+        | Ok(TInteger, sub1, expr1), Ok(TAny, sub2, expr2) ->
+            let typeVar = freshTypeVar ()
+            let dimsTypeVar = freshTypeVar ()
+            let sub = combineMaps sub1 sub2
+
+            let sub2 = Map.add typeVar (TTensor(TTypeVariable typeVar, DVar dimsTypeVar)) sub
+            Ok(TTypeVariable typeVar, sub2, EIndex(expr2, expr1, Some (TTypeVariable typeVar)))
+            
+        | Ok(TInteger, sub1, expr1), Ok(TTuple types, sub2, expr2) ->
+            let sub = combineMaps sub1 sub2
+            let returnType = applySubstitution aliases sub TNever
+            Ok(returnType, sub, EIndex(expr2, expr1, Some returnType))
         | Ok(TInteger, _, _), Ok(t, _, _) -> Error [ TypeError.InvalidIndex(expr, t) ]
 
         | Error errors, _ -> Error errors

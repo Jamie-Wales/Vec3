@@ -1,6 +1,7 @@
 module Vec3.Interpreter.Backend.Compiler
 
 open Microsoft.FSharp.Core
+open System
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Instructions
@@ -122,7 +123,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             let name =
                 match name with
                 | { Lexeme = Identifier n } -> n
-                | _ -> failwith "Invalid record field name"
+                | _ -> raise <| System.Exception("Invalid record field name")
 
             // pretty horrbile, but it works
             // record is a list of lists, where each list is a pair of a string and a value
@@ -145,7 +146,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             let name =
                 match token with
                 | { Lexeme = Identifier n } -> n
-                | _ -> failwith "Invalid record field name"
+                | _ -> raise <| System.Exception("Invalid record field name")
 
             // same as index, but with a string and a record (push string)
             compileExpr expr state
@@ -287,7 +288,7 @@ and compileAsBuiltin (parameters: Token list) (body: Expr) : Expression =
     // then we would be able to use other values and other functions in this (type checker verifies that this is valid)
 
     if parameters.Length <> 1 then
-        failwith "Builtin functions must have exactly one parameter"
+        raise <| InvalidProgramException("Builtin functions can only have one parameter")
 
     fromExpr body
 

@@ -128,68 +128,74 @@ type NotebookWindow () as this =
         plotsPanel.Margin <- Thickness(10.0)
         
         // Wire up events
-        runButton.Click.Add(fun _ -> 
-            match noTcParseAndCompile editor.Text vm with
-            | Some newVM ->
-                let oldOutputLength = Seq.length vm.Streams.StandardOutput
-                vm <- run newVM
-                output.Foreground <- SolidColorBrush(Colors.Black)
-                
-                let newOutput = vm.Streams.StandardOutput 
-                              |> Seq.skip oldOutputLength 
-                              |> String.concat "\n"
-                output.Text <- newOutput
-
-                // Clear existing plots
-                plotsPanel.Children.Clear()
-
-                // Handle any plots that were generated
-                for value in vm.Plots do
-                    match value with
-                    | VPlotData (title, xs, ys, plotType) ->
-                        let plotControl = AvaPlot()
-                        plotControl.Height <- 300
-                        plotControl.Width <- 400
-                        plotControl.Margin <- Thickness(0, 10, 0, 10)
-                        plotControl.Plot.Title(title)
-                        
-                        let extractNumber = function
-                            | VNumber (VFloat f) -> f
-                            | VNumber (VInteger i) -> float i
-                            | _ -> 0.0
-                        
-                        let x = List.map extractNumber xs |> Array.ofList
-                        let y = List.map extractNumber ys |> Array.ofList
-                        
-                        match plotType with
-                        | Scatter -> 
-                            plotControl.Plot.Add.Scatter(x, y) |> ignore
-                        | Line ->
-                            plotControl.Plot.Add.Line(x.[0], y.[0], x.[1], y.[1]) |> ignore
-                        | Bar ->
-                            plotControl.Plot.Add.Bars(y, x) |> ignore
-                        | Histogram -> failwith "todo"
-                        
-                        plotControl.Refresh()
-                        plotsPanel.Children.Add(plotControl)
-                            
-                    | VPlotFunction (title, f) ->
-                        let plotControl = AvaPlot()
-                        plotControl.Height <- 300
-                        plotControl.Width <- 400
-                        plotControl.Margin <- Thickness(0, 10, 0, 10)
-                        plotControl.Plot.Title(title)
-                        plotControl.Plot.Add.Function(f) |> ignore
-                        plotControl.Refresh()
-                        
-                        plotsPanel.Children.Add(plotControl)
-                            
-                    | _ -> ()
+        runButton.Click.Add(fun _ ->
+            try 
+                match parseAndCompile editor.Text vm with
+                | Some newVM ->
+                    let oldOutputLength = Seq.length vm.Streams.StandardOutput
+                    vm <- run newVM
+                    output.Foreground <- SolidColorBrush(Colors.Black)
                     
-                vm.Plots.Clear()
-            | None -> 
+                    let newOutput = vm.Streams.StandardOutput 
+                                  |> Seq.skip oldOutputLength 
+                                  |> String.concat "\n"
+                    output.Text <- newOutput
+
+                    // Clear existing plots
+                    plotsPanel.Children.Clear()
+
+                    // Handle any plots that were generated
+                    for value in vm.Plots do
+                        match value with
+                        | VPlotData (title, xs, ys, plotType) ->
+                            let plotControl = AvaPlot()
+                            plotControl.Height <- 300
+                            plotControl.Width <- 400
+                            plotControl.Margin <- Thickness(0, 10, 0, 10)
+                            plotControl.Plot.Title(title)
+                            
+                            let extractNumber = function
+                                | VNumber (VFloat f) -> f
+                                | VNumber (VInteger i) -> float i
+                                | _ -> 0.0
+                            
+                            let x = List.map extractNumber xs |> Array.ofList
+                            let y = List.map extractNumber ys |> Array.ofList
+                            
+                            match plotType with
+                            | Scatter -> 
+                                plotControl.Plot.Add.Scatter(x, y) |> ignore
+                            | Line ->
+                                plotControl.Plot.Add.Line(x[0], y[0], x[1], y[1]) |> ignore
+                            | Bar ->
+                                plotControl.Plot.Add.Bars(y, x) |> ignore
+                            | Histogram -> failwith "todo"
+                            
+                            plotControl.Refresh()
+                            plotsPanel.Children.Add(plotControl)
+                                
+                        | VPlotFunction (title, f) ->
+                            let plotControl = AvaPlot()
+                            plotControl.Height <- 300
+                            plotControl.Width <- 400
+                            plotControl.Margin <- Thickness(0, 10, 0, 10)
+                            plotControl.Plot.Title(title)
+                            plotControl.Plot.Add.Function(f) |> ignore
+                            plotControl.Refresh()
+                            
+                            plotsPanel.Children.Add(plotControl)
+                                
+                        | _ -> ()
+                        
+                    vm.Plots.Clear()
+                | None -> 
+                    output.Foreground <- SolidColorBrush(Colors.Red)
+                    output.Text <- "Failed to compile code"
+                    plotsPanel.Children.Clear()
+            with
+            | ex -> 
                 output.Foreground <- SolidColorBrush(Colors.Red)
-                output.Text <- "Failed to compile code"
+                output.Text <- ex.Message
                 plotsPanel.Children.Clear()
         )
         
@@ -267,7 +273,7 @@ type NotebookWindow () as this =
                         NotebookPdfExport.exportToPdf cells path)
             with 
             | ex -> 
-                eprintfn "Failed to export PDF: %s" ex.Message
+                eprintfn $"Failed to export PDF: %s{ex.Message}"
         } |> ignore
     member private this.ImportNotebook() =
         // TODO: Implement notebook import

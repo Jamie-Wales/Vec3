@@ -41,7 +41,7 @@ let readConstant (vm: VM) =
     let frame = getCurrentFrame vm
 
     if int byte >= frame.Function.Chunk.ConstantPool.Count then
-        failwithf $"Constant index out of range: %d{int byte} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
+        raise <| InvalidProgramException $"Constant index out of range: {byte} (pool size: {frame.Function.Chunk.ConstantPool.Count})"
 
     let constant = frame.Function.Chunk.ConstantPool[int byte]
     (constant, vm)
@@ -54,7 +54,7 @@ let readConstantLong (vm: VM) =
     let index = (int byte1) ||| ((int byte2) <<< 8) ||| ((int byte3) <<< 16)
 
     if index >= frame.Function.Chunk.ConstantPool.Count then
-        failwith $"Long constant index out of range: %d{index} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
+        raise <| InvalidProgramException $"Long constant index out of range: %d{index} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
 
     let constant = frame.Function.Chunk.ConstantPool[index]
     (constant, vm)
@@ -121,7 +121,7 @@ let callValue (vm: VM) (argCount: int) : VM =
     match callee with
     | VFunction(func, _) ->
         if argCount <> func.Arity then
-            failwith $"Expected {func.Arity} arguments but got {argCount}"
+            raise <| InvalidProgramException $"Expected {func.Arity} arguments but got {argCount}"
 
         let frame =
             { Function = func
@@ -133,7 +133,7 @@ let callValue (vm: VM) (argCount: int) : VM =
         vm
     | VClosure closure ->
         if argCount <> closure.Function.Arity then
-            failwith $"Expected {closure.Function.Arity} arguments but got {argCount}"
+            raise <| InvalidProgramException $"Expected {closure.Function.Arity} arguments but got {argCount}"
 
         let frame =
             { Function = closure.Function
@@ -157,7 +157,7 @@ let callValue (vm: VM) (argCount: int) : VM =
         let res, vm = pop vm
         let _, vm = pop vm
         push vm res
-    | _ -> failwith $"Can only call functions, got: {valueToString callee}"
+    | _ -> raise <| InvalidProgramException $"Can only call functions and closures"
 
 
 let parsePlotType = function
@@ -169,8 +169,8 @@ let parsePlotType = function
         Line 
     | "bar" -> 
         printf "Parsing Bar" 
-        Bar 
-    | unknown -> failwith $"Unknown plot type: {unknown}"
+        Bar
+    | name -> raise <| InvalidProgramException $"Unknown plot type: {name}"
     
 let rec createNewVM (mainFunc: Function) : VM =
     let constantPool =
@@ -218,28 +218,28 @@ and builtins () =
           let title = 
               match findField "title" (VString "Plot") with
               | VString t -> t
-              | _ -> failwith "title must be a string"
+              | _-> raise <| InvalidProgramException "title must be a string"
 
           let xs = 
               match findField "x" (VList([], LIST)) with
               | VList(xs, _) -> xs
-              | _ -> failwith "x must be a list"
+              | _ -> raise <| InvalidProgramException "x must be a list"
 
           let ys = 
               match findField "y" (VList([], LIST)) with
               | VList(ys, _) -> ys
-              | _ -> failwith "y must be a list"
+              | _ -> raise <| InvalidProgramException "y must be a list"
 
           let plotType = 
               match findField "ptype" (VString "scatter") with
                | VString t -> parsePlotType(t.ToLowerInvariant())
-               | _ -> failwith "type must be a string"
+                | _ -> raise <| InvalidProgramException "ptype must be a string"
           let plotData = VPlotData(title, xs, ys, plotType)
           vm.Plots.Add(plotData)
           push vm VNil
 
       | _ ->
-        failwith "plot expects a record with title, x, y, and optional type fields")
+          raise <| InvalidProgramException "plot expects a list of configuration options")
       Identifier "plotFunc",
       VBuiltin(fun args vm ->
           match args with
@@ -250,22 +250,20 @@ and builtins () =
               vm.Plots.Add(plotData)  
               push vm VNil  
           | _ ->
-              failwith
-                  $"""plotFunc expects a title, a function, a start, a stop, and a step, got: {String.concat ", " (List.map valueToString args)}""")
+              raise <| InvalidProgramException "plotFunc expects a title and a function")
       Identifier "plotFuncs",
         VBuiltin(fun args vm ->
         match args with
         | [ VString title; VList(funcs, _) ] ->
             let funcs = List.map (function
                 | VFunction(_, Some f) -> SymbolicExpression.toBuiltin f
-                | _ -> failwith "plotFuncs expects a list of functions") funcs
+                | _ -> raise <| InvalidProgramException "plotFuncs expects a list of functions") funcs
             
             let plotData = VPlotFunctions(title, funcs)
             vm.Plots.Add(plotData)
             push vm VNil
         | _ ->
-            failwith
-                $"""plotFuncs expects a list of functions, got: {String.concat ", " (List.map valueToString args)}""")
+            raise <| InvalidProgramException "plotFuncs expects a title and a list of functions")
       
       Identifier "print",
       VBuiltin(fun args vm ->
@@ -279,12 +277,15 @@ and builtins () =
           | [ VNumber(VFloat f) ] ->
               let result = VNumber(VFloat(sqrt f))
               push vm result
-          | _ -> failwith $"""sqrt expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+          | _ -> raise <| InvalidProgramException "sqrt expects a float")
       Identifier "BUILTIN_ABS",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(abs f)))
-          | _ -> failwith $"""abs expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+          | [ VNumber(VInteger i) ] -> push vm (VNumber(VInteger(abs i)))
+          | [ VNumber(VComplex(r, i)) ] -> push vm (VNumber(VFloat(sqrt(r * r + i * i))))
+          | [ VNumber(VRational(n, d)) ] -> push vm (VNumber(VRational(abs n, abs d)))
+          | _ -> raise <| InvalidProgramException "abs expects a number")
       Identifier "power",
       VBuiltin(fun args vm ->
           match args with
@@ -300,62 +301,62 @@ and builtins () =
           | [ VNumber(VInteger x); VNumber(VInteger y) ] ->
               let result = VNumber(VInteger(pown x y))
               push vm result
-          | _ -> failwith "Power expects two floats")
+          | _ -> raise <| InvalidProgramException "power expects two numbers")
       Identifier "BUILTIN_FLOOR",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(floor f)))
-          | _ -> failwith $"""floor expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+          | _ -> raise <| InvalidProgramException "floor expects a float")
       Identifier "BUILTIN_COS",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(cos f)))
-          | _ -> failwith $"""cos expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+          | _ -> raise <| InvalidProgramException "cos expects a float")
       Identifier "BUILTIN_SIN",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(sin f)))
-          | _ -> failwith $"""sin expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+          | _ -> raise <| InvalidProgramException "sin expects a float")
       Identifier "BUILTIN_TAN",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(tan f)))
-          | _ -> failwith $"""tan expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+          | _ -> raise <| InvalidProgramException "tan expects a float")
       Identifier "BUILTIN_ACOS",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(acos f)))
-          | _ -> failwith $"""acos expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+          | _ -> raise <| InvalidProgramException "acos expects a float")
 
       Identifier "BUILTIN_ATAN",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(atan f)))
-          | _ -> failwith $"""atan expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+          | _ -> raise <| InvalidProgramException "atan expects a float")
 
       Identifier "BUILTIN_ASIN",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(asin f)))
-          | _ -> failwith $"""asin expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+          | _ -> raise <| InvalidProgramException "asin expects a float")
 
       Identifier "BUILTIN_EXP",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(exp f)))
-          | _ -> failwith $"""exp expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+          | _ -> raise <| InvalidProgramException "exp expects a float")
 
       Identifier "BUILTIN_LOG",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f); VNumber(VFloat f1) ] -> push vm (VNumber(VFloat((log f1) / (log f))))
-          | _ -> failwith $"""log expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+          | _ -> raise <| InvalidProgramException "log expects two floats")
 
       Identifier "BUILTIN_LOG10",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(log10 f)))
-          | _ -> failwith $"""log10 expects a float, got: {String.concat ", " (List.map valueToString args)}""")
+          | _ -> raise <| InvalidProgramException "log10 expects a float")
 
       Identifier "env",
       VBuiltin(fun _ vm ->
@@ -380,7 +381,7 @@ and builtins () =
               let list = VList(value :: l, t)
               push vm list
           | _ ->
-              failwith $"""cons expects a value and a list, got: {String.concat ", " (List.map valueToString args)}""")
+              raise <| InvalidProgramException "cons expects a value and a list")
       Identifier "exit",
       VBuiltin(fun _ vm ->
           Environment.Exit(0)
@@ -423,8 +424,7 @@ and builtins () =
               let result, vm = fold acc vm l
               push vm result
           | _ ->
-              failwith
-                  $"""fold expects a list, an initial value, and a function, got: {String.concat ", " (List.map valueToString args)}""")
+              raise <| InvalidProgramException "fold expects a list, an accumulator, and a function")
 
       Identifier "map",
       VBuiltin(fun args vm ->
@@ -465,28 +465,27 @@ and builtins () =
               let result, vm = map [] vm l'
               push vm (VList(List.rev result, LIST))
           | _ ->
-              failwith
-                  $"""map expects a list and a function, got: {String.concat ", " (List.map valueToString args)}""")
+              raise <| InvalidProgramException "map expects a list and a function")
       Identifier "dotProduct",
       VBuiltin(fun args vm ->
           match args with
           | [ VList(l1', _) as l1; VList(l2', _) as l2 ] when List.length l1' = List.length l2' ->
               let result = dotProduct l1 l2
               push vm result
-          | _ -> failwith "dotProduct expects two lists of the same length")
+          | _ -> raise <| InvalidProgramException "dotProduct expects two lists of the same length")
       Identifier "crossProduct",
       VBuiltin(fun args vm ->
           match args with
           | [ VList(l1', _) as l1; VList(l2', _) as l2 ] when List.length l1' = 3 && List.length l2' = 3 ->
               let result = crossProduct l1 l2
               push vm result
-          | _ -> failwith "crossProduct expects two lists of length 3")
+          | _ -> raise <| InvalidProgramException "crossProduct expects two lists of length 3")
 
       Identifier "BUILTIN_TRUNC",
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VFloat num) ] -> push vm (VNumber(VFloat(truncate num)))
-          | _ -> failwith "trunc expects a float")
+          | _ -> raise <| InvalidProgramException "truncate expects a float")
 
       Identifier "range",
       VBuiltin(fun args vm ->
@@ -495,53 +494,18 @@ and builtins () =
               let range = [ for i in start..stop -> VNumber(VInteger i) ]
               let list = VList(range, LIST)
               push vm list
-          | _ -> failwith "Range expects two integers")
+            | [ VNumber(VInteger start); VNumber(VInteger stop); VNumber(VInteger step) ] ->
+                let range = [ for i in start..step..stop -> VNumber(VInteger i) ]
+                let list = VList(range, LIST)
+                push vm list
+            | _ -> raise <| InvalidProgramException "range expects two integers")
 
       Identifier "BUILTIN_LEN",
       VBuiltin(fun args vm ->
           match args with
           | [ VList(l, _) ] -> push vm (VNumber(VInteger(List.length l)))
-          | _ -> failwith "len expects a list")
-
-      Identifier "Int",
-      VBuiltin(fun args vm ->
-          match args with
-          | [ VNumber(VFloat f) ] -> push vm (VNumber(VInteger(int f)))
-          | _ -> failwith "Int expects a float")
-
-      Identifier "Float",
-      VBuiltin(fun args vm ->
-          match args with
-          | [ VNumber(VInteger i) ] -> push vm (VNumber(VFloat(float i)))
-          | _ -> failwith "Float expects an integer")
-
-      Identifier "String",
-      VBuiltin(fun args vm ->
-          match args with
-          | [ VNumber(VInteger i) ] -> push vm (VString(i.ToString()))
-          | [ VNumber(VFloat f) ] -> push vm (VString(f.ToString()))
-          | [ VBoolean b ] -> push vm (VString(b.ToString()))
-          | [ VString s ] -> push vm (VString(s))
-          | [ VList(l, _) ] -> push vm (VString(String.concat ", " (List.map valueToString l)))
-          | _ -> failwith "String expects a number, boolean, string, or list")
-
-      Identifier "Complex",
-      VBuiltin(fun args vm ->
-          match args with
-          | [ VNumber(VFloat re) ] -> push vm (VNumber(VComplex(re, 0.0)))
-          | _ -> failwith "Complex expects two floats")
-
-      Identifier "Rational",
-      VBuiltin(fun args vm ->
-          match args with
-          | [ VNumber(VInteger n) ] -> push vm (VNumber(VRational(n, 1)))
-          | _ -> failwith "Rational expects two integers")
-
-      Identifier "Boolean",
-      VBuiltin(fun args vm ->
-          match args with
-          | [ VBoolean b ] -> push vm (VBoolean(b))
-          | _ -> failwith "Boolean expects a boolean") // TODO add more cases to coercions
+          | [ VString s ] -> push vm (VNumber(VInteger(s.Length)))
+          | _ -> raise <| InvalidProgramException "len expects a list or a string")
 
       Identifier "PI", VNumber(VFloat(Math.PI))
 
@@ -570,7 +534,7 @@ and builtins () =
               
               let res = newtonRaphson builtin1 builtin2 init tol it
               push vm (VNumber(VFloat(res)))
-          | _ -> failwith "invalid")
+          | _ -> raise <| InvalidProgramException "newtonRaphson expects two functions, an initial guess, a tolerance, and a maximum number of iterations")
 
       Identifier "bisection",
       VBuiltin(fun args vm ->
@@ -579,7 +543,7 @@ and builtins () =
               let builtin = SymbolicExpression.toBuiltin f
               let res = bisection builtin a b tol it
               push vm (VNumber(VFloat(res)))
-          | _ -> failwith "invalid")
+          | _ -> raise <| InvalidProgramException "bisection expects a function, a lower bound, an upper bound, a tolerance, and a maximum number of iterations")
       
       Identifier "eval",
       VBuiltin(fun args vm ->
@@ -594,10 +558,9 @@ and builtins () =
                       let vm' = run block
                       let lst = vm'.Stack[vm'.Stack.Count - 1]
                       push vm lst
-                  | Error err -> failwith $"{err}"
-                | _ -> failwith "invalid"
-            | _ -> failwith "invalid"
-          )
+                  | Error err -> raise <| InvalidProgramException $"{err}"
+              | _ -> raise <| InvalidProgramException "eval expects a block"
+          | _ -> raise <| InvalidProgramException "eval expects a block")
       
       Identifier "differentiate",
       VBuiltin(fun args vm ->
@@ -616,9 +579,9 @@ and builtins () =
                     let vm' = run block
                     let lst = vm'.Stack[vm'.Stack.Count - 1]
                     push vm lst
-                | Error err -> failwith $"{err}"
+                | Error err -> raise <| InvalidProgramException $"{err}"
                 
-            | _ -> failwith "invalid")
+            | _ -> raise <| InvalidProgramException "differentiate expects a function")
       
       
       Identifier "assert",
@@ -626,142 +589,143 @@ and builtins () =
           match args with
           | [msg; cond] ->
               if not (isTruthy cond) then
-                 failwithf $"Assertion failed: {valueToString msg}"
+                  raise <| InvalidProgramException $"Assertion failed: {valueToString cond}"
               else
                   push vm VNil
           | [cond] ->
               if not (isTruthy cond) then
-                 failwithf $"Assertion failed: {valueToString cond}"
+                  raise <| InvalidProgramException $"Assertion failed: {valueToString cond}"
               else
                   push vm VNil
-          | _ -> failwith "invalid"
-          )
+            | _ -> raise <| InvalidProgramException "assert expects a condition")
 
       Operator(Plus, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> add a b |> push vm
-          | _ -> failwith "Expected two arguments for +")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for +")
 
       Operator(Minus, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> subtract a b |> push vm
-          | _ -> failwith "Expected two arguments for -")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for -")
 
       Operator(Star, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> multiply a b |> push vm
-          | _ -> failwith "Expected two arguments for *")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for *")
 
       Operator(Slash, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> divide a b |> push vm
-          | _ -> failwith "Expected two arguments for /")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for /")
 
       Operator(Percent, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ VNumber(VInteger a); VNumber(VInteger b) ] -> push vm (VNumber(VInteger(a % b)))
-          | _ -> failwith "Expected two integers for %")
+          | [ VNumber(VFloat a); VNumber(VFloat b) ] -> push vm (VNumber(VFloat(a % b)))
+          | _ -> raise <| InvalidProgramException "Expected two integers or floats for %")
 
       Operator(StarStar, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> power a b |> push vm
-          | _ -> failwith "Expected two integers for **")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for **")
 
       Operator(Equal, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> valuesEqual a b |> VBoolean |> push vm
-          | _ -> failwith "Expected two arguments for ==")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for ==")
 
       Operator(BangEqual, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> valuesEqual a b |> not |> VBoolean |> push vm
-          | _ -> failwith "Expected two arguments for !=")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for !=")
 
       Operator(Less, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> compare a b < 0 |> VBoolean |> push vm
-          | _ -> failwith "Expected two arguments for <")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for <")
 
       Operator(LessEqual, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> compare a b <= 0 |> VBoolean |> push vm
-          | _ -> failwith "Expected two arguments for <=")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for <=")
 
       Operator(Greater, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> compare a b > 0 |> VBoolean |> push vm
-          | _ -> failwith "Expected two arguments for >")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for >")
 
       Operator(GreaterEqual, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> compare a b >= 0 |> VBoolean |> push vm
-          | _ -> failwith "Expected two arguments for >=")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for >=")
 
       Operator(AmpersandAmpersand, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> (isTruthy a && isTruthy b) |> VBoolean |> push vm
-          | _ -> failwith "Expected two arguments for &&")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for &&")
 
       Operator(PipePipe, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> (isTruthy a || isTruthy b) |> VBoolean |> push vm
-          | _ -> failwith "Expected two arguments for ||")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for ||")
 
       Operator(Bang, Some Prefix),
       VBuiltin(fun args vm ->
           match args with
           | [ a ] -> not (isTruthy a) |> VBoolean |> push vm
-          | _ -> failwith "Expected one argument for !")
+          | _ -> raise <| InvalidProgramException "Expected one argument for !")
 
       Operator(Minus, Some Prefix),
       VBuiltin(fun args vm ->
           match args with
           | [ a ] -> negate a |> push vm
-          | _ -> failwith "Expected one argument for -")
+          | _ -> raise <| InvalidProgramException "Expected one argument for -")
 
       Operator(Plus, Some Prefix),
       VBuiltin(fun args vm ->
           match args with
           | [ a ] -> unnegate a |> push vm
-          | _ -> failwith "Expected one argument for +")
+          | _ -> raise <| InvalidProgramException "Expected one argument for +")
 
       Operator(Caret, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> power a b |> push vm
-          | _ -> failwith "Expected two arguments for ^")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for ^")
 
       Operator(DotStar, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> dotProduct a b |> push vm
-          | _ -> failwith "Expected two arguments for .*")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for .*")
 
       Operator(Cross, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> crossProduct a b |> push vm
-          | _ -> failwith "Expected two arguments for X")
+          | _ -> raise <| InvalidProgramException "Expected two arguments for cross")
 
       Operator(ColonColon, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; VList(l, _) ] -> VList(a :: l, LIST) |> push vm
-          | _ -> failwith "Expected a value and a list for ::") ]
+          | _ -> raise <| InvalidProgramException "Expected a value and a list for ::")
+      ]
 
     |> List.map (fun (key, value) -> lexemeToString key, value)
     |> Map.ofList
@@ -814,7 +778,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let index = frame.StackBase + int slot
 
         if index >= vm.Stack.Count then
-            failwith $"GET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}"
+            raise <| InvalidProgramException $"GET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}"
 
         let value = vm.Stack[index]
         let vm = push vm value
@@ -826,7 +790,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let index = frame.StackBase + int slot
 
         if index >= vm.Stack.Count then
-            failwith $"SET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}"
+            raise <| InvalidProgramException $"SET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}"
 
         vm.Stack[index] <- value
         vm
@@ -847,7 +811,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
                 appendOutput vm Execution $"Defining global variable: {name} = {valueToString value}"
 
             defineGlobal vm name value
-        | _ -> failwith "Expected string constant for variable name in DEFINE_GLOBAL"
+        | _ -> raise <| InvalidProgramException "Expected string constant for variable name in DEFINE_GLOBAL"
     | GET_GLOBAL ->
         let constant, vm = readConstant vm
 
@@ -857,8 +821,9 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             | Some value ->
                 printfn $"GET_GLOBAL: {name} = {valueToString value}"
                 push vm value
-            | None -> failwith $"Undefined variable '{name}'"
-        | _ -> failwith "Expected string constant for variable name in GET_GLOBAL"
+            | None ->
+                raise <| InvalidProgramException $"Undefined variable '{name}'"
+        | _ -> raise <| InvalidProgramException "Expected string constant for variable name in GET_GLOBAL"
     | SET_GLOBAL ->
         let constant, vm = readConstant vm
 
@@ -870,8 +835,8 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
                 let vm = defineGlobal vm name value
                 vm
             else
-                failwith $"Undefined variable '{name}'"
-        | _ -> failwith "Expected string constant for variable name in SET_GLOBAL"
+                raise <| InvalidProgramException $"Undefined variable '{name}'"
+        | _ -> raise <| InvalidProgramException "Expected string constant for variable name in SET_GLOBAL"
     | CALL ->
         let vm, argCount = readByte vm
 
@@ -902,7 +867,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             let closure = VClosure { Function = func; UpValues = upValues }
             let vm = push vm closure
             vm
-        | _ -> failwith "Expected function constant for closure"
+        | _ -> raise <| InvalidProgramException "Expected function constant for closure"
     | JUMP ->
         printfn $"Jumping"
         let vm, byte1 = readByte vm
@@ -940,7 +905,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             let list = VList(List.append values values', typ)
             let vm = push vm list
             vm
-        | _ -> failwith "Expected non-negative integer for list size"
+        | _ -> raise <| InvalidProgramException("Expected list and integer for list create")
 
     | COMPOUND_GET ->
         let key, vm = pop vm
@@ -962,9 +927,8 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             match value with
             | Some(VList([ _; v ], _)) -> push vm v
             | _ -> push vm VNil
-        | _ -> failwith "Invalid index"
-
-    | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
+        | _ -> raise <| InvalidProgramException("Expected list and integer for list get")
+    | _ -> raise <| InvalidProgramException($"Unimplemented opcode: {opCodeToString opcode}")
 
 and runLoop vm =
     if vm.Frames.Count = 0 then
@@ -1085,7 +1049,7 @@ let stepVM (vm: VM) =
                             appendOutput vm Execution $"Defining global variable: {name} = {valueToString value}"
 
                         defineGlobal vm name value
-                    | _ -> failwith "Expected string constant for variable name"
+                    | _ -> raise <| InvalidProgramException("Expected string constant for variable name in DEFINE_GLOBAL")
                 | GET_GLOBAL ->
                     let constant, vm = readConstant vm
 
@@ -1093,8 +1057,8 @@ let stepVM (vm: VM) =
                     | VString name ->
                         match getGlobal vm name with
                         | Some value -> push vm value
-                        | None -> failwith $"Undefined variable '{name}'"
-                    | _ -> failwith "Expected string constant for variable name"
+                        | None -> raise <| InvalidProgramException($"Undefined variable '{name}'")
+                    | _ -> raise <| InvalidProgramException("Expected string constant for variable name in GET_GLOBAL")
                 | RETURN ->
                     if vm.Frames.Count > 1 then
                         let returnValue, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
@@ -1103,7 +1067,7 @@ let stepVM (vm: VM) =
                     else
                         vm
 
-                | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
+                | _ -> raise <| InvalidProgramException($"Unimplemented opcode: {opCodeToString opcode}")
 
         updatedVM
 
