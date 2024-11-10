@@ -4,7 +4,6 @@ open Microsoft.FSharp.Core
 open Token
 open Grammar
 open Scanner
-open Vec3.Interpreter.Token
 
 
 

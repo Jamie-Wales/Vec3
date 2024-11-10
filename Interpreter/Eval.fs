@@ -195,6 +195,7 @@ let evalLiteral =
 let rec evalExpr (env: Env) (expr: Expr) : Expr =
     match expr with
     // extensible rows
+    | ECodeBlock expr -> ECodeBlock expr
     | ERange (start, end_, _) ->
         let start = evalExpr env start
         let end_ = evalExpr env end_
@@ -635,6 +636,10 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
 and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
     match stmt with
     | SExpression(expr, _) -> evalExpr env expr, env
+    | SRecFunc (name, params', body, t) ->
+        let lambda = ELambda(params', body, None, false, t)
+        let env = Map.add name.Lexeme lambda env
+        lambda, env
 
     | SVariableDeclaration(name, expr, _) ->
         let value = evalExpr env expr

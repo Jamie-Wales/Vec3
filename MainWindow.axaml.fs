@@ -49,6 +49,8 @@ let diff = differentiate(f)
 
 print(diff)
 
+plotFuncs("Differentiation", f, diff)
+
 let y = (z) -> cos(z)
 
 let r = (t) -> 2.9 * tan(t) 
@@ -61,9 +63,10 @@ let root = bisection(f, a, b, tolerance, max)
 
 print(root)
 
-plotFunc("test", f)
-plotFunc("cosTest", y)
-plotFunc("tanTest", r)
+plotFunc("Polynomial", f)
+
+plotFunc("Cos", cos)
+plotFunc("Tan", r)
 
 let data = {
     title="My Plot",

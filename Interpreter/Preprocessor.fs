@@ -1,8 +1,6 @@
 module Vec3.Interpreter.Preprocessor
 
-open System
 open System.IO
-open System.Text.RegularExpressions
 
 let rec preprocess (filename: string): string =
     let content = File.ReadAllText filename

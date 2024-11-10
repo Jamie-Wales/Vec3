@@ -1,7 +1,6 @@
 module Vec3.Interpreter.ConstantFolding
 
 open Token
-open Eval
 open Grammar
 
 let rec GCD a b =
