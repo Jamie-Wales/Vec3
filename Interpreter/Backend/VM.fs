@@ -668,6 +668,15 @@ and builtins () =
                 push vm VNil
                 
             | _ -> raise <| InvalidProgramException "draw expects a title and a list of functions")
+      
+      // TODO FIX THIS !!
+      Identifier "findIntegral",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VFunction(_, Some f); VNumber(VFloat a); VNumber(VFloat b)  ] ->
+                let res = SymbolicExpression.findIntegral f a b
+                push vm (VNumber(VFloat res))
+          )
 
       Operator(Plus, Some Infix),
       VBuiltin(fun args vm ->

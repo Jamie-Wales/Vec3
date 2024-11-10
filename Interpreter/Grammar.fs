@@ -136,6 +136,7 @@ type Type =
                 match row with
                 | TRowEmpty -> false
                 | TRowExtend(field, t, rest) -> (field.Lexeme = name && t = typ) || hasField' rest
+                | TConstrain constrain -> constrain.Constrain typ
                 | _ -> false
 
             hasField' row

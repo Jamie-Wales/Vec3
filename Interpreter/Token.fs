@@ -263,6 +263,7 @@ type BuiltInFunction =
     | Bisection
     | Differentiate
     | Integrate
+    | FindIntegral
     
 let builtInFunctionMap =
     [ Identifier "print", BuiltInFunction.Print
@@ -297,6 +298,7 @@ let builtInFunctionMap =
       Identifier "bisection", BuiltInFunction.Bisection
       Identifier "differentiate", BuiltInFunction.Differentiate
       Identifier "integrate", BuiltInFunction.Integrate
+      Identifier "findIntegral", BuiltInFunction.FindIntegral
       
       Operator (Plus, Some Infix), BuiltInFunction.Add
       Operator (Minus, Some Infix), BuiltInFunction.Sub

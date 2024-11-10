@@ -539,6 +539,7 @@ and listOrRange (state: ParserState) : ParseResult<Expr> =
                 |> Result.bind (fun (state, exprs) ->
                     expect state (Punctuation RightBracket)
                     |> Result.bind (fun state -> Ok(state, EList(start :: exprs, None))))
+            | Some (state, { Lexeme = Punctuation RightBracket }) -> Ok(state, EList([ start ], None))
             | _ -> Error(Expected "',' or '..' after list element.", state))
 
 and grouping (state: ParserState) : ParseResult<Expr> =
