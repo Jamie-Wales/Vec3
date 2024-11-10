@@ -32,8 +32,15 @@
         <Compile Include="Interpreter\ConstantFolding.fs" />
         <Compile Include="Interpreter\Prelude.fs" />
         <Compile Include="Interpreter\Repl.fs" />
+<<<<<<< HEAD
         <Compile Include="NotebookPDFExport.fs" />
+=======
+        <Compile Include="Interpreter\SymbolicExpression.fs" />
+>>>>>>> 13c8b72ffec9c3088f43b174dbdfb68a231f4db3
         <Compile Include="Notebook.axaml.fs" />
+        <Compile Include="Interpreter\Backend\Compiler.fs" />
+        <Compile Include="Notebook.axaml.fs" />
+        <Compile Include="Interpreter\SymbolicExpression.fs" />
         <Compile Include="PlotWindow.axaml.fs" />
         <Compile Include="MainWindow.axaml.fs" />
         <Compile Include="App.axaml.fs" />
