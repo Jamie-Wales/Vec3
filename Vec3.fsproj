@@ -8,7 +8,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Draw.axaml.fs" />
         <Compile Include="SyntaxWindow.axaml.fs" />
         <Compile Include="Interpreter\Preprocessor.fs" />
         <Compile Include="Interpreter\Token.fs" />
@@ -38,6 +37,7 @@
         <Compile Include="Notebook.axaml.fs" />
         <Compile Include="Notebook.axaml.fs" />
         <Compile Include="PlotWindow.axaml.fs" />
+        <Compile Include="Draw.axaml.fs" />
         <Compile Include="MainWindow.axaml.fs" />
         <Compile Include="App.axaml.fs" />
         <Compile Include="Program.fs" />

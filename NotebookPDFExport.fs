@@ -4,14 +4,30 @@ open QuestPDF.Fluent
 open QuestPDF.Helpers
 open QuestPDF.Infrastructure
 open System
+open Avalonia
 open Avalonia.Controls
 open AvaloniaEdit
+open ScottPlot.Avalonia
+open Avalonia.Media.Imaging
+open System.IO
 
 type CellData = 
     | TextCell of string
-    | CodeCell of {| Code: string; Output: string |}
+    | CodeCell of {| Code: string; Output: string; Plots: byte[] list |}
 
 module NotebookPdfExport =
+    let private capturePlotImage (plot: AvaPlot) =
+        let pixelSize = PixelSize(int plot.Width, int plot.Height)
+        let bitmap = new RenderTargetBitmap(pixelSize)
+        
+        plot.Measure(Size(plot.Width, plot.Height))
+        plot.Arrange(Rect(0.0, 0.0, plot.Width, plot.Height))
+        bitmap.Render(plot)
+        
+        use stream = new MemoryStream()
+        bitmap.Save(stream)
+        stream.ToArray()
+
     let extractCellsData (cellsContainer: StackPanel) =
         if cellsContainer = null then []
         else
@@ -20,12 +36,22 @@ module NotebookPdfExport =
             |> Seq.map (fun border -> 
                 let grid = border.Child :?> Grid
                 match grid.RowDefinitions.Count with
-                | 3 -> // Code cell (has buttons, editor, and output)
+                | 4 -> // Code cell (has buttons, editor, output, and plots)
                     let editor = grid.Children[1] :?> TextEditor
                     let output = grid.Children[2] :?> TextBlock
+                    let plotsPanel = grid.Children[3] :?> StackPanel
+                    
+                    // Capture all plots in the cell
+                    let plotImages = 
+                        plotsPanel.Children 
+                        |> Seq.cast<AvaPlot>
+                        |> Seq.map capturePlotImage
+                        |> Seq.toList
+                    
                     CodeCell {| 
                         Code = editor.Text.Trim()
                         Output = output.Text.Trim()
+                        Plots = plotImages
                     |}
                 | 2 -> // Text cell (has button and editor)
                     let editor = grid.Children[1] :?> TextEditor
@@ -33,11 +59,13 @@ module NotebookPdfExport =
                 | _ -> TextCell ""
             )
             |> Seq.filter (function 
-                | TextCell text -> not (System.String.IsNullOrWhiteSpace(text))
+                | TextCell text -> not (String.IsNullOrWhiteSpace(text))
                 | CodeCell data -> 
-                    not (System.String.IsNullOrWhiteSpace(data.Code)) || 
-                    not (System.String.IsNullOrWhiteSpace(data.Output)))
+                    not (String.IsNullOrWhiteSpace(data.Code)) || 
+                    not (String.IsNullOrWhiteSpace(data.Output)) ||
+                    not (List.isEmpty data.Plots))
             |> Seq.toList
+
     let exportToPdf (cells: CellData list) (path: string) =
         Document.Create(fun container ->
             container.Page(fun page ->
@@ -103,6 +131,7 @@ module NotebookPdfExport =
                         | CodeCell data ->
                             column.Item()
                                 .Column(fun codeSection ->
+                                    // Code Section
                                     codeSection.Item()
                                         .Border(1.0f)
                                         .BorderColor("#E2E8F0")
@@ -121,6 +150,7 @@ module NotebookPdfExport =
                                                 .Text(data.Code)
                                                 .FontColor("#2D3748") |> ignore) |> ignore
                                     
+                                    // Output Section (if any)
                                     if not (String.IsNullOrWhiteSpace(data.Output)) then
                                         codeSection.Item()
                                             .PaddingTop(5.0f)
@@ -138,6 +168,40 @@ module NotebookPdfExport =
                                                     .Background("#F0FFF4")
                                                     .Padding(12.0f)
                                                     .Text(data.Output)
-                                                    .FontColor("#2F855A") |> ignore) |> ignore) |> ignore
+                                                    .FontColor("#2F855A") |> ignore) |> ignore
+                                    
+                                    // Plots Section (if any)
+                                    if not (List.isEmpty data.Plots) then
+                                        codeSection.Item()
+                                            .PaddingTop(5.0f)
+                                            .Border(1.0f)
+                                            .BorderColor("#E2E8F0")
+                                            .Column(fun plotsCol ->
+                                                plotsCol.Item()
+                                                    .Background("#EBF8FF")
+                                                    .Padding(8.0f)
+                                                    .Text("Plots")
+                                                    .Bold()
+                                                    .FontSize(12.0f)
+                                                    .FontColor("#2C5282") |> ignore
+                                                
+                                                for plotImage in data.Plots do
+                                                    plotsCol.Item()
+                                                        .Row(fun row ->
+                                                            // Add left spacing
+                                                            row.ConstantItem(20.0f)
+                                                                .Height(0.0f) |> ignore
+                                                            
+                                                            // Center content
+                                                            row.RelativeItem()
+                                                                .AlignCenter()
+                                                                .Image(plotImage)
+                                                                .WithCompressionQuality(ImageCompressionQuality.Medium)
+                                                                .FitWidth() |> ignore
+                                                            
+                                                            // Add right spacing
+                                                            row.ConstantItem(20.0f)
+                                                                .Height(0.0f) |> ignore
+                                                        )))
                         
                         column.Item().MinHeight(15.0f) |> ignore)) |> ignore).GeneratePdf(path)

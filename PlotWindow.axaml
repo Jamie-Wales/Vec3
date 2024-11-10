@@ -8,6 +8,10 @@
         ExtendClientAreaToDecorationsHint="True"
         Width="800" Height="600">
     <Grid Margin="10, 30">
-        <scottPlot:AvaPlot Name="PlotControl" />
+        <scottPlot:AvaPlot 
+            Name="PlotControl"
+            HorizontalAlignment="Left"
+            Width="400"
+            Height="300"/>
     </Grid>
 </Window>

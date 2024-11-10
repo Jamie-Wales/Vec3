@@ -2,6 +2,7 @@ namespace Vec3
 
 open System
 open Avalonia.Controls
+open Avalonia.Controls.Shapes
 open Avalonia.Markup.Xaml
 open AvaloniaEdit
 open Avalonia.Media

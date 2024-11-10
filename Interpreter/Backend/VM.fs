@@ -407,11 +407,8 @@ and builtins () =
                             Locals = Array.zeroCreate f.Locals.Length }
 
                       vm.Frames.Add(frame)
-
                       let result, vm = runCurrentFrame vm
-
                       fold result vm xs
-
               let result, vm = fold acc vm l
               push vm result
           | [ VList(l, _); acc; VBuiltin f ] ->
