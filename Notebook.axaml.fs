@@ -4,8 +4,10 @@ open System.Threading.Tasks
 open Avalonia
 open Avalonia.Controls
 open Avalonia.Markup.Xaml
+open Avalonia.Media.Imaging
 open AvaloniaEdit
 open Avalonia.Media
+open ScottPlot.Avalonia
 open TextMateSharp.Grammars
 open AvaloniaEdit.TextMate
 open Vec3.Interpreter.Backend.VM
@@ -94,7 +96,7 @@ type NotebookWindow () as this =
         cellBorder.Classes.Add("cell")
         
         let grid = Grid()
-        grid.RowDefinitions <- RowDefinitions("Auto,*,Auto")
+        grid.RowDefinitions <- RowDefinitions("Auto,*,Auto,Auto") // Added row for plots
         
         // Buttons panel
         let buttonsPanel = StackPanel()
@@ -120,6 +122,11 @@ type NotebookWindow () as this =
         output.FontFamily <- "Cascadia Code,Consolas,Menlo,Monospace"
         output.Foreground <- SolidColorBrush(Colors.Black)
         
+        // Plots panel
+        let plotsPanel = StackPanel()
+        plotsPanel.Orientation <- Avalonia.Layout.Orientation.Vertical
+        plotsPanel.Margin <- Thickness(10.0)
+        
         // Wire up events
         runButton.Click.Add(fun _ -> 
             match noTcParseAndCompile editor.Text vm with
@@ -132,9 +139,58 @@ type NotebookWindow () as this =
                               |> Seq.skip oldOutputLength 
                               |> String.concat "\n"
                 output.Text <- newOutput
+
+                // Clear existing plots
+                plotsPanel.Children.Clear()
+
+                // Handle any plots that were generated
+                for value in vm.Plots do
+                    match value with
+                    | VPlotData (title, xs, ys, plotType) ->
+                        let plotControl = AvaPlot()
+                        plotControl.Height <- 300
+                        plotControl.Width <- 400
+                        plotControl.Margin <- Thickness(0, 10, 0, 10)
+                        plotControl.Plot.Title(title)
+                        
+                        let extractNumber = function
+                            | VNumber (VFloat f) -> f
+                            | VNumber (VInteger i) -> float i
+                            | _ -> 0.0
+                        
+                        let x = List.map extractNumber xs |> Array.ofList
+                        let y = List.map extractNumber ys |> Array.ofList
+                        
+                        match plotType with
+                        | Scatter -> 
+                            plotControl.Plot.Add.Scatter(x, y) |> ignore
+                        | Line ->
+                            plotControl.Plot.Add.Line(x.[0], y.[0], x.[1], y.[1]) |> ignore
+                        | Bar ->
+                            plotControl.Plot.Add.Bars(y, x) |> ignore
+                        | Histogram -> failwith "todo"
+                        
+                        plotControl.Refresh()
+                        plotsPanel.Children.Add(plotControl)
+                            
+                    | VPlotFunction (title, f) ->
+                        let plotControl = AvaPlot()
+                        plotControl.Height <- 300
+                        plotControl.Width <- 400
+                        plotControl.Margin <- Thickness(0, 10, 0, 10)
+                        plotControl.Plot.Title(title)
+                        plotControl.Plot.Add.Function(f) |> ignore
+                        plotControl.Refresh()
+                        
+                        plotsPanel.Children.Add(plotControl)
+                            
+                    | _ -> ()
+                    
+                vm.Plots.Clear()
             | None -> 
                 output.Foreground <- SolidColorBrush(Colors.Red)
                 output.Text <- "Failed to compile code"
+                plotsPanel.Children.Clear()
         )
         
         deleteButton.Click.Add(fun _ ->
@@ -148,10 +204,12 @@ type NotebookWindow () as this =
         Grid.SetRow(buttonsPanel, 0)
         Grid.SetRow(editor, 1)
         Grid.SetRow(output, 2)
+        Grid.SetRow(plotsPanel, 3)
         
         grid.Children.Add(buttonsPanel)
         grid.Children.Add(editor)
         grid.Children.Add(output)
+        grid.Children.Add(plotsPanel)
         
         cellBorder.Child <- grid
         cellsContainer.Children.Add(cellBorder)

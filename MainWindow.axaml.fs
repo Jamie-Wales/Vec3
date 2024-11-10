@@ -17,7 +17,6 @@ open Vec3.Interpreter.Typing
 open System.Threading.Tasks
 open System.Threading
 
-open ScottPlot.Collections
 type MainWindow () as this =
     inherit Window ()
 

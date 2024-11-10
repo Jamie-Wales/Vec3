@@ -11,6 +11,7 @@
         <Compile Include="SyntaxWindow.axaml.fs" />
         <Compile Include="Interpreter\Preprocessor.fs" />
         <Compile Include="Interpreter\Token.fs" />
+        <Compile Include="NotebookPDFExport.fs"/>
         <Compile Include="Interpreter\Grammar.fs" />
         <Compile Include="Interpreter\Printer.fs" />
         <Compile Include="Interpreter\Scanner.fs" />
@@ -32,11 +33,7 @@
         <Compile Include="Interpreter\ConstantFolding.fs" />
         <Compile Include="Interpreter\Prelude.fs" />
         <Compile Include="Interpreter\Repl.fs" />
-<<<<<<< HEAD
-        <Compile Include="NotebookPDFExport.fs" />
-=======
         <Compile Include="Interpreter\SymbolicExpression.fs" />
->>>>>>> 13c8b72ffec9c3088f43b174dbdfb68a231f4db3
         <Compile Include="Notebook.axaml.fs" />
         <Compile Include="Interpreter\Backend\Compiler.fs" />
         <Compile Include="Notebook.axaml.fs" />
