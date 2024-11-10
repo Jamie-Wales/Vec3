@@ -4,7 +4,6 @@ open Microsoft.FSharp.Core
 open Token
 open Grammar
 open Scanner
-open Vec3.Interpreter.Token
 
 
 
@@ -567,10 +566,12 @@ and ifElse (state: ParserState) : ParseResult<Expr> =
         |> Result.bind (fun state ->
             expression state Precedence.None
             |> Result.bind (fun (state, thenBranch) ->
+                let thenBranch = ETail(thenBranch, None)
                 match nextToken state with
                 | Some(state, { Lexeme = Keyword Else }) ->
                     expression state Precedence.None
                     |> Result.bind (fun (state, elseBranch) ->
+                        let elseBranch = ETail(elseBranch, None)
                         Ok(state, EIf(condition, thenBranch, elseBranch, None)))
                 | _ -> Ok(state, EIf(condition, thenBranch, ELiteral(LUnit, TUnit), Some TUnit)))))
 
@@ -791,7 +792,18 @@ and block (state: ParserState) : ParseResult<Expr> =
 
     let rec loop (state: ParserState) (stmts: Stmt list) : ParseResult<Expr> =
         match peek state with
-        | Some { Lexeme = Punctuation RightBrace } -> Ok(advance state, EBlock(List.rev stmts, None))
+        | Some { Lexeme = Punctuation RightBrace } ->
+            let head = List.tryHead stmts
+            match head with
+            | Some e ->
+                match e with
+                | SExpression(e, _) ->
+                    let e = SExpression(ETail(e, None), None)
+                    let stmts = List.skip 1 stmts
+                    let stmts = e :: stmts
+                    Ok (advance state, EBlock(List.rev stmts, None))
+                | _ -> Ok(advance state, EBlock(List.rev stmts, None))
+            | None -> Ok(advance state, EBlock(List.rev stmts, None))
         | None -> Error (UnexpectedEndOfInput, state)
         | _ -> statement state |> Result.bind (fun (state, stmt) -> loop state (stmt :: stmts))
 

@@ -1,7 +1,6 @@
 module Vec3.Interpreter.ConstantFolding
 
 open Token
-open Eval
 open Grammar
 
 let rec GCD a b =
@@ -33,6 +32,7 @@ let foldConstants (program: Program) : Program =
 
     and foldExpr (expr: Expr) : Expr =
         match expr with
+        | ETail(expr, typ) -> ETail(foldExpr expr, typ)
         | ELiteral(lit, typ) -> ELiteral(lit, typ)
         | EBlock(stmts, typ) -> EBlock(foldStatements stmts, typ)
         | EIdentifier(token, typ) -> EIdentifier(token, typ)

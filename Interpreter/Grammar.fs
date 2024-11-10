@@ -166,6 +166,8 @@ type Expr =
     | ERecordEmpty of Type
     
     | ECodeBlock of Expr
+    
+    | ETail of Expr * Type option
 
 and Stmt =
     | SExpression of Expr * Type option

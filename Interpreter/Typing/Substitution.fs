@@ -1,7 +1,6 @@
 module Vec3.Interpreter.Typing.Substitution
 
 open Vec3.Interpreter.Typing.Types
-open Vec3.Interpreter.Typing.Exceptions
 open Vec3.Interpreter.Grammar
 
 // make this immutable later, as it specialises functions too much

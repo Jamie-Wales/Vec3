@@ -1,6 +1,5 @@
 module Vec3.Interpreter.Backend.Types
 
-open Vec3.Interpreter
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.PrettyPrinter
 open Vec3.Interpreter.SymbolicExpression
@@ -101,8 +100,20 @@ let rec valueToString =
     | VFunction(f, _) -> $"<fn {f.Name}>"
     | VClosure c -> $"<closure {c.Function.Name}>"
     | VNil -> "nil"
-    | VList(l, typ) -> $"""[{String.concat ", " (List.map valueToString l)}]"""
+    | VList(l, typ) ->
+        match typ with
+        | LIST ->
+            $"""[{String.concat ", " (List.map valueToString l)}]"""
+        | RECORD ->
+            let fields =
+                l
+                |> List.map (fun v -> match v with VList([VString s; v], _) -> s, v | _ -> failwith "bad")
+                |> List.map (fun (s, v) -> $"""{s}: {valueToString v}""")
+            $"""{{{String.concat ", " fields}}}"""
+        | TUPLE ->
+            $"""({String.concat ", " (List.map valueToString l)})"""
     | VBuiltin _ -> "<builtin>"
     | VPlotData _ -> "<plot data>"
     | VPlotFunction _ -> "<plot function>"
+    | VPlotFunctions _ -> "<plot functions>"
     | VBlock v -> printExpr v

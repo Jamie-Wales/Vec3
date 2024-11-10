@@ -1,6 +1,5 @@
 module Vec3.Interpreter.Backend.Value
 
-open System.Collections.Generic
 open Microsoft.FSharp.Core
 open Vec3.Interpreter.Backend.Types
 open System
@@ -65,7 +64,7 @@ let rec add a b =
         let zipped = List.zip l1 l2
         let added = List.map (fun (x, y) -> add x y) zipped
         VList (added, t)
-    | _ -> failwith "Can only add numbers"
+    | _ -> raise <| InvalidOperationException("Can only add numbers")
 
 let rec subtract a b =
     match (a, b) with
@@ -82,7 +81,7 @@ let rec subtract a b =
         let zipped = List.zip l1 l2
         let added = List.map (fun (x, y) -> subtract x y) zipped
         VList (added, t)
-    | _ -> failwith "Can only subtract numbers"
+    | _ -> raise <| InvalidOperationException("Can only subtract numbers")
 
 let rec multiply a b =
     match (a, b) with
@@ -97,7 +96,7 @@ let rec multiply a b =
         let zipped = List.zip l1 l2
         let added = List.map (fun (x, y) -> multiply x y) zipped
         VList (added, t)
-    | _ -> failwith "Can only multiply numbers"
+    | _ -> raise <| InvalidOperationException("Can only multiply numbers")
 
 let rec divide a b =
     match (a, b) with
@@ -110,13 +109,13 @@ let rec divide a b =
         VNumber(VComplex((a*c + b*d) / denominator, (b*c - a*d) / denominator))
     | VNumber x, VNumber y ->
         let f1, f2 = floatValue x, floatValue y
-        if f2 = 0.0 then failwith "Division by zero"
+        if f2 = 0.0 then raise <| InvalidOperationException("Cannot divide by zero")
         VNumber(VFloat(f1 / f2))
     | VList (l1, t), VList (l2, _) ->
         let zipped = List.zip l1 l2
         let added = List.map (fun (x, y) -> divide x y) zipped
         VList (added, t)
-    | _ -> failwith "Can only divide numbers"
+    | _ -> raise <| InvalidOperationException("Can only divide numbers")
 
 let dotProduct a b =
     match (a, b) with
@@ -127,10 +126,10 @@ let dotProduct a b =
                 | l :: ls, r :: rs ->
                     match l, r with
                     | VNumber(VInteger x), VNumber(VInteger y) -> x * y + dotVectors ls rs
-                    | _ -> failwith "invalid"
-                | _ -> failwith "invalid"
+                    | _ -> raise <| InvalidOperationException("Dot product can only be taken between vectors of integers")
+                | _ -> raise <| InvalidOperationException("Vectors must be of the same length")
             VNumber(VInteger(dotVectors l1 l2))
-    | _ -> failwith "Can only take dot product of vectors"
+    | _ -> raise <| InvalidOperationException("Can only take dot product of vectors")
 
 let crossProduct a b =
     match (a, b) with
@@ -139,9 +138,9 @@ let crossProduct a b =
                 match lhs, rhs with
                 | [VNumber(VInteger x); VNumber(VInteger y); VNumber(VInteger z)], [VNumber(VInteger a); VNumber(VInteger b); VNumber(VInteger c)] ->
                     [VNumber(VInteger(y * c - z * b)); VNumber(VInteger(z * a - x * c)); VNumber(VInteger(x * b - y * a))]
-                | _ -> failwith "invalid"
+                | _ -> raise <| InvalidOperationException("Cross product can only be taken between vectors of integers")
             VList(crossVectors l1 l2, t)
-    | _ -> failwith "Can only take cross product of vectors"
+    | _ -> raise <| InvalidOperationException("Can only take cross product of vectors")
 
 let negate value =
     match value with
@@ -149,14 +148,15 @@ let negate value =
     | VNumber(VFloat n) -> VNumber(VFloat(-n))
     | VNumber(VRational(n, d)) -> VNumber(VRational(-n, d))
     | VNumber(VComplex(r, i)) -> VNumber(VComplex(-r, -i))
-    | _ -> failwith "Can only negate numbers"
+    | _ -> raise <| InvalidOperationException("Can only negate numbers")
 
 let unnegate value =
     match value with
     | VNumber(VInteger n) -> VNumber(VInteger(if n < 0 then -n else n))
     | VNumber(VFloat n) -> VNumber(VFloat(if n < 0.0 then -n else n))
     | VNumber(VRational(n, d)) -> VNumber(VRational(if n < 0 then -n, d else n, d))
-    | _ -> failwith "Can only unnegate numbers"
+    // | VNumber(VComplex(r, i)) -> VNumber(VComplex(if r < 0.0 then -r else r, if i < 0.0 then -i else i))
+    | _ -> raise <| InvalidOperationException("Can only unnegate numbers")
 
 let power a b =
     match (a, b) with
@@ -165,10 +165,12 @@ let power a b =
     | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) -> 
         VNumber(VRational(int (float n1 ** float n2), int (float d1 ** float d2)))
     | VNumber(VComplex(a, b)), VNumber(VComplex(c, d)) ->
-        failwith "todo"
+        let r = a ** c * Math.Exp(-b * d)
+        let i = a ** d * Math.Exp(b * c)
+        VNumber(VComplex(r, i))
     | VNumber x, VNumber y ->
         VNumber(VFloat(floatValue x ** floatValue y))
-    | _ -> failwith "Can only raise numbers to a power"
+    | _ -> raise <| InvalidOperationException("Can only raise numbers to a power")
 
 let compare a b =
     match (a, b) with
@@ -177,10 +179,13 @@ let compare a b =
         | VInteger x, VInteger y -> compare x y
         | VRational(n1, d1), VRational(n2, d2) -> 
             compare (n1 * d2) (n2 * d1)
-        | VComplex _, VComplex _ -> 
-            failwith "Cannot compare complex numbers"
+        | VComplex (r1, i1), VComplex (r2, i2) ->
+            let res = compare r1 r2
+            match res with
+            | 0 -> compare i1 i2
+            | _ -> res
         | _ -> compare (floatValue x) (floatValue y)
-    | _ -> failwith "Can only compare numbers"
+    | _ -> raise <| InvalidOperationException("Can only compare numbers")
 
 let rec cast org castTyp =
       match castTyp with
@@ -198,14 +203,14 @@ and castToBool a =
     | VBoolean v -> VBoolean v
     | VNil -> VBoolean false
     | VString s -> if String.IsNullOrEmpty s then VBoolean false else VBoolean true
-    | VNumber n -> VBoolean true
+    | VNumber _ -> VBoolean true
     | VList (l, _) -> if (List.isEmpty l) then (VBoolean false) else VBoolean true
     | _ -> VBoolean true
 
 and castToList a typ =
     match a with
     | VList (l, _) -> if Option.isSome typ then VList (List.map (fun el -> cast el (Option.get typ)) l, LIST) else VList (l, LIST)
-    | _ -> failwith "todo"
+    | _ -> VList ([a], LIST)
     
 and castToInt a =
     match a with
@@ -216,9 +221,9 @@ and castToInt a =
     | VString s -> 
         match Int32.TryParse(s) with
         | true, i -> VNumber (VInteger i)
-        | _ -> failwith "Invalid string for integer conversion"
+        | _ -> raise <| InvalidOperationException("Invalid string for integer conversion")
     | VBoolean b -> VNumber (VInteger (if b then 1 else 0))
-    | _ -> failwith "Cannot cast to integer"
+    | _ -> raise <| InvalidOperationException("Cannot cast to integer")
     
 and castToFloat a =
     match a with
@@ -228,17 +233,17 @@ and castToFloat a =
     | VNumber (VComplex (r, _)) -> VNumber (VFloat r)
     | VString s ->
         match Double.TryParse(s) with
-        | (true, f) -> VNumber (VFloat f)
-        | _ -> failwith "Invalid string for float conversion"
+        | true, f -> VNumber (VFloat f)
+        | _ -> raise <| InvalidOperationException("Invalid string for float conversion")
     | VBoolean b -> VNumber (VFloat (if b then 1.0 else 0.0))
-    | _ -> failwith "Cannot cast to float"
+    | _ -> raise <| InvalidOperationException("Cannot cast to float")
     
 and castToRat a =
     match a with
     | VNumber (VRational (num, denom)) -> VNumber (VRational (num, denom))
     | VNumber (VInteger i) -> VNumber (VRational (i, 1))
     | VNumber (VFloat f) ->
-        let num = int (f * 10000.0) // Example of approximating to 4 decimal places
+        let num = int (f * 10000.0)
         let denom = 10000
         VNumber (VRational (num, denom))
     | VNumber (VComplex (r, _)) -> VNumber (VRational (int (r * 10000.0), 10000))
@@ -248,9 +253,9 @@ and castToRat a =
             let num = int (f * 10000.0)
             let denom = 10000
             VNumber (VRational (num, denom))
-        | _ -> failwith "Invalid string for rational conversion"
+        | _ -> raise <| InvalidOperationException("Invalid string for rational conversion")
     | VBoolean b -> VNumber (VRational (if b then (1, 1) else 0, 1))
-    | _ -> failwith "Cannot cast to rational"
+    | _ -> raise <| InvalidOperationException("Cannot cast to rational")
     
 and castToComp a =
     match a with
@@ -260,10 +265,10 @@ and castToComp a =
     | VNumber (VRational (num, denom)) -> VNumber (VComplex ((float num) / (float denom), 0.0))
     | VString s ->
         match Double.TryParse(s) with
-        | (true, f) -> VNumber (VComplex (f, 0.0))
-        | _ -> failwith "Invalid string for complex conversion"
+        | true, f -> VNumber (VComplex (f, 0.0))
+        | _ -> raise <| InvalidOperationException("Invalid string for complex conversion")
     | VBoolean b -> VNumber (VComplex (if b then 1.0, 0.0 else 0.0, 0.0))
-    | _ -> failwith "Cannot cast to complex"
+    | _ -> raise <| InvalidOperationException("Cannot cast to complex")
     
 and castToString a =
     match a with
@@ -271,7 +276,7 @@ and castToString a =
     | VBoolean b -> VString (if b then "true" else "false")
     | VNumber (VInteger i) -> VString (string i)
     | VNumber (VFloat f) -> VString (string f)
-    | VNumber (VRational (num, denom)) -> VString ($"%d{num}/%d{denom}")
+    | VNumber (VRational (num, denom)) -> VString $"%d{num}/%d{denom}"
     | VNumber (VComplex (r, i)) -> VString $"%f{r} + %f{i}"
     | VList (l, _) -> VString ("[" + String.concat ", " (List.map (fun el -> match castToString el with VString s -> s | _ -> "") l) + "]")
     | _ -> VString ""
@@ -279,7 +284,7 @@ and castToString a =
 let newtonRaphson (f: float -> float) (f' : float -> float) (initialGuess: float) (tolerance: float) (maxIterations: int) =
     let rec iterate x n =
         if n >= maxIterations then
-            failwith "Exceeded maximum number of iterations."
+            raise <| InvalidOperationException("Exceeded maximum number of iterations.")
         else
             let fx = f x
             if abs fx < tolerance then
@@ -298,14 +303,14 @@ let bisection (f: float -> float) (a: float) (b: float) (tolerance: float) (maxI
         if abs fMid < tolerance then
             midpoint // Root found within tolerance
         elif n >= maxIterations then
-            failwith "Exceeded maximum number of iterations."
+            raise <| InvalidOperationException("Exceeded maximum number of iterations.")
         elif f a * fMid < 0.0 then
             iterate a midpoint (n + 1) // Root is in the left half
         else
             iterate midpoint b (n + 1) // Root is in the right half
 
     if f a * f b >= 0.0 then
-        failwith "The function must have opposite signs at a and b."
+        raise <| InvalidOperationException("Root not bracketed by the initial interval.")
     else
         iterate a b 0
  

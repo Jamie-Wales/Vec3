@@ -49,6 +49,8 @@ let diff = differentiate(f)
 
 print(diff)
 
+plotFuncs("Function differential", [f, diff])
+
 let y = (z) -> cos(z)
 
 let r = (t) -> 2.9 * tan(t) 
@@ -61,9 +63,9 @@ let root = bisection(f, a, b, tolerance, max)
 
 print(root)
 
-plotFunc("test", f)
-plotFunc("cosTest", y)
-plotFunc("tanTest", r)
+plotFunc("Polynomial", f)
+plotFunc("Cos", cos)
+plotFunc("Tan", r)
 
 let data = {
     title="My Plot",
@@ -166,7 +168,7 @@ plot(data)
                 | Scatter -> 
                     plotWindow.PlotControl.Plot.Add.Scatter(x, y) |> ignore
                 | Line ->
-                    plotWindow.PlotControl.Plot.Add.Line(x.[0], y.[0], x.[1], y.[1]) |> ignore
+                    plotWindow.PlotControl.Plot.Add.Line(x[0], y[0], x[1], y[1]) |> ignore
                 | Bar ->
                     plotWindow.PlotControl.Plot.Add.Bars(y, x) |> ignore
                 | Histogram -> failwith "todo"
@@ -198,16 +200,21 @@ plot(data)
     member private this.LoadCode() =
         replState <- createNewVM(initFunction("Main"))
         let code = this.GetEditorText()
-        match parseAndCompile code replState with
-        | Some vm ->
-            replState <- run vm 
-            standardOutput.Foreground <- SolidColorBrush(Colors.White)
-            let outputText = String.concat "\n" replState.Streams.StandardOutput
-            standardOutput.Text <- $"Vec3 code loaded and executed:\n%s{outputText}"
-            this.HandlePlotOutput(replState)  
-        | None -> 
+        try 
+            match parseAndCompile code replState with
+            | Some vm ->
+                replState <- run vm 
+                standardOutput.Foreground <- SolidColorBrush(Colors.White)
+                let outputText = String.concat "\n" replState.Streams.StandardOutput
+                standardOutput.Text <- $"Vec3 code loaded and executed:\n%s{outputText}"
+                this.HandlePlotOutput(replState)  
+            | None -> 
+                standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                standardOutput.Text <- "Failed to compile code"
+        with
+        | ex -> 
             standardOutput.Foreground <- SolidColorBrush(Colors.Red)
-            standardOutput.Text <- "Failed to compile code"
+            standardOutput.Text <- $"Error: %s{ex.Message}"
             
     member private this.TextChanged() =
         debounceTimer |> Option.iter (_.Dispose())
