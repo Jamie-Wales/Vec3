@@ -50,6 +50,8 @@ let diff = differentiate(f)
 
 print(diff)
 
+plotFuncs("Function differential", [f, diff])
+
 let y = (z) -> cos(z)
 
 let r = (t) -> 2.9 * tan(t) 
