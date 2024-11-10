@@ -54,7 +54,6 @@ type NotebookWindow () as this =
         let scopeName = registryOptions.GetScopeByLanguageId(fsharpLanguage.Id)
         installation.SetGrammar(scopeName)
         
-        // Apply theme colors
         let mutable colorString = ""
         if installation.TryGetThemeColor("editor.background", &colorString) then
             match Color.TryParse(colorString) with
@@ -96,9 +95,7 @@ type NotebookWindow () as this =
         cellBorder.Classes.Add("cell")
         
         let grid = Grid()
-        grid.RowDefinitions <- RowDefinitions("Auto,*,Auto,Auto") // Added row for plots
-        
-        // Buttons panel
+        grid.RowDefinitions <- RowDefinitions("Auto,*,Auto,Auto") 
         let buttonsPanel = StackPanel()
         buttonsPanel.Orientation <- Avalonia.Layout.Orientation.Horizontal
         buttonsPanel.HorizontalAlignment <- Avalonia.Layout.HorizontalAlignment.Right
@@ -107,7 +104,7 @@ type NotebookWindow () as this =
         let runButton = this.CreateRunButton()
         let deleteButton = this.CreateDeleteButton()
         
-        // Editor setup
+       
         let editor = TextEditor()
         editor.FontFamily <- "Cascadia Code,Consolas,Menlo,Monospace"
         editor.FontSize <- 14.0
@@ -116,18 +113,15 @@ type NotebookWindow () as this =
         editor.Margin <- Thickness(5.0)
         this.SetupTextMateEditor(editor)
         
-        // Output area
         let output = TextBlock()
         output.Margin <- Thickness(10.0)
         output.FontFamily <- "Cascadia Code,Consolas,Menlo,Monospace"
         output.Foreground <- SolidColorBrush(Colors.Black)
         
-        // Plots panel
         let plotsPanel = StackPanel()
         plotsPanel.Orientation <- Avalonia.Layout.Orientation.Vertical
         plotsPanel.Margin <- Thickness(10.0)
         
-        // Wire up events
         runButton.Click.Add(fun _ -> 
             match noTcParseAndCompile editor.Text vm with
             | Some newVM ->
@@ -140,16 +134,14 @@ type NotebookWindow () as this =
                               |> String.concat "\n"
                 output.Text <- newOutput
 
-                // Clear existing plots
                 plotsPanel.Children.Clear()
 
-                // Handle any plots that were generated
                 for value in vm.Plots do
                     match value with
                     | VPlotData (title, xs, ys, plotType) ->
                         let plotControl = AvaPlot()
-                        plotControl.Height <- 300
-                        plotControl.Width <- 400
+                        plotControl.Height <- 400
+                        plotControl.Width <- 500
                         plotControl.Margin <- Thickness(0, 10, 0, 10)
                         plotControl.Plot.Title(title)
                         
@@ -175,8 +167,8 @@ type NotebookWindow () as this =
                             
                     | VPlotFunction (title, f) ->
                         let plotControl = AvaPlot()
-                        plotControl.Height <- 300
-                        plotControl.Width <- 400
+                        plotControl.Height <- 400
+                        plotControl.Width <- 500
                         plotControl.Margin <- Thickness(0, 10, 0, 10)
                         plotControl.Plot.Title(title)
                         plotControl.Plot.Add.Function(f) |> ignore
@@ -225,7 +217,6 @@ type NotebookWindow () as this =
         deleteButton.HorizontalAlignment <- Avalonia.Layout.HorizontalAlignment.Right
         deleteButton.Margin <- Thickness(5.0)
         
-        // Text editor setup
         let editor = TextEditor()
         editor.FontFamily <- "Cascadia Code,Consolas,Menlo,Monospace"
         editor.FontSize <- 14.0
@@ -251,7 +242,6 @@ type NotebookWindow () as this =
     member private this.ExportNotebook() = 
         task {
             try
-                // Set QuestPDF license
                 QuestPDF.Settings.License <- QuestPDF.Infrastructure.LicenseType.Community
 
                 let dialog = SaveFileDialog()
@@ -267,8 +257,7 @@ type NotebookWindow () as this =
                         NotebookPdfExport.exportToPdf cells path)
             with 
             | ex -> 
-                eprintfn "Failed to export PDF: %s" ex.Message
+                eprintfn $"Failed to export PDF: %s{ex.Message}"
         } |> ignore
     member private this.ImportNotebook() =
-        // TODO: Implement notebook import
         ()

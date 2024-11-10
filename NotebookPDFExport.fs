@@ -103,12 +103,10 @@ module NotebookPdfExport =
                         | CodeCell data ->
                             column.Item()
                                 .Column(fun codeSection ->
-                                    // Code block with title bar
                                     codeSection.Item()
                                         .Border(1.0f)
                                         .BorderColor("#E2E8F0")
                                         .Column(fun codeCol ->
-                                            // Code header
                                             codeCol.Item()
                                                 .Background("#EDF2F7")
                                                 .Padding(8.0f)
@@ -117,21 +115,18 @@ module NotebookPdfExport =
                                                 .FontSize(12.0f)
                                                 .FontColor("#4A5568") |> ignore
                                             
-                                            // Code content
                                             codeCol.Item()
                                                 .Background("#F7FAFC")
                                                 .Padding(12.0f)
                                                 .Text(data.Code)
                                                 .FontColor("#2D3748") |> ignore) |> ignore
                                     
-                                    // Output block if not empty
                                     if not (String.IsNullOrWhiteSpace(data.Output)) then
                                         codeSection.Item()
                                             .PaddingTop(5.0f)
                                             .Border(1.0f)
                                             .BorderColor("#E2E8F0")
                                             .Column(fun outputCol ->
-                                                // Output header
                                                 outputCol.Item()
                                                     .Background("#F0FFF4")
                                                     .Padding(8.0f)
@@ -139,13 +134,10 @@ module NotebookPdfExport =
                                                     .Bold()
                                                     .FontSize(12.0f)
                                                     .FontColor("#276749") |> ignore
-                                                
-                                                // Output content
                                                 outputCol.Item()
                                                     .Background("#F0FFF4")
                                                     .Padding(12.0f)
                                                     .Text(data.Output)
                                                     .FontColor("#2F855A") |> ignore) |> ignore) |> ignore
                         
-                        // Add spacing between cells
                         column.Item().MinHeight(15.0f) |> ignore)) |> ignore).GeneratePdf(path)

@@ -192,7 +192,9 @@ let rec createNewVM (mainFunc: Function) : VM =
               StandardOutput = Seq.empty
               Globals = Seq.empty }
           ExecutionHistory = ResizeArray<VM>()
-          Plots = ResizeArray<Value>() }  
+          Plots = ResizeArray<Value>()
+          Canvas = ResizeArray<Value>()
+          }  
     let mainFrame =
         { Function = mainFunc
           IP = 0

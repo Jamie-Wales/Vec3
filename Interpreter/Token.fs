@@ -220,6 +220,7 @@ type BuiltInFunction =
     | PlotFunction
     | PlotFunctions
     
+    | DrawFunction 
     | Ceil
     | Len
     

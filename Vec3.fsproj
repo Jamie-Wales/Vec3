@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Draw.axaml.fs" />
         <Compile Include="SyntaxWindow.axaml.fs" />
         <Compile Include="Interpreter\Preprocessor.fs" />
         <Compile Include="Interpreter\Token.fs" />

@@ -84,7 +84,9 @@ and VM =
       Globals: Map<string, Value>
       Streams: OutputStreams
       ExecutionHistory: ResizeArray<VM>
-      Plots: ResizeArray<Value> }
+      Plots: ResizeArray<Value>
+      Canvas: ResizeArray<Value> 
+      }
 
 let rec valueToString =
     function
