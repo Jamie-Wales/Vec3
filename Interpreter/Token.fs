@@ -178,6 +178,7 @@ let punctuationToString (p: Punctuation): string =
     | RightBrace -> "}"
     | LeftBracket -> "["
     | RightBracket -> "]"
+    | Dollar -> "$"
 
 let lexemeToString (lex: Lexeme): string =
     match lex with
@@ -205,7 +206,6 @@ type BuiltInFunction =
     
     | Log
     | Exp
-    | Log10
     
     | Trunc
     
@@ -218,6 +218,7 @@ type BuiltInFunction =
     
     | Plot
     | PlotFunction
+    | PlotFunctions
     
     | Ceil
     | Len
@@ -258,6 +259,7 @@ type BuiltInFunction =
     
     | NewtonRaphson
     | Bisection
+    | Differentiate
     
 let builtInFunctionMap =
     [ Identifier "print", BuiltInFunction.Print
@@ -272,7 +274,6 @@ let builtInFunctionMap =
       
       Identifier "BUILTIN_EXP", BuiltInFunction.Exp
       Identifier "BUILTIN_LOG", BuiltInFunction.Log
-      Identifier "BUILTIN_LOG10", BuiltInFunction.Log10
       
       Identifier "env", BuiltInFunction.Env
       Identifier "BUILTIN_SQRT", BuiltInFunction.Sqrt
@@ -281,6 +282,7 @@ let builtInFunctionMap =
       Identifier "fold", BuiltInFunction.Fold
       Identifier "plot", BuiltInFunction.Plot
       Identifier "plotFunc", BuiltInFunction.PlotFunction
+      Identifier "plotFuncs", BuiltInFunction.PlotFunctions
       Identifier "BUILTIN_CEIL", BuiltInFunction.Ceil
       Identifier "map", BuiltInFunction.Map
       Identifier "BUILTIN_LEN", BuiltInFunction.Len
@@ -288,6 +290,7 @@ let builtInFunctionMap =
       
       Identifier "newtonRaphson", BuiltInFunction.NewtonRaphson
       Identifier "bisection", BuiltInFunction.Bisection
+      Identifier "differentiate", BuiltInFunction.Differentiate
       
       Operator (Plus, Some Infix), BuiltInFunction.Add
       Operator (Minus, Some Infix), BuiltInFunction.Sub

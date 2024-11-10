@@ -46,6 +46,10 @@ print(x)
 
 let f = (x) -> x^2.0 - 2.0
 
+let diff = differentiate(f)
+
+print(diff)
+
 let y = (z) -> cos(z)
 
 let r = (t) -> 2.9 * tan(t) 
@@ -179,7 +183,15 @@ plot(data)
                 plotWindow.PlotControl.Plot.Title(title)
                 plotWindow.PlotControl.Refresh()
                 plotWindow.Show()
-                        
+            
+            | VPlotFunctions (title, fs) ->
+                let plotWindow = PlotWindow()
+                plotWindow.Title <- title
+                for f in fs do
+                    plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
+                plotWindow.PlotControl.Plot.Title(title)
+                plotWindow.PlotControl.Refresh()
+                plotWindow.Show()
             | _ -> ()
                 
         vm.Plots.Clear()

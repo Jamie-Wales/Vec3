@@ -81,14 +81,20 @@ type Type =
         | TInteger
         | TFloat
         | TRational
-        | TComplex -> true
+        | TComplex -> true // fix
         | TTypeVariable _ -> true
         | TConstrain _ -> true
+        | _ -> false
+    
+    member this.IsFunction =
+        match this with
+        | TFunction _ -> true
+        | TAlias(_, Some t) -> t.IsFunction
         | _ -> false
 
     member this.IsPolynomial =
         match this with
-        | TFunction _ -> false
+        | TFunction _ -> false // fix
         | TTypeVariable _ -> true
         | TConstrain _ -> true
         | TAlias(_, Some t) -> t.IsPolynomial

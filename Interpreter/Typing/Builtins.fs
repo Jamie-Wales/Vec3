@@ -3,9 +3,6 @@ module Vec3.Interpreter.Typing.Builtins
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 
-    
-        
-
 let foldType =
     let listTyp = TTypeVariable (freshTypeVar())
     let accTyp = TTypeVariable (freshTypeVar())
@@ -71,11 +68,10 @@ let eq =
 let expType =
     TFunction([TFloat], TFloat, true, true)
     
+// later on make this curry
 let logType =
     TFunction([TFloat; TFloat], TFloat, false, true)
     
-let log10Type =
-    TFunction([TFloat], TFloat, true, true)
     
 let lt =
     let typeVar = freshTypeVar()
@@ -169,9 +165,20 @@ let newtonRaphsonType =
     TFunction([funcT1; funcT2; TFloat; TFloat; TInteger], TFloat, false, true)
 
 let bisectionTyp =
-    let funcT = TConstrain(freshTypeVar(), _.IsPure)
+    let funcT = TConstrain(freshTypeVar(), fun typ -> typ.IsPure && typ.NumArgsIs 1)
     
     TFunction([funcT; TFloat; TFloat; TFloat; TInteger], TFloat, false, true)
+
+let differentiateType =
+    let funcT = TConstrain(freshTypeVar(), fun typ -> typ.IsPure && typ.NumArgsIs 1) 
+    let retT = TFunction([TFloat], TFloat, true, false)
+    
+    TFunction([funcT], retT, false, true)
+
+let plotFunsType =
+    let funcT = TConstrain(freshTypeVar(), fun typ -> typ.IsPure && typ.NumArgsIs 1)
+    
+    TFunction([TString; TTensor(funcT, DAny);], TUnit, false, true)
 
 let BuiltinFunctions: Map<BuiltInFunction, TType> =
     [ Print, TFunction([ TAny ], TUnit, false, true)
@@ -184,7 +191,6 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       ATan, TFunction([ TFloat ], TFloat, true, true)
       Log, logType
       Exp, expType
-      Log10, log10Type
         
       Len, lenType
       Env, TFunction([], TUnit, false, true) 
@@ -198,9 +204,12 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       Map, mapType
       Plot, plotType
       PlotFunction, plotFunType
+      PlotFunctions, plotFunsType
       
       NewtonRaphson, newtonRaphsonType
       Bisection, bisectionTyp
+      
+      Differentiate, differentiateType
       
       Cons, consType
       Add, plus
