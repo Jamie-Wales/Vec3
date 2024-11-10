@@ -30,7 +30,7 @@ type Type =
 
     | TTypeVariable of TypeVar
 
-    | TConstrain of TypeVar * (Type -> bool)
+    | TConstrain of Constrain
 
     | TTuple of Type list
 
@@ -85,7 +85,7 @@ type Type =
         | TTypeVariable _ -> true
         | TConstrain _ -> true
         | _ -> false
-    
+
     member this.IsFunction =
         match this with
         | TFunction _ -> true
@@ -104,32 +104,64 @@ type Type =
         match this with
         | TFunction(_, _, _, bt) -> bt
         | _ -> false
-    
+
     member this.NumArgsIs num =
         match this with
         | TFunction(args, _, _, _) -> List.length args = num
         | _ -> false
-        
-        
+
+
     member this.IsList =
         match this with
         | TTensor _ -> true
         | _ -> false
-    
+
     member this.hasField name =
         match this with
         | TRecord row ->
             let rec hasField' row =
                 match row with
                 | TRowEmpty -> false
-                | TRowExtend (field, _, rest) -> field.Lexeme = name || hasField' rest
+                | TRowExtend(field, _, rest) -> field.Lexeme = name || hasField' rest
                 | _ -> false
+
             hasField' row
         | TAlias(_, Some t) -> t.hasField name
         | _ -> false
-        
-    member this.hasFields names =
-        List.forall this.hasField names
+
+    member this.hasFieldOf name typ =
+        match this with
+        | TRecord row ->
+            let rec hasField' row =
+                match row with
+                | TRowEmpty -> false
+                | TRowExtend(field, t, rest) -> (field.Lexeme = name && t = typ) || hasField' rest
+                | _ -> false
+
+            hasField' row
+        | TAlias(_, Some t) -> t.hasFieldOf name typ
+        | _ -> false
+
+    member this.hasFieldThat name constrain =
+        match this with
+        | TRecord row ->
+            let rec hasField' row =
+                match row with
+                | TRowEmpty -> false
+                | TRowExtend(field, t, rest) -> (field.Lexeme = name && constrain t) || hasField' rest
+                | _ -> false
+
+            hasField' row
+        | TAlias(_, Some t) -> t.hasFieldThat name constrain
+        | _ -> false
+
+    member this.hasFieldsThat fields =
+        List.forall (fun (name, constrain) -> this.hasFieldThat name constrain) fields
+
+    member this.hasFields names = List.forall this.hasField names
+
+    member this.hasFieldsOf fields =
+        List.forall (fun (name, typ) -> this.hasFieldOf name typ) fields
 
 and Dims =
     | Dims of int list
@@ -137,6 +169,17 @@ and Dims =
     | DVar of TypeVar
 
 and Row = Type // Row | RowEmpty | RowExtend
+
+and Constrain(typeVar: TypeVar, constrain: Type -> bool) =
+    member this.TypeVar = typeVar
+    member this.Constrain = constrain
+
+    override this.Equals(obj: obj) =
+        match obj with
+        | :? Constrain as c -> c.TypeVar = this.TypeVar
+        | _ -> false
+
+    override this.GetHashCode() = hash this.TypeVar
 
 type TType = Type
 
@@ -185,9 +228,9 @@ type Expr =
     | ERecordExtend of (Token * Expr * Type option) * Expr * Type option
     | ERecordRestrict of Expr * Token * Type option
     | ERecordEmpty of Type
-    
+
     | ECodeBlock of Expr
-    
+
     | ETail of Expr * Type option
 
 and Stmt =

@@ -46,10 +46,10 @@ let rec applySubstitution (env: AliasMap) (sub: Substitution) (t: TType) : TType
             match Map.tryFind v resolvedDims.Value with
             | Some t' -> TTensor(newTyp, t')
             | None -> TTensor(newTyp, DVar v)
-    | TConstrain(var, f) ->
-        match Map.tryFind var sub with
+    | TConstrain constrain ->
+        match Map.tryFind constrain.TypeVar sub with
         | Some t' -> applySubstitution env sub t'
-        | None -> TConstrain(var, f)
+        | None -> TConstrain constrain
     | TRecord row -> TRecord(applySubstitution env sub row)
     | TRowExtend(label, typ, row) -> TRowExtend(label, applySubstitution env sub typ, applySubstitution env sub row)
     | t -> t

@@ -13,7 +13,7 @@ let rec freeTypeVars (typ: TType) : TypeVar list =
         match dims with
         | DVar v -> v :: freeTypeVars typ
         | _ -> freeTypeVars typ
-    | TConstrain(var, _) -> [var]
+    | TConstrain constrain -> [constrain.TypeVar]
     | TAlias(_, typ) -> Option.map freeTypeVars typ |> Option.defaultValue []
     | _ -> []
 
