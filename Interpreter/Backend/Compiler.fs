@@ -89,6 +89,8 @@ let compileCodeBlock (expr: Expr) state : CompilerResult<unit> = emitConstant (V
 let rec compileExpr (expr: Expr) : Compiler<unit> =
     fun state ->
         match expr with
+        | ETail(e, _) ->
+            compileExpr e state
         | ELiteral(lit, _) -> compileLiteral lit state
         | EIdentifier(i, _) -> compileIdentifier i state
         | EGrouping(e, _) -> compileGrouping e state

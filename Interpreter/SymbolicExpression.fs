@@ -212,7 +212,7 @@ let rec fromExpr (expr: Expr) : Expression =
     
     | EGrouping (x, _) -> fromExpr x
     
-    | _ -> failwith $"Invalid expression {expr}"
+    | _ -> raise <| InvalidProgramException("Invalid expression")
     
 let simplify (expression: Expression) : Expression =
     let rec simplifier (expression: Expression) =

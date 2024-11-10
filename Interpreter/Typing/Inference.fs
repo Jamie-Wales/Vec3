@@ -319,6 +319,8 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             Ok argTypes
 
     match expr with
+    | ETail(e, _) ->
+        infer aliases env e
     | ELiteral(lit, _) ->
         let t = checkLiteral lit
         Ok(t, Map.empty, ELiteral(lit, t))

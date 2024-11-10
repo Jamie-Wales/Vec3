@@ -589,7 +589,7 @@ and builtins () =
           match args with
           | [msg; cond] ->
               if not (isTruthy cond) then
-                  raise <| InvalidProgramException $"Assertion failed: {valueToString cond}"
+                  raise <| InvalidProgramException $"Assertion failed: {valueToString msg}"
               else
                   push vm VNil
           | [cond] ->

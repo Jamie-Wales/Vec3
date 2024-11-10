@@ -625,6 +625,12 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
         match expr, index with
         | EList(exprs, _), ELiteral(LNumber(LInteger i), _) -> List.item i exprs
         | _ -> failwith "invalid"
+    | ETail(expr, _) ->
+        let expr = evalExpr env expr
+
+        match expr with
+        | EList(exprs, _) -> EList(List.tail exprs, None)
+        | _ -> failwith "invalid"
 
 and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
     match stmt with

@@ -184,7 +184,17 @@ type NotebookWindow () as this =
                             plotControl.Refresh()
                             
                             plotsPanel.Children.Add(plotControl)
-                                
+                        | VPlotFunctions (title, fs) ->
+                            let plotControl = AvaPlot()
+                            plotControl.Height <- 300
+                            plotControl.Width <- 400
+                            plotControl.Margin <- Thickness(0, 10, 0, 10)
+                            plotControl.Plot.Title(title)
+                            for f in fs do
+                                plotControl.Plot.Add.Function(f) |> ignore
+                            plotControl.Refresh()
+                            
+                            plotsPanel.Children.Add(plotControl)
                         | _ -> ()
                         
                     vm.Plots.Clear()

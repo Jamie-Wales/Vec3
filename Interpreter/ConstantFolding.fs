@@ -33,6 +33,7 @@ let foldConstants (program: Program) : Program =
 
     and foldExpr (expr: Expr) : Expr =
         match expr with
+        | ETail(expr, typ) -> ETail(foldExpr expr, typ)
         | ELiteral(lit, typ) -> ELiteral(lit, typ)
         | EBlock(stmts, typ) -> EBlock(foldStatements stmts, typ)
         | EIdentifier(token, typ) -> EIdentifier(token, typ)
