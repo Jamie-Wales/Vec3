@@ -53,8 +53,8 @@ let scNumber (nStr: char list) : (char list * Number * int) option =
     let rec scInt (iStr: char list) (iVal: int) (len: int) : char list * int * int =
         match iStr with
         | c :: tail when isDigit c -> scInt tail (10 * iVal + intVal c) (len + 1)
-        | '-' :: tail -> let iTail, iInt, iLen = scInt tail 0 len in (iTail, -iInt, iLen + 1)
-        | '+' :: tail -> scInt tail iVal (len + 1)
+        // | '-' :: tail -> let iTail, iInt, iLen = scInt tail 0 len in (iTail, -iInt, iLen + 1)
+        // | '+' :: tail -> scInt tail iVal (len + 1)
         | _ -> (iStr, iVal, len)
 
     let rec scFraction (fStr: char list) (acc: float) (div: float) (len: int) : char list * float * int =
@@ -85,9 +85,22 @@ let scNumber (nStr: char list) : (char list * Number * int) option =
                 let eStr, expVal, eLen = scInt expTail 0 0
                 Some(eStr, LFloat((float iVal + fVal) * (10.0 ** float expVal)), iLen + fLen + eLen + 2)
             | _ -> Some(fStr, LFloat(float iVal + fVal), iLen + fLen + 1)
-        | 'e' :: expTail ->
+        | 'e' :: expTail 
+        | 'E' :: expTail ->
             let eStr, expVal, eLen = scInt expTail 0 0
             Some(eStr, LFloat(float iVal * (10.0 ** float expVal)), iLen + eLen + 1)
+        | 'I' :: tail
+        | 'i' :: tail ->
+            match tail with
+            | [] -> Some(tail, LComplex(0.0, float iVal), iLen + 1)
+            | '+' :: tail ->
+                let fStr, fVal, fLen = scInt tail 0 0
+                Some(fStr, LComplex(fVal, float iVal), iLen + fLen + 2)
+            | '-' :: tail ->
+                let fStr, fVal, fLen = scInt tail 0 0
+                Some(fStr, LComplex(fVal, float -iVal), iLen + fLen + 2)
+            | _ ->
+                Some(tail, LComplex(0.0, float iVal), iLen + 1)
         | _ -> Some(iStr, LInteger iVal, iLen)
     | _ -> None
 

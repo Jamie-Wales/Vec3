@@ -27,7 +27,7 @@ type MainWindow () as this =
     let mutable loadButton: Button = null
     let mutable runButton: Button = null
     let mutable standardOutput: TextBlock = null
-    let mutable replState: VM = createNewVM(initFunction "Main" None )
+    let mutable replState: VM = createNewVM {Function = initFunction "Main" None; UpValues = [||] }
     
     let debounceTime = 500
     let mutable debounceTimer = None : Timer option
@@ -156,7 +156,7 @@ plot(data)
                 | Scatter -> 
                     plotWindow.PlotControl.Plot.Add.Scatter(x, y) |> ignore
                 | Line ->
-                    plotWindow.PlotControl.Plot.Add.Line(x.[0], y.[0], x.[1], y.[1]) |> ignore
+                    plotWindow.PlotControl.Plot.Add.Line(x[0], y[0], x[1], y[1]) |> ignore
                 | Bar ->
                     plotWindow.PlotControl.Plot.Add.Bars(y, x) |> ignore
                 | Histogram -> failwith "todo"
@@ -178,7 +178,7 @@ plot(data)
         vm.Plots.Clear()
         
     member private this.LoadCode() =
-        replState <- createNewVM(initFunction "Main" None)
+        replState <- createNewVM { Function = initFunction "Main" None; UpValues = [||] }
         let code = this.GetEditorText()
         match parseAndCompile code replState with
         | Some vm ->

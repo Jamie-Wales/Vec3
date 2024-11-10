@@ -93,7 +93,9 @@ let startRepl () =
     printfn "Welcome to the Vec3 REPL!"
     printfn "Type your code and press Enter to execute."
     printfn "Type 'exit' to quit the REPL."
-    repl (createNewVM (initFunction "Main" None))
+    let func = initFunction "Main" None
+    
+    repl (createNewVM { Function = func; UpValues = [||] })
     
 (* Note for Jake and Bake
  Repl input doest get type checked, because if variables
@@ -102,7 +104,7 @@ let startRepl () =
  OR pass vm to parser to check env
 *)
 let noTcParseAndCompile (code: string) (vm:VM) =
-    //let code = Prelude.prelude + code
+    let code = Prelude.prelude + code
     let code = preprocessContent code
     match parse code with
     | Ok (_, program) ->
@@ -116,7 +118,7 @@ let noTcParseAndCompile (code: string) (vm:VM) =
         None
         
 let parseAndCompile (code: string) (vm:VM) =
-    //let code = Prelude.prelude + code
+    let code = Prelude.prelude + code
     let code = preprocessContent code
     match parse code with
     | Ok (_, program) ->

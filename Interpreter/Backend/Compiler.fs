@@ -12,7 +12,7 @@ open Vec3.Interpreter.Parser
 let identMap: Map<Lexeme, Value> ref = ref Map.empty
 
 type CompilerState =
-    { CurrentFunction: Function
+    { CurrentFunction: Closure
       CurrentLine: int
       ScopeDepth: int
       LocalCount: int }
@@ -22,15 +22,15 @@ type CompilerResult<'a> = Result<'a * CompilerState, CompilerError>
 type Compiler<'a> = CompilerState -> CompilerResult<'a>
 
 let emitByte (byte: byte) (state: CompilerState) : CompilerResult<unit> =
-    writeChunk state.CurrentFunction.Chunk byte state.CurrentLine
+    writeChunk state.CurrentFunction.Function.Chunk byte state.CurrentLine
     Ok((), state)
 
 let emitBytes (bytes: byte seq) (state: CompilerState) : CompilerResult<unit> =
-    Seq.iter (fun byte -> writeChunk state.CurrentFunction.Chunk byte state.CurrentLine) bytes
+    Seq.iter (fun byte -> writeChunk state.CurrentFunction.Function.Chunk byte state.CurrentLine) bytes
     Ok((), state)
 
 let emitConstant (value: Value) (state: CompilerState) : CompilerResult<unit> =
-    writeConstant state.CurrentFunction.Chunk value state.CurrentLine
+    writeConstant state.CurrentFunction.Function.Chunk value state.CurrentLine
     Ok((), state)
 
 let emitOpCode (opCode: OP_CODE) (state: CompilerState) : CompilerResult<unit> = emitByte (opCodeToByte opCode) state
@@ -39,23 +39,23 @@ let emitJump (opCode: OP_CODE) (state: CompilerState) : int =
     emitOpCode opCode state
     |> Result.bind (fun ((), state) ->
         emitBytes [| byte 0xff; byte 0xff |] state
-        |> Result.map (fun ((), state) -> state.CurrentFunction.Chunk.Code.Count - 2))
+        |> Result.map (fun ((), state) -> state.CurrentFunction.Function.Chunk.Code.Count - 2))
     |> Result.defaultValue 0
 
 let patchJump (offset: int) (state: CompilerState) =
-    let jump = state.CurrentFunction.Chunk.Code.Count - offset - 2
+    let jump = state.CurrentFunction.Function.Chunk.Code.Count - offset - 2
 
     let offset = (jump >>> 8) &&& 0xff
     let offset1 = jump &&& 0xff
 
-    state.CurrentFunction.Chunk.Code[offset] <- byte offset
-    state.CurrentFunction.Chunk.Code[offset + 1] <- byte offset1
+    state.CurrentFunction.Function.Chunk.Code[offset] <- byte offset
+    state.CurrentFunction.Function.Chunk.Code[offset + 1] <- byte offset1
 
     Ok((), state)
 
 
 let emitJumpBack (offset: int) (state: CompilerState) : CompilerResult<unit> =
-    let jump = state.CurrentFunction.Chunk.Code.Count - offset - 1
+    let jump = state.CurrentFunction.Function.Chunk.Code.Count - offset - 1
     let bytes = [| byte (jump &&& 0xff); byte ((jump >>> 8) &&& 0xff) |]
     emitBytes bytes state
 
@@ -74,26 +74,26 @@ let addLocal (name: string) (state: CompilerState) : CompilerState =
           Index = state.LocalCount }
 
     let updatedFunction =
-        { state.CurrentFunction with
-            Locals = local :: state.CurrentFunction.Locals }
+        { state.CurrentFunction.Function with
+            Locals = local :: state.CurrentFunction.Function.Locals }
 
     { state with
-        CurrentFunction = updatedFunction
+        CurrentFunction = { state.CurrentFunction with Function = updatedFunction }
         LocalCount = state.LocalCount + 1 }
 
-let addUpValue (name: string) (state: CompilerState) : CompilerState =
+let addUpValue (name: string) (depth: int) (state: CompilerState) : CompilerState =
     let upValue =
         { Name = name
           Index = state.CurrentFunction.UpValues.Length
-          Depth = state.ScopeDepth 
+          Depth = depth 
           }
 
     let updatedFunction =
-        { state.CurrentFunction with
-            UpValues = upValue :: state.CurrentFunction.UpValues }
+        { state.CurrentFunction.Function with
+            UpValues = upValue :: state.CurrentFunction.Function.UpValues }
 
     { state with
-        CurrentFunction = updatedFunction }
+        CurrentFunction = { state.CurrentFunction with Function = updatedFunction } }
 
 let rec compileLiteral (lit: Literal) : Compiler<unit> =
     let compileNumber (n: Vec3.Interpreter.Token.Number) state =
@@ -160,7 +160,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             // might be better to have specific value for pair, but then the compound create would need to be changed
             // or extra instruction for create pair, otherwise any two eleemnt list would be a pair
 
-            let constIndex = addConstant state.CurrentFunction.Chunk (VString name)
+            let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString name)
 
             emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
             |> Result.bind (fun ((), state) -> compileExpr value state)
@@ -181,7 +181,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             // same as index, but with a string and a record (push string)
             compileExpr expr state
             |> Result.bind (fun ((), state) ->
-                let constIndex = addConstant state.CurrentFunction.Chunk (VString name)
+                let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString name)
 
                 emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
                 |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_GET state))
@@ -294,24 +294,18 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) : Compiler<u
         // upvalues are captured by the closure
         
         let currentFunction = state.CurrentFunction
-        let upvalues =
-            currentFunction.Locals
-            |> List.map (fun local ->
-                { Index = local.Index
-                  Name = local.Name
-                  Depth = local.Depth
-                  })
         
-        let prevUpvalues = currentFunction.UpValues
+        let upvalues = currentFunction.Function.Locals
+        let prevUpvalues = currentFunction.Function.UpValues
         
         let builtin = if pur then compileAsBuiltin parameters body else None
         
-        let functionName = $"lambda_{state.CurrentFunction.Name}"
+        let functionName = $"lambda_{state.CurrentFunction.Function.Name}"
         let lambdaFunction = initFunction functionName builtin
 
         let lambdaState =
             { state with
-                CurrentFunction = lambdaFunction
+                CurrentFunction = { Function = lambdaFunction; UpValues = [||] }
                 ScopeDepth = state.ScopeDepth + 1
                 LocalCount = 0
                 }
@@ -323,16 +317,14 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) : Compiler<u
                     let state = addLocal (lexemeToString param.Lexeme) state
 
                     { state with
-                        CurrentFunction =
-                            { state.CurrentFunction with
-                                Arity = state.CurrentFunction.Arity + 1 } })
+                        CurrentFunction = { state.CurrentFunction with Function = { state.CurrentFunction.Function with Arity = state.CurrentFunction.Function.Arity + 1 } }})
                 lambdaState
         
         let compiledParamsState =
             upvalues @ prevUpvalues
             |> List.fold
                 (fun state upvalue ->
-                    let state = addUpValue upvalue.Name state
+                    let state = addUpValue upvalue.Name upvalue.Depth state
                     state
                 )
                 
@@ -343,7 +335,7 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) : Compiler<u
             emitOpCode OP_CODE.RETURN finalLambdaState
             |> Result.bind (fun ((), finalState) ->
                 let constIndex =
-                    addConstant state.CurrentFunction.Chunk (VFunction(finalState.CurrentFunction))
+                    addConstant state.CurrentFunction.Function.Chunk (VFunction(finalState.CurrentFunction.Function))
 
                 // let upvalues =
                 //     state.CurrentFunction.Locals
@@ -352,22 +344,13 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) : Compiler<u
                 //
                 emitBytes [| byte (opCodeToByte OP_CODE.CLOSURE); byte constIndex |] state
                 |> Result.bind (fun ((), state) ->
-                    emitByte (byte (List.length upvalues)) state
+                    emitByte (byte (List.length upvalues + List.length prevUpvalues)) state
                     |> Result.bind (fun ((), state) ->
                         let upvalues =
-                            upvalues
+                            upvalues @ prevUpvalues
                             |> Seq.map (fun upvalue -> [| byte upvalue.Index; byte upvalue.Depth |])
                             |> Seq.concat
-                        emitBytes upvalues state
-                        |> Result.bind(fun ((), state) ->
-                            emitByte (byte (List.length prevUpvalues)) state
-                            |> Result.bind (fun ((), state) ->
-                                let prevUpvalues =
-                                    prevUpvalues
-                                    |> Seq.map (fun upvalue -> [| byte upvalue.Index; byte upvalue.Depth |])
-                                    |> Seq.concat
-                                emitBytes prevUpvalues state
-                            ))))))
+                        emitBytes upvalues state))))
 
 and compileAsBuiltin (parameters: Token list) (body: Expr) : (double -> double) option =
     // what we could do is make every unit return its compiled value
@@ -470,15 +453,15 @@ and compileIdentifier (token: Token) : Compiler<unit> =
     fun state ->
         let name = lexemeToString token.Lexeme
 
-        match state.CurrentFunction.Locals |> List.tryFind (fun local -> local.Name = name) with
+        match state.CurrentFunction.Function.Locals |> List.tryFind (fun local -> local.Name = name) with
         | Some local ->
             emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte local.Index |] state
         | None ->
-            match state.CurrentFunction.UpValues |> List.tryFind (fun upvalue -> upvalue.Name = name) with
+            match state.CurrentFunction.Function.UpValues |> List.tryFind (fun upvalue -> upvalue.Name = name) with
             | Some upvalue ->
                 emitBytes [| byte (opCodeToByte OP_CODE.GET_UPVALUE); byte upvalue.Index |] state
             | None ->
-                let constIndex = addConstant state.CurrentFunction.Chunk (VString name)
+                let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString name)
                 emitBytes [| byte (opCodeToByte OP_CODE.GET_GLOBAL); byte constIndex |] state
 
 and compileStmt (stmt: Stmt) : Compiler<unit> =
@@ -512,7 +495,7 @@ and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit
                 Ok((), newState)
             else
                 let constIndex =
-                    addConstant state.CurrentFunction.Chunk (VString(lexemeToString name.Lexeme))
+                    addConstant state.CurrentFunction.Function.Chunk (VString(lexemeToString name.Lexeme))
 
                 emitBytes [| byte (opCodeToByte OP_CODE.DEFINE_GLOBAL); byte constIndex |] state)
 
@@ -527,12 +510,14 @@ let compileProgramState (program: Program) (state: CompilerState) : CompilerResu
     compileStmts program state
     |> Result.bind (fun ((), state) ->
         emitOpCode OP_CODE.RETURN state
-        |> Result.map (fun ((), state) -> (state.CurrentFunction.Chunk, state)))
+        |> Result.map (fun ((), state) -> (state.CurrentFunction.Function.Chunk, state)))
 
 
-let compileProgram (program: Program) : CompilerResult<Function> =
+let compileProgram (program: Program) : CompilerResult<Closure> =
+    let func = initFunction "REPL_Input" None
+    
     let initialState =
-        { CurrentFunction = initFunction "REPL_Input" None
+        { CurrentFunction = { Function = func; UpValues = [||] }
           ScopeDepth = 0
           CurrentLine = 1
           LocalCount = 0 }

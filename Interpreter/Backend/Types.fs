@@ -69,7 +69,7 @@ and Closure =
       UpValues: Value array }
 
 and CallFrame = {
-    Function: Function
+    Closure: Closure
     IP: int
     StackBase: int
     Locals: Value array

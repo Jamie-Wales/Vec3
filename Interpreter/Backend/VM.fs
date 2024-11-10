@@ -11,9 +11,9 @@ open Vec3.Interpreter.Token
 
 // TODO essential -- fix lambdas (closures) !!!!!
 
-let loadFunction (vm: VM) (func: Function) : VM =
+let loadFunction (vm: VM) (func: Closure) : VM =
     let frame =
-        { Function = func
+        { Closure = func
           IP = 0
           StackBase = vm.Stack.Count
           Locals = [||] }
@@ -32,7 +32,7 @@ let getCurrentFrame (vm: VM) = vm.Frames[vm.Frames.Count - 1]
 
 let readByte (vm: VM) =
     let frame = getCurrentFrame vm
-    let byte = frame.Function.Chunk.Code[frame.IP]
+    let byte = frame.Closure.Function.Chunk.Code[frame.IP]
     let updatedFrame = { frame with IP = frame.IP + 1 }
     vm.Frames[vm.Frames.Count - 1] <- updatedFrame
     (vm, byte)
@@ -41,10 +41,10 @@ let readConstant (vm: VM) =
     let vm, byte = readByte vm
     let frame = getCurrentFrame vm
 
-    if int byte >= frame.Function.Chunk.ConstantPool.Count then
-        failwithf $"Constant index out of range: %d{int byte} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
+    if int byte >= frame.Closure.Function.Chunk.ConstantPool.Count then
+        failwithf $"Constant index out of range: %d{int byte} (pool size: %d{frame.Closure.Function.Chunk.ConstantPool.Count})"
 
-    let constant = frame.Function.Chunk.ConstantPool[int byte]
+    let constant = frame.Closure.Function.Chunk.ConstantPool[int byte]
     (constant, vm)
 
 let readConstantLong (vm: VM) =
@@ -54,10 +54,10 @@ let readConstantLong (vm: VM) =
     let frame = getCurrentFrame vm
     let index = (int byte1) ||| ((int byte2) <<< 8) ||| ((int byte3) <<< 16)
 
-    if index >= frame.Function.Chunk.ConstantPool.Count then
-        failwith $"Long constant index out of range: %d{index} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
+    if index >= frame.Closure.Function.Chunk.ConstantPool.Count then
+        failwith $"Long constant index out of range: %d{index} (pool size: %d{frame.Closure.Function.Chunk.ConstantPool.Count})"
 
-    let constant = frame.Function.Chunk.ConstantPool[index]
+    let constant = frame.Closure.Function.Chunk.ConstantPool[index]
     (constant, vm)
 
 
@@ -121,7 +121,8 @@ let callValue (vm: VM) (argCount: int) : VM =
             failwith $"Expected {func.Arity} arguments but got {argCount}"
 
         let frame =
-            { Function = func
+            { Closure = { Function = func
+                          UpValues = [||] }
               IP = 0
               StackBase = vm.Stack.Count - argCount
               Locals = Array.zeroCreate func.Locals.Length }
@@ -133,7 +134,7 @@ let callValue (vm: VM) (argCount: int) : VM =
             failwith $"Expected {closure.Function.Arity} arguments but got {argCount}"
 
         let frame =
-            { Function = closure.Function
+            { Closure = closure
               IP = 0
               StackBase = vm.Stack.Count - argCount
               Locals = Array.zeroCreate closure.Function.Locals.Length }
@@ -170,14 +171,14 @@ let parsePlotType =
         Bar
     | unknown -> failwith $"Unknown plot type: {unknown}"
 
-let rec createNewVM (mainFunc: Function) : VM =
+let rec createNewVM (mainFunc: Closure) : VM =
     let constantPool =
-        mainFunc.Chunk.ConstantPool
+        mainFunc.Function.Chunk.ConstantPool
         |> Seq.indexed
         |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
 
     let disassembly =
-        disassembleChunkToString mainFunc.Chunk mainFunc.Name
+        disassembleChunkToString mainFunc.Function.Chunk mainFunc.Function.Name
         |> fun s -> s.Split(Environment.NewLine) |> Seq.ofArray
 
     let vm =
@@ -195,7 +196,7 @@ let rec createNewVM (mainFunc: Function) : VM =
           Plots = ResizeArray<Value>() }
 
     let mainFrame =
-        { Function = mainFunc
+        { Closure = mainFunc
           IP = 0
           StackBase = 0
           Locals = [||] }
@@ -299,38 +300,36 @@ and builtins () =
       Identifier "BUILTIN_IF",
       VBuiltin(fun args vm ->
           match args with
-          | [ VBoolean b; VFunction thenn; VFunction elsee ]
-          | [ VBoolean b; VClosure { Function = thenn }; VClosure { Function = elsee } ] ->
+          | [ VBoolean b; VClosure thenn; VClosure elsee ] ->
               if b then
                   let frame =
-                      { Function = thenn
+                      { Closure = thenn
                         IP = 0
-                        StackBase = vm.Stack.Count - 2
-                        Locals = Array.zeroCreate thenn.Locals.Length }
-
+                        StackBase = vm.Stack.Count 
+                        Locals = Array.zeroCreate thenn.Function.Locals.Length }
+                  
                   vm.Frames.Add(frame)
 
                   let result, vm = runCurrentFrame vm
                   push vm result
               else
                   let frame =
-                      { Function = elsee
+                      { Closure = elsee
                         IP = 0
-                        StackBase = vm.Stack.Count - 2
-                        Locals = Array.zeroCreate elsee.Locals.Length }
+                        StackBase = vm.Stack.Count
+                        Locals = Array.zeroCreate elsee.Function.Locals.Length }
 
                   vm.Frames.Add(frame)
 
                   let result, vm = runCurrentFrame vm
                   push vm result
-          | [ VBoolean b; VFunction thenn; VBuiltin elsee ]
-          | [ VBoolean b; VClosure { Function = thenn }; VBuiltin elsee ] ->
+          | [ VBoolean b; VClosure thenn; VBuiltin elsee ] ->
               if b then
                   let frame =
-                      { Function = thenn
+                      { Closure = thenn
                         IP = 0
-                        StackBase = vm.Stack.Count - 2
-                        Locals = Array.zeroCreate thenn.Locals.Length }
+                        StackBase = vm.Stack.Count 
+                        Locals = Array.zeroCreate thenn.Function.Locals.Length }
 
                   vm.Frames.Add(frame)
 
@@ -340,18 +339,17 @@ and builtins () =
                   let vm = elsee [] vm
                   let result, vm = pop vm
                   push vm result
-          | [ VBoolean b; VBuiltin thenn; VFunction elsee ]
-          | [ VBoolean b; VBuiltin thenn; VClosure { Function = elsee } ] ->
+          | [ VBoolean b; VBuiltin thenn; VClosure elsee ] ->
               if b then
                   let vm = thenn [] vm
                   let result, vm = pop vm
                   push vm result
               else
                   let frame =
-                      { Function = elsee
+                      { Closure = elsee
                         IP = 0
-                        StackBase = vm.Stack.Count - 2
-                        Locals = Array.zeroCreate elsee.Locals.Length }
+                        StackBase = vm.Stack.Count 
+                        Locals = Array.zeroCreate elsee.Function.Locals.Length }
 
                   vm.Frames.Add(frame)
 
@@ -467,8 +465,7 @@ and builtins () =
       Identifier "fold",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList(l, _); acc; VFunction f ]
-          | [ VList(l, _); acc; VClosure { Function = f } ] ->
+          | [ VList(l, _); acc; VClosure f ] ->
               let rec fold acc vm =
                   function
                   | [] -> acc, vm
@@ -478,10 +475,10 @@ and builtins () =
                       let vm = push vm acc
 
                       let frame =
-                          { Function = f
+                          { Closure = f
                             IP = 0
                             StackBase = vm.Stack.Count - 2
-                            Locals = Array.zeroCreate f.Locals.Length }
+                            Locals = Array.zeroCreate f.Function.Locals.Length }
 
                       vm.Frames.Add(frame)
 
@@ -509,8 +506,7 @@ and builtins () =
       Identifier "map",
       VBuiltin(fun args vm ->
           match args with
-          | [ VList(l', _); VFunction f ]
-          | [ VList(l', _); VClosure { Function = f } ] ->
+          | [ VList(l', _); VClosure f ] ->
               let rec map acc vm =
                   function
                   | [] -> acc, vm
@@ -519,10 +515,10 @@ and builtins () =
                       let vm = push vm x
 
                       let frame =
-                          { Function = f
+                          { Closure = f
                             IP = 0
                             StackBase = vm.Stack.Count - 1
-                            Locals = Array.zeroCreate f.Locals.Length }
+                            Locals = Array.zeroCreate f.Function.Locals.Length }
 
                       vm.Frames.Add(frame)
 
@@ -816,7 +812,7 @@ and builtins () =
 and runCurrentFrame vm =
     let frame = getCurrentFrame vm
 
-    if frame.IP >= frame.Function.Chunk.Code.Count then
+    if frame.IP >= frame.Closure.Function.Chunk.Code.Count then
         VNil, vm
     else
         let vm, instruction = readByte vm
@@ -877,7 +873,14 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         vm
     | GET_UPVALUE ->
         let vm, slot = readByte vm
-        let closure = peek vm 1
+        
+        let rec findClosure (curDepth : int) =
+            let closure = peek vm curDepth
+            match closure with
+            | VClosure _ -> closure
+            | _ -> findClosure (curDepth + 1)
+        
+        let closure = findClosure 1
 
         match closure with
         | VClosure { UpValues = upValues } ->
@@ -885,6 +888,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             let vm = push vm upValue
             vm
         | _ -> failwith "Expected closure for GET_UPVALUE"
+            
     | SET_UPVALUE ->
         let vm, slot = readByte vm
         let value, vm = pop vm
@@ -892,7 +896,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
 
         match closure with
         | VClosure { UpValues = upValues } ->
-            upValues.[int slot] <- value
+            upValues[int slot] <- value
             vm
         | _ -> failwith "Expected closure for SET_UPVALUE"
 
@@ -966,11 +970,13 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             let vm, upValueCount = readByte vm
 
             // pop all upvalues
-            let rec popUpValues (vm: VM) (count: int) : (VM * Value list) =
+            let rec popUpValues (vm: VM) (count: int) : VM * Value list =
                 match count with
                 | n when n > 0 ->
                     let vm, index = readByte vm
                     let vm, depth = readByte vm
+                    
+                    printfn $"depth: {depth}, index: {index}"
 
                     let upValue = findUpValue vm (int depth) (int index)
 
@@ -981,15 +987,9 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
                 | _ -> vm, []
 
 
-            let vm, vals = popUpValues vm (int upValueCount)
-            
             // doesnt work, finds current frames up val in that loc, how can i look in previous frames for it, or know where to look???
-            // also why cant i just add them as locals ? everything is immutable, so no issue
-            let vm, prevUpValueCount = readByte vm
-            
-            let vm, prevUpValues = popUpValues vm (int prevUpValueCount)
-            
-            let vals = List.append prevUpValues vals
+            // also why cant i just add them as locals ? everything is immutable, so no issue -> cos i dont know what they are at compile time
+            let vm, vals = popUpValues vm (int upValueCount)
             
             let closure =
                 VClosure
@@ -1060,6 +1060,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
     | _ -> failwith $"Unimplemented opcode: {opCodeToString opcode}"
 
 and findUpValue (vm: VM) (depth: int) (index: int) =
+    // doesnt work if depth is more than 1 !!!
     let frame = getCurrentFrame vm
 
     let rec findUpValue' frame depth index =
@@ -1077,7 +1078,7 @@ and runLoop vm =
     else
         let frame = getCurrentFrame vm
 
-        if frame.IP >= frame.Function.Chunk.Code.Count then
+        if frame.IP >= frame.Closure.Function.Chunk.Code.Count then
             if vm.Frames.Count > 1 then
                 let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
                 vm.Frames.RemoveAt(vm.Frames.Count - 1)
@@ -1137,7 +1138,7 @@ let resetStreams (vm: VM) =
 let stepVM (vm: VM) =
     let currentFrame = getCurrentFrame vm
 
-    if currentFrame.IP >= currentFrame.Function.Chunk.Code.Count then
+    if currentFrame.IP >= currentFrame.Closure.Function.Chunk.Code.Count then
         if vm.Frames.Count > 1 then
             vm.Frames.RemoveAt(vm.Frames.Count - 1)
             vm
