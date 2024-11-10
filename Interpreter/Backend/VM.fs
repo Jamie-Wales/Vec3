@@ -2,11 +2,23 @@ module Vec3.Interpreter.Backend.VM
 
 open System
 open Microsoft.FSharp.Collections
+open Vec3.Interpreter
 open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Token
+open Grammar
+
+let loadFunction (vm: VM) (func: Function) : VM =
+    let frame = {
+        Function = func
+        IP = 0
+        StackBase = vm.Stack.Count
+        Locals = [||]
+    }
+    vm.Frames.Add(frame)
+    vm
 
 let createOutputStreams () =
     { ConstantPool = Seq.empty
@@ -147,9 +159,6 @@ let callValue (vm: VM) (argCount: int) : VM =
         push vm res
     | _ -> failwith $"Can only call functions, got: {valueToString callee}"
 
-// remove function from stack
-
-    
 
 let parsePlotType = function
     | "scatter" ->
@@ -162,7 +171,37 @@ let parsePlotType = function
         printf "Parsing Bar" 
         Bar 
     | unknown -> failwith $"Unknown plot type: {unknown}"
-let rec builtins () =
+    
+let rec createNewVM (mainFunc: Function) : VM =
+    let constantPool =
+        mainFunc.Chunk.ConstantPool
+        |> Seq.indexed
+        |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
+    let disassembly =
+        disassembleChunkToString mainFunc.Chunk mainFunc.Name
+        |> fun s -> s.Split(Environment.NewLine) |> Seq.ofArray
+    let vm =
+        { Frames = ResizeArray<CallFrame>()
+          Stack = ResizeArray<Value>(256)
+          ScopeDepth = 0
+          Globals = builtins()
+          Streams =
+            { ConstantPool = constantPool
+              Disassembly = disassembly
+              Execution = Seq.empty
+              StandardOutput = Seq.empty
+              Globals = Seq.empty }
+          ExecutionHistory = ResizeArray<VM>()
+          Plots = ResizeArray<Value>() }  
+    let mainFrame =
+        { Function = mainFunc
+          IP = 0
+          StackBase = 0
+          Locals = [||] }
+    vm.Frames.Add(mainFrame)
+    vm
+    
+and builtins () =
     [ Identifier "plot",
       VBuiltin(fun args vm ->
       match args with
@@ -205,12 +244,29 @@ let rec builtins () =
       VBuiltin(fun args vm ->
           match args with
           | [ VString title; VFunction(_, Some f) ] ->
-              let plotData = VPlotFunction(title, f)
+              let builtin = SymbolicExpression.toBuiltin f
+              
+              let plotData = VPlotFunction(title, builtin)
               vm.Plots.Add(plotData)  
               push vm VNil  
           | _ ->
               failwith
                   $"""plotFunc expects a title, a function, a start, a stop, and a step, got: {String.concat ", " (List.map valueToString args)}""")
+      Identifier "plotFuncs",
+        VBuiltin(fun args vm ->
+        match args with
+        | [ VString title; VList(funcs, _) ] ->
+            let funcs = List.map (function
+                | VFunction(_, Some f) -> SymbolicExpression.toBuiltin f
+                | _ -> failwith "plotFuncs expects a list of functions") funcs
+            
+            let plotData = VPlotFunctions(title, funcs)
+            vm.Plots.Add(plotData)
+            push vm VNil
+        | _ ->
+            failwith
+                $"""plotFuncs expects a list of functions, got: {String.concat ", " (List.map valueToString args)}""")
+      
       Identifier "print",
       VBuiltin(fun args vm ->
           let vm =
@@ -509,7 +565,10 @@ let rec builtins () =
               VNumber(VFloat init)
               VNumber(VFloat tol)
               VNumber(VInteger it) ] ->
-              let res = newtonRaphson f1 f2 init tol it
+              let builtin1 = SymbolicExpression.toBuiltin f1
+              let builtin2 = SymbolicExpression.toBuiltin f2
+              
+              let res = newtonRaphson builtin1 builtin2 init tol it
               push vm (VNumber(VFloat(res)))
           | _ -> failwith "invalid")
 
@@ -517,9 +576,50 @@ let rec builtins () =
       VBuiltin(fun args vm ->
           match args with
           | [ VFunction(_, Some f); VNumber(VFloat(a)); VNumber(VFloat(b)); VNumber(VFloat(tol)); VNumber(VInteger(it)) ] ->
-              let res = bisection f a b tol it
+              let builtin = SymbolicExpression.toBuiltin f
+              let res = bisection builtin a b tol it
               push vm (VNumber(VFloat(res)))
           | _ -> failwith "invalid")
+      
+      Identifier "eval",
+      VBuiltin(fun args vm ->
+          match args with
+          | [VBlock e] ->
+              match e with
+              | EBlock (stmts, _) ->
+                  let compiled = Compiler.compileProgram stmts
+                  match compiled with
+                  | Ok(func, _) ->
+                      let block = createNewVM(func)
+                      let vm' = run block
+                      let lst = vm'.Stack[vm'.Stack.Count - 1]
+                      push vm lst
+                  | Error err -> failwith $"{err}"
+                | _ -> failwith "invalid"
+            | _ -> failwith "invalid"
+          )
+      
+      Identifier "differentiate",
+      VBuiltin(fun args vm ->
+          match args with
+            | [ VFunction(_, Some f) ] ->
+                let diff = SymbolicExpression.differentiate f
+                let expr = SymbolicExpression.toExpr diff
+                
+                let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
+                let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
+                
+                let compiled = Compiler.compileProgram [expr]
+                match compiled with
+                | Ok(func, _) ->
+                    let block = createNewVM(func)
+                    let vm' = run block
+                    let lst = vm'.Stack[vm'.Stack.Count - 1]
+                    push vm lst
+                | Error err -> failwith $"{err}"
+                
+            | _ -> failwith "invalid")
+      
       
       Identifier "assert",
       VBuiltin(fun args vm ->
@@ -1015,42 +1115,5 @@ let stepBackVM (vm: VM) =
     else
         vm
         
-let createNewVM (mainFunc: Function) : VM =
-    let constantPool =
-        mainFunc.Chunk.ConstantPool
-        |> Seq.indexed
-        |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
-    let disassembly =
-        disassembleChunkToString mainFunc.Chunk mainFunc.Name
-        |> fun s -> s.Split(Environment.NewLine) |> Seq.ofArray
-    let vm =
-        { Frames = ResizeArray<CallFrame>()
-          Stack = ResizeArray<Value>(256)
-          ScopeDepth = 0
-          Globals = builtins()
-          Streams =
-            { ConstantPool = constantPool
-              Disassembly = disassembly
-              Execution = Seq.empty
-              StandardOutput = Seq.empty
-              Globals = Seq.empty }
-          ExecutionHistory = ResizeArray<VM>()
-          Plots = ResizeArray<Value>() }  
-    let mainFrame =
-        { Function = mainFunc
-          IP = 0
-          StackBase = 0
-          Locals = [||] }
-    vm.Frames.Add(mainFrame)
-    vm
 
-let loadFunction (vm: VM) (func: Function) : VM =
-    let frame = {
-        Function = func
-        IP = 0
-        StackBase = vm.Stack.Count
-        Locals = [||]
-    }
-    vm.Frames.Add(frame)
-    vm
 

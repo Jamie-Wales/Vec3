@@ -16,13 +16,14 @@
         <Compile Include="Interpreter\Printer.fs" />
         <Compile Include="Interpreter\Scanner.fs" />
         <Compile Include="Interpreter\Parser.fs" />
+        <Compile Include="Interpreter\SymbolicExpression.fs" />
         <Compile Include="Interpreter\PrettyPrinter.fs" />
         <Compile Include="Interpreter\Backend\Types.fs" />
         <Compile Include="Interpreter\Backend\Value.fs" />
         <Compile Include="Interpreter\Backend\Instructions.fs" />
         <Compile Include="Interpreter\Backend\Chunk.fs" />
-        <Compile Include="Interpreter\Backend\VM.fs" />
         <Compile Include="Interpreter\Backend\Compiler.fs" />
+        <Compile Include="Interpreter\Backend\VM.fs" />
         <Compile Include="Interpreter\Typing\Exceptions.fs" />
         <Compile Include="Interpreter\Typing\Types.fs" />
         <Compile Include="Interpreter\Typing\Substitution.fs" />
@@ -33,11 +34,8 @@
         <Compile Include="Interpreter\ConstantFolding.fs" />
         <Compile Include="Interpreter\Prelude.fs" />
         <Compile Include="Interpreter\Repl.fs" />
-        <Compile Include="Interpreter\SymbolicExpression.fs" />
         <Compile Include="Notebook.axaml.fs" />
-        <Compile Include="Interpreter\Backend\Compiler.fs" />
         <Compile Include="Notebook.axaml.fs" />
-        <Compile Include="Interpreter\SymbolicExpression.fs" />
         <Compile Include="PlotWindow.axaml.fs" />
         <Compile Include="MainWindow.axaml.fs" />
         <Compile Include="App.axaml.fs" />
