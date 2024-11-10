@@ -7,8 +7,8 @@ open Token
 // https://bmitc.me/articles/symbolic-expressions-in-fsharp#:~:text=By%20pattern%20matching%20against%20Sum,used%20in%20the%20result%20expression.
 
 type Expression =
-    | E
-    | PI
+    // | E
+    // | PI
     
     | X
     | Const of float
@@ -363,12 +363,8 @@ let integrate (expression: Expression) : Expression =
     inte expression |> simplify
 
 let findIntegral (expression: Expression) (a: float) (b: float) : float =
-    let builtin = toBuiltin expression
-    
-    let atA = builtin a
-    let atB = builtin b
-    
-    atB - atA
+    let integral = integrate expression
+    abs <| evaluate b integral - evaluate a integral
 
 let rec toString (expression: Expression) : string =
     let expression = simplify expression

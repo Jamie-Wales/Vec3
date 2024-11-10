@@ -672,13 +672,13 @@ and builtins () =
                 
             | _ -> raise <| InvalidProgramException "draw expects a title and a list of functions")
       
-      // TODO FIX THIS !!
       Identifier "findIntegral",
       VBuiltin(fun args vm ->
           match args with
-          | [ VFunction(_, Some f); VNumber(VFloat a); VNumber(VFloat b)  ] ->
+          | [ VFunction(_, Some f); VNumber(VFloat b); VNumber(VFloat a)  ] ->
                 let res = SymbolicExpression.findIntegral f a b
                 push vm (VNumber(VFloat res))
+            | _ -> raise <| InvalidProgramException "findIntegral expects a function, a lower bound, and an upper bound")
           )
 
       Operator(Plus, Some Infix),
