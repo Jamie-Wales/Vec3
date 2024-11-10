@@ -64,9 +64,9 @@ let root = bisection(f, a, b, tolerance, max)
 
 print(root)
 
-plotFunc("test", f)
-plotFunc("cosTest", y)
-plotFunc("tanTest", r)
+plotFunc("Standard Polynomial", f)
+plotFunc("Cos", cos)
+plotFunc("Tan wrapped", r)
 
 let data = {
     title="My Plot",
@@ -169,7 +169,7 @@ plot(data)
                 | Scatter -> 
                     plotWindow.PlotControl.Plot.Add.Scatter(x, y) |> ignore
                 | Line ->
-                    plotWindow.PlotControl.Plot.Add.Line(x.[0], y.[0], x.[1], y.[1]) |> ignore
+                    plotWindow.PlotControl.Plot.Add.Line(x[0], y[0], x[1], y[1]) |> ignore
                 | Bar ->
                     plotWindow.PlotControl.Plot.Add.Bars(y, x) |> ignore
                 | Histogram -> failwith "todo"
