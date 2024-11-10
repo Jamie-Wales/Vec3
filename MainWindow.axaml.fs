@@ -75,6 +75,15 @@ let data = {
     ptype="bar" 
 }
 plot(data)
+
+let data = {
+    x = 100.0,
+    y = 100.0,
+    width = 50.0,
+    height = 50.0,
+    colour = "red"
+}
+draw(data) 
 """
     
     do
@@ -151,8 +160,26 @@ plot(data)
         plotWindow
 
     member private this.HandlePlotOutput(vm: VM) =
+        let shapes =
+            vm.Canvas|> Seq.choose (function 
+            | VShape _ as shape -> Some shape
+            | _ -> None)
+            |> Seq.toList
+            
+        if not (List.isEmpty shapes) then
+            let drawWindow = DrawWindow()
+            drawWindow.Show()
+            Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                for shape in shapes do
+                    drawWindow.DrawShape(vm, shape)
+            ) |> ignore
+
+        // Handle other plot types
         for value in vm.Plots do
             match value with
+            | VShape _ -> 
+                // Already handled above
+                ()
             | VPlotData (title, xs, ys, plotType) ->
                 let plotWindow = PlotWindow()
                 plotWindow.Title <- title
@@ -197,7 +224,7 @@ plot(data)
             | _ -> ()
                 
         vm.Plots.Clear()
-        
+            
     member private this.LoadCode() =
         replState <- createNewVM(initFunction("Main"))
         let code = this.GetEditorText()
