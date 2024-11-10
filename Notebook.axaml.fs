@@ -1,6 +1,6 @@
 namespace Vec3
 
-open System
+open System.Threading.Tasks
 open Avalonia
 open Avalonia.Controls
 open Avalonia.Markup.Xaml
@@ -8,13 +8,10 @@ open AvaloniaEdit
 open Avalonia.Media
 open TextMateSharp.Grammars
 open AvaloniaEdit.TextMate
-open Vec3.Interpreter
 open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Compiler
 open Vec3.Interpreter.Repl
-open System.Collections.ObjectModel
-open Avalonia.Threading
 
 type NotebookWindow () as this =
     inherit Window ()
@@ -193,10 +190,27 @@ type NotebookWindow () as this =
         cellBorder.Child <- grid
         cellsContainer.Children.Add(cellBorder)
     
-    member private this.ExportNotebook() =
-        // TODO: Implement notebook export
-        ()
-        
+    member private this.ExportNotebook() = 
+        task {
+            try
+                // Set QuestPDF license
+                QuestPDF.Settings.License <- QuestPDF.Infrastructure.LicenseType.Community
+
+                let dialog = SaveFileDialog()
+                let extensions = ResizeArray<string>(["pdf"])
+                dialog.Filters.Add(FileDialogFilter(Name = "PDF Document", Extensions = extensions))
+                
+                let! path = dialog.ShowAsync(this)
+                match path with
+                | null -> ()  
+                | path ->
+                    let cells = NotebookPdfExport.extractCellsData cellsContainer
+                    do! Task.Run(fun () -> 
+                        NotebookPdfExport.exportToPdf cells path)
+            with 
+            | ex -> 
+                eprintfn "Failed to export PDF: %s" ex.Message
+        } |> ignore
     member private this.ImportNotebook() =
         // TODO: Implement notebook import
         ()
