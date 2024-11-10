@@ -39,7 +39,7 @@ let rec occursCheck (tv: TypeVar) (t: TType) : bool =
         || match var with
            | DVar v -> v = tv
            | _ -> false
-    | TConstrain(var, _) -> var = tv
+    | TConstrain constrain -> constrain.TypeVar = tv
     | TRecord row -> occursCheck tv row
     | TRowExtend(_, typ, row) -> occursCheck tv typ || occursCheck tv row
     | TAlias(_, typ) -> Option.map (occursCheck tv) typ |> Option.defaultValue false
@@ -88,9 +88,9 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
     
     | TTypeVariable tv, TTypeVariable tv' when tv = tv' -> Ok Map.empty
     
-    | TTypeVariable tv, TConstrain(var, f)
-    | TConstrain(var, f), TTypeVariable tv ->
-        Ok <| Map.add tv (TConstrain(var, f)) Map.empty
+    | TTypeVariable tv, TConstrain constrain
+    | TConstrain constrain, TTypeVariable tv ->
+        Ok <| Map.add tv (TConstrain constrain) Map.empty
 
     | TTypeVariable tv, t
     | t, TTypeVariable tv ->
@@ -99,23 +99,28 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
         else
             Ok <| Map.add tv t Map.empty
         
-    | TConstrain(var1, f1), TConstrain(var2, f2) ->
-        if var1 = var2 then
+    | TConstrain constrain1, TConstrain constrain2 ->
+        if constrain1.TypeVar = constrain2.TypeVar then
             Ok Map.empty
         else
             let tv = freshTypeVar()
             
-            let map = Map.add var1 (TConstrain(tv, fun t -> f1 t && f2 t)) Map.empty
-            let map = Map.add var2 (TConstrain(tv, fun t -> f1 t && f2 t)) map
+            let f1 = constrain1.Constrain
+            let f2 = constrain2.Constrain
+            
+            let constrain = TConstrain(Constrain(tv, fun t -> f1 t && f2 t))
+            
+            let map = Map.add constrain1.TypeVar constrain Map.empty
+            let map = Map.add constrain2.TypeVar constrain map
             
             Ok map
 
-    | TConstrain(var, f), t
-    | t, TConstrain(var, f) ->
-        if occursCheck var t then
+    | TConstrain constrain, t
+    | t, TConstrain constrain ->
+        if occursCheck constrain.TypeVar t then
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
-        else if f t then
-            Ok <| Map.add var t Map.empty
+        else if constrain.Constrain t then
+            Ok <| Map.add constrain.TypeVar t Map.empty
         else
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 
@@ -176,7 +181,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
                 | Some(TRowExtend(label2, typ2, rest_rows2)) when label1.Lexeme = label2.Lexeme -> Ok(typ2, rest_rows2)
                 | _ -> Ok(TRowExtend(label1, field_typ, TTypeVariable v), TRowEmpty)
             
-            | TConstrain(v, _) -> rewrite_row (TTypeVariable v) label field_typ
+            | TConstrain constrain -> rewrite_row (TTypeVariable constrain.TypeVar) label field_typ
 
             | _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 
@@ -184,26 +189,26 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
         let rest_row_1_var =
             match rest_rows1 with
             | TTypeVariable v -> Some(TTypeVariable v)
-            | TConstrain(v, _) -> Some(TTypeVariable v)
+            | TConstrain constrain -> Some(TTypeVariable constrain.TypeVar)
             | _ -> None
 
         let rest_row_2_var =
             match row2 with
             | TRowExtend(_, _, TTypeVariable v) -> Some(TTypeVariable v)
-            | TRowExtend(_, _, TConstrain(v, _)) -> Some(TTypeVariable v)
+            | TRowExtend(_, _, TConstrain constrain) -> Some(TTypeVariable constrain.TypeVar)
             | _ -> None
 
         let rest_row_1 =
             match rest_row_1_var with
             | Some(TTypeVariable v) -> TTypeVariable v
-            | Some(TConstrain(v, _)) -> TTypeVariable v
+            | Some(TConstrain constrain) -> TTypeVariable constrain.TypeVar
             | Some _ -> rest_rows1
             | None -> rest_rows1
 
         let rest_row_2 =
             match rest_row_2_var with
             | Some(TTypeVariable v) -> TTypeVariable v
-            | Some(TConstrain(v, _)) -> TTypeVariable v
+            | Some(TConstrain constrain) -> TTypeVariable constrain.TypeVar
             | _ -> row2
 
         let rewritten = rewrite_row rest_row_2 label1 typ1
@@ -419,8 +424,8 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                             let returnType = applySubstitution aliases combinedSubs ret
 
                             match returnType with
-                            | TConstrain(tv, _) ->
-                                let resolved = Map.tryFind tv resolvedTypes.Value
+                            | TConstrain constrain ->
+                                let resolved = Map.tryFind constrain.TypeVar resolvedTypes.Value
                                 
                                 match resolved with
                                 | Some t -> Ok(t, combinedSubs, ECall(expr, argExprs, Some t))
@@ -579,13 +584,13 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             let sub2 = Map.add n (TTensor(TTypeVariable typeVar, DVar dimsTypeVar)) sub
             Ok(TTypeVariable typeVar, sub2, EIndex(expr2, expr1, Some (TTypeVariable typeVar)))
 
-        | Ok(TInteger, sub1, expr1), Ok(TConstrain(n, f), sub2, expr2) -> // is this correct ?
+        | Ok(TInteger, sub1, expr1), Ok(TConstrain constrain, sub2, expr2) -> // is this correct ?
             let sub = combineMaps sub1 sub2
             
             let typeVar = freshTypeVar ()
             let dimsTypeVar = freshTypeVar ()
             
-            let sub2 = Map.add n (TTensor(TTypeVariable typeVar, DVar dimsTypeVar)) sub
+            let sub2 = Map.add constrain.TypeVar (TTensor(TTypeVariable typeVar, DVar dimsTypeVar)) sub
             Ok(TTypeVariable typeVar, sub2, EIndex(expr2, expr1, Some (TTypeVariable typeVar)))
 
         | Ok(TInteger, sub1, expr1), Ok(TAny, sub2, expr2) ->
@@ -596,7 +601,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             let sub2 = Map.add typeVar (TTensor(TTypeVariable typeVar, DVar dimsTypeVar)) sub
             Ok(TTypeVariable typeVar, sub2, EIndex(expr2, expr1, Some (TTypeVariable typeVar)))
             
-        | Ok(TInteger, sub1, expr1), Ok(TTuple types, sub2, expr2) ->
+        | Ok(TInteger, sub1, expr1), Ok(TTuple _, sub2, expr2) ->
             let sub = combineMaps sub1 sub2
             let returnType = applySubstitution aliases sub TNever
             Ok(returnType, sub, EIndex(expr2, expr1, Some returnType))

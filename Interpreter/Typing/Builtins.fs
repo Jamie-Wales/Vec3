@@ -25,47 +25,56 @@ let consType =
     TFunction([ listTyp; TTensor(listTyp, dimsVar1) ], TTensor(listTyp, dimsVar2), false, true)
 
 let plotType =
-    let recTyp =
-        TConstrain(
-            freshTypeVar (),
-            fun t -> t.hasFields [ Identifier "x"; Identifier "y"; Identifier "title"; Identifier "ptype" ]
-        )
+    let tensWithArithFieldsFunc = fun (t: TType) -> match t with
+                                                    | TTensor(typ, _) -> typ.IsArithmetic
+                                                    | _ -> false
+                    
+    
+    let func =
+        fun (t: TType) ->
+            t.hasFieldsThat
+                [ (Identifier "x", tensWithArithFieldsFunc)
+                  (Identifier "y", tensWithArithFieldsFunc)
+                  (Identifier "title", fun t -> t = TString)
+                  (Identifier "ptype", fun t -> t = TString) ]
+
+    let recTyp = TConstrain(Constrain(freshTypeVar (), func))
 
     TFunction([ recTyp ], TUnit, false, true)
 
 let plotFunType =
     let funConstrain =
-        TConstrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1))
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
 
     TFunction([ TString; funConstrain ], TUnit, false, true)
 
 let plus =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(typeVar, _.IsArithmetic)
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
 
     TFunction([ constrain; constrain ], constrain, true, true)
 
 let minus =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(typeVar, _.IsArithmetic)
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
 
     TFunction([ constrain; constrain ], constrain, true, true)
 
 let mul =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(typeVar, _.IsArithmetic)
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
 
     TFunction([ constrain; constrain ], constrain, true, true)
 
 let div =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(typeVar, _.IsArithmetic)
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
 
     TFunction([ constrain; constrain ], constrain, true, true)
 
 let pow =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(typeVar, _.IsArithmetic)
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
 
     TFunction([ constrain; constrain ], constrain, true, true)
 
@@ -81,25 +90,25 @@ let logType = TFunction([ TFloat; TFloat ], TFloat, false, true)
 
 let lt =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(typeVar, _.IsArithmetic)
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
 
     TFunction([ constrain; constrain ], TBool, false, true)
 
 let gt =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(typeVar, _.IsArithmetic)
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
 
     TFunction([ constrain; constrain ], TBool, false, true)
 
 let lte =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(typeVar, _.IsArithmetic)
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
 
     TFunction([ constrain; constrain ], TBool, false, true)
 
 let gte =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(typeVar, _.IsArithmetic)
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
 
     TFunction([ constrain; constrain ], TBool, false, true)
 
@@ -111,13 +120,13 @@ let notF = TFunction([ TBool ], TBool, false, true)
 
 let neg =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(typeVar, _.IsArithmetic)
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
 
     TFunction([ constrain ], constrain, true, true)
 
 let unneg =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(typeVar, _.IsArithmetic)
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
 
     TFunction([ constrain ], constrain, true, true)
 
@@ -134,7 +143,7 @@ let crossProduct =
 let dotProduct =
     let tensorTypeVar = freshTypeVar ()
     let dimsVar = DVar(freshTypeVar ())
-    let constrain = TConstrain(tensorTypeVar, _.IsArithmetic)
+    let constrain = TConstrain(Constrain(tensorTypeVar, _.IsArithmetic))
 
     TFunction([ TTensor(constrain, dimsVar); TTensor(constrain, dimsVar) ], constrain, false, true)
 
@@ -172,44 +181,55 @@ let castType =
     TFunction([ TAny; typ ], typ, false, true)
 
 let newtonRaphsonType =
-    let funcT1 = TConstrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1))
-    let funcT2 = TConstrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1))
+    let funcT1 =
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+
+    let funcT2 =
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
 
     TFunction([ funcT1; funcT2; TFloat; TFloat; TInteger ], TFloat, false, true)
 
 let bisectionTyp =
-    let funcT = TConstrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1))
+    let funcT =
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
 
     TFunction([ funcT; TFloat; TFloat; TFloat; TInteger ], TFloat, false, true)
 
 let differentiateType =
-    let funcT = TConstrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1))
+    let funcT =
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+
     let retT = TFunction([ TFloat ], TFloat, true, false)
 
     TFunction([ funcT ], retT, false, true)
 
 let integrateType =
-    let funcT = TConstrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1))
+    let funcT =
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+
     let retT = TFunction([ TFloat ], TFloat, true, false)
 
     TFunction([ funcT ], retT, false, true)
 
 let plotFunsType =
-    let funcT = TConstrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1))
+    let funcT =
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
 
     TFunction([ TString; TTensor(funcT, DAny) ], TUnit, false, true)
 
 let drawType =
     let recTyp =
         TConstrain(
-            freshTypeVar (),
-            fun t ->
-                t.hasFields
-                    [ Identifier "width"
-                      Identifier "height"
-                      Identifier "x"
-                      Identifier "y"
-                      Identifier "colour" ]
+            Constrain(
+                freshTypeVar (),
+                fun t ->
+                    t.hasFieldsOf
+                        [ (Identifier "width", TFloat)
+                          (Identifier "height", TFloat)
+                          (Identifier "x", TFloat)
+                          (Identifier "y", TFloat)
+                          (Identifier "colour", TString) ]
+            )
         )
 
     TFunction([ TRecord recTyp ], TUnit, false, true)
