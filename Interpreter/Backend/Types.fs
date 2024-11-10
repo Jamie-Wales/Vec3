@@ -44,6 +44,7 @@ and Value =
     | VPlotData of string * Value list * Value list * PlotType
     | VPlotFunction of string * (double -> double)
     | VPlotFunctions of string * (double -> double) list
+    | VShape of (float * float * float * float * string)
     | VBlock of Expr
 
 and CompoundType =
@@ -84,8 +85,7 @@ and VM =
       Streams: OutputStreams
       ExecutionHistory: ResizeArray<VM>
       Plots: ResizeArray<Value>
-      Canvas: ResizeArray<Value> 
-      }
+      Canvas: ResizeArray<Value> }
 
 let rec valueToString =
     function

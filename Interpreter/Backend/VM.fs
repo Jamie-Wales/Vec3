@@ -193,7 +193,7 @@ let rec createNewVM (mainFunc: Function) : VM =
               Globals = Seq.empty }
           ExecutionHistory = ResizeArray<VM>()
           Plots = ResizeArray<Value>()
-          Canvas = ResizeArray<Value>()
+          Canvas = ResizeArray<Value>() 
           }  
     let mainFrame =
         { Function = mainFunc
@@ -585,6 +585,25 @@ and builtins () =
                 
             | _ -> raise <| InvalidProgramException "differentiate expects a function")
       
+      Identifier "integrate",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VFunction(_, Some f) ] ->
+              let integral = SymbolicExpression.integrate f
+              let expr = SymbolicExpression.toExpr integral
+              
+              let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
+              let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
+              
+              let compiled = Compiler.compileProgram [expr]
+              match compiled with
+              | Ok(func, _) ->
+                    let block = createNewVM(func)
+                    let vm' = run block
+                    let lst = vm'.Stack[vm'.Stack.Count - 1]
+                    push vm lst
+              | Error err -> raise <| InvalidProgramException $"{err}"
+            | _ -> raise <| InvalidProgramException "integrate expects a function")
       
       Identifier "assert",
       VBuiltin(fun args vm ->
@@ -600,6 +619,58 @@ and builtins () =
               else
                   push vm VNil
             | _ -> raise <| InvalidProgramException "assert expects a condition")
+      
+      Identifier "draw",
+        VBuiltin(fun args vm ->
+            match args with
+            | [ VList (elems, RECORD) ] ->
+                let width = elems |> List.tryFind (function
+                    | VList([VString "width"; VNumber(VFloat _)], _) -> true
+                    | _ -> false)
+                
+                let width = match width with
+                            | Some(VList([VString "width"; VNumber(VFloat w)], _)) -> w
+                            | _ -> raise <| InvalidProgramException "draw expects a width"
+                
+                let height = elems |> List.tryFind (function
+                    | VList([VString "height"; VNumber(VFloat _)], _) -> true
+                    | _ -> false)
+                
+                let height = match height with
+                                | Some(VList([VString "height"; VNumber(VFloat h)], _)) -> h
+                                | _ -> raise <| InvalidProgramException "draw expects a height"
+                
+                let x = elems |> List.tryFind (function
+                    | VList([VString "x"; VNumber(VFloat _)], _) -> true
+                    | _ -> false)
+                
+                let x = match x with
+                            | Some(VList([VString "x"; VNumber(VFloat x)], _)) -> x
+                            | _ -> raise <| InvalidProgramException "draw expects an x"
+                
+                
+                
+                let y = elems |> List.tryFind (function
+                    | VList([VString "y"; VNumber(VFloat _)], _) -> true
+                    | _ -> false)
+                
+                let y = match y with
+                            | Some(VList([VString "y"; VNumber(VFloat y)], _)) -> y
+                            | _ -> raise <| InvalidProgramException "draw expects a y"
+                
+                let colour = elems |> List.tryFind (function
+                    | VList([VString "colour"; VString _], _) -> true
+                    | _ -> false)
+                
+                let colour = match colour with
+                                | Some(VList([VString "colour"; VString c], _)) -> c
+                                | _ -> raise <| InvalidProgramException "draw expects a colour"
+                
+                let value = VShape(width, height, x, y, colour)
+                vm.Canvas.Add(value)
+                push vm VNil
+                
+            | _ -> raise <| InvalidProgramException "draw expects a title and a list of functions")
 
       Operator(Plus, Some Infix),
       VBuiltin(fun args vm ->

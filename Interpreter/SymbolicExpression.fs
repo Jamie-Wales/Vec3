@@ -326,6 +326,38 @@ let differentiate (expression: Expression) : Expression =
         
     diff expression |> simplify
 
+// not quite working
+let integrate (expression: Expression) : Expression =
+    let rec inte (expression: Expression): Expression =
+        match simplify expression with
+        | X -> Multiplication (Const 0.5, Power (X, Const 2.0))
+        | Const x -> Multiplication (Const x, X)
+        | Negation x -> Negation (inte x)
+        | Addition (x, y) -> Addition (inte x, inte y)
+        | Subtraction (x, y) -> Subtraction (inte x, inte y)
+        | Multiplication (x, y) -> Multiplication (inte x, y)
+        | Division (x, y) -> Division (inte x, y)
+        | Power (x, y) -> Division (Power (x, Addition (y, Const 1.0)), Addition (y, Const 1.0))
+        
+        | Sine x -> Negation (Cosine x)
+        | Cosine x -> Sine x
+        | Tangent x -> Logarithm (Cosine x, Sine x)
+        
+        | ASine x -> Multiplication (x, ASine x)
+        | ACosine x -> Multiplication (x, ACosine x)
+        | ATangent x -> Multiplication (x, ATangent x)
+        
+        | Exponential x -> Exponential x
+        | Logarithm (x, y) -> Multiplication (y, Logarithm (Const Math.E, x))
+        | SquareRoot x -> Multiplication (Const 0.5, Multiplication (x, SquareRoot x))
+        
+        | AbsoluteValue x -> AbsoluteValue (inte x)
+        | Floor _ -> Const 0.0
+        | Ceiling _ -> Const 0.0
+        | Truncate _ -> Const 0.0
+        
+    inte expression |> simplify
+
 let rec toString (expression: Expression) : string =
     let expression = simplify expression
     

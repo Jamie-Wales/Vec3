@@ -109,6 +109,27 @@ type Type =
         match this with
         | TFunction(args, _, _, _) -> List.length args = num
         | _ -> false
+        
+        
+    member this.IsList =
+        match this with
+        | TTensor _ -> true
+        | _ -> false
+    
+    member this.hasField name =
+        match this with
+        | TRecord row ->
+            let rec hasField' row =
+                match row with
+                | TRowEmpty -> false
+                | TRowExtend (field, _, rest) -> field.Lexeme = name || hasField' rest
+                | _ -> false
+            hasField' row
+        | TAlias(_, Some t) -> t.hasField name
+        | _ -> false
+        
+    member this.hasFields names =
+        List.forall this.hasField names
 
 and Dims =
     | Dims of int list
