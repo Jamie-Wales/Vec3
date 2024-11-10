@@ -220,6 +220,8 @@ type BuiltInFunction =
     | PlotFunction
     | PlotFunctions
     
+    | Draw
+    
     | Ceil
     | Len
     
@@ -260,6 +262,7 @@ type BuiltInFunction =
     | NewtonRaphson
     | Bisection
     | Differentiate
+    | Integrate
     
 let builtInFunctionMap =
     [ Identifier "print", BuiltInFunction.Print
@@ -288,9 +291,12 @@ let builtInFunctionMap =
       Identifier "BUILTIN_LEN", BuiltInFunction.Len
       Identifier "BUILTIN_TRUNC", BuiltInFunction.Trunc
       
+      Identifier "draw", BuiltInFunction.Draw
+      
       Identifier "newtonRaphson", BuiltInFunction.NewtonRaphson
       Identifier "bisection", BuiltInFunction.Bisection
       Identifier "differentiate", BuiltInFunction.Differentiate
+      Identifier "integrate", BuiltInFunction.Integrate
       
       Operator (Plus, Some Infix), BuiltInFunction.Add
       Operator (Minus, Some Infix), BuiltInFunction.Sub
