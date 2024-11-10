@@ -7,6 +7,9 @@ open Token
 // https://bmitc.me/articles/symbolic-expressions-in-fsharp#:~:text=By%20pattern%20matching%20against%20Sum,used%20in%20the%20result%20expression.
 
 type Expression =
+    | E
+    | PI
+    
     | X
     | Const of float
     | Negation of Expression
@@ -67,7 +70,7 @@ type Expression =
     
 let logBase (bas: float) (x: float) = Math.Log x / Math.Log bas
     
-let rec evaluate (a: float) (expression: Expression) =
+let rec evaluate (a: float) (expression: Expression) : float =
     match expression with
     | X -> a
     | Const x -> x
@@ -156,6 +159,7 @@ let rec toBuiltin (expression: Expression) : (double -> double) =
 
 let rec fromExpr (expr: Expr) : Expression =
     match expr with
+    // need first class support for e etc !!
     | EIdentifier ({ Lexeme = Identifier "E"; Position = _ }, _) -> Const Math.E
     | EIdentifier ({ Lexeme = Identifier "PI"; Position = _ }, _) -> Const Math.PI
     | EIdentifier ({ Lexeme = Identifier "TAU"; Position = _ }, _) -> Const Math.Tau
@@ -357,6 +361,14 @@ let integrate (expression: Expression) : Expression =
         | Truncate _ -> Const 0.0
         
     inte expression |> simplify
+
+let findIntegral (expression: Expression) (a: float) (b: float) : float =
+    let builtin = toBuiltin expression
+    
+    let atA = builtin a
+    let atB = builtin b
+    
+    atB - atA
 
 let rec toString (expression: Expression) : string =
     let expression = simplify expression

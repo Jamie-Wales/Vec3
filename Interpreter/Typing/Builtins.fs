@@ -24,23 +24,6 @@ let consType =
 
     TFunction([ listTyp; TTensor(listTyp, dimsVar1) ], TTensor(listTyp, dimsVar2), false, true)
 
-let plotType =
-    let tensWithArithFieldsFunc = fun (t: TType) -> match t with
-                                                    | TTensor(typ, _) -> typ.IsArithmetic
-                                                    | _ -> false
-                    
-    
-    let func =
-        fun (t: TType) ->
-            t.hasFieldsThat
-                [ (Identifier "x", tensWithArithFieldsFunc)
-                  (Identifier "y", tensWithArithFieldsFunc)
-                  (Identifier "title", fun t -> t = TString)
-                  (Identifier "ptype", fun t -> t = TString) ]
-
-    let recTyp = TConstrain(Constrain(freshTypeVar (), func))
-
-    TFunction([ recTyp ], TUnit, false, true)
 
 let plotFunType =
     let funConstrain =
@@ -217,22 +200,46 @@ let plotFunsType =
 
     TFunction([ TString; TTensor(funcT, DAny) ], TUnit, false, true)
 
+let plotType =
+    let tensWithArithFieldsFunc = fun (t: TType) -> match t with
+                                                    | TTensor(typ, _) -> typ.IsArithmetic
+                                                    | _ -> false
+                    
+    
+    let func =
+        fun (t: TType) ->
+            t.hasFieldsThat
+                [ (Identifier "x", tensWithArithFieldsFunc)
+                  (Identifier "y", tensWithArithFieldsFunc)
+                  (Identifier "title", fun t -> t = TString)
+                  (Identifier "ptype", fun t -> t = TString) ]
+
+    let recTyp = TConstrain(Constrain(freshTypeVar (), func))
+
+    TFunction([ recTyp ], TUnit, false, true)
+    
 let drawType =
     let recTyp =
         TConstrain(
             Constrain(
                 freshTypeVar (),
                 fun t ->
-                    t.hasFieldsOf
-                        [ (Identifier "width", TFloat)
-                          (Identifier "height", TFloat)
-                          (Identifier "x", TFloat)
-                          (Identifier "y", TFloat)
-                          (Identifier "colour", TString) ]
+                    t.hasFieldsThat
+                        [ (Identifier "width", fun t -> t = TFloat)
+                          (Identifier "height", fun t -> t = TFloat)
+                          (Identifier "x", fun t -> t = TFloat)
+                          (Identifier "y", fun t -> t = TFloat)
+                          (Identifier "colour", fun t -> t = TString) ]
             )
         )
 
-    TFunction([ TRecord recTyp ], TUnit, false, true)
+    TFunction([ recTyp ], TUnit, false, true)
+
+let findIntegralType =
+    let funcT =
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+    
+    TFunction([funcT; TFloat; TFloat], TFloat, false, true)
 
 let BuiltinFunctions: Map<BuiltInFunction, TType> =
     [ Print, TFunction([ TAny ], TUnit, false, true)
@@ -266,6 +273,7 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
 
       Differentiate, differentiateType
       Integrate, integrateType
+      FindIntegral, findIntegralType
 
       Cons, consType
       Add, plus
