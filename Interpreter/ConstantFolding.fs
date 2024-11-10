@@ -13,11 +13,11 @@ let rec GCD a b =
 
 let simplifyRational rat =
     match rat with
-    | LRational(a, b) ->
+    | Rational(a, b) ->
         let gcd = GCD a b
         let a = a / gcd
         let b = b / gcd
-        LRational(a, b)
+        Rational(a, b)
     | _ -> failwith "bad"
     
 
@@ -30,7 +30,6 @@ let foldConstants (program: Program) : Program =
         | SExpression(expr, typ) -> SExpression(foldExpr expr, typ)
         | SAssertStatement(expr, msg, typ) -> SAssertStatement(foldExpr expr, Option.map foldExpr msg, typ)
         | STypeDeclaration(tok, typ, typ2) -> STypeDeclaration(tok, typ, typ2)
-        | SRecFunc (name, args, body, rt) -> SRecFunc(name, args, foldExpr body, rt)
 
     and foldExpr (expr: Expr) : Expr =
         match expr with
@@ -38,9 +37,7 @@ let foldConstants (program: Program) : Program =
         | EBlock(stmts, typ) -> EBlock(foldStatements stmts, typ)
         | EIdentifier(token, typ) -> EIdentifier(token, typ)
         | EGrouping (expr, typ) -> EGrouping(foldExpr expr, typ)
-        | ECall (expr, args, typ) ->
-            // add builtins to this
-            ECall(foldExpr expr, List.map foldExpr args, typ)
+        | ECall (expr, args, typ) -> ECall(foldExpr expr, List.map foldExpr args, typ)
         | EList (elems, typ) -> EList(List.map foldExpr elems, typ)
         | EIndex (expr, index, typ) -> EIndex(foldExpr expr, foldExpr index, typ)
         | ELambda(args, body, rt, pr, typ) -> ELambda(args, foldExpr body, rt, pr, typ)

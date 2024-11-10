@@ -226,7 +226,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
         | DAny, Dims _
         | Dims _, DAny -> unify typ1 typ2
         | Dims sizes1, Dims sizes2 ->
-            if sizes1 = sizes2 then
+            if sizes1 = sizes2 || List.isEmpty sizes1 || List.isEmpty sizes2 then
                 unify typ1 typ2
             else
                 Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
@@ -441,22 +441,6 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
 
                         let sub = List.fold combineMaps sub argSubs
                         Ok(t', sub, ECall(expr, argExprs, Some t))))
-            | TAny -> 
-                inferArgs aliases env args
-                |> Result.bind (fun argResults ->
-                    let argTypes = List.map (fun (t, _, _) -> t) argResults
-                    let argSubs = List.map (fun (_, sub, _) -> sub) argResults
-                    let argExprs = List.map (fun (_, _, expr) -> expr) argResults
-                    
-                    let returnT = TTypeVariable(freshTypeVar ())
-                    let t = TFunction(argTypes, returnT, false, false)
-
-                    unify aliases t TAny
-                    |> Result.bind (fun sub ->
-                        let t' = applySubstitution aliases sub TAny
-
-                        let sub = List.fold combineMaps sub argSubs
-                        Ok(t', sub, ECall(expr, argExprs, Some t))))
             | _ -> Error [ TypeError.InvalidCall(callee, t) ])
     | EBlock(stmts, _) ->
         inferProgram aliases env stmts
@@ -561,7 +545,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                         TTypeVariable(freshTypeVar ())
 
                 let returnType =
-                    TTensor(applySubstitution aliases combinedSubs head, Dims (List.length types))
+                    TTensor(applySubstitution aliases combinedSubs head, Dims [ List.length types ])
 
                 Ok(returnType, combinedSubs, EList(exprs, Some returnType))))
     | ERange(start, end_, _) ->

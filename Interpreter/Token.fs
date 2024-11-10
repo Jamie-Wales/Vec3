@@ -1,10 +1,10 @@
 module Vec3.Interpreter.Token
 
-type Number =
-    | LFloat of float
-    | LInteger of int
-    | LRational of int * int
-    | LComplex of float * float
+type TNumber =
+    | Float of float
+    | Integer of int
+    | Rational of int * int
+    | Complex of float * float
 
 type Operator =
     | Plus
@@ -52,7 +52,6 @@ type Punctuation =
     | LeftBracket
     | RightBracket
     | Dollar
-    | Newline
     
 type Keyword =
     | Let
@@ -98,7 +97,7 @@ let getKeyword (s: string): Keyword =
     Map.find s keywordMap
     
 type Lexeme =
-    | Number of Number
+    | Number of TNumber
     | String of string
     | Keyword of Keyword
     | Operator of Operator * Placement option
@@ -112,12 +111,12 @@ type Token = { Lexeme: Lexeme; Position: Position; }
 
 let Empty = { Lexeme = Identifier ""; Position = { Line = 0; Column = 0; } }
 
-let numberToString (n: Number): string =
+let numberToString (n: TNumber): string =
     match n with
-    | LFloat f -> $"Float({f})"
-    | LInteger i -> $"Integer({i})"
-    | LRational (n, d) -> $"Rational({n}/{d})"
-    | LComplex (r, i) -> $"Complex({r}i{i})"
+    | Float f -> $"Float({f})"
+    | Integer i -> $"Integer({i})"
+    | Rational (n, d) -> $"Rational({n}/{d})"
+    | Complex (r, i) -> $"Complex({r}i{i})"
 
 
 let operatorToString (op: Operator): string =
@@ -179,8 +178,6 @@ let punctuationToString (p: Punctuation): string =
     | RightBrace -> "}"
     | LeftBracket -> "["
     | RightBracket -> "]"
-    | Dollar -> "$"
-    | Newline -> "\n"
 
 let lexemeToString (lex: Lexeme): string =
     match lex with
@@ -224,8 +221,6 @@ type BuiltInFunction =
     
     | Ceil
     | Len
-    
-    | Eval
     
     | Add
     | Sub
@@ -317,8 +312,6 @@ let builtInFunctionMap =
       Operator (ColonColon, Some Infix), BuiltInFunction.Cons
       
       Identifier "cast", BuiltInFunction.Cast
-      
-      Identifier "eval", BuiltInFunction.Eval
       
       Identifier "Int", BuiltInFunction.BInt
       Identifier "Float", BuiltInFunction.BFloat

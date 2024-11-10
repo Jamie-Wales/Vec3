@@ -93,14 +93,12 @@ let startRepl () =
     printfn "Welcome to the Vec3 REPL!"
     printfn "Type your code and press Enter to execute."
     printfn "Type 'exit' to quit the REPL."
-    let func = initFunction "Main" None
-    
-    repl (createNewVM { Function = func; UpValues = [||] })
+    repl (createNewVM (initFunction "Main"))
     
 (* Note for Jake and Bake
  Repl input doest get type checked, because if variables
  are defined in the code editor they cant be found
- maybe worth being able to turn of variable resolution
+ maybe worth being able to turn of variable resolutionr
  OR pass vm to parser to check env
 *)
 let noTcParseAndCompile (code: string) (vm:VM) =

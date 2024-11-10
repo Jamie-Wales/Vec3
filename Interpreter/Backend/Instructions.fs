@@ -22,9 +22,6 @@ type OP_CODE =
     | COMPOUND_CREATE
     | COMPOUND_GET
     
-    | GET_UPVALUE
-    | SET_UPVALUE
-    
 let opCodeToByte =
     function
     | CONSTANT -> 0uy
@@ -48,9 +45,6 @@ let opCodeToByte =
     | COMPOUND_CREATE -> 26uy
     | COMPOUND_GET -> 27uy
     
-    | GET_UPVALUE -> 28uy
-    | SET_UPVALUE -> 29uy
-    
 
 let byteToOpCode byte =
     match byte with
@@ -73,8 +67,6 @@ let byteToOpCode byte =
     | 25uy -> CLOSURE
     | 26uy -> COMPOUND_CREATE
     | 27uy -> COMPOUND_GET
-    | 28uy -> GET_UPVALUE
-    | 29uy -> SET_UPVALUE
     | _ -> failwith $"Unknown OP_CODE: {byte}"
 
 let opCodeToString =
@@ -98,7 +90,5 @@ let opCodeToString =
     | CLOSURE -> "CLOSURE"
     | COMPOUND_CREATE -> "COMPOUND_CREATE"
     | COMPOUND_GET -> "COMPOUND_GET"
-    | GET_UPVALUE -> "GET_UPVALUE"
-    | SET_UPVALUE -> "SET_UPVALUE"
     
     

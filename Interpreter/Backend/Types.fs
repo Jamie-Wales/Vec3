@@ -35,7 +35,7 @@ and Value =
     | VNumber of VNumber
     | VString of string
     | VBoolean of bool
-    | VFunction of Function
+    | VFunction of Function * (double -> double) option
     | VClosure of Closure
     | VNil
     | VList of Value list * CompoundType
@@ -59,17 +59,14 @@ and Function =
     { Arity: int
       Chunk: Chunk
       Name: string
-      Locals: Local list
-      UpValues: Local list
-      BuiltIn: (double -> double) option
-      }
+      Locals: Local list }
 
 and Closure =
     { Function: Function
-      UpValues: Value array }
-
+      UpValues: Value list }
+    
 and CallFrame = {
-    Closure: Closure
+    Function: Function
     IP: int
     StackBase: int
     Locals: Value array
@@ -92,7 +89,7 @@ let rec valueToString =
     | VNumber(VComplex(r, i)) -> $"%f{r} + %f{i}i"
     | VBoolean b -> string b
     | VString s -> s
-    | VFunction f -> $"<fn {f.Name}>"
+    | VFunction (f, _) -> $"<fn {f.Name}>"
     | VClosure c -> $"<closure {c.Function.Name}>"
     | VNil -> "nil"
     | VList (l, typ) -> $"""[{String.concat ", " (List.map valueToString l)}]"""

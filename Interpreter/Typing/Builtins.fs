@@ -125,7 +125,7 @@ let unneg =
 let crossProduct =
     let tensorTypeVar = TTypeVariable (freshTypeVar())
     
-    TFunction([TTensor(tensorTypeVar, Dims 3); TTensor(tensorTypeVar, Dims 3)], TTensor(tensorTypeVar, Dims 3), false, true)
+    TFunction([TTensor(tensorTypeVar, Dims [ 3 ]); TTensor(tensorTypeVar, Dims [ 3 ])], TTensor(tensorTypeVar, Dims[ 3 ]), false, true)
     
 let dotProduct =
     let tensorTypeVar = freshTypeVar()
@@ -150,7 +150,7 @@ let lenType =
 let listCast =
     let listType = TTypeVariable (freshTypeVar())
     
-    TFunction([listType], TTensor(listType, DAny), false, true)
+    TFunction([listType], TTensor(listType, Dims [ 1 ]), false, true)
     
 let tupleCast =
     let listType = TTypeVariable (freshTypeVar())
@@ -220,8 +220,6 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       Lte, lte
       Gt, gt
       Gte, gte
-      
-      Eval, TFunction([TAny], TAny, false, true)
       
       CrossProduct, crossProduct
       DotProduct, dotProduct

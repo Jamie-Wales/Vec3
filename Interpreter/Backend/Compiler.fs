@@ -9,10 +9,10 @@ open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open Vec3.Interpreter.Parser
 
-let identMap: Map<Lexeme, Value> ref = ref Map.empty
+let identMap: Map<Lexeme, Value> ref  = ref Map.empty
 
 type CompilerState =
-    { CurrentFunction: Closure
+    { CurrentFunction: Function
       CurrentLine: int
       ScopeDepth: int
       LocalCount: int }
@@ -22,50 +22,34 @@ type CompilerResult<'a> = Result<'a * CompilerState, CompilerError>
 type Compiler<'a> = CompilerState -> CompilerResult<'a>
 
 let emitByte (byte: byte) (state: CompilerState) : CompilerResult<unit> =
-    writeChunk state.CurrentFunction.Function.Chunk byte state.CurrentLine
+    writeChunk state.CurrentFunction.Chunk byte state.CurrentLine
     Ok((), state)
 
 let emitBytes (bytes: byte seq) (state: CompilerState) : CompilerResult<unit> =
-    Seq.iter (fun byte -> writeChunk state.CurrentFunction.Function.Chunk byte state.CurrentLine) bytes
+    Seq.iter (fun byte -> writeChunk state.CurrentFunction.Chunk byte state.CurrentLine) bytes
     Ok((), state)
 
 let emitConstant (value: Value) (state: CompilerState) : CompilerResult<unit> =
-    writeConstant state.CurrentFunction.Function.Chunk value state.CurrentLine
+    writeConstant state.CurrentFunction.Chunk value state.CurrentLine
     Ok((), state)
 
 let emitOpCode (opCode: OP_CODE) (state: CompilerState) : CompilerResult<unit> = emitByte (opCodeToByte opCode) state
 
 let emitJump (opCode: OP_CODE) (state: CompilerState) : int =
     emitOpCode opCode state
-    |> Result.bind (fun ((), state) ->
-        emitBytes [| byte 0xff; byte 0xff |] state
-        |> Result.map (fun ((), state) -> state.CurrentFunction.Function.Chunk.Code.Count - 2))
+    |> Result.map (fun _ -> state.CurrentFunction.Chunk.Code.Count - 1)
     |> Result.defaultValue 0
 
-let patchJump (offset: int) (state: CompilerState) =
-    let jump = state.CurrentFunction.Function.Chunk.Code.Count - offset - 2
-
-    let offset = (jump >>> 8) &&& 0xff
-    let offset1 = jump &&& 0xff
-
-    state.CurrentFunction.Function.Chunk.Code[offset] <- byte offset
-    state.CurrentFunction.Function.Chunk.Code[offset + 1] <- byte offset1
-
-    Ok((), state)
-
-
 let emitJumpBack (offset: int) (state: CompilerState) : CompilerResult<unit> =
-    let jump = state.CurrentFunction.Function.Chunk.Code.Count - offset - 1
+    let jump = state.CurrentFunction.Chunk.Code.Count - offset - 1
     let bytes = [| byte (jump &&& 0xff); byte ((jump >>> 8) &&& 0xff) |]
     emitBytes bytes state
 
-let initFunction (name: string) (builtin: (double -> double) option) : Function =
+let initFunction (name: string) =
     { Arity = 0
       Chunk = emptyChunk ()
       Name = name
-      Locals = []
-      UpValues = []
-      BuiltIn = builtin }
+      Locals = [] }
 
 let addLocal (name: string) (state: CompilerState) : CompilerState =
     let local =
@@ -74,29 +58,15 @@ let addLocal (name: string) (state: CompilerState) : CompilerState =
           Index = state.LocalCount }
 
     let updatedFunction =
-        { state.CurrentFunction.Function with
-            Locals = local :: state.CurrentFunction.Function.Locals }
+        { state.CurrentFunction with
+            Locals = local :: state.CurrentFunction.Locals }
 
     { state with
-        CurrentFunction = { state.CurrentFunction with Function = updatedFunction }
+        CurrentFunction = updatedFunction
         LocalCount = state.LocalCount + 1 }
 
-let addUpValue (name: string) (depth: int) (state: CompilerState) : CompilerState =
-    let upValue =
-        { Name = name
-          Index = state.CurrentFunction.UpValues.Length
-          Depth = depth 
-          }
-
-    let updatedFunction =
-        { state.CurrentFunction.Function with
-            UpValues = upValue :: state.CurrentFunction.Function.UpValues }
-
-    { state with
-        CurrentFunction = { state.CurrentFunction with Function = updatedFunction } }
-
 let rec compileLiteral (lit: Literal) : Compiler<unit> =
-    let compileNumber (n: Vec3.Interpreter.Token.Number) state =
+    let compileNumber (n: Vec3.Interpreter.Grammar.Number) state =
         match n with
         | LInteger i -> emitConstant (VNumber(VInteger i)) state
         | LFloat f -> emitConstant (VNumber(VFloat f)) state
@@ -114,8 +84,8 @@ let rec compileLiteral (lit: Literal) : Compiler<unit> =
                 emitOpCode OP_CODE.FALSE state
         | LUnit -> emitConstant VNil state
 
-let compileCodeBlock (expr: Expr) state : CompilerResult<unit> = emitConstant (VBlock(expr)) state
-
+let compileCodeBlock (expr: Expr) state: CompilerResult<unit> =
+        emitConstant (VBlock(expr)) state
 let rec compileExpr (expr: Expr) : Compiler<unit> =
     fun state ->
         match expr with
@@ -129,7 +99,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | EList(elements, _) -> compileList elements state
         | EIndex(list, index, _) -> compileIndex list index state
         | ETuple(elements, _) -> compileTuple elements state
-        | ECodeBlock(expr) -> compileCodeBlock expr state
+        | ECodeBlock(expr)  -> compileCodeBlock expr state
         | ERange(start, stop, _) ->
             let expression =
                 ECall(
@@ -146,7 +116,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
 
         | ERecordEmpty _ ->
             emitConstant (VNumber(VInteger 0)) state
-            |> Result.bind (fun ((), state) -> emitConstant (VList([], RECORD)) state)
+            |> Result.bind (fun ((), state) -> emitConstant (VList ([], RECORD)) state)
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
 
         | ERecordExtend((name, value, _), record, _) ->
@@ -160,12 +130,12 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             // might be better to have specific value for pair, but then the compound create would need to be changed
             // or extra instruction for create pair, otherwise any two eleemnt list would be a pair
 
-            let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString name)
+            let constIndex = addConstant state.CurrentFunction.Chunk (VString name)
 
             emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
             |> Result.bind (fun ((), state) -> compileExpr value state)
             |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 2)) state)
-            |> Result.bind (fun ((), state) -> emitConstant (VList([], RECORD)) state)
+            |> Result.bind (fun ((), state) -> emitConstant (VList ([], RECORD)) state)
             |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
             |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 1)) state)
             |> Result.bind (fun ((), state) -> compileExpr record state)
@@ -181,7 +151,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             // same as index, but with a string and a record (push string)
             compileExpr expr state
             |> Result.bind (fun ((), state) ->
-                let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString name)
+                let constIndex = addConstant state.CurrentFunction.Chunk (VString name)
 
                 emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
                 |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_GET state))
@@ -211,7 +181,7 @@ and compileTuple (elements: Expr list) : Compiler<unit> =
         // same as list
         compileElements elements state
         |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger elements.Length)) state)
-        |> Result.bind (fun ((), state) -> emitConstant (VList([], TUPLE)) state)
+        |> Result.bind (fun ((), state) -> emitConstant (VList ([], TUPLE)) state)
         |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
 
 and compileList (elements: Expr list) : Compiler<unit> =
@@ -225,39 +195,25 @@ and compileList (elements: Expr list) : Compiler<unit> =
 
         compileElements elements state
         |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger elements.Length)) state)
-        |> Result.bind (fun ((), state) -> emitConstant (VList([], LIST)) state)
+        |> Result.bind (fun ((), state) -> emitConstant (VList ([], LIST)) state)
         |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
 
 
 and compileIf (condition: Expr) (thenBranch: Expr) (elseBranch: Expr) : Compiler<unit> =
     fun state ->
-        // compileExpr condition state
-        // |> Result.bind (fun ((), state) ->
-        //     let thenJump = emitJump OP_CODE.JUMP_IF_FALSE state
-        //
-        //     emitOpCode OP_CODE.POP state
-        //     |> Result.bind (fun ((), state) ->
-        //         compileExpr thenBranch state
-        //         |> Result.bind (fun ((), state) ->
-        //             let elseJump = emitJump OP_CODE.JUMP state
-        //
-        //             patchJump thenJump state
-        //             |> Result.bind (fun ((), state) ->
-        //                 emitOpCode OP_CODE.POP state
-        //                 |> Result.bind (fun ((), state) ->
-        //                     |> Result.bind (fun ((), state) -> patchJump elseJump state))))))
-        let thenAsLambda = ELambda([], thenBranch, None, false, None)
-        let elseAsLambda = ELambda([], elseBranch, None, false, None)
+        compileExpr condition state
+        |> Result.bind (fun ((), state) ->
+            let elseJump = emitJump OP_CODE.JUMP_IF_FALSE state
 
-        let id =
-            EIdentifier(
-                { Lexeme = Identifier "BUILTIN_IF"
-                  Position = { Column = 0; Line = 0 } },
-                None
-            )
+            emitOpCode OP_CODE.POP state
+            |> Result.bind (fun ((), state) -> compileExpr thenBranch state)
+            |> Result.bind (fun ((), state) ->
+                let endJump = emitJump OP_CODE.JUMP state
 
-        compileCall id [ condition; thenAsLambda; elseAsLambda ] state
-
+                emitJumpBack elseJump state
+                // |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.POP state)
+                |> Result.bind (fun ((), state) -> compileExpr elseBranch state)
+                |> Result.bind (fun ((), state) -> emitJumpBack endJump state)))
 
 // block is a new scope and an expression, therefore last expression is returned in the block
 and compileBlock (stmts: Stmt list) : Compiler<unit> =
@@ -286,29 +242,17 @@ and compileBlock (stmts: Stmt list) : Compiler<unit> =
              { newState with
                  ScopeDepth = newState.ScopeDepth - 1 }))
 
+
 and compileLambda (parameters: Token list) (body: Expr) (pur: bool) : Compiler<unit> =
     fun state ->
-        // capture environment (upvalues)
-        // compile body
-        // return closure
-        // upvalues are captured by the closure
-        
-        let currentFunction = state.CurrentFunction
-        
-        let upvalues = currentFunction.Function.Locals
-        let prevUpvalues = currentFunction.Function.UpValues
-        
-        let builtin = if pur then compileAsBuiltin parameters body else None
-        
-        let functionName = $"lambda_{state.CurrentFunction.Function.Name}"
-        let lambdaFunction = initFunction functionName builtin
+        let functionName = $"lambda_{state.CurrentFunction.Name}"
+        let lambdaFunction = initFunction functionName
 
         let lambdaState =
             { state with
-                CurrentFunction = { Function = lambdaFunction; UpValues = [||] }
+                CurrentFunction = lambdaFunction
                 ScopeDepth = state.ScopeDepth + 1
-                LocalCount = 0
-                }
+                LocalCount = 0 }
 
         let compiledParamsState =
             parameters
@@ -317,122 +261,103 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) : Compiler<u
                     let state = addLocal (lexemeToString param.Lexeme) state
 
                     { state with
-                        CurrentFunction = { state.CurrentFunction with Function = { state.CurrentFunction.Function with Arity = state.CurrentFunction.Function.Arity + 1 } }})
+                        CurrentFunction =
+                            { state.CurrentFunction with
+                                Arity = state.CurrentFunction.Arity + 1 } })
                 lambdaState
-        
-        let compiledParamsState =
-            upvalues @ prevUpvalues
-            |> List.fold
-                (fun state upvalue ->
-                    let state = addUpValue upvalue.Name upvalue.Depth state
-                    state
-                )
-                
-                compiledParamsState
+
+        let builtin = if pur then Some <| compileAsBuiltin parameters body else None
         
         compileExpr body compiledParamsState
         |> Result.bind (fun ((), finalLambdaState) ->
-            emitOpCode OP_CODE.RETURN finalLambdaState
-            |> Result.bind (fun ((), finalState) ->
+            match emitOpCode OP_CODE.RETURN finalLambdaState with
+            | Ok((), finalState) ->
                 let constIndex =
-                    addConstant state.CurrentFunction.Function.Chunk (VFunction(finalState.CurrentFunction.Function))
+                    addConstant state.CurrentFunction.Chunk (VFunction (finalState.CurrentFunction, builtin))
 
-                // let upvalues =
-                //     state.CurrentFunction.Locals
-                //     |> List.filter (fun local -> local.Depth < finalState.ScopeDepth)
-                //     |> List.map (_.Index)
-                //
-                emitBytes [| byte (opCodeToByte OP_CODE.CLOSURE); byte constIndex |] state
-                |> Result.bind (fun ((), state) ->
-                    emitByte (byte (List.length upvalues + List.length prevUpvalues)) state
-                    |> Result.bind (fun ((), state) ->
-                        let upvalues =
-                            upvalues @ prevUpvalues
-                            |> Seq.map (fun upvalue -> [| byte upvalue.Index; byte upvalue.Depth |])
-                            |> Seq.concat
-                        emitBytes upvalues state))))
+                emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
+            | Error e -> Error e
+        )
 
-and compileAsBuiltin (parameters: Token list) (body: Expr) : (double -> double) option =
+and compileAsBuiltin (parameters: Token list) (body: Expr): (double -> double) =
     // what we could do is make every unit return its compiled value
     // add to a map of lexeme to builtins on function def
     // then we would be able to use other values and other functions in this (type checker verifies that this is valid)
-
+    
     if parameters.Length <> 1 then
-        None
-    else
-
-        let parameter = parameters.Head
-        let parameterName = lexemeToString parameter.Lexeme
-
-        let logBase (x: double) (y: double) = log y / log x
-
-        let getBinaryOp (lexeme: Lexeme) =
-            match lexeme with
-            | Operator(Plus, _) -> (+)
-            | Operator(Minus, _) -> (-)
-            | Operator(Star, _) -> (*)
-            | Operator(Slash, _) -> (/)
-            | Operator(Percent, _) -> (%)
-            | Operator(StarStar, _) -> ( ** )
-            | Operator(Caret, _) -> ( ** )
-            | Identifier i when i = "log" || i = "BUILTIN_LOG" -> logBase
+        failwith "Builtin functions must have exactly one parameter"
+        
+    let parameter = parameters.Head
+    let parameterName = lexemeToString parameter.Lexeme
+    
+    let logBase (x: double) (y: double) = log y / log x
+    
+    let getBinaryOp (lexeme: Lexeme) =
+        match lexeme with
+        | Operator (Plus, _) -> (+)
+        | Operator (Minus, _) -> (-)
+        | Operator (Star, _) -> (*)
+        | Operator (Slash, _)  -> (/)
+        | Operator (Percent, _) -> (%)
+        | Operator (StarStar, _) -> ( ** )
+        | Operator (Caret, _) -> ( ** )
+        | Identifier i when i = "log" || i = "BUILTIN_LOG" -> logBase
+        | _ -> failwith "Invalid operator"
+    
+    
+    let getUnaryOp (lexeme: Lexeme) : (double -> double) =
+        match lexeme with
+        | Identifier i when i = "abs" || i = "BUILTIN_ABS" -> abs
+        | Identifier i when i = "sqrt" || i = "BUILTIN_SQRT" -> sqrt
+        | Identifier i when i = "sin" || i = "BUILTIN_SIN" -> sin
+        | Identifier i when i = "cos" || i = "BUILTIN_COS" -> cos
+        | Identifier i when i = "tan" || i = "BUILTIN_TAN" -> tan
+        | Identifier i when i = "asin" || i = "BUILTIN_ASIN" -> asin
+        | Identifier i when i = "acos" || i = "BUILTIN_ACOS" -> acos
+        | Identifier i when i = "atan" || i = "BUILTIN_ATAN" -> atan
+        | Identifier i when i = "exp" || i = "BUILTIN_EXP" -> exp
+        | Identifier i when i = "log10" || i = "BUILTIN_LOG10" -> log10
+        | Identifier i when i = "ceil" || i = "BUILTIN_CEIL" -> ceil
+        | Identifier i when i = "floor" || i = "BUILTIN_FLOOR" -> floor
+        | Identifier i when i = "round" || i = "BUILTIN_ROUND" -> round
+        | Identifier i when i = "trunc" || i = "BUILTIN_TRUNC" -> truncate
+        | Operator (Minus, _) -> (~-)
+        | Operator (Plus, _) -> fun x -> if x < 0.0 then -1.0 else 1.0
+        | _ -> failwith "Invalid operator"
+    
+    let getIdent (lexeme: Lexeme) : double =
+        match lexeme with
+        | Identifier i when i = "E" -> Math.E
+        | Identifier i when i = "PI" -> Math.PI
+        | Identifier i when i = "TAU" -> Math.Tau
+        | _ -> failwith "invalid"
+        
+    let rec compileBuiltinBody (body: Expr) : (double -> double) =
+        match body with
+        | EIdentifier(i, _) when lexemeToString i.Lexeme = parameterName -> id
+        | EIdentifier(i, _) -> fun _ -> getIdent i.Lexeme
+        | ELiteral(LNumber(LInteger i), _) -> fun _ -> double i
+        | ELiteral(LNumber(LFloat f), _) -> fun _ -> f
+        | ELiteral(LNumber(LRational(n, d)), _) -> fun _ -> double n / double d
+        | ELiteral(LNumber(LComplex(r, i)), _) -> fun _ -> r
+        | ECall(name, args, _) ->
+            match name with
+            | EIdentifier(i, _) ->
+                let args = args |> List.map compileBuiltinBody
+                if args.Length = 2 then
+                    let op = getBinaryOp i.Lexeme
+                    fun x -> op (args.Head x) (args.Tail.Head x)
+                else if args.Length = 1 then
+                    let op = getUnaryOp i.Lexeme
+                    fun x -> op (args.Head x)
+                else
+                    failwith "Invalid number of arguments"
             | _ -> failwith "Invalid operator"
-
-
-        let getUnaryOp (lexeme: Lexeme) : (double -> double) =
-            match lexeme with
-            | Identifier i when i = "abs" || i = "BUILTIN_ABS" -> abs
-            | Identifier i when i = "sqrt" || i = "BUILTIN_SQRT" -> sqrt
-            | Identifier i when i = "sin" || i = "BUILTIN_SIN" -> sin
-            | Identifier i when i = "cos" || i = "BUILTIN_COS" -> cos
-            | Identifier i when i = "tan" || i = "BUILTIN_TAN" -> tan
-            | Identifier i when i = "asin" || i = "BUILTIN_ASIN" -> asin
-            | Identifier i when i = "acos" || i = "BUILTIN_ACOS" -> acos
-            | Identifier i when i = "atan" || i = "BUILTIN_ATAN" -> atan
-            | Identifier i when i = "exp" || i = "BUILTIN_EXP" -> exp
-            | Identifier i when i = "log10" || i = "BUILTIN_LOG10" -> log10
-            | Identifier i when i = "ceil" || i = "BUILTIN_CEIL" -> ceil
-            | Identifier i when i = "floor" || i = "BUILTIN_FLOOR" -> floor
-            | Identifier i when i = "round" || i = "BUILTIN_ROUND" -> round
-            | Identifier i when i = "trunc" || i = "BUILTIN_TRUNC" -> truncate
-            | Operator(Minus, _) -> (~-)
-            | Operator(Plus, _) -> fun x -> if x < 0.0 then -1.0 else 1.0
-            | _ -> failwith "Invalid operator"
-
-        let getIdent (lexeme: Lexeme) : double =
-            match lexeme with
-            | Identifier i when i = "E" -> Math.E
-            | Identifier i when i = "PI" -> Math.PI
-            | Identifier i when i = "TAU" -> Math.Tau
-            | _ -> failwith "invalid"
-
-        let rec compileBuiltinBody (body: Expr) : (double -> double) =
-            match body with
-            | EIdentifier(i, _) when lexemeToString i.Lexeme = parameterName -> id
-            | EIdentifier(i, _) -> fun _ -> getIdent i.Lexeme
-            | ELiteral(LNumber(LInteger i), _) -> fun _ -> double i
-            | ELiteral(LNumber(LFloat f), _) -> fun _ -> f
-            | ELiteral(LNumber(LRational(n, d)), _) -> fun _ -> double n / double d
-            | ELiteral(LNumber(LComplex(r, i)), _) -> fun _ -> r
-            | ECall(name, args, _) ->
-                match name with
-                | EIdentifier(i, _) ->
-                    let args = args |> List.map compileBuiltinBody
-
-                    if args.Length = 2 then
-                        let op = getBinaryOp i.Lexeme
-                        fun x -> op (args.Head x) (args.Tail.Head x)
-                    else if args.Length = 1 then
-                        let op = getUnaryOp i.Lexeme
-                        fun x -> op (args.Head x)
-                    else
-                        failwith "Invalid number of arguments"
-                | _ -> failwith "Invalid operator"
-            | EGrouping(expr, _) -> compileBuiltinBody expr
-            | _ -> failwith "Invalid builtin function"
-
-        Some(compileBuiltinBody body)
-
+        | EGrouping (expr, _) -> compileBuiltinBody expr 
+        | _ -> failwith "Invalid builtin function"
+        
+    compileBuiltinBody body
+        
 and compileCall (callee: Expr) (arguments: Expr list) : Compiler<unit> =
     fun state ->
         let rec compileArguments arguments state =
@@ -441,7 +366,7 @@ and compileCall (callee: Expr) (arguments: Expr list) : Compiler<unit> =
             | arg :: rest ->
                 compileExpr arg state
                 |> Result.bind (fun ((), state) -> compileArguments rest state)
-
+                
         compileExpr callee state
         |> Result.bind (fun ((), state) -> compileArguments arguments state)
         |> Result.bind (fun ((), state) ->
@@ -453,16 +378,11 @@ and compileIdentifier (token: Token) : Compiler<unit> =
     fun state ->
         let name = lexemeToString token.Lexeme
 
-        match state.CurrentFunction.Function.Locals |> List.tryFind (fun local -> local.Name = name) with
-        | Some local ->
-            emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte local.Index |] state
+        match state.CurrentFunction.Locals |> List.tryFind (fun local -> local.Name = name) with
+        | Some local -> emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte local.Index |] state
         | None ->
-            match state.CurrentFunction.Function.UpValues |> List.tryFind (fun upvalue -> upvalue.Name = name) with
-            | Some upvalue ->
-                emitBytes [| byte (opCodeToByte OP_CODE.GET_UPVALUE); byte upvalue.Index |] state
-            | None ->
-                let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString name)
-                emitBytes [| byte (opCodeToByte OP_CODE.GET_GLOBAL); byte constIndex |] state
+            let constIndex = addConstant state.CurrentFunction.Chunk (VString name)
+            emitBytes [| byte (opCodeToByte OP_CODE.GET_GLOBAL); byte constIndex |] state
 
 and compileStmt (stmt: Stmt) : Compiler<unit> =
     fun state ->
@@ -470,19 +390,8 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
         | SExpression(expr, _) -> compileExpr expr state
         | SVariableDeclaration(name, initializer, _) -> compileVariableDeclaration name initializer state
         | SAssertStatement(expr, msg, _) ->
-            let callee =
-                EIdentifier(
-                    { Lexeme = Identifier "assert"
-                      Position = { Column = 0; Line = 0 } },
-                    None
-                )
-
-            let args =
-                if Option.isNone msg then
-                    [ expr ]
-                else
-                    [ Option.get msg; expr ]
-
+            let callee = EIdentifier({Lexeme = Identifier "assert"; Position = {Column = 0; Line=0} }, None)
+            let args = if Option.isNone msg then [expr] else [Option.get msg; expr]
             compileCall callee args state
         | STypeDeclaration _ -> Ok((), state)
 
@@ -495,7 +404,7 @@ and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit
                 Ok((), newState)
             else
                 let constIndex =
-                    addConstant state.CurrentFunction.Function.Chunk (VString(lexemeToString name.Lexeme))
+                    addConstant state.CurrentFunction.Chunk (VString(lexemeToString name.Lexeme))
 
                 emitBytes [| byte (opCodeToByte OP_CODE.DEFINE_GLOBAL); byte constIndex |] state)
 
@@ -510,14 +419,12 @@ let compileProgramState (program: Program) (state: CompilerState) : CompilerResu
     compileStmts program state
     |> Result.bind (fun ((), state) ->
         emitOpCode OP_CODE.RETURN state
-        |> Result.map (fun ((), state) -> (state.CurrentFunction.Function.Chunk, state)))
+        |> Result.map (fun ((), state) -> (state.CurrentFunction.Chunk, state)))
 
 
-let compileProgram (program: Program) : CompilerResult<Closure> =
-    let func = initFunction "REPL_Input" None
-    
+let compileProgram (program: Program) : CompilerResult<Function> =
     let initialState =
-        { CurrentFunction = { Function = func; UpValues = [||] }
+        { CurrentFunction = initFunction "REPL_Input"
           ScopeDepth = 0
           CurrentLine = 1
           LocalCount = 0 }
@@ -533,3 +440,7 @@ let compileProgram (program: Program) : CompilerResult<Closure> =
     |> Result.bind (fun ((), state) ->
         emitOpCode OP_CODE.RETURN state
         |> Result.map (fun ((), state) -> (state.CurrentFunction, state)))
+
+
+    
+    

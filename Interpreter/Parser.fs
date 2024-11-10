@@ -128,10 +128,10 @@ let number (state: ParserState) : ParseResult<Expr> =
     match previous state with
     | Some { Lexeme = Lexeme.Number n } ->
         match n with
-        | LInteger i -> Ok(state, ELiteral(LNumber(LInteger(i)), TInteger))
-        | LFloat f -> Ok(state, ELiteral(LNumber(LFloat(f)), TFloat))
-        | LRational(n, d) -> Ok(state, ELiteral(LNumber(LRational(n, d)), TRational))
-        | LComplex(r, i) -> Ok(state, ELiteral(LNumber(LComplex(r, i)), TComplex))
+        | Integer i -> Ok(state, ELiteral(LNumber(LInteger(i)), TInteger))
+        | Float f -> Ok(state, ELiteral(LNumber(LFloat(f)), TFloat))
+        | Rational(n, d) -> Ok(state, ELiteral(LNumber(LRational(n, d)), TRational))
+        | Complex(r, i) -> Ok(state, ELiteral(LNumber(LComplex(r, i)), TComplex))
     | _ -> Error(Expected "Number", state)
 
 
@@ -424,7 +424,7 @@ and binary (state: ParserState) (left: Expr) : ParseResult<Expr> =
 
 and unary (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Unary"
-    
+
     match previous state with
     | Some op ->
         let op =
@@ -444,7 +444,6 @@ and leftBrace (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "LeftBrace"
 
     match peek state with
-    | Some { Lexeme = Punctuation Newline } -> leftBrace (advance state)
     | Some { Lexeme = Punctuation RightBrace } -> Ok(advance state, ERecordEmpty(TRowEmpty))
     | Some { Lexeme = Identifier _ } ->
         match peek (advance state) with
@@ -459,21 +458,17 @@ and recordFields
     (fields: (Token * Expr * TType option) list)
     : ParseResult<(Token * Expr * TType option) list> =
     match peek state with
-    | Some { Lexeme = Punctuation Newline } -> Ok(advance state, fields)
     | Some { Lexeme = Punctuation RightBrace } -> Ok(advance state, List.rev fields)
     | Some { Lexeme = Lexeme.Identifier _ } ->
         match nextToken state with
         | Some(state, name) ->
             match nextToken state with
-            | Some(state, { Lexeme = Punctuation RightBrace }) -> Ok (advance state, (List.rev fields))
-            | Some(state, { Lexeme = Punctuation Newline }) -> recordFields (advance state) fields
             | Some(state, { Lexeme = Operator(Equal, _) }) ->
                 expression state Precedence.Assignment
                 |> Result.bind (fun (state, value) ->
                     match peek state with
-                    | Some { Lexeme = Punctuation Newline } -> recordFields (advance state) fields
                     | Some { Lexeme = Punctuation Comma } ->
-                        recordFields (advance (advance state)) ((name, value, None) :: fields)
+                        recordFields (advance state) ((name, value, None) :: fields)
                     | Some { Lexeme = Punctuation RightBrace } ->
                         Ok(advance state, List.rev ((name, value, None) :: fields))
                     | _ -> Error(Expected "',' or '}' after record field.", state))
@@ -481,14 +476,12 @@ and recordFields
                 typeHint state
                 |> Result.bind (fun (state, fieldType) ->
                     match nextToken state with
-                    | Some(state, { Lexeme = Punctuation Newline }) -> recordFields (advance state) fields
                     | Some(state, { Lexeme = Operator(Equal, _) }) ->
                         expression state Precedence.Assignment
                         |> Result.bind (fun (state, value) ->
                             match peek state with
-                            | Some { Lexeme = Punctuation Newline } -> recordFields (advance state) fields
                             | Some { Lexeme = Punctuation Comma } ->
-                                recordFields (advance (advance state)) ((name, value, Some fieldType) :: fields)
+                                recordFields (advance state) ((name, value, Some fieldType) :: fields)
                             | Some { Lexeme = Punctuation RightBrace } ->
                                 Ok(advance state, List.rev ((name, value, Some fieldType) :: fields))
                             | _ -> Error(Expected "',' or '}' after record field.", state))
@@ -799,7 +792,6 @@ and block (state: ParserState) : ParseResult<Expr> =
     let rec loop (state: ParserState) (stmts: Stmt list) : ParseResult<Expr> =
         match peek state with
         | Some { Lexeme = Punctuation RightBrace } -> Ok(advance state, EBlock(List.rev stmts, None))
-        | Some { Lexeme = Punctuation Newline } -> loop (advance state) stmts
         | None -> Error (UnexpectedEndOfInput, state)
         | _ -> statement state |> Result.bind (fun (state, stmt) -> loop state (stmt :: stmts))
 
@@ -941,7 +933,6 @@ and statement (state: ParserState) : ParseResult<Stmt> =
             | _ ->
                 expression state Precedence.None
                 |> Result.bind (fun (state, expr) -> Ok(state, SExpression(expr, None)))
-        | Punctuation Newline -> statement (advance state)
         | _ ->
             expression state Precedence.None
             |> Result.bind (fun (state, expr) -> Ok(state, SExpression(expr, None)))
