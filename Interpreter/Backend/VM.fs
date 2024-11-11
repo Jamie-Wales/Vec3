@@ -855,8 +855,6 @@ and runFrameRecursive vm =
     else
         let vm, instruction = readByte vm
         let opcode = byteToOpCode instruction
-        printfn $"Executing: {opcode}"
-        printfn " in runCurrentFrame in map"
         match opcode with
         | CALL ->
             let vm, argCount  = readByte vm
@@ -875,12 +873,9 @@ and runCurrentFrame vm =
     else
         let vm, instruction = readByte vm
         let opcode = byteToOpCode instruction
-        printfn $"Executing: {opcode}"
-        printfn " in runCurrentFrame in map"
 
         match opcode with
         | RETURN ->
-            printfn $"Returning from map"
             let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
             vm.Frames.RemoveAt(vm.Frames.Count - 1)
             result, vm
@@ -956,7 +951,6 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         | VString name ->
             match getGlobal vm name with
             | Some value ->
-                printfn $"GET_GLOBAL: {name} = {valueToString value}"
                 push vm value
             | None ->
                 raise <| InvalidProgramException $"Undefined variable '{name}'"
@@ -1006,7 +1000,6 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             vm
         | _ -> raise <| InvalidProgramException "Expected function constant for closure"
     | JUMP ->
-        printfn $"Jumping"
         let vm, byte1 = readByte vm
         let vm, byte2 = readByte vm
         let jump = (int byte1 <<< 8) ||| int byte2
@@ -1015,15 +1008,12 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         vm.Frames[vm.Frames.Count - 1] <- frame
         vm
     | JUMP_IF_FALSE ->
-        printfn $"Jumping if false"
         let vm, byte1 = readByte vm
         let vm, byte2 = readByte vm
         let jump = (int byte1 <<< 8) ||| int byte2
         let condition, vm = pop vm
 
-        printfn $"Condition: {valueToString condition}"
         if not (isTruthy condition) then
-            printfn $"Jumping"
             let frame = getCurrentFrame vm
             let frame = { frame with IP = frame.IP + jump }
             vm.Frames[vm.Frames.Count - 1] <- frame
@@ -1090,7 +1080,6 @@ and runLoop vm =
 
             let vm =
                 let opcode = byteToOpCode instruction
-                printfn $"Executing: {opcode}"
                 executeOpcode vm opcode
 
             runLoop vm
@@ -1100,7 +1089,6 @@ and run (vm: VM) = runLoop vm
 
 and callValue (vm: VM) (argCount: int) (recursive: int): VM =
     let callee = peek vm argCount
-    printfn $"Calling value: {valueToString callee}"
 
     match recursive with
     | 0 ->

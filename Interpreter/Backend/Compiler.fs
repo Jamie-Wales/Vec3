@@ -328,6 +328,9 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
         match stmt with
         | SExpression(expr, _) -> compileExpr expr state
         | SVariableDeclaration(name, initializer, _) -> compileVariableDeclaration name initializer state
+        | SRecFunc(name, tup, expr, _) ->
+            let assign = SVariableDeclaration(name, ELambda(tup, expr, None, false, None), None)
+            compileStmt assign state
         | SAssertStatement(expr, msg, _) ->
             let callee =
                 EIdentifier(
