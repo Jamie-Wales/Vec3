@@ -53,8 +53,8 @@ let scNumber (nStr: char list) : (char list * TNumber * int) option =
     let rec scInt (iStr: char list) (iVal: int) (len: int) : char list * int * int =
         match iStr with
         | c :: tail when isDigit c -> scInt tail (10 * iVal + intVal c) (len + 1)
-        | '-' :: tail -> let iTail, iInt, iLen = scInt tail 0 len in (iTail, -iInt, iLen + 1)
-        | '+' :: tail -> scInt tail iVal (len + 1)
+        // | '-' :: tail -> let iTail, iInt, iLen = scInt tail 0 len in (iTail, -iInt, iLen + 1)
+        // | '+' :: tail -> scInt tail iVal (len + 1)
         | _ -> (iStr, iVal, len)
 
     let rec scFraction (fStr: char list) (acc: float) (div: float) (len: int) : char list * float * int =
@@ -78,12 +78,28 @@ let scNumber (nStr: char list) : (char list * TNumber * int) option =
             match fStr with
             | 'e' :: expTail
             | 'E' :: expTail ->
-                let eStr, expVal, eLen = scInt expTail 0 0
-                Some(eStr, TNumber.Float((float iVal + fVal) * (10.0 ** float expVal)), iLen + fLen + eLen + 2)
+                match expTail with
+                | '+' :: expTail ->
+                    let eStr, expVal, eLen = scInt expTail 0 0
+                    Some(eStr, TNumber.Float((float iVal + fVal) * (10.0 ** float expVal)), iLen + fLen + eLen + 2)
+                | '-' :: expTail ->
+                    let eStr, expVal, eLen = scInt expTail 0 0
+                    Some(eStr, TNumber.Float((float iVal + fVal) * (10.0 ** float -expVal)), iLen + fLen + eLen + 2)
+                | _ ->
+                    let eStr, expVal, eLen = scInt expTail 0 0
+                    Some(eStr, TNumber.Float((float iVal + fVal) * (10.0 ** float expVal)), iLen + fLen + eLen + 2)
             | _ -> Some(fStr, TNumber.Float(float iVal + fVal), iLen + fLen + 1)
         | 'e' :: expTail ->
-            let eStr, expVal, eLen = scInt expTail 0 0
-            Some(eStr, TNumber.Float(float iVal * (10.0 ** float expVal)), iLen + eLen + 1)
+                match expTail with
+                | '+' :: expTail ->
+                    let eStr, expVal, eLen = scInt expTail 0 0
+                    Some(eStr, TNumber.Float((float iVal) * (10.0 ** float expVal)), iLen + eLen + 2)
+                | '-' :: expTail ->
+                    let eStr, expVal, eLen = scInt expTail 0 0
+                    Some(eStr, TNumber.Float((float iVal) * (10.0 ** float -expVal)), iLen + + eLen + 2)
+                | _ ->
+                    let eStr, expVal, eLen = scInt expTail 0 0
+                    Some(eStr, TNumber.Float((float iVal) * (10.0 ** float expVal)), iLen + eLen + 2)
         | _ -> Some(iStr, TNumber.Integer iVal, iLen)
     | _ -> None
 
