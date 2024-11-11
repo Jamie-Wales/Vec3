@@ -328,12 +328,6 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
         match stmt with
         | SExpression(expr, _) -> compileExpr expr state
         | SVariableDeclaration(name, initializer, _) -> compileVariableDeclaration name initializer state
-        | SRecFunc(name, tup, expr, _) ->
-            let parameters = List.map fst tup 
-            match (compileLambda parameters expr false state) with
-            | Ok ((), state)->
-                compileVariableDeclaration name expr state
-            | Error _ -> failwith "Cannot compile RecFunction"
         | SAssertStatement(expr, msg, _) ->
             let callee =
                 EIdentifier(
