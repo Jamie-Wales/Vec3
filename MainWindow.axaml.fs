@@ -41,8 +41,9 @@ REPL for quick commands click 'Play' or Shift+Enter.
 Type 'help()' in the REPL for more information."""
 
     let initialCode = """// Vec3 Editor Example
-let x: int = 5
-print(x)
+rec f(x) -> if x < 0 then print("done") else { print(x) f(x-1) }
+
+f(10)
 
 let f = (x) -> x^2.0 - 2.0
 

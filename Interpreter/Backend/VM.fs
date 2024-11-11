@@ -754,7 +754,7 @@ and builtins () =
           | [ a; b ] -> power a b |> push vm
           | _ -> raise <| InvalidProgramException "Expected two arguments for **")
 
-      Operator(Equal, Some Infix),
+      Operator(EqualEqual, Some Infix),
       VBuiltin(fun args vm ->
           match args with
           | [ a; b ] -> valuesEqual a b |> VBoolean |> push vm
@@ -885,6 +885,7 @@ and runCurrentFrame vm =
 
 
 and executeOpcode (vm: VM) (opcode: OP_CODE) =
+    printfn $"{opCodeToString opcode}"
     let vm = appendOutput vm Execution $"Executing: {opCodeToString opcode}"
 
     match opcode with
@@ -1000,9 +1001,11 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             vm
         | _ -> raise <| InvalidProgramException "Expected function constant for closure"
     | JUMP ->
+        printfn "here"
         let vm, byte1 = readByte vm
         let vm, byte2 = readByte vm
-        let jump = (int byte1 <<< 8) ||| int byte2
+        let jump = int  ((byte1 <<< 8) ||| byte2)
+        
         let frame = getCurrentFrame vm
         let frame = { frame with IP = frame.IP + jump }
         vm.Frames[vm.Frames.Count - 1] <- frame
@@ -1010,9 +1013,9 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
     | JUMP_IF_FALSE ->
         let vm, byte1 = readByte vm
         let vm, byte2 = readByte vm
-        let jump = (int byte1 <<< 8) ||| int byte2
+        let jump = int  ((byte1 <<< 8) ||| byte2)
         let condition, vm = pop vm
-
+        
         if not (isTruthy condition) then
             let frame = getCurrentFrame vm
             let frame = { frame with IP = frame.IP + jump }

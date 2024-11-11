@@ -35,15 +35,29 @@ let emitConstant (value: Value) (state: CompilerState) : CompilerResult<unit> =
 
 let emitOpCode (opCode: OP_CODE) (state: CompilerState) : CompilerResult<unit> = emitByte (opCodeToByte opCode) state
 
-let emitJump (opCode: OP_CODE) (state: CompilerState) : int =
-    emitOpCode opCode state
-    |> Result.map (fun _ -> state.CurrentFunction.Chunk.Code.Count - 1)
-    |> Result.defaultValue 0
+// let emitJump (opCode: OP_CODE) (state: CompilerState) : int =
+//     emitOpCode opCode state
+//     |> Result.map (fun _ -> state.CurrentFunction.Chunk.Code.Count - 1)
+//     |> Result.defaultValue 0
 
 let emitJumpBack (offset: int) (state: CompilerState) : CompilerResult<unit> =
     let jump = state.CurrentFunction.Chunk.Code.Count - offset - 1
     let bytes = [| byte (jump &&& 0xff); byte ((jump >>> 8) &&& 0xff) |]
     emitBytes bytes state
+
+let emitJump (instruction: byte) (state: CompilerState) =
+    emitByte (instruction) state
+    |> Result.bind (fun ((), state) ->
+        emitByte (byte 0xff) state
+        |> Result.bind (fun ((), state) ->
+            emitByte (byte 0xff) state
+            |> Result.map (fun ((), state) -> state.CurrentFunction.Chunk.Code.Count - 2)))
+
+let patchJump (offset: int) (state: CompilerState) =
+    let jump = state.CurrentFunction.Chunk.Code.Count - offset - 2
+
+    state.CurrentFunction.Chunk.Code[offset] <- (byte jump >>> 8) &&& byte 0xff
+    state.CurrentFunction.Chunk.Code[offset + 1] <- byte jump &&& byte 0xff
 
 let initFunction (name: string) =
     { Arity = 0
@@ -95,7 +109,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | ELambda(parameters, body, _, pr, _) ->
             let parameters = List.map fst parameters
             compileLambda parameters body pr state
-        | ECall(callee, arguments, _) -> compileCall callee arguments false state 
+        | ECall(callee, arguments, _) -> compileCall callee arguments false state
         | EList(elements, _) -> compileList elements state
         | EIndex(list, index, _) -> compileIndex list index state
         | ETuple(elements, _) -> compileTuple elements state
@@ -163,7 +177,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             match ex with
             | ECall(name, args, _) -> compileCall name args true state
             | e -> compileExpr e state
-                
+
 and compileIndex (list: Expr) (index: Expr) : Compiler<unit> =
     fun state ->
         compileExpr list state
@@ -202,19 +216,21 @@ and compileList (elements: Expr list) : Compiler<unit> =
 
 and compileIf (condition: Expr) (thenBranch: Expr) (elseBranch: Expr) : Compiler<unit> =
     fun state ->
+        printfn $"{elseBranch}"
         compileExpr condition state
         |> Result.bind (fun ((), state) ->
-            let elseJump = emitJump OP_CODE.JUMP_IF_FALSE state
-
-            emitOpCode OP_CODE.POP state
-            |> Result.bind (fun ((), state) -> compileExpr thenBranch state)
-            |> Result.bind (fun ((), state) ->
-                let endJump = emitJump OP_CODE.JUMP state
-
-                emitJumpBack elseJump state
-                // |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.POP state)
-                |> Result.bind (fun ((), state) -> compileExpr elseBranch state)
-                |> Result.bind (fun ((), state) -> emitJumpBack endJump state)))
+            emitJump (opCodeToByte OP_CODE.JUMP_IF_FALSE) state
+            |> Result.bind (fun thenJump ->
+                 compileExpr thenBranch state
+                 |> Result.bind (fun ((), state) ->
+                     emitJump (opCodeToByte OP_CODE.JUMP) state
+                     |> Result.bind (fun elseJump ->
+                          patchJump thenJump state
+                          compileExpr elseBranch state
+                              |> Result.bind(fun ((), state) -> 
+                                  patchJump (elseJump) state
+                                  Ok((), state)
+                              )))))
 
 // block is a new scope and an expression, therefore last expression is returned in the block
 and compileBlock (stmts: Stmt list) : Compiler<unit> =
@@ -289,7 +305,8 @@ and compileAsBuiltin (parameters: Token list) (body: Expr) : Expression =
     // then we would be able to use other values and other functions in this (type checker verifies that this is valid)
 
     if parameters.Length <> 1 then
-        raise <| InvalidProgramException("Builtin functions can only have one parameter")
+        raise
+        <| InvalidProgramException("Builtin functions can only have one parameter")
 
     fromExpr body
 
@@ -309,6 +326,7 @@ and compileCall (callee: Expr) (arguments: Expr list) (recursive: bool) : Compil
                 match recursive with
                 | false -> 0
                 | true -> 1
+
             emitBytes [| byte (opCodeToByte OP_CODE.CALL); byte (List.length arguments); (byte b) |] state)
 
 and compileGrouping grouping : Compiler<unit> = fun state -> compileExpr grouping state
@@ -329,6 +347,7 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
         | SExpression(expr, _) -> compileExpr expr state
         | SVariableDeclaration(name, initializer, _) -> compileVariableDeclaration name initializer state
         | SRecFunc(name, tup, expr, _) ->
+            printfn $"{expr}"
             let assign = SVariableDeclaration(name, ELambda(tup, expr, None, false, None), None)
             compileStmt assign state
         | SAssertStatement(expr, msg, _) ->
