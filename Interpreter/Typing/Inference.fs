@@ -14,12 +14,8 @@ open Exceptions
 // or let x = (y) -> y() + y() should infer y as a function of TFunction([], TConstrain(var, [ TInteger; TFloat; TRational; TComplex ]))
 // but doesnt, very difficult to implement
 
-// let defaultTypeEnv: TypeEnv =
-//     builtInFunctionMap |> Map.map (fun _ builtIn ->
-//         let typ = BuiltinFunctions[builtIn]
-//         Forall([], typ))
-
 // TODO : MAJOR ISSUE WITH CALLING AGR ORDER ??????????
+// TODO: ALSO PROBLEM WITH INFERRING RECORD ARGS ??
 
 let defaultTypeEnv: TypeEnv =
     let funcMap =
@@ -386,7 +382,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         |> Result.bind (fun (bodyType, sub, expr) ->
 
             let paramTypes = List.map (applySubstitution aliases sub) paramTypes
-
+            
             let paramList = List.zip paramList paramTypes
             
             // TODO FIX RECORD TYPES !!!!!!!!!!!!!!
@@ -457,8 +453,12 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                     inferArgs aliases env args
                     |> Result.bind (fun argResults ->
                         let argTypes = List.map (fun (t, _, _) -> t) argResults
+                        
                         let argSubs = List.map (fun (_, sub, _) -> sub) argResults
                         let argExprs = List.map (fun (_, _, expr) -> expr) argResults
+                        
+                        printfn $"{paramTypes}"
+                        printfn $"{argTypes}"
 
                         unifyWithSubstitution aliases paramTypes argTypes Map.empty
                         |> Result.bind (fun sub' ->
@@ -675,7 +675,6 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
 
         match valueResult, recordResult with
         | Ok(t, sub1, expr1), Ok(TRecord(row), sub2, expr2) ->
-            printfn "here"
             let sub = combineMaps sub1 sub2
             let row = applySubstitution aliases sub row
             let sub = combineMaps sub sub2
@@ -779,6 +778,7 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
         infer aliases env expr
         |> Result.map (fun (t, sub, expr) -> (env, aliases, sub, SExpression(expr, Some t)))
     | SVariableDeclaration(name, expr, typ) ->
+            
         infer aliases env expr
         |> Result.bind (fun (t, sub, expr) ->
             let typ = Option.defaultValue t typ
