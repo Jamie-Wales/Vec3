@@ -923,7 +923,7 @@ and recFunc (state: ParserState) : ParseResult<Stmt> =
         |> Result.bind (fun state ->
             parseParameters state []
             |> Result.bind (fun (state, parameters) ->
-                expect state (Operator(Equal, None))
+                expect state (Operator(Arrow, None))
                 |> Result.bind (fun state ->
                     expression state Precedence.Assignment
                     |> Result.bind (fun (state, expr) ->
