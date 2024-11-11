@@ -64,7 +64,6 @@ type DrawWindow() as this =
                 Canvas.SetTop(rect, y)
                 rect :> Shape
             | "circle" ->
-                // Circle/Ellipse
                 let circle = Ellipse()
                 circle.Width <- abs w
                 circle.Height <- abs h

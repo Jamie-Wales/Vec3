@@ -114,52 +114,6 @@ let binaryOp (vm: VM) (op: Value -> Value -> Value) =
     let result = op a b
     push vm result
 
-let callValue (vm: VM) (argCount: int) : VM =
-    let callee = peek vm argCount
-    printfn $"Calling value: {valueToString callee}"
-
-    match callee with
-    | VFunction(func, _) ->
-        if argCount <> func.Arity then
-            raise <| InvalidProgramException $"Expected {func.Arity} arguments but got {argCount}"
-
-        let frame =
-            { Function = func
-              IP = 0
-              StackBase = vm.Stack.Count - argCount
-              Locals = Array.zeroCreate func.Locals.Length }
-
-        vm.Frames.Add(frame)
-        vm
-    | VClosure closure ->
-        if argCount <> closure.Function.Arity then
-            raise <| InvalidProgramException $"Expected {closure.Function.Arity} arguments but got {argCount}"
-
-        let frame =
-            { Function = closure.Function
-              IP = 0
-              StackBase = vm.Stack.Count - argCount
-              Locals = Array.zeroCreate closure.Function.Locals.Length }
-
-        vm.Frames.Add(frame)
-        let frame = getCurrentFrame vm
-        closure.UpValues |> Seq.iteri (fun i upValue -> frame.Locals[i] <- upValue)
-        vm
-    | VBuiltin func ->
-        printfn $"Calling builtin function: {func}"
-
-        let args =
-            [ 0 .. argCount - 1 ]
-            |> List.map (fun _ -> let value, _ = pop vm in value)
-            |> List.rev
-
-        let vm = func args vm
-        let res, vm = pop vm
-        let _, vm = pop vm
-        push vm res
-    | _ -> raise <| InvalidProgramException $"Can only call functions and closures"
-
-
 let parsePlotType = function
     | "scatter" ->
          printf "Parsing Scatter" 
@@ -894,6 +848,25 @@ and builtins () =
     |> List.map (fun (key, value) -> lexemeToString key, value)
     |> Map.ofList
 
+and runFrameRecursive vm =
+    let frame = getCurrentFrame vm
+    if frame.IP >= frame.Function.Chunk.Code.Count then
+        VNil, vm
+    else
+        let vm, instruction = readByte vm
+        let opcode = byteToOpCode instruction
+        printfn $"Executing: {opcode}"
+        printfn " in runCurrentFrame in map"
+        match opcode with
+        | CALL ->
+            let vm, argCount  = readByte vm
+            let vm, recursive = readByte vm
+            let callee = peek vm (int argCount)
+            callee, vm
+        | _ ->
+            let vm = executeOpcode vm opcode
+            runCurrentFrame vm
+            
 and runCurrentFrame vm =
     let frame = getCurrentFrame vm
 
@@ -1002,9 +975,9 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
                 raise <| InvalidProgramException $"Undefined variable '{name}'"
         | _ -> raise <| InvalidProgramException "Expected string constant for variable name in SET_GLOBAL"
     | CALL ->
-        let vm, argCount = readByte vm
-
-        callValue vm (int argCount)
+        let vm, argCount  = readByte vm
+        let vm, recursive = readByte vm
+        callValue vm (int argCount) (int recursive)
     | RETURN ->
         let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
         vm.Frames.RemoveAt(vm.Frames.Count - 1)
@@ -1125,6 +1098,74 @@ and runLoop vm =
 
 and run (vm: VM) = runLoop vm
 
+and callValue (vm: VM) (argCount: int) (recursive: int): VM =
+    let callee = peek vm argCount
+    printfn $"Calling value: {valueToString callee}"
+
+    match recursive with
+    | 0 ->
+        match callee with
+        | VFunction(func, _) ->
+            if argCount <> func.Arity then
+                raise <| InvalidProgramException $"Expected {func.Arity} arguments but got {argCount}"
+
+            let frame =
+                { Function = func
+                  IP = 0
+                  StackBase = vm.Stack.Count - argCount
+                  Locals = Array.zeroCreate func.Locals.Length }
+
+            vm.Frames.Add(frame)
+            vm
+        | VClosure closure ->
+            if argCount <> closure.Function.Arity then
+                raise <| InvalidProgramException $"Expected {closure.Function.Arity} arguments but got {argCount}"
+
+            let frame =
+                { Function = closure.Function
+                  IP = 0
+                  StackBase = vm.Stack.Count - argCount
+                  Locals = Array.zeroCreate closure.Function.Locals.Length }
+
+            vm.Frames.Add(frame)
+            let frame = getCurrentFrame vm
+            closure.UpValues |> Seq.iteri (fun i upValue -> frame.Locals[i] <- upValue)
+            vm
+        | VBuiltin func ->
+            printfn $"Calling builtin function: {func}"
+
+            let args =
+                [ 0 .. argCount - 1 ]
+                |> List.map (fun _ -> let value, _ = pop vm in value)
+                |> List.rev
+
+            let vm = func args vm
+            let res, vm = pop vm
+            let _, vm = pop vm
+            push vm res
+        | _ -> raise <| InvalidProgramException $"Can only call functions and closures"
+    | 1 ->
+        match callee with
+        | VFunction(func, _) ->
+            if argCount <> func.Arity then
+                raise <| InvalidProgramException $"Expected {func.Arity} arguments but got {argCount}"
+            let frame =
+                { Function = func
+                  IP = 0
+                  StackBase = vm.Stack.Count - argCount
+                  Locals = Array.zeroCreate func.Locals.Length }
+            vm.Frames.Add(frame)
+            match runFrameRecursive vm with
+            | VFunction(f, e),  vm  ->
+                vm.Frames.RemoveAt(vm.Frames.Count- 1)
+                callValue vm argCount 1
+            | v, vm ->
+                let _ = push vm v in
+                vm
+        | _ -> raise <| InvalidProgramException $"Can only call functions and closures"
+
+
+
 
 // let interpretWithMode (func: Function) (vm: VM option) (isRepl: bool) =
 //     let vm =
@@ -1200,8 +1241,9 @@ let stepVM (vm: VM) =
                     let _, vm = pop vm
                     vm
                 | CALL ->
-                    let vm, argCount = readByte vm
-                    callValue vm (int argCount)
+                    let _, argCount = readByte vm
+                    let vm, recursive = readByte vm 
+                    callValue vm (int argCount) (int recursive)
                 | DEFINE_GLOBAL ->
                     let constant, vm = readConstant vm
 

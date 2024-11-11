@@ -89,15 +89,13 @@ let compileCodeBlock (expr: Expr) state : CompilerResult<unit> = emitConstant (V
 let rec compileExpr (expr: Expr) : Compiler<unit> =
     fun state ->
         match expr with
-        | ETail(e, _) ->
-            compileExpr e state
         | ELiteral(lit, _) -> compileLiteral lit state
         | EIdentifier(i, _) -> compileIdentifier i state
         | EGrouping(e, _) -> compileGrouping e state
         | ELambda(parameters, body, _, pr, _) ->
             let parameters = List.map fst parameters
             compileLambda parameters body pr state
-        | ECall(callee, arguments, _) -> compileCall callee arguments state
+        | ECall(callee, arguments, _) -> compileCall callee arguments false state 
         | EList(elements, _) -> compileList elements state
         | EIndex(list, index, _) -> compileIndex list index state
         | ETuple(elements, _) -> compileTuple elements state
@@ -159,12 +157,13 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
                 |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_GET state))
 
         | EBlock(stmts, _) -> compileBlock stmts state // scope is fucked up think its global
-
-        // below not working
         | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
         | ETernary(cond, thenB, elseB, _) -> compileIf cond thenB elseB state
-
-
+        | ETail(ex, _) ->
+            match ex with
+            | ECall(name, args, _) -> compileCall name args true state
+            | e -> compileExpr e state
+                
 and compileIndex (list: Expr) (index: Expr) : Compiler<unit> =
     fun state ->
         compileExpr list state
@@ -294,7 +293,7 @@ and compileAsBuiltin (parameters: Token list) (body: Expr) : Expression =
 
     fromExpr body
 
-and compileCall (callee: Expr) (arguments: Expr list) : Compiler<unit> =
+and compileCall (callee: Expr) (arguments: Expr list) (recursive: bool) : Compiler<unit> =
     fun state ->
         let rec compileArguments arguments state =
             match arguments with
@@ -306,7 +305,11 @@ and compileCall (callee: Expr) (arguments: Expr list) : Compiler<unit> =
         compileExpr callee state
         |> Result.bind (fun ((), state) -> compileArguments arguments state)
         |> Result.bind (fun ((), state) ->
-            emitBytes [| byte (opCodeToByte OP_CODE.CALL); byte (List.length arguments) |] state)
+            let b =
+                match recursive with
+                | false -> 0
+                | true -> 1
+            emitBytes [| byte (opCodeToByte OP_CODE.CALL); byte (List.length arguments); (byte b) |] state)
 
 and compileGrouping grouping : Compiler<unit> = fun state -> compileExpr grouping state
 
@@ -325,6 +328,12 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
         match stmt with
         | SExpression(expr, _) -> compileExpr expr state
         | SVariableDeclaration(name, initializer, _) -> compileVariableDeclaration name initializer state
+        | SRecFunc(name, tup, expr, _) ->
+            let parameters = List.map fst tup 
+            match (compileLambda parameters expr false state) with
+            | Ok ((), state)->
+                compileVariableDeclaration name expr state
+            | Error _ -> failwith "Cannot compile RecFunction"
         | SAssertStatement(expr, msg, _) ->
             let callee =
                 EIdentifier(
@@ -339,7 +348,7 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
                 else
                     [ Option.get msg; expr ]
 
-            compileCall callee args state
+            compileCall callee args false state
         | STypeDeclaration _ -> Ok((), state)
 
 and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit> =
