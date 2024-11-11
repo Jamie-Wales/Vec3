@@ -490,6 +490,8 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
 
                         let sub = List.fold combineMaps sub argSubs
                         Ok(t', sub, ECall(expr, argExprs, Some t))))
+            | TAny ->
+                Ok(TAny, Map.empty, ECall(expr,args, Some TAny))
             | _ -> Error [ TypeError.InvalidCall(callee, t) ])
     | EBlock(stmts, _) ->
         inferProgram aliases env stmts

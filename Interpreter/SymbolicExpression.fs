@@ -160,7 +160,7 @@ let rec toBuiltin (expression: Expression) : (double -> double) =
 let rec fromExpr (expr: Expr) : Expression =
     match expr with
     // need first class support for e etc !!
-    | EIdentifier ({ Lexeme = Identifier "E"; Position = _ }, _) -> Const Math.E
+    | EIdentifier ({ Lexeme = Identifier "E"; Position = _ }, _) -> Exponential(Const 1)
     | EIdentifier ({ Lexeme = Identifier "PI"; Position = _ }, _) -> Const Math.PI
     | EIdentifier ({ Lexeme = Identifier "TAU"; Position = _ }, _) -> Const Math.Tau
     | EIdentifier ({ Lexeme = Identifier _; Position = _ }, _) -> X

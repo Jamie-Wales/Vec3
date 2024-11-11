@@ -267,6 +267,21 @@ and builtins () =
         | _ ->
             raise <| InvalidProgramException "plotFuncs expects a title and a list of functions")
       
+      Identifier "read",
+      VBuiltin(fun args vm ->
+          match args with
+          | [ VString s ] ->
+              let parsed = Parser.parse s
+              match parsed with
+              | Ok(_, ast) ->
+                  let ast = EBlock(ast, None)
+                  let value = VBlock ast
+                  push vm value
+              | _ ->
+                  push vm VNil
+          | _ -> raise <| InvalidProgramException ("Read accepts a string")
+          )
+      
       Identifier "print",
       VBuiltin(fun args vm ->
           let vm =

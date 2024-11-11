@@ -247,6 +247,9 @@ let findIntegralType =
     
     TFunction([funcT; TFloat; TFloat], TFloat, false, true)
 
+let readTyp =
+    TFunction([TString], TAny, false, true)
+
 let BuiltinFunctions: Map<BuiltInFunction, TType> =
     [ Print, TFunction([ TAny ], TUnit, false, true)
       Input, TFunction([], TString, false, true)
@@ -258,6 +261,10 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       ATan, TFunction([ TFloat ], TFloat, true, true)
       Log, logType
       Exp, expType
+      
+      Eval, TFunction([TAny], TAny, false, true)
+      
+      Read, readTyp
 
       Len, lenType
       Env, TFunction([], TUnit, false, true)

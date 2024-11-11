@@ -204,10 +204,14 @@ type BuiltInFunction =
     | ASin
     | ATan
     
+    | Eval
+    
     | Log
     | Exp
     
     | Trunc
+    
+    | Read
     
     | Env
     | Sqrt
@@ -275,6 +279,9 @@ let builtInFunctionMap =
       Identifier "BUILTIN_ACOS", BuiltInFunction.ACos
       Identifier "BUILTIN_ATAN", BuiltInFunction.ATan
       Identifier "BUILTIN_ASIN", BuiltInFunction.ASin
+      
+      Identifier "read", BuiltInFunction.Read
+      Identifier "eval", BuiltInFunction.Eval
       
       Identifier "BUILTIN_EXP", BuiltInFunction.Exp
       Identifier "BUILTIN_LOG", BuiltInFunction.Log
