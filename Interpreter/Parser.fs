@@ -992,7 +992,8 @@ let parse (input: string) =
     let tokens = tokenize input
 
     match tokens with
-    | Ok tokens -> parseTokens tokens
+    | Ok tokens ->
+        parseTokens tokens
     | Error f -> Error(LexerError f, createParserState [])
 
 let parseFile (file: string) =

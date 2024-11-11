@@ -119,6 +119,7 @@ let parseAndCompile (code: string) (vm:VM) =
     let code = preprocessContent code
     match parse code with
     | Ok (_, program) ->
+        printfn $"{program}"
         match inferProgram Map.empty defaultTypeEnv program with
         | Ok (_, _, _, program) ->
             match compileProgram program with

@@ -256,6 +256,7 @@ draw(data)
                     else
                         match parse code with
                         | Ok (_, ast) ->
+                            printfn $"{ast}"
                             let env, aliases, _, _ = Prelude.preludeChecked
                             
                             match Inference.inferProgram aliases env ast with

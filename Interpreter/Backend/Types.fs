@@ -44,7 +44,7 @@ and Value =
     | VPlotData of string * Value list * Value list * PlotType
     | VPlotFunction of string * (double -> double)
     | VPlotFunctions of string * (double -> double) list
-    | VShape of (float * float * float * float * string)
+    | VShape of (float * float * float * float * string * string)
     | VBlock of Expr
 
 and CompoundType =

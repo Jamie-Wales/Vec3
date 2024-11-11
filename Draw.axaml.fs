@@ -1,5 +1,6 @@
 namespace Vec3
 
+open System
 open Avalonia
 open Avalonia.Controls
 open Avalonia.Markup.Xaml
@@ -45,13 +46,24 @@ type DrawWindow() as this =
         
     member this.DrawShape(vm: VM, shape) =
         currentVm <- Some vm
-        let (w, h, x, y, color) = match shape with VShape(x, y, w, h, c) -> (x, y, w, h, c)
+        let (w, h, x, y, color, typ) = match shape with
+                                        | VShape(x, y, w, h, c, t) -> (x, y, w, h, c, t)
+                                        | _ -> raise <| InvalidProgramException("Unknown shape value")
         
         let colorBrush = SolidColorBrush(this.ParseColor(color))
         
         // Determine shape type based on parameters and create appropriate shape
         let shape =
-            if abs(w - h) < 0.001 then
+            match typ with
+            | "rectangle" -> 
+                let rect = Rectangle()
+                rect.Width <- abs w
+                rect.Height <- abs h
+                rect.Fill <- colorBrush
+                Canvas.SetLeft(rect, x)
+                Canvas.SetTop(rect, y)
+                rect :> Shape
+            | "circle" ->
                 // Circle/Ellipse
                 let circle = Ellipse()
                 circle.Width <- abs w
@@ -60,14 +72,14 @@ type DrawWindow() as this =
                 Canvas.SetLeft(circle, x - w/2.0)  // Center the circle
                 Canvas.SetTop(circle, y - h/2.0)
                 circle :> Shape
-            else
-                let rect = Rectangle()
-                rect.Width <- abs w
-                rect.Height <- abs h
-                rect.Fill <- colorBrush
-                Canvas.SetLeft(rect, x)
-                Canvas.SetTop(rect, y)
-                rect :> Shape
+            | "line" ->
+                let line = Avalonia.Controls.Shapes.Line()
+                line.Width <- abs w
+                line.Height <- abs h
+                line.Fill <- colorBrush
+                Canvas.SetLeft(line, x)
+                Canvas.SetTop(line, y)
+                line :> Shape
                 
         canvasControl.Children.Add(shape)
         

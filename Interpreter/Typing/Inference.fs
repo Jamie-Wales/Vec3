@@ -18,6 +18,9 @@ open Exceptions
 //     builtInFunctionMap |> Map.map (fun _ builtIn ->
 //         let typ = BuiltinFunctions[builtIn]
 //         Forall([], typ))
+
+// TODO : MAJOR ISSUE WITH CALLING AGR ORDER ??????????
+
 let defaultTypeEnv: TypeEnv =
     let funcMap =
         builtInFunctionMap |> Map.map (fun _ builtIn -> BuiltinFunctions[builtIn])
@@ -387,7 +390,6 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             let paramList = List.zip paramList paramTypes
             
             // TODO FIX RECORD TYPES !!!!!!!!!!!!!!
-            printfn "paramList: %A" paramList
 
             let rec rowToConstrain (row: Row) =
                 match row with

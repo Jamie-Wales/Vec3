@@ -662,11 +662,82 @@ and builtins () =
                 let colour = match colour with
                                 | Some(VList([VString "colour"; VString c], _)) -> c
                                 | _ -> raise <| InvalidProgramException "draw expects a colour"
+                                
+                let typ = elems |> List.tryFind (function
+                    | VList([VString "shape"; VString _], _) -> true
+                    | _ -> false
+                    )
                 
-                let value = VShape(width, height, x, y, colour)
+                let typ = match typ with
+                           | Some(VList([VString "shape"; VString c], _)) -> c
+                           | _ -> "circle"
+                
+                let value = VShape(width, height, x, y, colour, typ)
                 vm.Canvas.Add(value)
                 push vm VNil
-                
+            | [VList(elems, LIST)] ->
+                elems |>
+                List.iter (fun elems ->
+                    match elems with
+                    | VList(elems, RECORD) ->
+                        
+                        let width = elems |> List.tryFind (function
+                            | VList([VString "width"; VNumber(VFloat _)], _) -> true
+                            | _ -> false)
+                        
+                        let width = match width with
+                                    | Some(VList([VString "width"; VNumber(VFloat w)], _)) -> w
+                                    | _ -> raise <| InvalidProgramException "draw expects a width"
+                        
+                        let height = elems |> List.tryFind (function
+                            | VList([VString "height"; VNumber(VFloat _)], _) -> true
+                            | _ -> false)
+                        
+                        let height = match height with
+                                        | Some(VList([VString "height"; VNumber(VFloat h)], _)) -> h
+                                        | _ -> raise <| InvalidProgramException "draw expects a height"
+                        
+                        let x = elems |> List.tryFind (function
+                            | VList([VString "x"; VNumber(VFloat _)], _) -> true
+                            | _ -> false)
+                        
+                        let x = match x with
+                                    | Some(VList([VString "x"; VNumber(VFloat x)], _)) -> x
+                                    | _ -> raise <| InvalidProgramException "draw expects an x"
+                        
+                        
+                        
+                        let y = elems |> List.tryFind (function
+                            | VList([VString "y"; VNumber(VFloat _)], _) -> true
+                            | _ -> false)
+                        
+                        let y = match y with
+                                    | Some(VList([VString "y"; VNumber(VFloat y)], _)) -> y
+                                    | _ -> raise <| InvalidProgramException "draw expects a y"
+                        
+                        let colour = elems |> List.tryFind (function
+                            | VList([VString "colour"; VString _], _) -> true
+                            | _ -> false)
+                        
+                        let colour = match colour with
+                                        | Some(VList([VString "colour"; VString c], _)) -> c
+                                        | _ -> raise <| InvalidProgramException "draw expects a colour"
+                        
+                        let typ = elems |> List.tryFind (function
+                            | VList([VString "shape"; VString _], _) -> true
+                            | _ -> false
+                            )
+                        
+                        let typ = match typ with
+                                   | Some(VList([VString "shape"; VString c], _)) -> c
+                                   | _ -> "circle"
+                        
+                        let value = VShape(width, height, x, y, colour, typ)
+                        vm.Canvas.Add(value)
+                        push vm VNil |> ignore
+                    | _ -> raise <| InvalidProgramException("draw expects a list of records")
+                )
+                vm
             | _ -> raise <| InvalidProgramException "draw expects a title and a list of functions")
       
       Identifier "findIntegral",
@@ -676,7 +747,6 @@ and builtins () =
                 let res = SymbolicExpression.findIntegral f a b
                 push vm (VNumber(VFloat res))
             | _ -> raise <| InvalidProgramException "findIntegral expects a function, a lower bound, and an upper bound")
-          )
 
       Operator(Plus, Some Infix),
       VBuiltin(fun args vm ->
