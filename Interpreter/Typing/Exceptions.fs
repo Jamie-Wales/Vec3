@@ -5,6 +5,7 @@ open Vec3.Interpreter.Grammar
 
 type TType = Type
 
+
 type TypeError =
     | InvalidIf of Expr
     | UndefinedVariable of Token

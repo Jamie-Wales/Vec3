@@ -45,6 +45,10 @@ rec f(x) -> if x < 0 then print("done") else { print(x) f(x-1) }
 
 f(10)
 
+
+let casting = (5 * 4^3) : float
+print(casting)
+
 let f = (x) -> x^2.0 - 2.0
 
 let diff = differentiate(f)
@@ -52,6 +56,9 @@ let diff = differentiate(f)
 print(diff)
 
 plotFuncs("Function differential", [f, diff])
+
+let areaUnder = findIntegral(f, 0.0, 10.0)
+print(areaUnder)
 
 let y = (z) -> cos(z)
 

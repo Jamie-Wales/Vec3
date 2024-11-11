@@ -14,6 +14,7 @@ open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Compiler
 open Vec3.Interpreter.Repl
+open Vec3.Interpreter.Typing
 
 type NotebookWindow () as this =
     inherit Window ()
@@ -24,6 +25,7 @@ type NotebookWindow () as this =
     let mutable exportButton: Button = null
     let mutable importButton: Button = null
     let mutable vm: VM = createNewVM(initFunction("Main"))
+    let mutable typeEnv: Types.TypeEnv = Inference.defaultTypeEnv
     
     do
         AvaloniaXamlLoader.Load(this)
@@ -130,8 +132,9 @@ type NotebookWindow () as this =
         // Wire up events
         runButton.Click.Add(fun _ ->
             try 
-                match parseAndCompile editor.Text vm with
-                | Some newVM ->
+                match parseAndCompileWithTE editor.Text vm typeEnv with
+                | Some (newVM, env) ->
+                    typeEnv <- env
                     let oldOutputLength = Seq.length vm.Streams.StandardOutput
                     vm <- run newVM
                     output.Foreground <- SolidColorBrush(Colors.Black)

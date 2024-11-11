@@ -133,3 +133,24 @@ let parseAndCompile (code: string) (vm:VM) =
     | Error (e, s) ->
         printfn $"Parsing error: {formatParserError e s}"
         None
+
+let parseAndCompileWithTE (code: string) (vm: VM) (env: TypeEnv) =
+    let code = Prelude.prelude + code
+    let code = preprocessContent code
+    match parse code with
+    | Ok (_, program) ->
+        printfn $"{program}"
+        match inferProgram Map.empty env program with
+        | Ok (env, _, _, program) ->
+            match compileProgram program with
+            | Ok (func, _) -> Some(loadFunction vm func, env)
+            | Error (msg, _) ->
+                printfn $"Compilation error: {msg}"
+                None
+        | Error errors ->
+            printfn $"Type error: {formatTypeErrors errors}"
+            None
+    | Error (e, s) ->
+        printfn $"Parsing error: {formatParserError e s}"
+        None
+    

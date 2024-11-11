@@ -35,7 +35,6 @@
         <Compile Include="Interpreter\Prelude.fs" />
         <Compile Include="Interpreter\Repl.fs" />
         <Compile Include="Notebook.axaml.fs" />
-        <Compile Include="Notebook.axaml.fs" />
         <Compile Include="PlotWindow.axaml.fs" />
         <Compile Include="Draw.axaml.fs" />
         <Compile Include="MainWindow.axaml.fs" />
