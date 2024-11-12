@@ -248,7 +248,8 @@ draw(data)
                 standardOutput.Foreground <- SolidColorBrush(Colors.Red)
                 standardOutput.Text <- "Failed to compile code"
         with
-        | ex -> 
+        | ex ->
+            printfn $"Error: {ex}"
             standardOutput.Foreground <- SolidColorBrush(Colors.Red)
             standardOutput.Text <- $"Error: %s{ex.Message}"
             
@@ -264,7 +265,6 @@ draw(data)
                     else
                         match parse code with
                         | Ok (_, ast) ->
-                            printfn $"{ast}"
                             let env, aliases, _, _ = Prelude.preludeChecked
                             
                             match Inference.inferProgram aliases env ast with

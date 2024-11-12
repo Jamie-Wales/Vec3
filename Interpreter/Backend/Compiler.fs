@@ -291,8 +291,13 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) : Compiler<u
 
         compileExpr body compiledParamsState
         |> Result.bind (fun ((), finalLambdaState) ->
+            // emit arg count again
+            
             match emitOpCode OP_CODE.RETURN finalLambdaState with
             | Ok((), finalState) ->
+                emitByte (byte (parameters.Length + 1)) finalLambdaState |> ignore
+                emitByte (byte 2) finalLambdaState |> ignore
+                
                 let constIndex =
                     addConstant state.CurrentFunction.Chunk (VFunction(finalState.CurrentFunction, builtin))
 
@@ -391,7 +396,10 @@ let compileProgramState (program: Program) (state: CompilerState) : CompilerResu
     compileStmts program state
     |> Result.bind (fun ((), state) ->
         emitOpCode OP_CODE.RETURN state
-        |> Result.map (fun ((), state) -> (state.CurrentFunction.Chunk, state)))
+        |> Result.map (fun ((), state) -> (
+            emitByte (byte 1) state |> ignore
+            emitByte (byte 1) state |> ignore
+            state.CurrentFunction.Chunk, state)))
 
 
 let compileProgram (program: Program) : CompilerResult<Function> =
@@ -411,4 +419,7 @@ let compileProgram (program: Program) : CompilerResult<Function> =
     compileStmts program initialState
     |> Result.bind (fun ((), state) ->
         emitOpCode OP_CODE.RETURN state
-        |> Result.map (fun ((), state) -> (state.CurrentFunction, state)))
+        |> Result.map (fun ((), state) -> (
+            emitByte (byte 1) state |> ignore
+            emitByte (byte 1) state |> ignore
+            state.CurrentFunction, state)))

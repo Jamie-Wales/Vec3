@@ -40,7 +40,7 @@ and Value =
     | VClosure of Closure
     | VNil
     | VList of Value list * CompoundType
-    | VBuiltin of (Value list -> VM -> VM)
+    | VBuiltin of (Value list -> VM -> VM) * string
     | VPlotData of string * Value list * Value list * PlotType
     | VPlotFunction of string * (double -> double)
     | VPlotFunctions of string * (double -> double) list
