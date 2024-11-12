@@ -97,7 +97,10 @@ let data = {
     height = 50.0,
     colour = "red"
 }
-draw(data) 
+draw(data)
+
+// list casting
+let x = [1..10] : [float]
 """
     
     do

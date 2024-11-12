@@ -333,7 +333,7 @@ and codeBlock (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "Code Block"
 
     expect state (Punctuation LeftBrace)
-    |> Result.bind (fun state -> block state |> Result.bind (fun (state, expr) ->Ok(state, ECodeBlock expr)))
+    |> Result.bind (fun state -> block state |> Result.bind (fun (state, expr) -> Ok(state, ECodeBlock expr)))
 
 
 and ident (state: ParserState) : ParseResult<Expr> =
@@ -539,7 +539,7 @@ and listOrRange (state: ParserState) : ParseResult<Expr> =
                 |> Result.bind (fun (state, exprs) ->
                     expect state (Punctuation RightBracket)
                     |> Result.bind (fun state -> Ok(state, EList(start :: exprs, None))))
-            | Some (state, { Lexeme = Punctuation RightBracket }) -> Ok(state, EList([ start ], None))
+            | Some(state, { Lexeme = Punctuation RightBracket }) -> Ok(state, EList([ start ], None))
             | _ -> Error(Expected "',' or '..' after list element.", state))
 
 and grouping (state: ParserState) : ParseResult<Expr> =
@@ -568,6 +568,7 @@ and ifElse (state: ParserState) : ParseResult<Expr> =
             expression state Precedence.None
             |> Result.bind (fun (state, thenBranch) ->
                 let thenBranch = ETail(thenBranch, None)
+
                 match nextToken state with
                 | Some(state, { Lexeme = Keyword Else }) ->
                     expression state Precedence.None
@@ -795,6 +796,7 @@ and block (state: ParserState) : ParseResult<Expr> =
         match peek state with
         | Some { Lexeme = Punctuation RightBrace } ->
             let head = List.tryHead stmts
+
             match head with
             | Some e ->
                 match e with
@@ -802,10 +804,10 @@ and block (state: ParserState) : ParseResult<Expr> =
                     let e = SExpression(ETail(e, None), None)
                     let stmts = List.skip 1 stmts
                     let stmts = e :: stmts
-                    Ok (advance state, EBlock(List.rev stmts, None))
+                    Ok(advance state, EBlock(List.rev stmts, None))
                 | _ -> Ok(advance state, EBlock(List.rev stmts, None))
             | None -> Ok(advance state, EBlock(List.rev stmts, None))
-        | None -> Error (UnexpectedEndOfInput, state)
+        | None -> Error(UnexpectedEndOfInput, state)
         | _ -> statement state |> Result.bind (fun (state, stmt) -> loop state (stmt :: stmts))
 
     loop state []
@@ -923,12 +925,34 @@ and recFunc (state: ParserState) : ParseResult<Stmt> =
         |> Result.bind (fun state ->
             parseParameters state []
             |> Result.bind (fun (state, parameters) ->
-                expect state (Operator(Arrow, None))
-                |> Result.bind (fun state ->
+                match nextToken state with
+                | Some(state, { Lexeme = Operator(Arrow, _) }) ->
                     expression state Precedence.Assignment
                     |> Result.bind (fun (state, expr) ->
                         let f = SRecFunc(name, parameters, expr, None)
-                        Ok(state, f)))))
+                        Ok(state, f))
+                | Some(state, { Lexeme = Punctuation Colon }) ->
+                    typeHint state
+                    |> Result.bind (fun (state, returnType) ->
+                        match nextToken state with
+                        | Some(state, { Lexeme = Operator(Arrow, _) }) ->
+                            expression state Precedence.Assignment
+                            |> Result.bind (fun (state, expr) ->
+                                let f = SRecFunc(name, parameters, expr, Some returnType)
+                                Ok(state, f))
+                        | Some(state, { Lexeme = Punctuation LeftBrace }) ->
+                            block state
+                            |> Result.bind (fun (state, expr) ->
+                                let f = SRecFunc(name, parameters, expr, Some returnType)
+                                Ok(state, f))
+                        | _ -> Error(Expected "function body.", state))
+
+                | Some(state, { Lexeme = Punctuation LeftBrace }) ->
+                    block state
+                    |> Result.bind (fun (state, expr) ->
+                        let f = SRecFunc(name, parameters, expr, None)
+                        Ok(state, f))
+                | _ -> Error(Expected "function body.", state)))
     | _ -> Error(Expected "Identifier", state)
 
 and statement (state: ParserState) : ParseResult<Stmt> =
@@ -992,8 +1016,7 @@ let parse (input: string) =
     let tokens = tokenize input
 
     match tokens with
-    | Ok tokens ->
-        parseTokens tokens
+    | Ok tokens -> parseTokens tokens
     | Error f -> Error(LexerError f, createParserState [])
 
 let parseFile (file: string) =
