@@ -41,10 +41,11 @@ REPL for quick commands click 'Play' or Shift+Enter.
 Type 'help()' in the REPL for more information."""
 
     let initialCode = """// Vec3 Editor Example
-rec f(x) -> if x < 0 then print("done") else { print(x) f(x-1) }
 
-f(10)
+rec fact(n) -> if n < 1 then 1 else n * fact(n - 1)
 
+let x = fact(5)
+print(x)
 
 let casting = (5 * 4^3) : float
 print(casting)

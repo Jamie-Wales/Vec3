@@ -4,7 +4,6 @@ open System
 open Microsoft.FSharp.Collections
 open Vec3.Interpreter
 open Vec3.Interpreter.Backend.Instructions
-open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Token
@@ -236,7 +235,7 @@ and builtins () =
                   push vm value
               | _ ->
                   push vm VNil
-          | _ -> raise <| InvalidProgramException ("Read accepts a string")), "Read")
+          | _ -> raise <| InvalidProgramException "Read accepts a string"), "Read")
       
       Identifier "print",
       VBuiltin((fun args vm ->
@@ -859,7 +858,7 @@ and runFrameRecursive vm =
         match opcode with
         | CALL ->
             let vm, argCount  = readByte vm
-            let vm, recursive = readByte vm
+            let vm, _ = readByte vm
             let callee = peek vm (int argCount)
             callee, vm
         | _ ->
@@ -877,8 +876,8 @@ and runCurrentFrame vm =
 
         match opcode with
         | RETURN ->
-            let vm, argCount = readByte vm
-            let vm, shouldPop = readByte vm
+            let vm, _ = readByte vm
+            let vm, _ = readByte vm
             
             let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
             vm.Frames.RemoveAt(vm.Frames.Count - 1)
@@ -983,9 +982,9 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
         
         // pop arg count
-        List.iter (fun _ -> let _, vm = pop vm in ()) [ 0 .. (int argCount) - 2 ]
+        List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int argCount) - 2 ]
         if int shouldPop = 2 then
-            let _, vm = pop vm
+            let _ = pop vm
             ()
             
         
@@ -1187,7 +1186,7 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
                   Locals = Array.zeroCreate func.Locals.Length }
             vm.Frames.Add(frame)
             match runFrameRecursive vm with
-            | VFunction(f, e),  vm  ->
+            | VFunction _,  vm  ->
                 vm.Frames.RemoveAt(vm.Frames.Count- 1)
                 callValue vm argCount 1
             | v, vm ->
@@ -1207,6 +1206,7 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
             push vm res
         | _ ->
             raise <| InvalidProgramException $"Can only call functions and closures {callee}"
+    | _ -> raise <| InvalidProgramException $"Invalid recursive value {recursive}"
 
 
 
@@ -1311,8 +1311,8 @@ let stepVM (vm: VM) =
                         | None -> raise <| InvalidProgramException($"Undefined variable '{name}'")
                     | _ -> raise <| InvalidProgramException("Expected string constant for variable name in GET_GLOBAL")
                 | RETURN ->
-                    let _, argCount = readByte vm
-                    let _, shouldPop = readByte vm
+                    let _ = readByte vm
+                    let _ = readByte vm // for returnign from user funcs
                     if vm.Frames.Count > 1 then
                         let returnValue, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
                         vm.Frames.RemoveAt(vm.Frames.Count - 1)
