@@ -249,6 +249,17 @@ let findIntegralType =
 
 let readTyp =
     TFunction([TString], TAny, false, true)
+    
+let headTyp =
+    let listTyp = TTypeVariable(freshTypeVar ())
+    let dimsVar = DVar(freshTypeVar ())
+    
+    TFunction([TTensor(listTyp, dimsVar)], listTyp, false, true)
+
+let tailTyp =
+    let listTyp = TTypeVariable(freshTypeVar ())
+    
+    TFunction([TTensor(listTyp, DAny)], TTensor(listTyp, DAny), false, true)
 
 let BuiltinFunctions: Map<BuiltInFunction, TType> =
     [ Print, TFunction([ TAny ], TUnit, false, true)
@@ -261,6 +272,9 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       ATan, TFunction([ TFloat ], TFloat, true, true)
       Log, logType
       Exp, expType
+      
+      Head, headTyp
+      Tail, tailTyp
       
       Eval, TFunction([TAny], TAny, false, true)
       
@@ -309,15 +323,6 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
 
       CrossProduct, crossProduct
       DotProduct, dotProduct
-
-      BInt, TFunction([ TAny ], TInteger, false, true)
-      BFloat, TFunction([ TAny ], TFloat, false, true)
-      BComplex, TFunction([ TAny ], TComplex, false, true)
-      BRational, TFunction([ TAny ], TRational, false, true)
-      BString, TFunction([ TAny ], TString, false, true)
-      BBool, TFunction([ TAny ], TBool, false, true)
-      BList, listCast
-      BTuple, tupleCast
 
       Cast, castType
 

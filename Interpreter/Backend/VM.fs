@@ -843,6 +843,21 @@ and builtins () =
           match args with
           | [ a; VList(l, _) ] -> VList(a :: l, LIST) |> push vm
           | _ -> raise <| InvalidProgramException "Expected a value and a list for ::"), "Cons")
+      
+      Identifier "head",
+      VBuiltin((fun args vm ->
+        match args with
+        | [ VList(l, _) ] -> List.head l |> push vm
+        | _ -> raise <| InvalidProgramException "Expected a list for head"), "Head")
+      
+      Identifier "tail",
+        VBuiltin((fun args vm ->
+            match args with
+            | [ VList(l, _) ] ->
+                let tail = List.tail l
+                VList(tail, LIST) |> push vm
+            | _ -> raise <| InvalidProgramException "Expected a list for tail"), "Tail")
+        
       ]
 
     |> List.map (fun (key, value) -> lexemeToString key, value)
@@ -876,7 +891,6 @@ and runCurrentFrame vm =
 
         match opcode with
         | RETURN ->
-            let vm, _ = readByte vm
             let vm, _ = readByte vm
             
             let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
@@ -977,13 +991,14 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let vm, recursive = readByte vm
         callValue vm (int argCount) (int recursive)
     | RETURN ->
-        let vm, argCount = readByte vm
+        let currentFrame = getCurrentFrame vm
+        let argCount = currentFrame.Function.Arity
         let vm, shouldPop = readByte vm
         let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
         
         // pop arg count
-        List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int argCount) - 2 ]
-        if int shouldPop = 2 then
+        List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int argCount) - 1 ]
+        if int shouldPop = 1 then
             let _ = pop vm
             ()
             
@@ -1311,7 +1326,7 @@ let stepVM (vm: VM) =
                         | None -> raise <| InvalidProgramException($"Undefined variable '{name}'")
                     | _ -> raise <| InvalidProgramException("Expected string constant for variable name in GET_GLOBAL")
                 | RETURN ->
-                    let _ = readByte vm
+                    let currArity = currentFrame.Function.Arity // do it like instead
                     let _ = readByte vm // for returnign from user funcs
                     if vm.Frames.Count > 1 then
                         let returnValue, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm

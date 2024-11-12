@@ -2,7 +2,6 @@ namespace Vec3
 
 open System
 open Avalonia.Controls
-open Avalonia.Controls.Shapes
 open Avalonia.Markup.Xaml
 open AvaloniaEdit
 open Avalonia.Media
@@ -46,6 +45,12 @@ rec fact(n) -> if n < 1 then 1 else n * fact(n - 1)
 
 let x = fact(5)
 print(x)
+
+// need to fix type inference function params, and locals also stay on the stack so i need to fix that
+rec map(list, func: any) -> if len(list) == 0 then 
+							[] 
+						  else 
+						    func(head(list)) :: map(tail(list), func)
 
 let casting = (5 * 4^3) : float
 print(casting)

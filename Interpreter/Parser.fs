@@ -139,8 +139,8 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
         match punc with
         | LeftParen ->
             { Prefix = Some leftParen
-              Infix = None
-              Postfix = Some call
+              Infix = Some call
+              Postfix = None
               Precedence = Precedence.Call }
         | LeftBrace ->
             { Prefix = Some leftBrace
@@ -149,8 +149,8 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
               Precedence = Precedence.None }
         | LeftBracket ->
             { Prefix = Some listOrRange
-              Infix = None
-              Postfix = Some index
+              Infix = Some index
+              Postfix = None
               Precedence = Precedence.Index }
         | Colon ->
             { Prefix = None

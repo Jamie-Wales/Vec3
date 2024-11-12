@@ -250,24 +250,17 @@ type BuiltInFunction =
     | CrossProduct
     | DotProduct
     
-    | Cons
-    
     | Cast
-    
-    | BInt
-    | BFloat
-    | BComplex
-    | BRational
-    | BBool
-    | BString
-    | BList
-    | BTuple
     
     | NewtonRaphson
     | Bisection
     | Differentiate
     | Integrate
     | FindIntegral
+    
+    | Head
+    | Tail
+    | Cons
     
 let builtInFunctionMap =
     [ Identifier "print", BuiltInFunction.Print
@@ -331,14 +324,8 @@ let builtInFunctionMap =
       
       Identifier "cast", BuiltInFunction.Cast
       
-      Identifier "Int", BuiltInFunction.BInt
-      Identifier "Float", BuiltInFunction.BFloat
-      Identifier "Complex", BuiltInFunction.BComplex
-      Identifier "Rational", BuiltInFunction.BRational
-      Identifier "Boolean", BuiltInFunction.BBool
-      Identifier "String", BuiltInFunction.BString
-      Identifier "List", BuiltInFunction.BList
-      Identifier "Tuple", BuiltInFunction.BTuple
+      Identifier "head", BuiltInFunction.Head
+      Identifier "tail", BuiltInFunction.Tail
       ]
     |> Map.ofList
     
