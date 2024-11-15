@@ -111,7 +111,8 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             compileLambda parameters body pr state
         | ECall(callee, arguments, _) -> compileCall callee arguments false state
         | EList(elements, _) -> compileList elements state
-        | EIndex(list, index, _) -> compileIndex list index state
+        | EIndex(list, (start, end_, isRange), _) ->
+            compileIndex list start end_ isRange state
         | ETuple(elements, _) -> compileTuple elements state
         | ECodeBlock(expr) -> compileCodeBlock expr state
         | ERange(start, stop, _) ->
@@ -161,14 +162,16 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
                 match token with
                 | { Lexeme = Identifier n } -> n
                 | _ -> raise <| System.Exception("Invalid record field name")
-
-            // same as index, but with a string and a record (push string)
-            compileExpr expr state
-            |> Result.bind (fun ((), state) ->
-                let constIndex = addConstant state.CurrentFunction.Chunk (VString name)
-
-                emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
-                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_GET state))
+            
+            // compile as call
+            let callee =
+                EIdentifier(
+                    { Lexeme = Identifier "select"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                )
+                
+            compileCall callee [ expr; ELiteral(LString name, TString) ] false state
 
         | EBlock(stmts, _) -> compileBlock stmts state // scope is fucked up think its global
         | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
@@ -178,11 +181,76 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             | ECall(name, args, _) -> compileCall name args true state
             | e -> compileExpr e state
 
-and compileIndex (list: Expr) (index: Expr) : Compiler<unit> =
+and compileIndex (list: Expr) (start: Expr option) (end_: Expr option) (isRange: bool) : Compiler<unit> =
     fun state ->
-        compileExpr list state
-        |> Result.bind (fun ((), state) -> compileExpr index state)
-        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_GET state)
+        if isRange && (Option.isNone start && Option.isNone end_) then
+            raise <| InvalidProgramException("Range must have both start and end")
+        
+        if not isRange && (Option.isSome start && Option.isSome end_) then
+            raise <| InvalidProgramException("Index must have either start or end")
+            
+        if not isRange && (Option.isSome start && Option.isNone end_) then
+            // is index
+            let start = Option.get start
+            // compile as call
+            let callee =
+                EIdentifier(
+                    { Lexeme = Identifier "index"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                )
+                
+            compileCall callee [ list; start ] false state
+            
+        
+        else if not isRange && (Option.isNone start && Option.isSome end_) then
+            let end_ = Option.get end_
+            // compile as call
+            let callee =
+                EIdentifier(
+                    { Lexeme = Identifier "index"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                )
+                
+            compileCall callee [ list; end_ ] false state
+            
+        else if Option.isNone start then
+            // compile as call
+            let callee =
+                EIdentifier(
+                    { Lexeme = Identifier "index"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                )
+                
+            compileCall callee [ list; ELiteral(LNumber(LInteger 0), TInteger); Option.get end_ ] false state
+            
+        else if Option.isNone end_ then
+            let start = Option.get start
+            
+            // compile as call
+            let callee =
+                EIdentifier(
+                    { Lexeme = Identifier "index"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                )
+                
+            compileCall callee [ list; start; ELiteral(LNumber(LInteger 0), TInteger) ] false state
+        else
+            let start = Option.get start
+            let end_ = Option.get end_
+            
+            // compile as call
+            let callee =
+                EIdentifier(
+                    { Lexeme = Identifier "index"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                )
+                
+            compileCall callee [ list; start; end_ ] false state
 
 and compileTuple (elements: Expr list) : Compiler<unit> =
     fun state ->

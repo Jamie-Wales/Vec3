@@ -257,7 +257,6 @@ type BuiltInFunction =
     | Integrate
     | FindIntegral
     
-    | Tail
     | Cons
     
 let builtInFunctionMap =
@@ -320,7 +319,6 @@ let builtInFunctionMap =
       
       Identifier "cast", BuiltInFunction.Cast
       
-      Identifier "tail", BuiltInFunction.Tail
       ]
     |> Map.ofList
     

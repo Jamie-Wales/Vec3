@@ -553,10 +553,33 @@ and grouping (state: ParserState) : ParseResult<Expr> =
 and index (state: ParserState) (left: Expr) : ParseResult<Expr> =
     let state = setLabel state "Index"
 
-    expression state Precedence.None
-    |> Result.bind (fun (state, expr) ->
-        expect state (Punctuation RightBracket)
-        |> Result.bind (fun state -> Ok(state, EIndex(left, expr, None))))
+    match peek state with
+    | Some { Lexeme = Operator(DotDot, _) } ->
+        let state = advance state
+
+        expression state Precedence.None
+        |> Result.bind (fun (state, end_) ->
+            expect state (Punctuation RightBracket)
+            |> Result.bind (fun state -> Ok(state, EIndex(left, (None, Some end_, true), None))))
+    | _ ->
+        expression state Precedence.None
+        |> Result.bind (fun (state, start) ->
+            match peek state with
+            | Some { Lexeme = Operator(DotDot, _) } ->
+                let state = advance state
+
+                match peek state with
+                | Some { Lexeme = Punctuation RightBracket } ->
+                    Ok(advance state, EIndex(left, (Some start, None, true), None))
+                | _ ->
+                    expression state Precedence.None
+                    |> Result.bind (fun (state, end_) ->
+                        expect state (Punctuation RightBracket)
+                        |> Result.bind (fun state -> Ok(state, EIndex(left, (Some start, Some end_, true), None))))
+            | _ ->
+                expect state (Punctuation RightBracket)
+                |> Result.bind (fun state -> Ok(state, EIndex(left, (Some start, None, false), None))))
+
 
 and ifElse (state: ParserState) : ParseResult<Expr> =
     let state = setLabel state "If"

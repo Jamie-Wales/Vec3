@@ -619,7 +619,7 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
         | ELiteral(LBool false, _) -> evalExpr env else'
         | _ -> failwith "invalid"
     | ETernary(cond, then', else', typ) -> evalExpr env (EIf(cond, then', else', typ))
-    | EIndex(expr, index, _) ->
+    | EIndex(expr, (Some index, _, _), _) ->
         let expr = evalExpr env expr
         let index = evalExpr env index
 

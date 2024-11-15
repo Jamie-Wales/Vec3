@@ -612,51 +612,67 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         | _, Error errors -> Error errors
         | _ -> Error [ TypeError.InvalidRange(start, end_) ]
 
-    | EIndex(expr, index, _) ->
-        let indexResult = infer aliases env index
+    | EIndex(expr, (start, end_, isRange), _) ->
+        // start and end are optional, but one ust be present
+        // isRange indicates if the index is a range, ie [1:2], or [:8], or [1:], returns a tensor
+        // or if false then it is a single index, ie [1], returns a single element
+        
         let exprResult = infer aliases env expr
+        let startResult = Option.map (infer aliases env) start
+        let endResult = Option.map (infer aliases env) end_
+        
+        let results = [ Some exprResult; startResult; endResult ]
+        let hasErrors = List.exists (Option.exists Result.isError) results
+        
+        if hasErrors then
+            let errors =
+                List.collect
+                    (fun result ->
+                        match result with
+                        | Some (Error errors) -> errors
+                        | _ -> [])
+                    results
 
-        match indexResult, exprResult with
-        | Ok(TInteger, sub1, expr1), Ok(TTensor(typ, _), sub2, expr2) -> // might be nice to have little dependent types with the dims and index
-            let sub = combineMaps sub1 sub2
-            let returnType = applySubstitution aliases sub typ
-            Ok(returnType, sub, EIndex(expr2, expr1, Some returnType))
-        | Ok(TInteger, sub1, expr1), Ok(TTypeVariable n, sub2, expr2) ->
-            let typeVar = freshTypeVar ()
-            let dimsTypeVar = freshTypeVar ()
-            let sub = combineMaps sub1 sub2
+            Error errors
+        else
+            let exprType = match exprResult with
+                            | Ok(t, _, _) -> t
+                            | _ -> TNever
 
-            let sub2 = Map.add n (TTensor(TTypeVariable typeVar, DVar dimsTypeVar)) sub
-            Ok(TTypeVariable typeVar, sub2, EIndex(expr2, expr1, Some(TTypeVariable typeVar)))
+            let startType = match startResult with
+                            | Some(Ok(t, _, _)) -> t
+                            | _ -> TNever
 
-        | Ok(TInteger, sub1, expr1), Ok(TConstrain constrain, sub2, expr2) -> // is this correct ?
-            let sub = combineMaps sub1 sub2
+            let endType = match endResult with
+                            | Some(Ok(t, _, _)) -> t
+                            | _ -> TNever
+            
+            let startSub = match startResult with
+                            | Some(Ok(_, sub, _)) -> sub
+                            | _ -> Map.empty
+                            
+            let endSub = match endResult with
+                            | Some(Ok(_, sub, _)) -> sub
+                            | _ -> Map.empty
+            
 
-            let typeVar = freshTypeVar ()
-            let dimsTypeVar = freshTypeVar ()
+            let startType = applySubstitution aliases startSub startType
+            let endType = applySubstitution aliases endSub endType
 
-            let sub2 =
-                Map.add constrain.TypeVar (TTensor(TTypeVariable typeVar, DVar dimsTypeVar)) sub
+            let startType = applySubstitution aliases Map.empty startType
+            let endType = applySubstitution aliases Map.empty endType
 
-            Ok(TTypeVariable typeVar, sub2, EIndex(expr2, expr1, Some(TTypeVariable typeVar)))
+            let returnType =
+                if isRange then
+                    TTensor(exprType, DAny)
+                else
+                    exprType
 
-        | Ok(TInteger, sub1, expr1), Ok(TAny, sub2, expr2) ->
-            let typeVar = freshTypeVar ()
-            let dimsTypeVar = freshTypeVar ()
-            let sub = combineMaps sub1 sub2
+            let sub = combineMaps startSub endSub
 
-            let sub2 = Map.add typeVar (TTensor(TTypeVariable typeVar, DVar dimsTypeVar)) sub
-            Ok(TTypeVariable typeVar, sub2, EIndex(expr2, expr1, Some(TTypeVariable typeVar)))
-
-        | Ok(TInteger, sub1, expr1), Ok(TTuple _, sub2, expr2) ->
-            let sub = combineMaps sub1 sub2
-            let returnType = applySubstitution aliases sub TNever
-            Ok(returnType, sub, EIndex(expr2, expr1, Some returnType))
-        | Ok(TInteger, _, _), Ok(t, _, _) -> Error [ TypeError.InvalidIndex(expr, t) ]
-
-        | Error errors, _ -> Error errors
-        | _, Error errors -> Error errors
-        | _ -> Error [ TypeError.InvalidIndex(expr, TNever) ]
+            Ok(returnType, sub, EIndex(expr, (start, end_, isRange), Some returnType))
+        
+        
 
     // lot of this doesnt work,
 

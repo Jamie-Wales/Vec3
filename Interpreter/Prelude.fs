@@ -20,6 +20,11 @@ let trunc = (x) -> BUILTIN_TRUNC(x)
 
 let id = (x) -> x
 
+let tail = (list) -> if list == [] then 
+						error("tail of empty list") 
+					  else 
+						list[1..]
+
 rec len(list) -> if list == [] then 
 					0 
 				 else 

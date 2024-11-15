@@ -219,7 +219,7 @@ type Expr =
     | ETuple of Expr list * Type option
 
     | ECall of Expr * Expr list * Type option
-    | EIndex of Expr * Expr * Type option
+    | EIndex of Expr * (Expr option * Expr option * bool) * Type option
 
     | ELambda of (Token * Type option) list * Expr * Type option * bool * Type option // bool is pure flag
     | EBlock of Stmt list * Type option

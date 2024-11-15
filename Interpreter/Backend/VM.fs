@@ -117,95 +117,8 @@ let defineGlobal (vm: VM) (name: string) (value: Value) =
 let getGlobal (vm: VM) (name: string) =
     Map.tryFind name vm.Globals
 
-let rec createNewVM (mainFunc: Function) : VM =
-    let constantPool =
-        mainFunc.Chunk.ConstantPool
-        |> Seq.indexed
-        |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
-        
-    let vm =
-        { Frames = ResizeArray<CallFrame>()
-          Stack = ResizeArray<Value>(256)
-          ScopeDepth = 0
-          Globals = Map.fold (fun acc key value -> Map.add key value acc) (specialCasedBuiltins()) builtins
-          Streams =
-            { ConstantPool = constantPool
-              Disassembly = [""]
-              Execution = Seq.empty
-              StandardOutput = Seq.empty
-              Globals = Seq.empty }
-          ExecutionHistory = ResizeArray<VM>()
-          Plots = ResizeArray<Value>()
-          Canvas = ResizeArray<Value>() 
-          }  
-    let mainFrame =
-        { Function = mainFunc
-          IP = 0
-          StackBase = 0
-          Locals = [||] }
-    vm.Frames.Add(mainFrame)
-    vm
-    
-and specialCasedBuiltins (): Map<string, Value> =
-      [   Identifier "eval",
-          VBuiltin((fun args ->
-              match args with
-              | [VBlock e] ->
-                  match e with
-                  | EBlock (stmts, _) ->
-                      let compiled = Compiler.compileProgram stmts
-                      match compiled with
-                      | Ok(func, _) ->
-                          let block = createNewVM(func)
-                          let vm' = run block
-                          vm'.Stack[vm'.Stack.Count - 1]
-                      | Error err -> raise <| InvalidProgramException $"{err}"
-                  | _ -> raise <| InvalidProgramException "eval expects a block"
-              | _ -> raise <| InvalidProgramException "eval expects a block"), "Eval")
-          
-          Identifier "differentiate",
-          VBuiltin((fun args ->
-              match args with
-                | [ VFunction(_, Some f) ] ->
-                    let diff = SymbolicExpression.differentiate f
-                    let expr = SymbolicExpression.toExpr diff
-                    
-                    let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
-                    let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
-                    
-                    let compiled = Compiler.compileProgram [expr]
-                    match compiled with
-                    | Ok(func, _) ->
-                        let block = createNewVM(func)
-                        let vm' = run block
-                        vm'.Stack[vm'.Stack.Count - 1]
-                    | Error err -> raise <| InvalidProgramException $"{err}"
-                    
-                | _ -> raise <| InvalidProgramException "differentiate expects a function"), "Differentiate")
-          
-          Identifier "integrate",
-          VBuiltin((fun args ->
-              match args with
-              | [ VFunction(_, Some f) ] ->
-                  let integral = SymbolicExpression.integrate f
-                  let expr = SymbolicExpression.toExpr integral
-                  
-                  let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
-                  let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
-                  
-                  let compiled = Compiler.compileProgram [expr]
-                  match compiled with
-                  | Ok(func, _) ->
-                        let block = createNewVM(func)
-                        let vm' = run block
-                        vm'.Stack[vm'.Stack.Count - 1]
-                  | Error err -> raise <| InvalidProgramException $"{err}"
-                | _ -> raise <| InvalidProgramException "integrate expects a function"), "Integrate")
-        ]
-        |> List.map (fun (key, value) -> lexemeToString key, value)
-        |> Map.ofList
 
-and runFrameRecursive vm =
+let rec runFrameRecursive vm =
     let frame = getCurrentFrame vm
     if frame.IP >= frame.Function.Chunk.Code.Count then
         VNil, vm
@@ -403,28 +316,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             let vm = push vm list
             vm
         | _ -> raise <| InvalidProgramException("Expected list and integer for list create")
-
-    | COMPOUND_GET ->
-        let key, vm = pop vm
-        let structure, vm = pop vm
-
-        match (structure, key) with
-        | VList(values, _), VNumber(VInteger i) when i >= 0 && i < List.length values ->
-            let value = List.item i values
-            let vm = push vm value
-            vm
-        | VList(values, _), VString key ->
-            let value =
-                values
-                |> Seq.tryFind (fun value ->
-                    match value with
-                    | VList([ VString k; _ ], _) when k = key -> true
-                    | _ -> false)
-
-            match value with
-            | Some(VList([ _; v ], _)) -> push vm v
-            | _ -> push vm VNil
-        | _ -> raise <| InvalidProgramException("Expected list and integer for list get")
+        
     | _ -> raise <| InvalidProgramException($"Unimplemented opcode: {opCodeToString opcode}")
 
 and runLoop vm =
@@ -455,9 +347,7 @@ and runLoop vm =
             runLoop vm
 
 
-and run (vm: VM) = runLoop vm
 
-// TODO FIX CALL ORDER
 and callValue (vm: VM) (argCount: int) (recursive: int): VM =
     let callee = peek vm argCount
 
@@ -567,128 +457,101 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
     | _ -> raise <| InvalidProgramException $"Invalid recursive value {recursive}"
 
 
-
-
-// let interpretWithMode (func: Function) (vm: VM option) (isRepl: bool) =
-//     let vm =
-//         match vm with
-//         | Some existingVM ->
-//             let newFrame =
-//                 { Function = func
-//                   IP = 0
-//                   StackBase = existingVM.Stack.Count
-//                   Locals = [||] }
-//
-//             existingVM.Frames.Add(newFrame)
-//             existingVM
-//         | None ->
-//             let newVM = createVM func
-//             appendOutput newVM ConstantPool "=== Constant Pool ==="
-//
-//     let vm = appendOutput vm Execution "\n=== Program Execution ==="
-//     let finalVm = run vm
-//     (finalVm, finalVm.Streams)
-//
-// let interpret (func: Function) (vm: VM option) = interpretWithMode func vm false
-
-// let replExecute (func: Function) (vm: VM option) = interpretWithMode func vm true
-
 let getStreamContent (stream: seq<string>) =
     String.concat Environment.NewLine (Seq.toArray stream)
 
 let resetStreams (vm: VM) =
     { vm with
         Streams = createOutputStreams () }
-
-let stepVM (vm: VM) =
-    let currentFrame = getCurrentFrame vm
-
-    if currentFrame.IP >= currentFrame.Function.Chunk.Code.Count then
-        if vm.Frames.Count > 1 then
-            vm.Frames.RemoveAt(vm.Frames.Count - 1)
-            vm
-        else
-            vm
-    else
-        saveVMState vm
-        let vm, instruction = readByte vm
-
-        let updatedVM =
-            match byteToOpCode instruction with
-            | opcode ->
-                let vm = appendOutput vm Execution $"Executing: {opCodeToString opcode}"
-
-                match opcode with
-                | GET_LOCAL ->
-                    let vm, slot = readByte vm
-                    let frame = getCurrentFrame vm
-                    let value = vm.Stack[frame.StackBase + int slot]
-                    
-                    let _ = push vm value
-                    vm
-                | SET_LOCAL ->
-                    let vm, slot = readByte vm
-                    let value, vm = pop vm
-                    let frame = getCurrentFrame vm
-                    vm.Stack[frame.StackBase + int slot] <- value
-                    vm
-                | CONSTANT ->
-                    let constant, vm = readConstant vm
-                    push vm constant
-                | CONSTANT_LONG ->
-                    let constant, vm = readConstantLong vm
-                    push vm constant
-                | TRUE -> push vm (VBoolean true)
-                | FALSE -> push vm (VBoolean false)
-                | POP ->
-                    let _, vm = pop vm
-                    vm
-                | CALL ->
-                    let _, argCount = readByte vm
-                    let vm, recursive = readByte vm 
-                    callValue vm (int argCount) (int recursive)
-                | DEFINE_GLOBAL ->
-                    let constant, vm = readConstant vm
-
-                    match constant with
-                    | VString name ->
-                        let value, vm = pop vm
-
-                        let vm =
-                            appendOutput vm Execution $"Defining global variable: {name} = {valueToString value}"
-
-                        defineGlobal vm name value
-                    | _ -> raise <| InvalidProgramException("Expected string constant for variable name in DEFINE_GLOBAL")
-                | GET_GLOBAL ->
-                    let constant, vm = readConstant vm
-
-                    match constant with
-                    | VString name ->
-                        match getGlobal vm name with
-                        | Some value -> push vm value
-                        | None -> raise <| InvalidProgramException($"Undefined variable '{name}'")
-                    | _ -> raise <| InvalidProgramException("Expected string constant for variable name in GET_GLOBAL")
-                | RETURN ->
-                    let currArity = currentFrame.Function.Arity // do it like instead
-                    let _ = readByte vm // for returnign from user funcs
-                    if vm.Frames.Count > 1 then
-                        let returnValue, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
-                        vm.Frames.RemoveAt(vm.Frames.Count - 1)
-                        push vm returnValue
-                    else
-                        vm
-
-                | _ -> raise <| InvalidProgramException($"Unimplemented opcode: {opCodeToString opcode}")
-
-        updatedVM
-
-let stepBackVM (vm: VM) =
-    if vm.ExecutionHistory.Count > 0 then
-        let previousState = vm.ExecutionHistory[vm.ExecutionHistory.Count - 1]
-        vm.ExecutionHistory.RemoveAt(vm.ExecutionHistory.Count - 1)
-        previousState
-    else
-        vm
+    
+    
+let run (vm: VM) = runLoop vm
+    
+    
+let rec createNewVM (mainFunc: Function) : VM =
+    let constantPool =
+        mainFunc.Chunk.ConstantPool
+        |> Seq.indexed
+        |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
         
-
-
+    let vm =
+        { Frames = ResizeArray<CallFrame>()
+          Stack = ResizeArray<Value>(256)
+          ScopeDepth = 0
+          Globals = Map.fold (fun acc key value -> Map.add key value acc) (specialCasedBuiltins()) builtins
+          Streams =
+            { ConstantPool = constantPool
+              Disassembly = [""]
+              Execution = Seq.empty
+              StandardOutput = Seq.empty
+              Globals = Seq.empty }
+          ExecutionHistory = ResizeArray<VM>()
+          Plots = ResizeArray<Value>()
+          Canvas = ResizeArray<Value>() 
+          }  
+    let mainFrame =
+        { Function = mainFunc
+          IP = 0
+          StackBase = 0
+          Locals = [||] }
+    vm.Frames.Add(mainFrame)
+    vm
+    
+and specialCasedBuiltins (): Map<string, Value> =
+      [   Identifier "eval",
+          VBuiltin((fun args ->
+              match args with
+              | [VBlock e] ->
+                  match e with
+                  | EBlock (stmts, _) ->
+                      let compiled = Compiler.compileProgram stmts
+                      match compiled with
+                      | Ok(func, _) ->
+                          let block = createNewVM(func)
+                          let vm' = run block
+                          vm'.Stack[vm'.Stack.Count - 1]
+                      | Error err -> raise <| InvalidProgramException $"{err}"
+                  | _ -> raise <| InvalidProgramException "eval expects a block"
+              | _ -> raise <| InvalidProgramException "eval expects a block"), "Eval")
+          
+          Identifier "differentiate",
+          VBuiltin((fun args ->
+              match args with
+                | [ VFunction(_, Some f) ] ->
+                    let diff = SymbolicExpression.differentiate f
+                    let expr = SymbolicExpression.toExpr diff
+                    
+                    let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
+                    let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
+                    
+                    let compiled = Compiler.compileProgram [expr]
+                    match compiled with
+                    | Ok(func, _) ->
+                        let block = createNewVM(func)
+                        let vm' = run block
+                        vm'.Stack[vm'.Stack.Count - 1]
+                    | Error err -> raise <| InvalidProgramException $"{err}"
+                    
+                | _ -> raise <| InvalidProgramException "differentiate expects a function"), "Differentiate")
+          
+          Identifier "integrate",
+          VBuiltin((fun args ->
+              match args with
+              | [ VFunction(_, Some f) ] ->
+                  let integral = SymbolicExpression.integrate f
+                  let expr = SymbolicExpression.toExpr integral
+                  
+                  let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
+                  let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
+                  
+                  let compiled = Compiler.compileProgram [expr]
+                  match compiled with
+                  | Ok(func, _) ->
+                        let block = createNewVM(func)
+                        let vm' = run block
+                        vm'.Stack[vm'.Stack.Count - 1]
+                  | Error err -> raise <| InvalidProgramException $"{err}"
+                | _ -> raise <| InvalidProgramException "integrate expects a function"), "Integrate")
+        ]
+        |> List.map (fun (key, value) -> lexemeToString key, value)
+        |> Map.ofList

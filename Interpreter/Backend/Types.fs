@@ -120,3 +120,5 @@ let rec valueToString =
     | VPlotFunctions _ -> "<plot functions>"
     | VBlock v -> printExpr v
     | VShape _ -> "<shape>"
+    | VShapes _ -> "<shapes>"
+    | VOutput _ -> "<output>"
