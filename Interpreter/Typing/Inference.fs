@@ -124,7 +124,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 
     | TFunction(params1, ret1, pr1, bt1), TFunction(params2, ret2, pr2, bt2) ->
-        if List.length params1 <> List.length params2 || pr1 <> pr2 || bt1 <> bt2 then
+        if List.length params1 <> List.length params2 then
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
         else
             let paramResults = List.map2 unify params1 params2
@@ -364,6 +364,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         // let f = (x) -> { x }, not pure
         // add is builtin to this !!!! so that only simple functions work
         let rec isPure (body: Expr) : bool =
+            List.length paramList = 1 &&
             match body with
             | ELiteral _ -> true
             | EIdentifier(name, _) ->

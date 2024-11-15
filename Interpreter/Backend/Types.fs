@@ -40,11 +40,13 @@ and Value =
     | VClosure of Closure
     | VNil
     | VList of Value list * CompoundType
-    | VBuiltin of (Value list -> VM -> VM) * string
+    | VBuiltin of (Value list -> Value) * string
     | VPlotData of string * Value list * Value list * PlotType
     | VPlotFunction of string * (double -> double)
     | VPlotFunctions of string * (double -> double) list
     | VShape of (float * float * float * float * string * string)
+    | VShapes of (float * float * float * float * string * string) list
+    | VOutput of string
     | VBlock of Expr
 
 and CompoundType =

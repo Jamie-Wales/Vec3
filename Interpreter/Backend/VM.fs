@@ -6,6 +6,8 @@ open Vec3.Interpreter
 open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
+open Vec3.Interpreter.Backend.Builtins
+
 open Vec3.Interpreter.Token
 open Grammar
 
@@ -106,7 +108,6 @@ let pop (vm: VM) =
 
 let peek (vm: VM) offset = vm.Stack[vm.Stack.Count - 1 - offset]
 
-
 let defineGlobal (vm: VM) (name: string) (value: Value) =
     let updatedGlobals = Map.add name value vm.Globals
     let updatedVM = { vm with Globals = updatedGlobals }
@@ -116,31 +117,17 @@ let defineGlobal (vm: VM) (name: string) (value: Value) =
 let getGlobal (vm: VM) (name: string) =
     Map.tryFind name vm.Globals
 
-let parsePlotType = function
-    | "scatter" ->
-         printf "Parsing Scatter" 
-         Scatter
-    | "line" -> 
-        printf "Parsing line" 
-        Line 
-    | "bar" -> 
-        printf "Parsing Bar" 
-        Bar
-    | name -> raise <| InvalidProgramException $"Unknown plot type: {name}"
-    
 let rec createNewVM (mainFunc: Function) : VM =
     let constantPool =
         mainFunc.Chunk.ConstantPool
         |> Seq.indexed
         |> Seq.map (fun (i, value) -> $"[{i}] {valueToString value}")
-    // let disassembly =
-    //     disassembleChunkToString mainFunc.Chunk mainFunc.Name
-    //     |> fun s -> s.Split(Environment.NewLine) |> Seq.ofArray
+        
     let vm =
         { Frames = ResizeArray<CallFrame>()
           Stack = ResizeArray<Value>(256)
           ScopeDepth = 0
-          Globals = builtins()
+          Globals = Map.fold (fun acc key value -> Map.add key value acc) (specialCasedBuiltins()) builtins
           Streams =
             { ConstantPool = constantPool
               Disassembly = [""]
@@ -159,709 +146,64 @@ let rec createNewVM (mainFunc: Function) : VM =
     vm.Frames.Add(mainFrame)
     vm
     
-and builtins () =
-    [ Identifier "plot",
-      VBuiltin((fun args vm ->
-      match args with
-      | [ VList(config, _) ] ->
-          let findField fieldName defaultValue = 
-              config 
-              |> List.tryFind (function 
-                  | VList([VString k; _], _) when k = fieldName -> true 
-                  | _ -> false)
-              |> function
-                  | Some(VList([_; v], _)) -> v
-                  | _ -> defaultValue
-
-          let title = 
-              match findField "title" (VString "Plot") with
-              | VString t -> t
-              | _-> raise <| InvalidProgramException "title must be a string"
-
-          let xs = 
-              match findField "x" (VList([], LIST)) with
-              | VList(xs, _) -> xs
-              | _ -> raise <| InvalidProgramException "x must be a list"
-
-          let ys = 
-              match findField "y" (VList([], LIST)) with
-              | VList(ys, _) -> ys
-              | _ -> raise <| InvalidProgramException "y must be a list"
-
-          let plotType = 
-              match findField "ptype" (VString "scatter") with
-               | VString t -> parsePlotType(t.ToLowerInvariant())
-                | _ -> raise <| InvalidProgramException "ptype must be a string"
-          let plotData = VPlotData(title, xs, ys, plotType)
-          vm.Plots.Add(plotData)
-          push vm VNil
-
-      | _ ->
-          raise <| InvalidProgramException "plot expects a list of configuration options"), "Plot")
-      Identifier "plotFunc",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VString title; VFunction(_, Some f) ] ->
-              let builtin = SymbolicExpression.toBuiltin f
-              
-              let plotData = VPlotFunction(title, builtin)
-              vm.Plots.Add(plotData)  
-              push vm VNil  
-          | _ ->
-              raise <| InvalidProgramException "plotFunc expects a title and a function"), "PlotFunc")
-      Identifier "plotFuncs",
-        VBuiltin((fun args vm ->
-        match args with
-        | [ VString title; VList(funcs, _) ] ->
-            let funcs = List.map (function
-                | VFunction(_, Some f) -> SymbolicExpression.toBuiltin f
-                | _ -> raise <| InvalidProgramException "plotFuncs expects a list of functions") funcs
-            
-            let plotData = VPlotFunctions(title, funcs)
-            vm.Plots.Add(plotData)
-            push vm VNil
-        | _ ->
-            raise <| InvalidProgramException "plotFuncs expects a title and a list of functions"), "PlotFuncs")
-      
-      Identifier "read",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VString s ] ->
-              let parsed = Parser.parse s
-              match parsed with
-              | Ok(_, ast) ->
-                  let ast = EBlock(ast, None)
-                  let value = VBlock ast
-                  push vm value
-              | _ ->
-                  push vm VNil
-          | _ -> raise <| InvalidProgramException "Read accepts a string"), "Read")
-      
-      Identifier "print",
-      VBuiltin((fun args vm ->
-           let vm =
-                appendOutput vm StandardOutput $"""{String.concat " " (List.map valueToString args)}"""
-           push vm VNil), "Print")
-      Identifier "BUILTIN_SQRT",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat f) ] ->
-              let result = VNumber(VFloat(sqrt f))
-              push vm result
-          | _ -> raise <| InvalidProgramException "sqrt expects a float"), "Sqrt")
-      Identifier "BUILTIN_ABS",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(abs f)))
-          | [ VNumber(VInteger i) ] -> push vm (VNumber(VInteger(abs i)))
-          | [ VNumber(VComplex(r, i)) ] -> push vm (VNumber(VFloat(sqrt(r * r + i * i))))
-          | [ VNumber(VRational(n, d)) ] -> push vm (VNumber(VRational(abs n, abs d)))
-          | _ -> raise <| InvalidProgramException "abs expects a number"), "Abs")
-      Identifier "power",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat x); VNumber(VFloat y) ] ->
-              let result = VNumber(VFloat(pown x (int y)))
-              push vm result
-          | [ VNumber(VFloat x); VNumber(VInteger y) ] ->
-              let result = VNumber(VFloat(pown x y))
-              push vm result
-          | [ VNumber(VInteger x); VNumber(VFloat y) ] ->
-              let result = VNumber(VFloat(pown x (int y)))
-              push vm result
-          | [ VNumber(VInteger x); VNumber(VInteger y) ] ->
-              let result = VNumber(VInteger(pown x y))
-              push vm result
-          | _ -> raise <| InvalidProgramException "power expects two numbers"), "Power")
-      Identifier "BUILTIN_FLOOR",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(floor f)))
-          | _ -> raise <| InvalidProgramException "floor expects a float"), "Floor")
-      Identifier "BUILTIN_COS",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(cos f)))
-          | _ -> raise <| InvalidProgramException "cos expects a float"), "Cos")
-      Identifier "BUILTIN_SIN",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(sin f)))
-          | _ -> raise <| InvalidProgramException "sin expects a float"), "Sin")
-      Identifier "BUILTIN_TAN",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(tan f)))
-          | _ -> raise <| InvalidProgramException "tan expects a float"), "Tan")
-      Identifier "BUILTIN_ACOS",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(acos f)))
-          | _ -> raise <| InvalidProgramException "acos expects a float"), "Acos")
-
-      Identifier "BUILTIN_ATAN",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(atan f)))
-          | _ -> raise <| InvalidProgramException "atan expects a float"), "Atan")
-
-      Identifier "BUILTIN_ASIN",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(asin f)))
-          | _ -> raise <| InvalidProgramException "asin expects a float"), "Asin")
-
-      Identifier "BUILTIN_EXP",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(exp f)))
-          | _ -> raise <| InvalidProgramException "exp expects a float"), "Exp")
-
-      Identifier "BUILTIN_LOG",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat f); VNumber(VFloat f1) ] -> push vm (VNumber(VFloat((log f1) / (log f))))
-          | _ -> raise <| InvalidProgramException "log expects two floats"), "Log")
-
-      Identifier "BUILTIN_LOG10",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat f) ] -> push vm (VNumber(VFloat(log10 f)))
-          | _ -> raise <| InvalidProgramException "log10 expects a float"), "Log10")
-
-      Identifier "env",
-      VBuiltin((fun _ vm ->
-          let globals =
-              vm.Globals
-              |> Map.map (fun k v -> $"{k} = {valueToString v}")
-              |> Map.toSeq
-              |> Seq.map snd
-              |> Seq.toList
-
-          let globalsString = String.concat Environment.NewLine globals
-          printfn $"Globals: {globalsString}"
-          push vm (VString globalsString)), "Env")
-      Identifier "input",
-      VBuiltin((fun _ vm ->
-          let input = Console.ReadLine()
-          push vm (VString input)), "Input")
-      Identifier "cons",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ value; VList(l, t) ] ->
-              let list = VList(value :: l, t)
-              push vm list
-          | _ ->
-              raise <| InvalidProgramException "cons expects a value and a list"), "Cons")
-      Identifier "exit",
-      VBuiltin((fun _ vm ->
-          Environment.Exit(0)
-          vm), "Exit")
-      Identifier "fold",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VList(l, _); acc; VFunction(f, None) ] ->
-              let rec fold acc vm =
-                  function
-                  | [] -> acc, vm
-                  | x :: xs ->
-
-                      let vm = push vm x
-                      let vm = push vm acc
-
-                      let frame =
-                          { Function = f
-                            IP = 0
-                            StackBase = vm.Stack.Count - 2
-                            Locals = Array.zeroCreate f.Locals.Length }
-
-                      vm.Frames.Add(frame)
-                      let result, vm = runCurrentFrame vm
-                      fold result vm xs
-              let result, vm = fold acc vm l
-              push vm result
-          | [ VList(l, _); acc; VBuiltin (f, _) ] ->
-              let rec fold acc vm =
-                  function
-                  | [] -> acc, vm
-                  | x :: xs ->
-                      let vm = f [ x; acc ] vm
-                      let result, vm = pop vm
-                      fold result vm xs
-
-              let result, vm = fold acc vm l
-              push vm result
-          | _ ->
-              raise <| InvalidProgramException "fold expects a list, an accumulator, and a function"), "Fold")
-
-      Identifier "map",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VList(l', _); VFunction(f, None) ] ->
-              let rec map acc vm =
-                  function
-                  | [] -> acc, vm
-                  | x :: xs ->
-
-                      let vm = push vm x
-
-                      let frame =
-                          { Function = f
-                            IP = 0
-                            StackBase = vm.Stack.Count - 1
-                            Locals = Array.zeroCreate f.Locals.Length }
-
-                      vm.Frames.Add(frame)
-
-                      let result, vm = runCurrentFrame vm
-
-                      let vm = push vm result
-                      map (result :: acc) vm xs
-
-              let result, vm = map [] vm l'
-              push vm (VList(List.rev result, LIST))
-
-          | [ VList(l', _); VBuiltin (f, _) ] ->
-              let rec map acc vm =
-                  function
-                  | [] -> acc, vm
-                  | x :: xs ->
-                      let vm = f [ x ] vm
-                      let result, vm = pop vm
-                      map (result :: acc) vm xs
-
-              let result, vm = map [] vm l'
-              push vm (VList(List.rev result, LIST))
-          | _ ->
-              raise <| InvalidProgramException "map expects a list and a function"), "Map")
-      Identifier "dotProduct",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VList(l1', _) as l1; VList(l2', _) as l2 ] when List.length l1' = List.length l2' ->
-              let result = dotProduct l1 l2
-              push vm result
-          | _ -> raise <| InvalidProgramException "dotProduct expects two lists of the same length"), "DotProduct")
-      Identifier "crossProduct",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VList(l1', _) as l1; VList(l2', _) as l2 ] when List.length l1' = 3 && List.length l2' = 3 ->
-              let result = crossProduct l1 l2
-              push vm result
-          | _ -> raise <| InvalidProgramException "crossProduct expects two lists of length 3"), "CrossProduct")
-
-      Identifier "BUILTIN_TRUNC",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VFloat num) ] -> push vm (VNumber(VFloat(truncate num)))
-          | _ -> raise <| InvalidProgramException "truncate expects a float"), "Truncate")
-
-      Identifier "range",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VInteger start); VNumber(VInteger stop) ] ->
-              let range = [ for i in start..stop -> VNumber(VInteger i) ]
-              let list = VList(range, LIST)
-              push vm list
-            | [ VNumber(VInteger start); VNumber(VInteger stop); VNumber(VInteger step) ] ->
-                let range = [ for i in start..step..stop -> VNumber(VInteger i) ]
-                let list = VList(range, LIST)
-                push vm list
-            | _ -> raise <| InvalidProgramException "range expects two integers"), "Range")
-
-      Identifier "BUILTIN_LEN",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VList(l, _) ] -> push vm (VNumber(VInteger(List.length l)))
-          | [ VString s ] -> push vm (VNumber(VInteger(s.Length)))
-          | _ -> raise <| InvalidProgramException "len expects a list or a string"), "Len")
-
-      Identifier "PI", VNumber(VFloat(Math.PI))
-
-      Identifier "E", VNumber(VFloat(Math.E))
-
-      Identifier "TAU", VNumber(VFloat(Math.Tau))
-
-      Identifier "cast",
-      VBuiltin((fun args vm ->
-          let org = args.Head
-          let castTyp = List.item 1 args
+and specialCasedBuiltins (): Map<string, Value> =
+      [   Identifier "eval",
+          VBuiltin((fun args ->
+              match args with
+              | [VBlock e] ->
+                  match e with
+                  | EBlock (stmts, _) ->
+                      let compiled = Compiler.compileProgram stmts
+                      match compiled with
+                      | Ok(func, _) ->
+                          let block = createNewVM(func)
+                          let vm' = run block
+                          vm'.Stack[vm'.Stack.Count - 1]
+                      | Error err -> raise <| InvalidProgramException $"{err}"
+                  | _ -> raise <| InvalidProgramException "eval expects a block"
+              | _ -> raise <| InvalidProgramException "eval expects a block"), "Eval")
           
-          cast org castTyp |> push vm
-      ), "Cast")
-
-      Identifier "newtonRaphson",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VFunction(_, Some f1)
-              VFunction(_, Some f2)
-              VNumber(VFloat init)
-              VNumber(VFloat tol)
-              VNumber(VInteger it) ] ->
-              let builtin1 = SymbolicExpression.toBuiltin f1
-              let builtin2 = SymbolicExpression.toBuiltin f2
-              
-              let res = newtonRaphson builtin1 builtin2 init tol it
-              push vm (VNumber(VFloat(res)))
-          | _ -> raise <| InvalidProgramException "newtonRaphson expects two functions, an initial guess, a tolerance, and a maximum number of iterations"), "NewtonRaphson")
-
-      Identifier "bisection",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VFunction(_, Some f); VNumber(VFloat(a)); VNumber(VFloat(b)); VNumber(VFloat(tol)); VNumber(VInteger(it)) ] ->
-              let builtin = SymbolicExpression.toBuiltin f
-              let res = bisection builtin a b tol it
-              push vm (VNumber(VFloat(res)))
-          | _ -> raise <| InvalidProgramException "bisection expects a function, a lower bound, an upper bound, a tolerance, and a maximum number of iterations"), "Bisection")
-      
-      Identifier "eval",
-      VBuiltin((fun args vm ->
-          match args with
-          | [VBlock e] ->
-              match e with
-              | EBlock (stmts, _) ->
-                  let compiled = Compiler.compileProgram stmts
+          Identifier "differentiate",
+          VBuiltin((fun args ->
+              match args with
+                | [ VFunction(_, Some f) ] ->
+                    let diff = SymbolicExpression.differentiate f
+                    let expr = SymbolicExpression.toExpr diff
+                    
+                    let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
+                    let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
+                    
+                    let compiled = Compiler.compileProgram [expr]
+                    match compiled with
+                    | Ok(func, _) ->
+                        let block = createNewVM(func)
+                        let vm' = run block
+                        vm'.Stack[vm'.Stack.Count - 1]
+                    | Error err -> raise <| InvalidProgramException $"{err}"
+                    
+                | _ -> raise <| InvalidProgramException "differentiate expects a function"), "Differentiate")
+          
+          Identifier "integrate",
+          VBuiltin((fun args ->
+              match args with
+              | [ VFunction(_, Some f) ] ->
+                  let integral = SymbolicExpression.integrate f
+                  let expr = SymbolicExpression.toExpr integral
+                  
+                  let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
+                  let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
+                  
+                  let compiled = Compiler.compileProgram [expr]
                   match compiled with
                   | Ok(func, _) ->
-                      let block = createNewVM(func)
-                      let vm' = run block
-                      let lst = vm'.Stack[vm'.Stack.Count - 1]
-                      push vm lst
+                        let block = createNewVM(func)
+                        let vm' = run block
+                        vm'.Stack[vm'.Stack.Count - 1]
                   | Error err -> raise <| InvalidProgramException $"{err}"
-              | _ -> raise <| InvalidProgramException "eval expects a block"
-          | _ -> raise <| InvalidProgramException "eval expects a block"), "Eval")
-      
-      Identifier "differentiate",
-      VBuiltin((fun args vm ->
-          match args with
-            | [ VFunction(_, Some f) ] ->
-                let diff = SymbolicExpression.differentiate f
-                let expr = SymbolicExpression.toExpr diff
-                
-                let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
-                let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
-                
-                let compiled = Compiler.compileProgram [expr]
-                match compiled with
-                | Ok(func, _) ->
-                    let block = createNewVM(func)
-                    let vm' = run block
-                    let lst = vm'.Stack[vm'.Stack.Count - 1]
-                    push vm lst
-                | Error err -> raise <| InvalidProgramException $"{err}"
-                
-            | _ -> raise <| InvalidProgramException "differentiate expects a function"), "Differentiate")
-      
-      Identifier "integrate",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VFunction(_, Some f) ] ->
-              let integral = SymbolicExpression.integrate f
-              let expr = SymbolicExpression.toExpr integral
-              
-              let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
-              let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
-              
-              let compiled = Compiler.compileProgram [expr]
-              match compiled with
-              | Ok(func, _) ->
-                    let block = createNewVM(func)
-                    let vm' = run block
-                    let lst = vm'.Stack[vm'.Stack.Count - 1]
-                    push vm lst
-              | Error err -> raise <| InvalidProgramException $"{err}"
-            | _ -> raise <| InvalidProgramException "integrate expects a function"), "Integrate")
-      
-      Identifier "assert",
-      VBuiltin((fun args vm ->
-          match args with
-          | [msg; cond] ->
-              if not (isTruthy cond) then
-                  raise <| InvalidProgramException $"Assertion failed: {valueToString msg}"
-              else
-                  push vm VNil
-          | [cond] ->
-              if not (isTruthy cond) then
-                  raise <| InvalidProgramException $"Assertion failed: {valueToString cond}"
-              else
-                  push vm VNil
-            | _ -> raise <| InvalidProgramException "assert expects a condition"), "Assert")
-      
-      Identifier "draw",
-        VBuiltin((fun args vm ->
-            match args with
-            | [ VList (elems, RECORD) ] ->
-                let width = elems |> List.tryFind (function
-                    | VList([VString "width"; VNumber(VFloat _)], _) -> true
-                    | _ -> false)
-                
-                let width = match width with
-                            | Some(VList([VString "width"; VNumber(VFloat w)], _)) -> w
-                            | _ -> raise <| InvalidProgramException "draw expects a width"
-                
-                let height = elems |> List.tryFind (function
-                    | VList([VString "height"; VNumber(VFloat _)], _) -> true
-                    | _ -> false)
-                
-                let height = match height with
-                                | Some(VList([VString "height"; VNumber(VFloat h)], _)) -> h
-                                | _ -> raise <| InvalidProgramException "draw expects a height"
-                
-                let x = elems |> List.tryFind (function
-                    | VList([VString "x"; VNumber(VFloat _)], _) -> true
-                    | _ -> false)
-                
-                let x = match x with
-                            | Some(VList([VString "x"; VNumber(VFloat x)], _)) -> x
-                            | _ -> raise <| InvalidProgramException "draw expects an x"
-                
-                
-                
-                let y = elems |> List.tryFind (function
-                    | VList([VString "y"; VNumber(VFloat _)], _) -> true
-                    | _ -> false)
-                
-                let y = match y with
-                            | Some(VList([VString "y"; VNumber(VFloat y)], _)) -> y
-                            | _ -> raise <| InvalidProgramException "draw expects a y"
-                
-                let colour = elems |> List.tryFind (function
-                    | VList([VString "colour"; VString _], _) -> true
-                    | _ -> false)
-                
-                let colour = match colour with
-                                | Some(VList([VString "colour"; VString c], _)) -> c
-                                | _ -> raise <| InvalidProgramException "draw expects a colour"
-                                
-                let typ = elems |> List.tryFind (function
-                    | VList([VString "shape"; VString _], _) -> true
-                    | _ -> false
-                    )
-                
-                let typ = match typ with
-                           | Some(VList([VString "shape"; VString c], _)) -> c
-                           | _ -> "circle"
-                
-                let value = VShape(width, height, x, y, colour, typ)
-                vm.Canvas.Add(value)
-                push vm VNil
-            | [VList(elems, LIST)] ->
-                elems |>
-                List.iter (fun elems ->
-                    match elems with
-                    | VList(elems, RECORD) ->
-                        
-                        let width = elems |> List.tryFind (function
-                            | VList([VString "width"; VNumber(VFloat _)], _) -> true
-                            | _ -> false)
-                        
-                        let width = match width with
-                                    | Some(VList([VString "width"; VNumber(VFloat w)], _)) -> w
-                                    | _ -> raise <| InvalidProgramException "draw expects a width"
-                        
-                        let height = elems |> List.tryFind (function
-                            | VList([VString "height"; VNumber(VFloat _)], _) -> true
-                            | _ -> false)
-                        
-                        let height = match height with
-                                        | Some(VList([VString "height"; VNumber(VFloat h)], _)) -> h
-                                        | _ -> raise <| InvalidProgramException "draw expects a height"
-                        
-                        let x = elems |> List.tryFind (function
-                            | VList([VString "x"; VNumber(VFloat _)], _) -> true
-                            | _ -> false)
-                        
-                        let x = match x with
-                                    | Some(VList([VString "x"; VNumber(VFloat x)], _)) -> x
-                                    | _ -> raise <| InvalidProgramException "draw expects an x"
-                        
-                        
-                        
-                        let y = elems |> List.tryFind (function
-                            | VList([VString "y"; VNumber(VFloat _)], _) -> true
-                            | _ -> false)
-                        
-                        let y = match y with
-                                    | Some(VList([VString "y"; VNumber(VFloat y)], _)) -> y
-                                    | _ -> raise <| InvalidProgramException "draw expects a y"
-                        
-                        let colour = elems |> List.tryFind (function
-                            | VList([VString "colour"; VString _], _) -> true
-                            | _ -> false)
-                        
-                        let colour = match colour with
-                                        | Some(VList([VString "colour"; VString c], _)) -> c
-                                        | _ -> raise <| InvalidProgramException "draw expects a colour"
-                        
-                        let typ = elems |> List.tryFind (function
-                            | VList([VString "shape"; VString _], _) -> true
-                            | _ -> false
-                            )
-                        
-                        let typ = match typ with
-                                   | Some(VList([VString "shape"; VString c], _)) -> c
-                                   | _ -> "circle"
-                        
-                        let value = VShape(width, height, x, y, colour, typ)
-                        vm.Canvas.Add(value)
-                        push vm VNil |> ignore
-                    | _ -> raise <| InvalidProgramException("draw expects a list of records")
-                )
-                vm
-            | _ -> raise <| InvalidProgramException "draw expects a title and a list of functions"), "Draw")
-      
-      Identifier "findIntegral",
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VFunction(_, Some f); VNumber(VFloat b); VNumber(VFloat a)  ] ->
-                let res = SymbolicExpression.findIntegral f a b
-                push vm (VNumber(VFloat res))
-            | _ -> raise <| InvalidProgramException "findIntegral expects a function, a lower bound, and an upper bound"), "FindIntegral")
-
-      Operator(Plus, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> add a b |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for +"), "Add")
-
-      Operator(Minus, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> subtract a b |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for -"), "Subtract")
-
-      Operator(Star, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> multiply a b |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for *"), "Multiply")
-
-      Operator(Slash, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> divide a b |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for /"), "Divide")
-
-      Operator(Percent, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ VNumber(VInteger a); VNumber(VInteger b) ] -> push vm (VNumber(VInteger(a % b)))
-          | [ VNumber(VFloat a); VNumber(VFloat b) ] -> push vm (VNumber(VFloat(a % b)))
-          | _ -> raise <| InvalidProgramException "Expected two integers or floats for %"), "Mod")
-
-      Operator(StarStar, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> power a b |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for **"), "Power")
-
-      Operator(EqualEqual, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> valuesEqual a b |> VBoolean |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for =="), "Equal")
-
-      Operator(BangEqual, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> valuesEqual a b |> not |> VBoolean |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for !="), "NotEqual")
-
-      Operator(Less, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> compare a b < 0 |> VBoolean |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for <"), "Less")
-
-      Operator(LessEqual, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> compare a b <= 0 |> VBoolean |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for <="), "LessEqual")
-
-      Operator(Greater, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> compare a b > 0 |> VBoolean |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for >"), "Greater")
-
-      Operator(GreaterEqual, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> compare a b >= 0 |> VBoolean |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for >="), "GreaterEqual")
-
-      Operator(AmpersandAmpersand, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> (isTruthy a && isTruthy b) |> VBoolean |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for &&"), "And")
-
-      Operator(PipePipe, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> (isTruthy a || isTruthy b) |> VBoolean |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for ||"), "Or")
-
-      Operator(Bang, Some Prefix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a ] -> not (isTruthy a) |> VBoolean |> push vm
-          | _ -> raise <| InvalidProgramException "Expected one argument for !"), "Not")
-
-      Operator(Minus, Some Prefix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a ] -> negate a |> push vm
-          | _ -> raise <| InvalidProgramException "Expected one argument for -"), "Negate")
-
-      Operator(Plus, Some Prefix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a ] -> unnegate a |> push vm
-          | _ -> raise <| InvalidProgramException "Expected one argument for +"), "Unnegate")
-
-      Operator(Caret, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> power a b |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for ^"), "Power")
-
-      Operator(DotStar, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> dotProduct a b |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for .*"), "DotProduct")
-
-      Operator(Cross, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; b ] -> crossProduct a b |> push vm
-          | _ -> raise <| InvalidProgramException "Expected two arguments for cross"), "CrossProduct")
-
-      Operator(ColonColon, Some Infix),
-      VBuiltin((fun args vm ->
-          match args with
-          | [ a; VList(l, _) ] -> VList(a :: l, LIST) |> push vm
-          | _ -> raise <| InvalidProgramException "Expected a value and a list for ::"), "Cons")
-      
-      Identifier "head",
-      VBuiltin((fun args vm ->
-        match args with
-        | [ VList(l, _) ] -> List.head l |> push vm
-        | _ -> raise <| InvalidProgramException "Expected a list for head"), "Head")
-      
-      Identifier "tail",
-        VBuiltin((fun args vm ->
-            match args with
-            | [ VList(l, _) ] ->
-                let tail = List.tail l
-                VList(tail, LIST) |> push vm
-            | _ -> raise <| InvalidProgramException "Expected a list for tail"), "Tail")
-        
-      ]
-
-    |> List.map (fun (key, value) -> lexemeToString key, value)
-    |> Map.ofList
+                | _ -> raise <| InvalidProgramException "integrate expects a function"), "Integrate")
+        ]
+        |> List.map (fun (key, value) -> lexemeToString key, value)
+        |> Map.ofList
 
 and runFrameRecursive vm =
     let frame = getCurrentFrame vm
@@ -1167,29 +509,21 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
                 |> List.map (fun _ -> let value, _ = pop vm in value)
                 |> List.rev
                 
-            let vm = func args vm
-            let res, vm = pop vm
-            let _, vm = pop vm
-            push vm res
-        | _ ->
-            // horrible broken hack, should be done elsewhere but somethigns the wrong value ends up on the stack, no idea
-            // so remove it remove previous caller etc
-            // for cases such as cos(tan(5.0))
-            
-            let args =
-                [ 0 .. argCount - 1 ]
-                |> List.map (fun _ -> let value, _ = pop vm in value)
-                |> List.rev
-            
-            printfn $"Calling value: {callee} with {args} arguments"
+            let value = func args
+            let vm, value = match value with
+                            | VShape _ -> vm.Plots.Add(value); vm, VNil
+                            | VPlotData _ -> vm.Plots.Add(value); vm, VNil
+                            | VPlotFunction _ -> vm.Plots.Add(value); vm, VNil
+                            | VPlotFunctions _ -> vm.Plots.Add(value); vm, VNil
+                            | VShapes _ -> vm.Plots.Add(value); vm, VNil
+                            | VOutput s ->
+                                appendOutput vm StandardOutput s, VNil
+                            | _ -> vm, value
             
             let _, vm = pop vm
-            let _, vm = pop vm
-            // push args back
-            args |> List.iter (fun arg -> push vm arg |> ignore)
-            callValue vm argCount 1
+            push vm value
+        | _ -> raise <| InvalidProgramException $"Can only call functions and closures {callee}"
     | 1 ->
-        printfn "rec"
         match callee with
         | VFunction(func, _) ->
             if argCount <> func.Arity then
@@ -1215,10 +549,19 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
                 |> List.map (fun _ -> let value, _ = pop vm in value)
                 |> List.rev
 
-            let vm = func args vm
-            let res, vm = pop vm
+            let value = func args
+            let vm, value = match value with
+                            | VShape _ -> vm.Plots.Add(value); vm, VNil
+                            | VPlotData _ -> vm.Plots.Add(value); vm, VNil
+                            | VPlotFunction _ -> vm.Plots.Add(value); vm, VNil
+                            | VPlotFunctions _ -> vm.Plots.Add(value); vm, VNil
+                            | VShapes _ -> vm.Plots.Add(value); vm, VNil
+                            | VOutput s ->
+                                appendOutput vm StandardOutput s, VNil
+                            | _ -> vm, value
+            
             let _, vm = pop vm
-            push vm res
+            push vm value
         | _ ->
             raise <| InvalidProgramException $"Can only call functions and closures {callee}"
     | _ -> raise <| InvalidProgramException $"Invalid recursive value {recursive}"

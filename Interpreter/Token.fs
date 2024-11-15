@@ -217,8 +217,6 @@ type BuiltInFunction =
     | Sqrt
     | Abs
     | Floor
-    | Fold
-    | Map
     
     | Plot
     | PlotFunction
@@ -227,7 +225,8 @@ type BuiltInFunction =
     | Draw
     
     | Ceil
-    | Len
+    
+    | Err
     
     | Add
     | Sub
@@ -258,7 +257,6 @@ type BuiltInFunction =
     | Integrate
     | FindIntegral
     
-    | Head
     | Tail
     | Cons
     
@@ -275,6 +273,7 @@ let builtInFunctionMap =
       
       Identifier "read", BuiltInFunction.Read
       Identifier "eval", BuiltInFunction.Eval
+      Identifier "error", BuiltInFunction.Err
       
       Identifier "BUILTIN_EXP", BuiltInFunction.Exp
       Identifier "BUILTIN_LOG", BuiltInFunction.Log
@@ -283,13 +282,10 @@ let builtInFunctionMap =
       Identifier "BUILTIN_SQRT", BuiltInFunction.Sqrt
       Identifier "BUILTIN_ABS", BuiltInFunction.Abs
       Identifier "BUILTIN_FLOOR", BuiltInFunction.Floor
-      Identifier "fold", BuiltInFunction.Fold
       Identifier "plot", BuiltInFunction.Plot
       Identifier "plotFunc", BuiltInFunction.PlotFunction
       Identifier "plotFuncs", BuiltInFunction.PlotFunctions
       Identifier "BUILTIN_CEIL", BuiltInFunction.Ceil
-      Identifier "map", BuiltInFunction.Map
-      Identifier "BUILTIN_LEN", BuiltInFunction.Len
       Identifier "BUILTIN_TRUNC", BuiltInFunction.Trunc
       
       Identifier "draw", BuiltInFunction.Draw
@@ -324,7 +320,6 @@ let builtInFunctionMap =
       
       Identifier "cast", BuiltInFunction.Cast
       
-      Identifier "head", BuiltInFunction.Head
       Identifier "tail", BuiltInFunction.Tail
       ]
     |> Map.ofList

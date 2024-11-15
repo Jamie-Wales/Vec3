@@ -3,20 +3,6 @@ module Vec3.Interpreter.Typing.Builtins
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 
-let foldType =
-    let listTyp = TTypeVariable(freshTypeVar ())
-    let accTyp = TTypeVariable(freshTypeVar ())
-    let dimsVar = DVar(freshTypeVar ())
-
-    TFunction(
-        [ TTensor(listTyp, dimsVar)
-          accTyp
-          TFunction([ listTyp; accTyp ], accTyp, false, false) ],
-        accTyp,
-        false,
-        true
-    )
-
 let consType =
     let listTyp = TTypeVariable(freshTypeVar ())
     let dimsVar1 = DVar(freshTypeVar ())
@@ -130,24 +116,6 @@ let dotProduct =
 
     TFunction([ TTensor(constrain, dimsVar); TTensor(constrain, dimsVar) ], constrain, false, true)
 
-let mapType =
-    let listTyp = TTypeVariable(freshTypeVar ())
-    let dimsVar = DVar(freshTypeVar ())
-    let accTyp = TTypeVariable(freshTypeVar ())
-
-    TFunction(
-        [ TTensor(listTyp, dimsVar); TFunction([ listTyp ], accTyp, false, false) ],
-        TTensor(accTyp, dimsVar),
-        false,
-        true
-    )
-
-let lenType =
-    let listTyp = TTypeVariable(freshTypeVar ())
-    let dimsVar = DVar(freshTypeVar ())
-
-    TFunction([ TTensor(listTyp, dimsVar) ], TInteger, false, true)
-
 let listCast =
     let listType = TTypeVariable(freshTypeVar ())
 
@@ -250,12 +218,6 @@ let findIntegralType =
 let readTyp =
     TFunction([TString], TAny, false, true)
     
-let headTyp =
-    let listTyp = TTypeVariable(freshTypeVar ())
-    let dimsVar = DVar(freshTypeVar ())
-    
-    TFunction([TTensor(listTyp, dimsVar)], listTyp, false, true)
-
 let tailTyp =
     let listTyp = TTypeVariable(freshTypeVar ())
     
@@ -273,14 +235,12 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       Log, logType
       Exp, expType
       
-      Head, headTyp
       Tail, tailTyp
       
       Eval, TFunction([TAny], TAny, false, true)
       
       Read, readTyp
 
-      Len, lenType
       Env, TFunction([], TUnit, false, true)
       Exit, TFunction([], TUnit, false, true)
       Sqrt, TFunction([ TFloat ], TFloat, true, true)
@@ -288,8 +248,6 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       Floor, TFunction([ TFloat ], TFloat, true, true)
       Ceil, TFunction([ TFloat ], TFloat, true, true)
       Trunc, TFunction([ TFloat ], TFloat, true, true)
-      Fold, foldType
-      Map, mapType
       Plot, plotType
       PlotFunction, plotFunType
       PlotFunctions, plotFunsType
@@ -323,6 +281,8 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
 
       CrossProduct, crossProduct
       DotProduct, dotProduct
+      
+      Err, TFunction([ TString ], TUnit, false, true)
 
       Cast, castType
 

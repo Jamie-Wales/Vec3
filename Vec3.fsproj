@@ -23,6 +23,7 @@
         <Compile Include="Interpreter\Backend\Instructions.fs" />
         <Compile Include="Interpreter\Backend\Chunk.fs" />
         <Compile Include="Interpreter\Backend\Compiler.fs" />
+        <Compile Include="Interpreter\Backend\Builtins.fs" />
         <Compile Include="Interpreter\Backend\VM.fs" />
         <Compile Include="Interpreter\Typing\Exceptions.fs" />
         <Compile Include="Interpreter\Typing\Types.fs" />
