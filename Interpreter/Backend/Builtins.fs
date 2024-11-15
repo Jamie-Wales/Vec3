@@ -346,64 +346,6 @@ let builtins =
           "Bisection"
       )
 
-      // Identifier "eval",
-      // VBuiltin((fun args vm ->
-      //     match args with
-      //     | [VBlock e] ->
-      //         match e with
-      //         | EBlock (stmts, _) ->
-      //             let compiled = Compiler.compileProgram stmts
-      //             match compiled with
-      //             | Ok(func, _) ->
-      //                 let block = createNewVM(func)
-      //                 let vm' = run block
-      //                 let lst = vm'.Stack[vm'.Stack.Count - 1]
-      //                 push vm lst
-      //             | Error err -> raise <| InvalidProgramException $"{err}"
-      //         | _ -> raise <| InvalidProgramException "eval expects a block"
-      //     | _ -> raise <| InvalidProgramException "eval expects a block"), "Eval")
-
-      // Identifier "differentiate",
-      // VBuiltin((fun args vm ->
-      //     match args with
-      //       | [ VFunction(_, Some f) ] ->
-      //           let diff = SymbolicExpression.differentiate f
-      //           let expr = SymbolicExpression.toExpr diff
-      //
-      //           let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
-      //           let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
-      //
-      //           let compiled = Compiler.compileProgram [expr]
-      //           match compiled with
-      //           | Ok(func, _) ->
-      //               let block = createNewVM(func)
-      //               let vm' = run block
-      //               let lst = vm'.Stack[vm'.Stack.Count - 1]
-      //               push vm lst
-      //           | Error err -> raise <| InvalidProgramException $"{err}"
-      //
-      //       | _ -> raise <| InvalidProgramException "differentiate expects a function"), "Differentiate")
-
-      // Identifier "integrate",
-      // VBuiltin((fun args vm ->
-      //     match args with
-      //     | [ VFunction(_, Some f) ] ->
-      //         let integral = SymbolicExpression.integrate f
-      //         let expr = SymbolicExpression.toExpr integral
-      //
-      //         let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
-      //         let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
-      //
-      //         let compiled = Compiler.compileProgram [expr]
-      //         match compiled with
-      //         | Ok(func, _) ->
-      //               let block = createNewVM(func)
-      //               let vm' = run block
-      //               let lst = vm'.Stack[vm'.Stack.Count - 1]
-      //               push vm lst
-      //         | Error err -> raise <| InvalidProgramException $"{err}"
-      //       | _ -> raise <| InvalidProgramException "integrate expects a function"), "Integrate")
-
       Identifier "assert",
       VBuiltin(
           (fun args ->
