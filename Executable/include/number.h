@@ -1,6 +1,6 @@
 #pragma once
-
 #include <stdint.h>
+
 typedef enum {
     NUMBER_INTEGER,
     NUMBER_FLOAT,
@@ -9,17 +9,27 @@ typedef enum {
 } NumberType;
 
 typedef struct {
+    int64_t num;
+    int64_t denom;
+} Rational;
+
+typedef struct {
+    double real;
+    double imag;
+} Complex;
+
+typedef struct {
     NumberType type;
     union {
         int64_t integer;
         double float_val;
-        struct {
-            int64_t num;
-            int64_t denom;
-        } rational;
-        struct {
-            double real;
-            double imag;
-        } complex;
+        Rational rational;
+        Complex complex;
     } as;
 } Number;
+
+void number_print(const Number* number);
+Number number_from_int(int64_t value);
+Number number_from_float(double value);
+Number number_from_rational(int64_t num, int64_t denom);
+Number number_from_complex(double real, double imag);

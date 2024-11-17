@@ -153,6 +153,30 @@ src/main.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Executable.dir/build.make CMakeFiles/Executable.dir/src/main.c.s
 .PHONY : src/main.c.s
 
+src/number.o: src/number.c.o
+.PHONY : src/number.o
+
+# target to build an object file
+src/number.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Executable.dir/build.make CMakeFiles/Executable.dir/src/number.c.o
+.PHONY : src/number.c.o
+
+src/number.i: src/number.c.i
+.PHONY : src/number.i
+
+# target to preprocess a source file
+src/number.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Executable.dir/build.make CMakeFiles/Executable.dir/src/number.c.i
+.PHONY : src/number.c.i
+
+src/number.s: src/number.c.s
+.PHONY : src/number.s
+
+# target to generate assembly for a file
+src/number.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Executable.dir/build.make CMakeFiles/Executable.dir/src/number.c.s
+.PHONY : src/number.c.s
+
 src/value.o: src/value.c.o
 .PHONY : src/value.o
 
@@ -189,6 +213,9 @@ help:
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/number.o"
+	@echo "... src/number.i"
+	@echo "... src/number.s"
 	@echo "... src/value.o"
 	@echo "... src/value.i"
 	@echo "... src/value.s"

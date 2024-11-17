@@ -9,6 +9,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/Users/jamie/dev/university/year3/F/Vec3/Executable/src/main.c" "CMakeFiles/Executable.dir/src/main.c.o" "gcc" "CMakeFiles/Executable.dir/src/main.c.o.d"
+  "/Users/jamie/dev/university/year3/F/Vec3/Executable/src/number.c" "CMakeFiles/Executable.dir/src/number.c.o" "gcc" "CMakeFiles/Executable.dir/src/number.c.o.d"
   "/Users/jamie/dev/university/year3/F/Vec3/Executable/src/value.c" "CMakeFiles/Executable.dir/src/value.c.o" "gcc" "CMakeFiles/Executable.dir/src/value.c.o.d"
   )
 

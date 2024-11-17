@@ -1,6 +1,8 @@
 file(REMOVE_RECURSE
   "CMakeFiles/Executable.dir/src/main.c.o"
   "CMakeFiles/Executable.dir/src/main.c.o.d"
+  "CMakeFiles/Executable.dir/src/number.c.o"
+  "CMakeFiles/Executable.dir/src/number.c.o.d"
   "CMakeFiles/Executable.dir/src/value.c.o"
   "CMakeFiles/Executable.dir/src/value.c.o.d"
   "Executable"

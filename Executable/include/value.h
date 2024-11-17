@@ -1,8 +1,10 @@
-
-#include <assert.h>
+#pragma once
+#include "number.h"
 #include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stddef.h>
+
+typedef struct Vec3Value Vec3Value;
+typedef struct Vec3Object Vec3Object;
 
 typedef enum {
     TYPE_NUMBER,
@@ -19,38 +21,45 @@ typedef struct Vec3Object {
     void (*destructor)(struct Vec3Object*);
 } Vec3Object;
 
+typedef struct {
+    char* chars;
+    size_t length;
+} String;
+
+typedef struct {
+    Vec3Value** items;
+    size_t length;
+    size_t capacity;
+} List;
+
 typedef struct Vec3Value {
     Vec3Object object;
     union {
-        struct {
-            enum {
-                NUMBER_INTEGER,
-                NUMBER_FLOAT,
-                NUMBER_RATIONAL,
-                NUMBER_COMPLEX
-            } type;
-            union {
-                int64_t integer;
-                double float_val;
-                struct {
-                    int64_t num;
-                    int64_t denom;
-                } rational;
-                struct {
-                    double real;
-                    double imag;
-                } complex;
-            } as;
-        } number;
-
-        struct {
-            char* chars;
-            size_t length;
-        } string;
-    };
+        Number number;
+        String string;
+        List list;
+    } as;
 } Vec3Value;
 
 void vec3_incref(Vec3Value* value);
 void vec3_decref(Vec3Value* value);
-Vec3Value* vec3_create_integer(int64_t value);
+
+Vec3Value* vec3_new_number(Number number);
+Vec3Value* vec3_new_string(const char* chars);
+Vec3Value* vec3_new_list(size_t initial_capacity);
+Vec3Value* vec3_new_nil(void);
+
+void vec3_destroy_string(Vec3Object* object);
+void vec3_destroy_list(Vec3Object* object);
+
 Vec3Value* vec3_add(Vec3Value* a, Vec3Value* b);
+Vec3Value* vec3_subtract(Vec3Value* a, Vec3Value* b);
+Vec3Value* vec3_multiply(Vec3Value* a, Vec3Value* b);
+Vec3Value* vec3_divide(Vec3Value* a, Vec3Value* b);
+
+void vec3_list_append(Vec3Value* list, Vec3Value* value);
+Vec3Value* vec3_list_get(Vec3Value* list, size_t index);
+void vec3_list_set(Vec3Value* list, size_t index, Vec3Value* value);
+
+void vec3_print(const Vec3Value* value);
+bool vec3_is_truthy(const Vec3Value* value);
