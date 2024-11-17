@@ -1,29 +1,56 @@
-#pragma once
+
+#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
-
-#define BOOL_VAL(value)   ((Value){VAL_BOOL, {.boolean = value}})
-#define NIL_VAL           ((Value){VAL_NIL, {.number = NULL}})
-#define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number = value}})
-#define AS_BOOL(value)    ((value).as.boolean)
-#define AS_NUMBER(value)  ((value).as.number)
-#define IS_BOOL(value)    ((value).type == VAL_BOOL)
-#define IS_NIL(value)     ((value).type == VAL_NIL)
-#define IS_NUMBER(value)  ((value).type == VAL_NUMBER)
+#include <string.h>
 
 typedef enum {
-    VAL_BOOL,
-    VAL_NIL,
-    VAL_NUMBER,
+    TYPE_NUMBER,
+    TYPE_STRING,
+    TYPE_LIST,
+    TYPE_FUNCTION,
+    TYPE_CLOSURE,
+    TYPE_NIL
 } ValueType;
 
-typedef struct {
+typedef struct Vec3Object {
     ValueType type;
+    size_t ref_count;
+    void (*destructor)(struct Vec3Object*);
+} Vec3Object;
+
+typedef struct Vec3Value {
+    Vec3Object object;
     union {
-        bool boolean;
-        double number;
-    } as;
-} Value;
+        struct {
+            enum {
+                NUMBER_INTEGER,
+                NUMBER_FLOAT,
+                NUMBER_RATIONAL,
+                NUMBER_COMPLEX
+            } type;
+            union {
+                int64_t integer;
+                double float_val;
+                struct {
+                    int64_t num;
+                    int64_t denom;
+                } rational;
+                struct {
+                    double real;
+                    double imag;
+                } complex;
+            } as;
+        } number;
 
+        struct {
+            char* chars;
+            size_t length;
+        } string;
+    };
+} Vec3Value;
 
-Value add(double a, double b);
+void vec3_incref(Vec3Value* value);
+void vec3_decref(Vec3Value* value);
+Vec3Value* vec3_create_integer(int64_t value);
+Vec3Value* vec3_add(Vec3Value* a, Vec3Value* b);
