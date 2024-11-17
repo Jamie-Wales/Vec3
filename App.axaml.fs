@@ -1,9 +1,12 @@
-namespace Vec3 
+namespace Vec3
 
 open Avalonia
 open Avalonia.Controls.ApplicationLifetimes
 open Avalonia.Markup.Xaml
 
+/// <summary>
+/// The main application class (UI).
+/// </summary>
 type App() =
     inherit Application()
 

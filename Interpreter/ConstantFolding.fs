@@ -1,3 +1,6 @@
+/// <summary>
+/// Constant folding for the AST.
+/// </summary>
 module Vec3.Interpreter.ConstantFolding
 
 open Token
@@ -12,11 +15,11 @@ let rec GCD a b =
 
 let simplifyRational rat =
     match rat with
-    | Rational(a, b) ->
+    | LRational(a, b) ->
         let gcd = GCD a b
         let a = a / gcd
         let b = b / gcd
-        Rational(a, b)
+        LRational(a, b)
     | _ -> failwith "bad"
     
 

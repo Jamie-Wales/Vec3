@@ -1,3 +1,7 @@
+/// <summary>
+/// The virtual machine for the interpreter.
+/// </summary>
+
 module Vec3.Interpreter.Backend.VM
 
 open System
@@ -146,9 +150,18 @@ and runCurrentFrame vm =
 
         match opcode with
         | RETURN ->
-            let vm, _ = readByte vm
+            let currentFrame = getCurrentFrame vm
+            let argCount = currentFrame.Function.Arity
+           // let localCount = currentFrame.Function.Locals.Length
+            let vm, shouldPop = readByte vm
             
             let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
+            List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int argCount) - 1 ]
+           // List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int localCount) - 1 ]
+            if int shouldPop = 1 then
+                let _ = pop vm
+                ()
+            
             vm.Frames.RemoveAt(vm.Frames.Count - 1)
             result, vm
         | _ ->
@@ -248,11 +261,13 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
     | RETURN ->
         let currentFrame = getCurrentFrame vm
         let argCount = currentFrame.Function.Arity
+      //  let localCount = currentFrame.Function.Locals.Length
         let vm, shouldPop = readByte vm
         let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
         
         // pop arg count
         List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int argCount) - 1 ]
+       // List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int localCount) - 1 ]
         if int shouldPop = 1 then
             let _ = pop vm
             ()

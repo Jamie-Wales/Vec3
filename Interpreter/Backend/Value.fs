@@ -1,3 +1,7 @@
+/// <summary>
+/// Value operations for the interpreter.
+/// </summary>
+
 module Vec3.Interpreter.Backend.Value
 
 open Microsoft.FSharp.Core

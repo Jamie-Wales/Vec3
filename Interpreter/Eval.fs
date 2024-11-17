@@ -1,3 +1,6 @@
+/// <summary>
+/// Tree-walk interpreter for the Vec3 language.
+/// </summary>
 module Vec3.Interpreter.Eval
 
 open Microsoft.FSharp.Core

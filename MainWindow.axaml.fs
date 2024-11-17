@@ -17,6 +17,9 @@ open Vec3.Interpreter.Typing
 open System.Threading.Tasks
 open System.Threading
 
+/// <summary>
+/// The main UI window used for the Vec3 editor.
+/// </summary>
 type MainWindow () as this =
     inherit Window ()
 

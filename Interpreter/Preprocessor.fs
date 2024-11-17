@@ -1,3 +1,6 @@
+/// <summary>
+/// Preprocesses a file by recursively including all files specified by open statements.
+/// </summary>
 module Vec3.Interpreter.Preprocessor
 
 open System.IO

@@ -1,3 +1,7 @@
+/// <summary>
+/// Defines the chunk type and functions to work with it.
+/// </summary>
+
 module Vec3.Interpreter.Backend.Chunk
 
 open System.Text

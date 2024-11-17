@@ -1,3 +1,7 @@
+/// <summary>
+/// Substitution functions for the type checker.
+/// </summary>
+
 module Vec3.Interpreter.Typing.Substitution
 
 open Vec3.Interpreter.Typing.Types

@@ -8,6 +8,9 @@ open Vec3.Interpreter.Parser
 open Vec3.Interpreter.Eval
 open Vec3.Interpreter.Typing.Exceptions
 
+/// <summary>
+/// The main program module (entry point).
+/// </summary>
 module Program =
     
     // args, -r to repl, -f to file, -g or no args for GUI

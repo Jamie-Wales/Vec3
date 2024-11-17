@@ -1,3 +1,6 @@
+/// <summary>
+/// Printer for the AST.
+/// </summary>
 module Vec3.Interpreter.Printer
 
 open System.Text

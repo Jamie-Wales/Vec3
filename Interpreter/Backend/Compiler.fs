@@ -1,3 +1,8 @@
+/// <summary>
+/// Compiler for the backend.
+/// Compiles the AST to bytecode.
+/// </summary>
+
 module Vec3.Interpreter.Backend.Compiler
 
 open Microsoft.FSharp.Core
@@ -80,7 +85,7 @@ let addLocal (name: string) (state: CompilerState) : CompilerState =
         LocalCount = state.LocalCount + 1 }
 
 let rec compileLiteral (lit: Literal) : Compiler<unit> =
-    let compileNumber (n: Vec3.Interpreter.Grammar.Number) state =
+    let compileNumber (n: Vec3.Interpreter.Token.Number) state =
         match n with
         | LInteger i -> emitConstant (VNumber(VInteger i)) state
         | LFloat f -> emitConstant (VNumber(VFloat f)) state
@@ -180,6 +185,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             match ex with
             | ECall(name, args, _) -> compileCall name args true state
             | e -> compileExpr e state
+        | EMatch(expr, cases, _) -> compileMatch expr cases state
 
 and compileIndex (list: Expr) (start: Expr option) (end_: Expr option) (isRange: bool) : Compiler<unit> =
     fun state ->
@@ -412,6 +418,64 @@ and compileIdentifier (token: Token) : Compiler<unit> =
         | None ->
             let constIndex = addConstant state.CurrentFunction.Chunk (VString name)
             emitBytes [| byte (opCodeToByte OP_CODE.GET_GLOBAL); byte constIndex |] state
+
+and compileMatch (expr: Expr) (cases: (Pattern * Expr) list) : Compiler<unit> =
+    fun state ->
+        // hwo to do this ?
+        // compile expr
+        // compile each case
+        // if match then jump to end
+        // if no match then jump to next case
+        // if no case then error
+        // how to compile cons ?
+        // how to compile record ?
+        // answer is to compile as call to builtin
+        
+        // translate to series of if else
+        // EIF(ECall(match, [ pattern compile, expr compile ]), case, else EIF(ECall(match, [ pattern compile, expr compile ]), case, else ...))
+        
+        // compile as call to lambda for access to local variables, sorry no impl case as call with pattern 
+        let rec patternToExpression (pattern: Pattern) : Expr =
+            match pattern with
+            | PWildcard -> ELiteral(LBool true, TBool)
+            | PIdentifier name -> EIdentifier(name, None)
+            | PTuple ps -> ETuple(List.map patternToExpression ps, None)
+            | PList ps -> EList(List.map patternToExpression ps, None)
+            | PCons (head, tail) -> EList([ patternToExpression head; patternToExpression tail ], None)
+            | PLiteral lit -> ELiteral(lit, TAny)
+            | PRecordEmpty -> ERecordEmpty TRowEmpty
+            | PType _ -> ELiteral(LBool true, TBool)
+            
+        let rec generateExpression (cases: (Pattern * Expr) list) : Expr =
+            match cases with
+            | [] ->
+                let errIdentifier =
+                    EIdentifier(
+                        { Lexeme = Identifier "error"
+                          Position = { Line = 0; Column = 0 } },
+                        None
+                    )
+                    
+                ECall(errIdentifier, [ ELiteral(LString "No match found", TString) ], None)
+                
+            | (pattern, case) :: rest ->
+                ETernary(
+                    ECall(
+                        EIdentifier(
+                            { Lexeme = Identifier "match"
+                              Position = { Line = 0; Column = 0 } },
+                            None
+                        ),
+                        [ (patternToExpression pattern); expr ],
+                        None
+                    ),
+                    case,
+                    generateExpression rest,
+                    None
+                )
+                
+        let expression = generateExpression cases
+        compileExpr expression state
 
 and compileStmt (stmt: Stmt) : Compiler<unit> =
     fun state ->

@@ -1,3 +1,6 @@
+/// <summary>
+/// Defines instructions for the backend / virtual machine.
+/// </summary>
 module Vec3.Interpreter.Backend.Instructions
 
 type OP_CODE =

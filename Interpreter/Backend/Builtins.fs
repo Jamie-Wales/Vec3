@@ -1,3 +1,7 @@
+/// <summary>
+/// Built-in functions for the VM.
+/// </summary>
+
 module Vec3.Interpreter.Backend.Builtins
 
 open Vec3.Interpreter.Grammar
@@ -775,7 +779,17 @@ let builtins =
                   | _ -> raise <| InvalidProgramException "Key not found"
               | _ -> raise <| InvalidProgramException "Expected a list and a string for select"),
           "Select"
-      ) ]
+      )
+      Identifier "match",
+        VBuiltin((fun args ->
+            match args with
+            | [ pattern; expr ] ->
+                match pattern, expr with
+                | VBoolean true, _ -> VBoolean true
+                | VBoolean false, _ -> VBoolean false
+                | p, x -> valuesEqual p x |> VBoolean
+            | _ -> raise <| InvalidProgramException "Expected a pattern and an expression for match"), "Match")
+      ]
 
 
     |> List.map (fun (key, value) -> lexemeToString key, value)

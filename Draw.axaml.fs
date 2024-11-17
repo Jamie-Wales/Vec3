@@ -9,6 +9,9 @@ open Avalonia.Media
 open Avalonia.Controls.Shapes
 open Vec3.Interpreter.Backend.Types
 
+/// <summary>
+/// The window used for drawing shapes.
+/// </summary>
 type DrawWindow() as this =
     inherit Window()
     

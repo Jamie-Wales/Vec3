@@ -16,6 +16,9 @@ open Vec3.Interpreter.Backend.Compiler
 open Vec3.Interpreter.Repl
 open Vec3.Interpreter.Typing
 
+/// <summary>
+/// The notebook window.
+/// </summary>
 type NotebookWindow () as this =
     inherit Window ()
     

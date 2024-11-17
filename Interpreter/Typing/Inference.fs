@@ -1,10 +1,13 @@
+/// <summary>
+/// Type inference for the type checker using the Hindley-Milner algorithm with row polymorphism.
+/// </summary>
+
 module Vec3.Interpreter.Typing.Inference
 
 open Microsoft.FSharp.Collections
 open Microsoft.FSharp.Core
 open Types
 open Substitution
-open Generalisation
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open Builtins
@@ -123,7 +126,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
         else
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 
-    | TFunction(params1, ret1, pr1, bt1), TFunction(params2, ret2, pr2, bt2) ->
+    | TFunction(params1, ret1, _, _), TFunction(params2, ret2, _, _) ->
         if List.length params1 <> List.length params2 then
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
         else
@@ -458,9 +461,6 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                         let argSubs = List.map (fun (_, sub, _) -> sub) argResults
                         let argExprs = List.map (fun (_, _, expr) -> expr) argResults
                         
-                        printfn $"{paramTypes}"
-                        printfn $"{argTypes}"
-
                         unifyWithSubstitution aliases paramTypes argTypes Map.empty
                         |> Result.bind (fun sub' ->
                             let combinedSubs = List.fold combineMaps sub' argSubs
@@ -621,6 +621,8 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         let startResult = Option.map (infer aliases env) start
         let endResult = Option.map (infer aliases env) end_
         
+        printfn "startResult: %A" startResult
+        
         let results = [ Some exprResult; startResult; endResult ]
         let hasErrors = List.exists (Option.exists Result.isError) results
         
@@ -632,20 +634,20 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                         | Some (Error errors) -> errors
                         | _ -> [])
                     results
-
+                    
             Error errors
         else
             let exprType = match exprResult with
                             | Ok(t, _, _) -> t
-                            | _ -> TNever
+                            | _ -> TInteger
 
             let startType = match startResult with
                             | Some(Ok(t, _, _)) -> t
-                            | _ -> TNever
+                            | _ -> TInteger
 
             let endType = match endResult with
                             | Some(Ok(t, _, _)) -> t
-                            | _ -> TNever
+                            | _ -> TInteger
             
             let startSub = match startResult with
                             | Some(Ok(_, sub, _)) -> sub
@@ -661,19 +663,24 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
 
             let startType = applySubstitution aliases Map.empty startType
             let endType = applySubstitution aliases Map.empty endType
+            
+            let checkStart = unify aliases startType TInteger
+            let checkEnd = unify aliases endType TInteger
+            
+            match checkStart, checkEnd with
+            | Ok _, Ok _ ->
+                let returnType =
+                    if isRange then
+                        TTensor(exprType, DAny)
+                    else
+                        exprType
 
-            let returnType =
-                if isRange then
-                    TTensor(exprType, DAny)
-                else
-                    exprType
+                let sub = combineMaps startSub endSub
 
-            let sub = combineMaps startSub endSub
-
-            Ok(returnType, sub, EIndex(expr, (start, end_, isRange), Some returnType))
+                Ok(returnType, sub, EIndex(expr, (start, end_, isRange), Some returnType))
+            | Error errors, _ -> Error errors
+            | _, Error errors -> Error errors
         
-        
-
     // lot of this doesnt work,
 
     // fails on the following:
@@ -785,7 +792,173 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         | Error errors -> Error errors
         | _ -> Error [ TypeError.InvalidField(name, TNever) ]
     | ECodeBlock e -> Ok(TAny, Map.empty, ECodeBlock e)
+    
+    | EMatch(expr, cases, _) ->
+        infer aliases env expr
+        |> Result.bind (fun (t, sub, expr) ->
+                    let inferCase (case: Pattern * Expr) =
+                        let pattern, caseExpr = case
+                        
+                        inferPattern aliases env pattern
+                        |> Result.bind (fun (patternType, sub', pattern, env) ->
+                            let sub = combineMaps sub sub'
+                            let patternType = applySubstitution aliases sub patternType
 
+                            // need to bind pattern names
+                            let newEnv = applySubstitutionToEnv aliases sub env
+
+                            infer aliases newEnv caseExpr
+                            |> Result.bind (fun (caseType, sub'', caseExpr) ->
+                                let sub = combineMaps sub sub''
+
+                                unify aliases t patternType
+                                |> Result.bind (fun sub''' ->
+                                    let sub = combineMaps sub sub'''
+
+                                    let returnType = applySubstitution aliases sub caseType
+                                    Ok(returnType, sub, (pattern, caseExpr)))))
+                        
+                    let caseResults = List.map inferCase cases
+                    
+                    let hasErrors = List.exists Result.isError caseResults
+                    
+                    if hasErrors then
+                        let errors =
+                            List.collect
+                                (fun result ->
+                                    match result with
+                                    | Error errors -> errors
+                                    | _ -> [])
+                                caseResults
+                                
+                        Error errors
+                    else
+                        let caseResults = List.choose (function Ok(t, sub, expr) -> Some(t, sub, expr) | _ -> None) caseResults
+                        
+                        let types = List.map (fun (t, _, _) -> t) caseResults
+                        let subs = List.map (fun (_, sub, _) -> sub) caseResults
+                        let exprs = List.map (fun (_, _, expr) -> expr) caseResults
+                        
+                        let subs = List.fold combineMaps Map.empty subs
+                        
+                        let head = List.tryHead types
+                        let head = Option.defaultValue (TTypeVariable(freshTypeVar ())) head
+                        let returnType = applySubstitution aliases subs head
+                        
+                        Ok(returnType, subs, EMatch(expr, List.zip (List.map fst cases) (List.map snd exprs), Some returnType)))
+                    
+                    // doesnt work
+and inferPattern (aliases: AliasMap) (env: TypeEnv) (pattern: Pattern) : (TType * Substitution * Pattern * TypeEnv) TypeResult =
+    match pattern with
+    | PWildcard -> Ok(TAny, Map.empty, PWildcard, env)
+    | PIdentifier id ->
+        Ok (TTypeVariable(freshTypeVar ()), Map.empty, PIdentifier id, Map.add id.Lexeme (TTypeVariable(freshTypeVar ())) env)
+    | PCons (head, rest) ->
+        let headResult = inferPattern aliases env head
+        let restResult = inferPattern aliases env rest
+
+        match headResult, restResult with
+        | Ok(t1, sub1, expr1, env1), Ok(_, sub2, expr2, env2) ->
+            let env = combineMaps env1 env2
+            let sub = combineMaps sub1 sub2
+            let sub = combineMaps sub sub2
+
+            let newType = TTensor(t1, DAny)
+            Ok(newType, sub, PCons(expr1, expr2), env)
+        | Error errors, _ -> Error errors
+        | _, Error errors -> Error errors
+    | PList elems ->
+        let results = List.map (inferPattern aliases env) elems
+        
+        let hasErrors = List.exists Result.isError results
+        
+        if hasErrors then
+            let errors =
+                List.collect
+                    (fun result ->
+                        match result with
+                        | Error errors -> errors
+                        | _ -> [])
+                    results
+                    
+            Error errors
+        else
+            let results = List.choose (function Ok(t, sub, expr, env) -> Some(t, sub, expr, env) | _ -> None) results
+            
+            let types = List.map (fun (t, _, _, _) -> t) results
+            let subs = List.map (fun (_, sub, _, _) -> sub) results
+            let exprs = List.map (fun (_, _, expr, _) -> expr) results
+            let envs = List.map (fun (_, _, _, env) -> env) results
+            
+            let head = List.tryHead types
+            let tail = if List.length types > 1 then List.tail types else []
+            let head = Option.defaultValue (TTypeVariable(freshTypeVar ())) head
+            
+            let subResults = List.map (unify aliases head) tail
+            
+            let hasErrors = List.exists Result.isError subResults
+            
+            if hasErrors then
+                let errors =
+                    List.collect
+                        (fun result ->
+                            match result with
+                            | Error errors -> errors
+                            | _ -> [])
+                        subResults
+                        
+                Error errors
+            else
+                let subResults =
+                    List.choose
+                        (function
+                        | Ok(sub) -> Some(sub)
+                        | _ -> None)
+                        subResults
+                        
+                let env = List.fold combineMaps Map.empty envs
+                let combinedSubs = List.fold combineMaps Map.empty subResults
+                let combinedSubs = List.fold combineMaps combinedSubs subs
+                
+                // doesnt work
+                let returnType = applySubstitution aliases combinedSubs head
+                let returnType = TTensor(returnType, DAny)
+                
+                Ok(returnType, combinedSubs, PList(exprs), env)
+    | PRecordEmpty -> Ok(TRecord(TRowEmpty), Map.empty, PRecordEmpty, env)
+    | PLiteral(lit) ->
+        let t = checkLiteral lit
+        Ok(t, Map.empty, PLiteral(lit), env)
+    | PTuple(elems) ->
+        let types = List.map (inferPattern aliases env) elems
+        
+        let hasErrors = List.exists Result.isError types
+        
+        if hasErrors then
+            let errors =
+                List.collect
+                    (fun result ->
+                        match result with
+                        | Error errors -> errors
+                        | _ -> [])
+                    types
+                    
+            Error errors
+        else
+            let results = List.choose (function Ok(t, sub, expr, env) -> Some(t, sub, expr, env) | _ -> None) types
+            
+            let types = List.map (fun (t, _, _, _) -> t) results
+            let subs = List.map (fun (_, sub, _, _) -> sub) results
+            let exprs = List.map (fun (_, _, expr, _) -> expr) results
+            let envs = List.map (fun (_, _, _, env) -> env) results
+            
+            let combinedSubs = List.fold combineMaps Map.empty subs
+            let env = List.fold combineMaps Map.empty envs
+            
+            let returnType = TTuple(types)
+            
+            Ok(returnType, combinedSubs, PTuple(exprs), env)
+                
 and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * AliasMap * Substitution * Stmt) TypeResult =
     // make this immutable later, pass it around, or resolved in substitution
     resolvedTypes.Value <- Map.empty
@@ -882,7 +1055,6 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
                 unify aliases bodyType returnT
                 |> Result.bind (fun sub' ->
                     let sub = combineMaps sub sub'
-                    let returnType = applySubstitution aliases sub returnT
 
                     Ok(
                         newEnv,

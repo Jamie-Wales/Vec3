@@ -1,3 +1,7 @@
+/// <summary>
+/// Contains the types of built-in functions and constants.
+/// </summary>
+
 module Vec3.Interpreter.Typing.Builtins
 
 open Vec3.Interpreter.Grammar

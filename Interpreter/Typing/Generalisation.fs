@@ -1,3 +1,7 @@
+/// <summary>
+/// Generalisation functions for the type checker.
+/// </summary>
+
 module Vec3.Interpreter.Typing.Generalisation
 
 open Types

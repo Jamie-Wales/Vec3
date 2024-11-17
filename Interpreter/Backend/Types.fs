@@ -1,3 +1,6 @@
+/// <summary>
+/// Types for the backend.
+/// </summary>
 module Vec3.Interpreter.Backend.Types
 
 open Vec3.Interpreter.Grammar

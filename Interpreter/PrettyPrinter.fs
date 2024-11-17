@@ -1,3 +1,6 @@
+/// <summary>
+/// Pretty printer for the AST.
+/// </summary>
 module Vec3.Interpreter.PrettyPrinter
 
 open Grammar
