@@ -1,3 +1,6 @@
+/// <summary>
+/// Types for the backend.
+/// </summary>
 module Vec3.Interpreter.Backend.Types
 
 open Vec3.Interpreter.Grammar
@@ -40,11 +43,13 @@ and Value =
     | VClosure of Closure
     | VNil
     | VList of Value list * CompoundType
-    | VBuiltin of (Value list -> VM -> VM)
+    | VBuiltin of (Value list -> Value) * string
     | VPlotData of string * Value list * Value list * PlotType
     | VPlotFunction of string * (double -> double)
     | VPlotFunctions of string * (double -> double) list
     | VShape of (float * float * float * float * string * string)
+    | VShapes of (float * float * float * float * string * string) list
+    | VOutput of string
     | VBlock of Expr
 
 and CompoundType =
@@ -118,3 +123,5 @@ let rec valueToString =
     | VPlotFunctions _ -> "<plot functions>"
     | VBlock v -> printExpr v
     | VShape _ -> "<shape>"
+    | VShapes _ -> "<shapes>"
+    | VOutput _ -> "<output>"

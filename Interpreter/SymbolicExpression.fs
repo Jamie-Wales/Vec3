@@ -1,3 +1,8 @@
+/// <summary>
+/// Symbolic expression module.
+/// DSL for symbolic expressions.
+/// </summary>
+
 module Vec3.Interpreter.SymbolicExpression
 
 open System
@@ -6,12 +11,20 @@ open Token
 
 // https://bmitc.me/articles/symbolic-expressions-in-fsharp#:~:text=By%20pattern%20matching%20against%20Sum,used%20in%20the%20result%20expression.
 
+/// <summary>
+/// The symbolic expression type (a DSL for symbolic expressions).
+/// </summary>
 type Expression =
-    // | E
-    // | PI
-    
+    /// <summary>
+    /// A variable.
+    /// </summary>
     | X
+    
+    /// <summary>
+    /// A constant value in the expression.
+    /// </summary>
     | Const of float
+    
     | Negation of Expression
     | Addition of Expression * Expression
     | Subtraction of Expression * Expression
@@ -28,6 +41,10 @@ type Expression =
     | ATangent of Expression
     
     | Exponential of Expression
+    
+    /// <summary>
+    /// Log base and value to take the logarithm.
+    /// </summary>
     | Logarithm of Expression * Expression // base and value to take the logarithm
     
     | SquareRoot of Expression
@@ -67,9 +84,20 @@ type Expression =
     static member Abs (x: Expression) = AbsoluteValue x
     
     
-    
+/// <summary>
+/// Log base function.
+/// </summary>
+/// <param name="bas">The base of the logarithm.</param>
+/// <param name="x">The value to take the logarithm of.</param>
+/// <returns>The logarithm of the value with the specified base.</returns>
 let logBase (bas: float) (x: float) = Math.Log x / Math.Log bas
     
+/// <summary>
+/// Evaluate the expression at a given value.
+/// </summary>
+/// <param name="a">The value to evaluate the expression at.</param>
+/// <param name="expression">The expression to evaluate.</param>
+/// <returns>The result of evaluating the expression at the given value.</returns>
 let rec evaluate (a: float) (expression: Expression) : float =
     match expression with
     | X -> a
@@ -98,8 +126,16 @@ let rec evaluate (a: float) (expression: Expression) : float =
     | Ceiling x -> Math.Ceiling (evaluate a x)
     | Truncate x -> Math.Truncate (evaluate a x)
     
+/// <summary>
+/// A zero'd position for easier conversion.
+/// </summary>
 let defaultPosition = { Line = 0; Column = 0 }
  
+/// <summary>
+/// Convert a symbolic expression to an expression in the grammar.
+/// </summary>
+/// <param name="expression">The symbolic expression to convert.</param>
+/// <returns>The expression in the grammar.</returns>
 let rec toExpr (expression: Expression): Expr =
     match expression with
     | X -> EIdentifier ({ Lexeme = Identifier "x"; Position = defaultPosition }, None)
@@ -128,6 +164,11 @@ let rec toExpr (expression: Expression): Expr =
     | Ceiling x -> ECall (EIdentifier ({ Lexeme = Identifier "BUILTIN_CEIL"; Position = defaultPosition }, None), [toExpr x], None)
     | Truncate x -> ECall (EIdentifier ({ Lexeme = Identifier "BUILTIN_TRUNC"; Position = defaultPosition }, None), [toExpr x], None)
     
+/// <summary>
+/// Convert a symbolic expression to a builtin function (a function defined in the f sharp runtime).
+/// </summary>
+/// <param name="expression">The symbolic expression to convert.</param>
+/// <returns>The builtin function that represents the symbolic expression.</returns>
 let rec toBuiltin (expression: Expression) : (double -> double) =
     match expression with
     | X -> id
@@ -156,7 +197,12 @@ let rec toBuiltin (expression: Expression) : (double -> double) =
     | Ceiling x -> (fun a -> Math.Ceiling (toBuiltin x a))
     | Truncate x -> (fun a -> Math.Truncate (toBuiltin x a))
         
-
+/// <summary>
+/// Convert an expression in the grammar to a symbolic expression.
+/// </summary>
+/// <param name="expr">The expression in the grammar to convert (must be pure and have only 1 input / output).</param>
+/// <returns>The symbolic expression that represents the expression in the grammar.</returns>
+/// <exception cref="InvalidProgramException">If the expression is not a valid symbolic expression.</exception>
 let rec fromExpr (expr: Expr) : Expression =
     match expr with
     // need first class support for e etc !!
@@ -218,6 +264,11 @@ let rec fromExpr (expr: Expr) : Expression =
     
     | _ -> raise <| InvalidProgramException("Invalid expression")
     
+/// <summary>
+/// Simplify an expression using algebraic simplification rules.
+/// </summary>
+/// <param name="expression">The expression to simplify.</param>
+/// <returns>The simplified expression.</returns>
 let simplify (expression: Expression) : Expression =
     let rec simplifier (expression: Expression) =
         match expression with
@@ -290,16 +341,20 @@ let simplify (expression: Expression) : Expression =
         | X -> X
         | Const x -> Const x
         
-    // let rec simplifyRec (expression: Expression) =
-    //     let simplified = simplifier expression
-    //     if simplified = expression then
-    //         simplified
-    //     else
-    //         simplifyRec simplified
-            
+    // do this recursively until no more simplifications can be made instead
     expression |> simplifier |> simplifier |> simplifier
     
+/// <summary>
+/// Find the derivative of an expression.
+/// </summary>
+/// <param name="expression">The expression to differentiate.</param>
+/// <returns>The derivative of the expression.</returns>
 let differentiate (expression: Expression) : Expression =
+    /// <summary>
+    /// Inner top down recursive differentiation function.
+    /// </summary>
+    /// <param name="expression">The expression to differentiate.</param>
+    /// <returns>The differentiated expression.</returns>
     let rec diff (expression: Expression) : Expression =
         match simplify expression with
         | X -> Const 1.0
@@ -330,7 +385,11 @@ let differentiate (expression: Expression) : Expression =
         
     diff expression |> simplify
 
-// not quite working
+/// <summary>
+/// Find the unbound integral of an expression.
+/// </summary>
+/// <param name="expression">The expression to integrate.</param>
+/// <returns>The integral of the expression.</returns>
 let integrate (expression: Expression) : Expression =
     let rec inte (expression: Expression): Expression =
         match simplify expression with
@@ -362,10 +421,22 @@ let integrate (expression: Expression) : Expression =
         
     inte expression |> simplify
 
+/// <summary>
+/// Find the definite integral of an expression.
+/// </summary>
+/// <param name="expression">The expression to integrate.</param>
+/// <param name="a">The lower bound of the integral.</param>
+/// <param name="b">The upper bound of the integral.</param>
+/// <returns>The definite integral of the expression.</returns>
 let findIntegral (expression: Expression) (a: float) (b: float) : float =
     let integral = integrate expression
     abs <| evaluate b integral - evaluate a integral
 
+/// <summary>
+/// Convert an expression to a string.
+/// </summary>
+/// <param name="expression">The expression to convert.</param>
+/// <returns>The string representation of the expression.</returns>
 let rec toString (expression: Expression) : string =
     let expression = simplify expression
     

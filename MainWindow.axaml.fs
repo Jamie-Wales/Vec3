@@ -2,7 +2,6 @@ namespace Vec3
 
 open System
 open Avalonia.Controls
-open Avalonia.Controls.Shapes
 open Avalonia.Markup.Xaml
 open AvaloniaEdit
 open Avalonia.Media
@@ -18,6 +17,9 @@ open Vec3.Interpreter.Typing
 open System.Threading.Tasks
 open System.Threading
 
+/// <summary>
+/// The main UI window used for the Vec3 editor.
+/// </summary>
 type MainWindow () as this =
     inherit Window ()
 
@@ -41,10 +43,17 @@ REPL for quick commands click 'Play' or Shift+Enter.
 Type 'help()' in the REPL for more information."""
 
     let initialCode = """// Vec3 Editor Example
-rec f(x) -> if x < 0 then print("done") else { print(x) f(x-1) }
 
-f(10)
+rec fact(n) -> if n < 1 then 1 else n * fact(n - 1)
 
+let x = fact(5)
+print(x)
+
+// need to fix type inference function params, and locals also stay on the stack so i need to fix that
+rec map(list, func: any) -> if len(list) == 0 then 
+							[] 
+						  else 
+						    func(head(list)) :: map(tail(list), func)
 
 let casting = (5 * 4^3) : float
 print(casting)
@@ -91,7 +100,10 @@ let data = {
     height = 50.0,
     colour = "red"
 }
-draw(data) 
+draw(data)
+
+// list casting
+let x = [1..10] : [float]
 """
     
     do
@@ -248,7 +260,8 @@ draw(data)
                 standardOutput.Foreground <- SolidColorBrush(Colors.Red)
                 standardOutput.Text <- "Failed to compile code"
         with
-        | ex -> 
+        | ex ->
+            printfn $"Error: {ex}"
             standardOutput.Foreground <- SolidColorBrush(Colors.Red)
             standardOutput.Text <- $"Error: %s{ex.Message}"
             
@@ -264,7 +277,6 @@ draw(data)
                     else
                         match parse code with
                         | Ok (_, ast) ->
-                            printfn $"{ast}"
                             let env, aliases, _, _ = Prelude.preludeChecked
                             
                             match Inference.inferProgram aliases env ast with

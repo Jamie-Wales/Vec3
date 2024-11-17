@@ -5,6 +5,9 @@ open Avalonia.Controls
 open Avalonia.Markup.Xaml
 open ScottPlot.Avalonia
 
+/// <summary>
+/// The window used for plotting.
+/// </summary>
 type PlotWindow() as this =
     inherit Window()
 

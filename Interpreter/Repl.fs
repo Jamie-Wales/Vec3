@@ -1,3 +1,6 @@
+/// <summary>
+/// REPL for the Vec3 language.
+/// </summary>
 module Vec3.Interpreter.Repl
 
 open System
@@ -11,6 +14,7 @@ open Vec3.Interpreter.Typing.Exceptions
 open Vec3.Interpreter.Eval
 open Vec3.Interpreter.Preprocessor
 open Vec3.Interpreter.Grammar
+open Vec3.Interpreter.Token
 open Vec3.Interpreter.ConstantFolding
 
 let numberToString (n: Number): string =

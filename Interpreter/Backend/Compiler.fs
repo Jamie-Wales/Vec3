@@ -1,3 +1,8 @@
+/// <summary>
+/// Compiler for the backend.
+/// Compiles the AST to bytecode.
+/// </summary>
+
 module Vec3.Interpreter.Backend.Compiler
 
 open Microsoft.FSharp.Core
@@ -80,7 +85,7 @@ let addLocal (name: string) (state: CompilerState) : CompilerState =
         LocalCount = state.LocalCount + 1 }
 
 let rec compileLiteral (lit: Literal) : Compiler<unit> =
-    let compileNumber (n: Vec3.Interpreter.Grammar.Number) state =
+    let compileNumber (n: Vec3.Interpreter.Token.Number) state =
         match n with
         | LInteger i -> emitConstant (VNumber(VInteger i)) state
         | LFloat f -> emitConstant (VNumber(VFloat f)) state
@@ -111,7 +116,8 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             compileLambda parameters body pr state
         | ECall(callee, arguments, _) -> compileCall callee arguments false state
         | EList(elements, _) -> compileList elements state
-        | EIndex(list, index, _) -> compileIndex list index state
+        | EIndex(list, (start, end_, isRange), _) ->
+            compileIndex list start end_ isRange state
         | ETuple(elements, _) -> compileTuple elements state
         | ECodeBlock(expr) -> compileCodeBlock expr state
         | ERange(start, stop, _) ->
@@ -161,14 +167,16 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
                 match token with
                 | { Lexeme = Identifier n } -> n
                 | _ -> raise <| System.Exception("Invalid record field name")
-
-            // same as index, but with a string and a record (push string)
-            compileExpr expr state
-            |> Result.bind (fun ((), state) ->
-                let constIndex = addConstant state.CurrentFunction.Chunk (VString name)
-
-                emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
-                |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_GET state))
+            
+            // compile as call
+            let callee =
+                EIdentifier(
+                    { Lexeme = Identifier "select"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                )
+                
+            compileCall callee [ expr; ELiteral(LString name, TString) ] false state
 
         | EBlock(stmts, _) -> compileBlock stmts state // scope is fucked up think its global
         | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
@@ -177,12 +185,78 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             match ex with
             | ECall(name, args, _) -> compileCall name args true state
             | e -> compileExpr e state
+        | EMatch(expr, cases, _) -> compileMatch expr cases state
 
-and compileIndex (list: Expr) (index: Expr) : Compiler<unit> =
+and compileIndex (list: Expr) (start: Expr option) (end_: Expr option) (isRange: bool) : Compiler<unit> =
     fun state ->
-        compileExpr list state
-        |> Result.bind (fun ((), state) -> compileExpr index state)
-        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_GET state)
+        if isRange && (Option.isNone start && Option.isNone end_) then
+            raise <| InvalidProgramException("Range must have both start and end")
+        
+        if not isRange && (Option.isSome start && Option.isSome end_) then
+            raise <| InvalidProgramException("Index must have either start or end")
+            
+        if not isRange && (Option.isSome start && Option.isNone end_) then
+            // is index
+            let start = Option.get start
+            // compile as call
+            let callee =
+                EIdentifier(
+                    { Lexeme = Identifier "index"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                )
+                
+            compileCall callee [ list; start ] false state
+            
+        
+        else if not isRange && (Option.isNone start && Option.isSome end_) then
+            let end_ = Option.get end_
+            // compile as call
+            let callee =
+                EIdentifier(
+                    { Lexeme = Identifier "index"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                )
+                
+            compileCall callee [ list; end_ ] false state
+            
+        else if Option.isNone start then
+            // compile as call
+            let callee =
+                EIdentifier(
+                    { Lexeme = Identifier "index"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                )
+                
+            compileCall callee [ list; ELiteral(LNumber(LInteger 0), TInteger); Option.get end_ ] false state
+            
+        else if Option.isNone end_ then
+            let start = Option.get start
+            
+            // compile as call
+            let callee =
+                EIdentifier(
+                    { Lexeme = Identifier "index"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                )
+                
+            compileCall callee [ list; start; ELiteral(LNumber(LInteger 0), TInteger) ] false state
+        else
+            let start = Option.get start
+            let end_ = Option.get end_
+            
+            // compile as call
+            let callee =
+                EIdentifier(
+                    { Lexeme = Identifier "index"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                )
+                
+            compileCall callee [ list; start; end_ ] false state
 
 and compileTuple (elements: Expr list) : Compiler<unit> =
     fun state ->
@@ -291,8 +365,12 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) : Compiler<u
 
         compileExpr body compiledParamsState
         |> Result.bind (fun ((), finalLambdaState) ->
+            // emit arg count again
+            
             match emitOpCode OP_CODE.RETURN finalLambdaState with
             | Ok((), finalState) ->
+                emitByte (byte 1) finalLambdaState |> ignore
+                
                 let constIndex =
                     addConstant state.CurrentFunction.Chunk (VFunction(finalState.CurrentFunction, builtin))
 
@@ -340,6 +418,64 @@ and compileIdentifier (token: Token) : Compiler<unit> =
         | None ->
             let constIndex = addConstant state.CurrentFunction.Chunk (VString name)
             emitBytes [| byte (opCodeToByte OP_CODE.GET_GLOBAL); byte constIndex |] state
+
+and compileMatch (expr: Expr) (cases: (Pattern * Expr) list) : Compiler<unit> =
+    fun state ->
+        // hwo to do this ?
+        // compile expr
+        // compile each case
+        // if match then jump to end
+        // if no match then jump to next case
+        // if no case then error
+        // how to compile cons ?
+        // how to compile record ?
+        // answer is to compile as call to builtin
+        
+        // translate to series of if else
+        // EIF(ECall(match, [ pattern compile, expr compile ]), case, else EIF(ECall(match, [ pattern compile, expr compile ]), case, else ...))
+        
+        // compile as call to lambda for access to local variables, sorry no impl case as call with pattern 
+        let rec patternToExpression (pattern: Pattern) : Expr =
+            match pattern with
+            | PWildcard -> ELiteral(LBool true, TBool)
+            | PIdentifier name -> EIdentifier(name, None)
+            | PTuple ps -> ETuple(List.map patternToExpression ps, None)
+            | PList ps -> EList(List.map patternToExpression ps, None)
+            | PCons (head, tail) -> EList([ patternToExpression head; patternToExpression tail ], None)
+            | PLiteral lit -> ELiteral(lit, TAny)
+            | PRecordEmpty -> ERecordEmpty TRowEmpty
+            | PType _ -> ELiteral(LBool true, TBool)
+            
+        let rec generateExpression (cases: (Pattern * Expr) list) : Expr =
+            match cases with
+            | [] ->
+                let errIdentifier =
+                    EIdentifier(
+                        { Lexeme = Identifier "error"
+                          Position = { Line = 0; Column = 0 } },
+                        None
+                    )
+                    
+                ECall(errIdentifier, [ ELiteral(LString "No match found", TString) ], None)
+                
+            | (pattern, case) :: rest ->
+                ETernary(
+                    ECall(
+                        EIdentifier(
+                            { Lexeme = Identifier "match"
+                              Position = { Line = 0; Column = 0 } },
+                            None
+                        ),
+                        [ (patternToExpression pattern); expr ],
+                        None
+                    ),
+                    case,
+                    generateExpression rest,
+                    None
+                )
+                
+        let expression = generateExpression cases
+        compileExpr expression state
 
 and compileStmt (stmt: Stmt) : Compiler<unit> =
     fun state ->
@@ -391,7 +527,9 @@ let compileProgramState (program: Program) (state: CompilerState) : CompilerResu
     compileStmts program state
     |> Result.bind (fun ((), state) ->
         emitOpCode OP_CODE.RETURN state
-        |> Result.map (fun ((), state) -> (state.CurrentFunction.Chunk, state)))
+        |> Result.map (fun ((), state) -> (
+            emitByte (byte 0) state |> ignore
+            state.CurrentFunction.Chunk, state)))
 
 
 let compileProgram (program: Program) : CompilerResult<Function> =
@@ -411,4 +549,6 @@ let compileProgram (program: Program) : CompilerResult<Function> =
     compileStmts program initialState
     |> Result.bind (fun ((), state) ->
         emitOpCode OP_CODE.RETURN state
-        |> Result.map (fun ((), state) -> (state.CurrentFunction, state)))
+        |> Result.map (fun ((), state) -> (
+            emitByte (byte 0) state |> ignore
+            state.CurrentFunction, state)))

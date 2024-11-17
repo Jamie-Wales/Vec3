@@ -1,11 +1,20 @@
+/// <summary>
+/// Defines the types used in the lexer and parser.
+/// </summary>
 module Vec3.Interpreter.Token
 
-type TNumber =
-    | Float of float
-    | Integer of int
-    | Rational of int * int
-    | Complex of float * float
+/// <summary>
+/// Type representing a number in the language.
+/// </summary>
+type Number =
+    | LFloat of float
+    | LInteger of int
+    | LRational of int * int
+    | LComplex of float * float
 
+/// <summary>
+/// Possible operators in the language.
+/// </summary>
 type Operator =
     | Plus
     | Minus
@@ -39,9 +48,17 @@ type Operator =
     | DotStar
     
     | ColonColon
+    
+    /// <summary>
+    /// For the future, custom operators can be added.
+    /// </summary>
     | Custom of string
     
+/// <summary>
+/// Represents a punctuation symbol in the language, i.e. a token only used for syntax.
+/// </summary>
 type Punctuation =
+    | Newline
     | Comma
     | Semicolon
     | Colon
@@ -53,6 +70,9 @@ type Punctuation =
     | RightBracket
     | Dollar
     
+/// <summary>
+/// Represents a keyword in the language.
+/// </summary>
 type Keyword =
     | Let
     | If
@@ -69,8 +89,12 @@ type Keyword =
     | With
     | Type
     | Rec
+    | Match
+    | Case
     
-    
+/// <summary>
+/// Map of keywords to their respective keyword type.
+/// </summary>
 let keywordMap = 
     [ "let", Keyword.Let
       "if", Keyword.If
@@ -87,38 +111,80 @@ let keywordMap =
       "with", Keyword.With
       "type", Keyword.Type
       "rec", Keyword.Rec
+      "match", Keyword.Match
+      "case", Keyword.Case
        ]
     |> Map.ofList
 
+/// <summary>
+/// Tests if a string is a keyword.
+/// </summary>
+/// <param name="s">The string to test.</param>
+/// <returns>True if the string is a keyword, false otherwise.</returns>
 let isKeyword (s: string): bool =
     Map.containsKey s keywordMap
 
+/// <summary>
+/// Get the keyword type of a given string.
+/// </summary>
+/// <param name="s">The string to get the keyword type of.</param>
+/// <returns>The keyword type of the string.</returns>
+/// <exception cref="KeyNotFoundException">Thrown if the string is not a keyword.</exception>
 let getKeyword (s: string): Keyword =
     Map.find s keywordMap
     
+/// <summary>
+/// Represents a lexeme in the language (a token).
+/// </summary>
 type Lexeme =
-    | Number of TNumber
+    | Number of Number
     | String of string
     | Keyword of Keyword
+    /// <summary>
+    /// A given operator and its placement in the expression.
+    /// The placement is used to disambiguate between unary and binary operators.
+    /// </summary>
     | Operator of Operator * Placement option
     | Punctuation of Punctuation
     | Identifier of string
     
+/// <summary>
+/// The placement of an operator in an expression.
+/// </summary>
 and Placement = Prefix | Infix | Postfix
 
+/// <summary>
+/// The position of a token in the source code.
+/// </summary>
 type Position = { Line: int; Column: int; }
+
+/// <summary>
+/// A token in the language.
+/// </summary>
 type Token = { Lexeme: Lexeme; Position: Position; }
 
+/// <summary>
+/// A token representing an empty token (for testing).
+/// </summary>
 let Empty = { Lexeme = Identifier ""; Position = { Line = 0; Column = 0; } }
 
-let numberToString (n: TNumber): string =
+/// <summary>
+/// Converts a number type to a string.
+/// </summary>
+/// <param name="n">The number to convert.</param>
+/// <returns>The string representation of the number.</returns>
+let numberToString (n: Number): string =
     match n with
-    | Float f -> $"Float({f})"
-    | Integer i -> $"Integer({i})"
-    | Rational (n, d) -> $"Rational({n}/{d})"
-    | Complex (r, i) -> $"Complex({r}i{i})"
+    | LFloat f -> $"Float({f})"
+    | LInteger i -> $"Integer({i})"
+    | LRational (n, d) -> $"Rational({n}/{d})"
+    | LComplex (r, i) -> $"Complex({r}i{i})"
 
-
+/// <summary>
+/// Converts an operator to a string.
+/// </summary>
+/// <param name="op">The operator to convert.</param>
+/// <returns>The string representation of the operator.</returns>
 let operatorToString (op: Operator): string =
     match op with
     | Plus -> "+"
@@ -149,6 +215,11 @@ let operatorToString (op: Operator): string =
     | DotDot -> ".."
     | Custom s -> s
 
+/// <summary>
+/// Converts a keyword to a string.
+/// </summary>
+/// <param name="kw">The keyword to convert.</param>
+/// <returns>The string representation of the keyword.</returns>
 let keywordToString (kw: Keyword): string =
     match kw with
     | Let -> "let"
@@ -166,7 +237,14 @@ let keywordToString (kw: Keyword): string =
     | With -> "with"
     | Type -> "type"
     | Rec -> "rec"
+    | Match -> "match"
+    | Case -> "case"
 
+/// <summary>
+/// Converts a punctuation to a string.
+/// </summary>
+/// <param name="p">The punctuation to convert.</param>
+/// <returns>The string representation of the punctuation.</returns>
 let punctuationToString (p: Punctuation): string =
     match p with
     | Comma -> ","
@@ -180,6 +258,11 @@ let punctuationToString (p: Punctuation): string =
     | RightBracket -> "]"
     | Dollar -> "$"
 
+/// <summary>
+/// Converts a lexeme to a string.
+/// </summary>
+/// <param name="lex">The lexeme to convert.</param>
+/// <returns>The string representation of the lexeme.</returns>
 let lexemeToString (lex: Lexeme): string =
     match lex with
     | Number n -> $"Number(%s{numberToString n})"
@@ -189,9 +272,17 @@ let lexemeToString (lex: Lexeme): string =
     | Identifier i -> $"Identifier(%s{i})"
     | Punctuation p -> $"Punctuation({punctuationToString p})"
 
+/// <summary>
+/// Converts a token to a string.
+/// </summary>
+/// <param name="token">The token to convert.</param>
+/// <returns>The string representation of the token.</returns>
 let tokenToString (token: Token): string =
     $"{{ lexeme: %s{lexemeToString token.Lexeme}; line: %d{token.Position.Line} }}"
     
+/// <summary>
+/// A built-in function in the language.
+/// </summary>
 type BuiltInFunction =
     | Print
     | Input
@@ -217,8 +308,6 @@ type BuiltInFunction =
     | Sqrt
     | Abs
     | Floor
-    | Fold
-    | Map
     
     | Plot
     | PlotFunction
@@ -227,7 +316,8 @@ type BuiltInFunction =
     | Draw
     
     | Ceil
-    | Len
+    
+    | Err
     
     | Add
     | Sub
@@ -250,18 +340,7 @@ type BuiltInFunction =
     | CrossProduct
     | DotProduct
     
-    | Cons
-    
     | Cast
-    
-    | BInt
-    | BFloat
-    | BComplex
-    | BRational
-    | BBool
-    | BString
-    | BList
-    | BTuple
     
     | NewtonRaphson
     | Bisection
@@ -269,6 +348,11 @@ type BuiltInFunction =
     | Integrate
     | FindIntegral
     
+    | Cons
+    
+/// <summary>
+/// Map of built-in functions to their respective function type.
+/// </summary>
 let builtInFunctionMap =
     [ Identifier "print", BuiltInFunction.Print
       Identifier "input", BuiltInFunction.Input
@@ -282,6 +366,7 @@ let builtInFunctionMap =
       
       Identifier "read", BuiltInFunction.Read
       Identifier "eval", BuiltInFunction.Eval
+      Identifier "error", BuiltInFunction.Err
       
       Identifier "BUILTIN_EXP", BuiltInFunction.Exp
       Identifier "BUILTIN_LOG", BuiltInFunction.Log
@@ -290,13 +375,10 @@ let builtInFunctionMap =
       Identifier "BUILTIN_SQRT", BuiltInFunction.Sqrt
       Identifier "BUILTIN_ABS", BuiltInFunction.Abs
       Identifier "BUILTIN_FLOOR", BuiltInFunction.Floor
-      Identifier "fold", BuiltInFunction.Fold
       Identifier "plot", BuiltInFunction.Plot
       Identifier "plotFunc", BuiltInFunction.PlotFunction
       Identifier "plotFuncs", BuiltInFunction.PlotFunctions
       Identifier "BUILTIN_CEIL", BuiltInFunction.Ceil
-      Identifier "map", BuiltInFunction.Map
-      Identifier "BUILTIN_LEN", BuiltInFunction.Len
       Identifier "BUILTIN_TRUNC", BuiltInFunction.Trunc
       
       Identifier "draw", BuiltInFunction.Draw
@@ -331,16 +413,13 @@ let builtInFunctionMap =
       
       Identifier "cast", BuiltInFunction.Cast
       
-      Identifier "Int", BuiltInFunction.BInt
-      Identifier "Float", BuiltInFunction.BFloat
-      Identifier "Complex", BuiltInFunction.BComplex
-      Identifier "Rational", BuiltInFunction.BRational
-      Identifier "Boolean", BuiltInFunction.BBool
-      Identifier "String", BuiltInFunction.BString
-      Identifier "List", BuiltInFunction.BList
-      Identifier "Tuple", BuiltInFunction.BTuple
       ]
     |> Map.ofList
     
+/// <summary>
+/// Tests if a lexeme is a built-in function.
+/// </summary>
+/// <param name="s">The lexeme to test.</param>
+/// <returns>True if the lexeme is a built-in function, false otherwise.</returns>
 let isBuiltInFunction (s: Lexeme): bool =
     Map.containsKey s builtInFunctionMap

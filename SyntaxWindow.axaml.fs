@@ -7,6 +7,9 @@ open Avalonia.Media
 open TextMateSharp.Grammars
 open AvaloniaEdit.TextMate
 
+/// <summary>
+/// Example window.
+/// </summary>
 type SyntaxWindow () as this =
     inherit Window ()
 

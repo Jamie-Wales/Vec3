@@ -4,10 +4,14 @@ open System
 open Avalonia
 open Avalonia.Controls
 open Avalonia.Markup.Xaml
+open Avalonia.Input
 open Avalonia.Media
 open Avalonia.Controls.Shapes
 open Vec3.Interpreter.Backend.Types
 
+/// <summary>
+/// The window used for drawing shapes.
+/// </summary>
 type DrawWindow() as this =
     inherit Window()
     
@@ -15,6 +19,16 @@ type DrawWindow() as this =
     static let mutable windowCount = 0
     static let offset = 30
     let mutable currentVm: VM option = None
+    
+    // listen for arrow keys
+    do this.KeyDown.Add(fun e ->
+        match e.Key with
+        | Key.Left -> () 
+        | Key.Right ->  ()
+        | Key.Up -> ()
+        | Key.Down -> ()
+        | _ -> ()
+    )
     
     do
         AvaloniaXamlLoader.Load(this)
@@ -44,7 +58,7 @@ type DrawWindow() as this =
                 | false, _ -> Colors.Black
         with _ -> Colors.Black
         
-    member this.DrawShape(vm: VM, shape) =
+    member this.DrawShape(vm: VM, shape: Value) =
         currentVm <- Some vm
         let (w, h, x, y, color, typ) = match shape with
                                         | VShape(x, y, w, h, c, t) -> (x, y, w, h, c, t)

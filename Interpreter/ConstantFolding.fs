@@ -1,3 +1,6 @@
+/// <summary>
+/// Constant folding for the AST.
+/// </summary>
 module Vec3.Interpreter.ConstantFolding
 
 open Token
@@ -12,11 +15,11 @@ let rec GCD a b =
 
 let simplifyRational rat =
     match rat with
-    | Rational(a, b) ->
+    | LRational(a, b) ->
         let gcd = GCD a b
         let a = a / gcd
         let b = b / gcd
-        Rational(a, b)
+        LRational(a, b)
     | _ -> failwith "bad"
     
 
@@ -39,7 +42,7 @@ let foldConstants (program: Program) : Program =
         | EGrouping (expr, typ) -> EGrouping(foldExpr expr, typ)
         | ECall (expr, args, typ) -> ECall(foldExpr expr, List.map foldExpr args, typ)
         | EList (elems, typ) -> EList(List.map foldExpr elems, typ)
-        | EIndex (expr, index, typ) -> EIndex(foldExpr expr, foldExpr index, typ)
+        // | EIndex (expr, (start, end_, isRange), typ) -> EIndex(foldExpr expr, foldExpr index, typ)
         | ELambda(args, body, rt, pr, typ) -> ELambda(args, foldExpr body, rt, pr, typ)
         | EIf(condEx, thenEx, elseEx, typ) ->
             let cond = foldExpr condEx

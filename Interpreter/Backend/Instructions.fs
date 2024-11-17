@@ -1,3 +1,6 @@
+/// <summary>
+/// Defines instructions for the backend / virtual machine.
+/// </summary>
 module Vec3.Interpreter.Backend.Instructions
 
 type OP_CODE =
@@ -21,7 +24,6 @@ type OP_CODE =
     | Exception
     
     | COMPOUND_CREATE
-    | COMPOUND_GET
     
 let opCodeToByte =
     function
@@ -44,7 +46,6 @@ let opCodeToByte =
     | CLOSURE -> 25uy
     
     | COMPOUND_CREATE -> 26uy
-    | COMPOUND_GET -> 27uy
     
     | Exception -> 255uy
     
@@ -69,7 +70,6 @@ let byteToOpCode byte =
     | 24uy -> CALL
     | 25uy -> CLOSURE
     | 26uy -> COMPOUND_CREATE
-    | 27uy -> COMPOUND_GET
     | 255uy -> Exception
     | _ -> raise (System.Exception("Unknown OpCode"))
 
@@ -93,7 +93,6 @@ let opCodeToString =
     | CALL -> "CALL"
     | CLOSURE -> "CLOSURE"
     | COMPOUND_CREATE -> "COMPOUND_CREATE"
-    | COMPOUND_GET -> "COMPOUND_GET"
     
     | Exception -> "Exception"
     

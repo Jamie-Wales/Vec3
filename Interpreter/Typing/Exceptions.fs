@@ -1,11 +1,16 @@
+/// <summary>
+/// Exceptions for the type checker.
+/// </summary>
+/// 
 module Vec3.Interpreter.Typing.Exceptions
 
 open Vec3.Interpreter.Token
 open Vec3.Interpreter.Grammar
 
-type TType = Type
 
-
+/// <summary>
+/// Possible type errors.
+/// </summary>
 type TypeError =
     | InvalidIf of Expr
     | UndefinedVariable of Token
@@ -37,9 +42,21 @@ type TypeError =
     | InvalidFieldAccess of Token * TType
     | InvalidRange of Expr * Expr
 
+/// <summary>
+/// Allows for multiple type errors to be thrown.
+/// </summary>
 type TypeErrors = TypeError list
+
+/// <summary>
+/// Represents a type exception.
+/// </summary>
 exception TypeException of TypeErrors
 
+/// <summary>
+/// Pretty print a type error.
+/// </summary>
+/// <param name="error">The type error.</param>
+/// <returns>A string representation of the type error.</returns>
 let formatTypeError (error: TypeError) : string =
     match error with
     | UndefinedVariable token -> $"Undefined variable {token.Lexeme} at Line: {token.Position.Line}"
@@ -83,6 +100,10 @@ let formatTypeError (error: TypeError) : string =
     | InvalidFieldAccess(token, typ) -> $"Invalid field access at Line: {token.Position.Line}, got {typ}"
     | InvalidRange(expr, typ) -> $"Invalid range at Line: {expr}, got {typ}"
         
-
+/// <summary>
+/// Pretty print a list of type errors.
+/// </summary>
+/// <param name="errors">The list of type errors.</param>
+/// <returns>A string representation of the type errors.</returns>
 let formatTypeErrors (errors: TypeError list) : string =
     List.map formatTypeError errors |> String.concat "\n"
