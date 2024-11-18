@@ -4,12 +4,19 @@
 
 module Vec3.Interpreter.Backend.Builtins
 
+open Microsoft.FSharp.Control
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter
 open System
 open Vec3.Interpreter.Token
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
+
+let getNewDrawId =
+    let id = ref 0
+    fun () ->
+        id.Value <- id.Value + 1
+        id.Value
 
 let parsePlotType =
     function
@@ -441,7 +448,7 @@ let builtins =
                       | Some(VList([ VString "shape"; VString c ], _)) -> c
                       | _ -> "circle"
 
-                  VShape(width, height, x, y, colour, typ)
+                  VShape(width, height, x, y, colour, typ, getNewDrawId())
               | [ VList(elems, LIST) ] ->
                   let res =
                       elems
@@ -520,7 +527,7 @@ let builtins =
                               (width, height, x, y, colour, typ)
                           | _ -> raise <| InvalidProgramException("draw expects a list of records"))
 
-                  VShapes res
+                  VShapes (res, getNewDrawId())
               | _ -> raise <| InvalidProgramException "draw expects a title and a list of functions"),
           "Draw"
       )
@@ -789,6 +796,21 @@ let builtins =
                 | VBoolean false, _ -> VBoolean false
                 | p, x -> valuesEqual p x |> VBoolean
             | _ -> raise <| InvalidProgramException "Expected a pattern and an expression for match"), "Match")
+      Identifier "on",
+        VBuiltin((fun args ->
+            match args with
+            | [ VList([VList([VString "id"; VNumber(VInteger shapeId)], _)], RECORD); VList([VList([VString "event"; VNumber(VInteger eventId)], _)], RECORD); VFunction(func, _) ] ->
+                VEventListener(shapeId, eventId, func)
+            | _ -> raise <| InvalidProgramException $"Expected a shape id, an event id, and a function for on {args}"),
+             "On")
+      
+      Identifier "await",
+        VBuiltin((fun args ->
+            match args with
+            | [ VPromise(task) ] ->
+                Async.RunSynchronously task
+            | _ -> failwith "not a promise"
+            ), "Async")
       ]
 
 

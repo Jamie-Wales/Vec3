@@ -1233,11 +1233,12 @@ and lambda (state: ParserState) : ParseResult<Expr> =
             typeHint state
             |> Result.bind (fun (state, returnType) ->
                 parseBody state
-                |> Result.bind (fun (state, body) -> Ok(state, ELambda(params', body, Some returnType, false, None))))
+                |> Result.bind (fun (state, body) -> Ok(state, ELambda(params', body, Some returnType, false, None, 
+                false))))
 
         | _ ->
             parseBody state
-            |> Result.bind (fun (state, body) -> Ok(state, ELambda(params', body, None, false, None))))
+            |> Result.bind (fun (state, body) -> Ok(state, ELambda(params', body, None, false, None, false))))
 
 /// <summary>
 /// Parses a function type hint.
@@ -1555,6 +1556,68 @@ and recFunc (state: ParserState) : ParseResult<Stmt> =
                         Ok(state, f))
                 | _ -> Error(Expected "function body.", state)))
     | _ -> Error(Expected "Identifier", state)
+    
+and asyncFunc (state: ParserState) : ParseResult<Stmt> =
+    let state = setLabel state "Rec Func"
+
+    let rec parseParameters
+        (state: ParserState)
+        (params': (Token * TType option) list)
+        : ParseResult<(Token * TType option) list> =
+        match nextToken state with
+        | Some(state, { Lexeme = Punctuation RightParen }) -> Ok(state, List.rev params')
+        | Some(state, ({ Lexeme = Identifier _ } as token)) ->
+            let paramType, state =
+                match peek state with
+                | Some { Lexeme = Punctuation Colon } ->
+                    let state = advance state
+
+                    match typeHint state with
+                    | Ok(state, paramType) -> Some paramType, state
+                    | Error _ -> None, state
+                | _ -> None, state
+
+            match peek state with
+            | Some { Lexeme = Punctuation RightParen } -> Ok(advance state, (List.rev ((token, paramType) :: params')))
+            | Some { Lexeme = Punctuation Comma } -> parseParameters (advance state) ((token, paramType) :: params')
+            | _ -> Error(Expected "',' or ')'.", state)
+        | _ -> Error(Expected "parameter name.", state)
+
+    match nextToken state with
+    | Some(state, ({ Lexeme = Identifier _ } as name)) ->
+        expect state (Punctuation LeftParen)
+        |> Result.bind (fun state ->
+            parseParameters state []
+            |> Result.bind (fun (state, parameters) ->
+                match nextToken state with
+                | Some(state, { Lexeme = Operator(Arrow, _) }) ->
+                    expression state Precedence.Assignment
+                    |> Result.bind (fun (state, expr) ->
+                        let f = SAsync(name, parameters, expr, None)
+                        Ok(state, f))
+                | Some(state, { Lexeme = Punctuation Colon }) ->
+                    typeHint state
+                    |> Result.bind (fun (state, returnType) ->
+                        match nextToken state with
+                        | Some(state, { Lexeme = Operator(Arrow, _) }) ->
+                            expression state Precedence.Assignment
+                            |> Result.bind (fun (state, expr) ->
+                                let f = SAsync(name, parameters, expr, Some returnType)
+                                Ok(state, f))
+                        | Some(state, { Lexeme = Punctuation LeftBrace }) ->
+                            block state
+                            |> Result.bind (fun (state, expr) ->
+                                let f = SAsync(name, parameters, expr, Some returnType)
+                                Ok(state, f))
+                        | _ -> Error(Expected "function body.", state))
+
+                | Some(state, { Lexeme = Punctuation LeftBrace }) ->
+                    block state
+                    |> Result.bind (fun (state, expr) ->
+                        let f = SAsync(name, parameters, expr, None)
+                        Ok(state, f))
+                | _ -> Error(Expected "function body.", state)))
+    | _ -> Error(Expected "Identifier", state)
 
 /// <summary>
 /// Parses a statement.
@@ -1573,6 +1636,7 @@ and statement (state: ParserState) : ParseResult<Stmt> =
             | Keyword.Assert -> assertStatement (advance state)
             | Keyword.Type -> typeDecl (advance state)
             | Keyword.Rec -> recFunc (advance state)
+            | Keyword.Async -> asyncFunc (advance state)
             | _ ->
                 expression state Precedence.None
                 |> Result.bind (fun (state, expr) -> Ok(state, SExpression(expr, None)))

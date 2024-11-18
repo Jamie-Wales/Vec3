@@ -373,7 +373,7 @@ type Expr =
     /// <summary>
     /// A lambda expression with a list of arguments, a body, a return type, a pure flag, and a type.
     /// </summary>
-    | ELambda of (Token * Type option) list * Expr * Type option * bool * Type option // bool is pure flag
+    | ELambda of (Token * Type option) list * Expr * Type option * bool * Type option * bool // bool is pure flag
     | EBlock of Stmt list * Type option
     | ERange of Expr * Expr * Type option
 
@@ -411,6 +411,7 @@ and Stmt =
     | SAssertStatement of Expr * Expr option * Type option
     | STypeDeclaration of Token * Type * Type option
     | SRecFunc of Token * (Token * Type option) list * Expr * Type option
+    | SAsync of Token * (Token * Type option) list * Expr * Type option
   
 /// <summary>
 /// Various patterns for pattern matching.

@@ -111,9 +111,9 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | ELiteral(lit, _) -> compileLiteral lit state
         | EIdentifier(i, _) -> compileIdentifier i state
         | EGrouping(e, _) -> compileGrouping e state
-        | ELambda(parameters, body, _, pr, _) ->
+        | ELambda(parameters, body, _, pr, _, isAsync) ->
             let parameters = List.map fst parameters
-            compileLambda parameters body pr state
+            compileLambda parameters body pr isAsync state
         | ECall(callee, arguments, _) -> compileCall callee arguments false state
         | EList(elements, _) -> compileList elements state
         | EIndex(list, (start, end_, isRange), _) ->
@@ -334,7 +334,7 @@ and compileBlock (stmts: Stmt list) : Compiler<unit> =
                  ScopeDepth = newState.ScopeDepth - 1 }))
 
 
-and compileLambda (parameters: Token list) (body: Expr) (pur: bool) : Compiler<unit> =
+and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bool) : Compiler<unit> =
     fun state ->
         let functionName = $"lambda_{state.CurrentFunction.Name}"
         let lambdaFunction = initFunction functionName
@@ -371,8 +371,12 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) : Compiler<u
             | Ok((), finalState) ->
                 emitByte (byte 1) finalLambdaState |> ignore
                 
+                printfn $"{isAsync}"
                 let constIndex =
-                    addConstant state.CurrentFunction.Chunk (VFunction(finalState.CurrentFunction, builtin))
+                    addConstant state.CurrentFunction.Chunk (if isAsync then VAsyncFunction(finalState
+                    .CurrentFunction) else VFunction(finalState
+                    .CurrentFunction, 
+                    builtin))
 
                 emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
             | Error e -> Error e)
@@ -482,9 +486,12 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
         match stmt with
         | SExpression(expr, _) -> compileExpr expr state
         | SVariableDeclaration(name, initializer, _) -> compileVariableDeclaration name initializer state
+        | SAsync(name, tup, expr, _) ->
+            printfn "here"
+            let assign = SVariableDeclaration(name, ELambda(tup, expr, None, false, None, true), None)
+            compileStmt assign state
         | SRecFunc(name, tup, expr, _) ->
-            printfn $"{expr}"
-            let assign = SVariableDeclaration(name, ELambda(tup, expr, None, false, None), None)
+            let assign = SVariableDeclaration(name, ELambda(tup, expr, None, false, None, false), None)
             compileStmt assign state
         | SAssertStatement(expr, msg, _) ->
             let callee =

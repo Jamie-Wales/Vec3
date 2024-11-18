@@ -3,6 +3,9 @@
 /// </summary>
 module Vec3.Interpreter.Backend.Types
 
+open System
+open System.Runtime.InteropServices.JavaScript
+open System.Threading.Tasks
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.PrettyPrinter
 open Vec3.Interpreter.SymbolicExpression
@@ -20,7 +23,7 @@ type OutputStreams =
     { ConstantPool: seq<string>
       Disassembly: seq<string>
       Execution: seq<string>
-      StandardOutput: seq<string>
+      StandardOutput: Ref<seq<string>>
       Globals: seq<string> }
 
 type Chunk =
@@ -40,6 +43,7 @@ and Value =
     | VString of string
     | VBoolean of bool
     | VFunction of Function * Expression option
+    | VAsyncFunction of Function 
     | VClosure of Closure
     | VNil
     | VList of Value list * CompoundType
@@ -47,10 +51,12 @@ and Value =
     | VPlotData of string * Value list * Value list * PlotType
     | VPlotFunction of string * (double -> double)
     | VPlotFunctions of string * (double -> double) list
-    | VShape of (float * float * float * float * string * string)
-    | VShapes of (float * float * float * float * string * string) list
+    | VShape of (float * float * float * float * string * string * int)
+    | VShapes of (float * float * float * float * string * string) list * int
     | VOutput of string
     | VBlock of Expr
+    | VEventListener of int * int * Function
+    | VPromise of Async<Value>
 
 and CompoundType =
     | LIST
@@ -90,7 +96,8 @@ and VM =
       Streams: OutputStreams
       ExecutionHistory: ResizeArray<VM>
       Plots: ResizeArray<Value>
-      Canvas: ResizeArray<Value> }
+      Canvas: ResizeArray<Value>
+      EventListeners: ResizeArray<int * int * Function> } // shape id, event id, function
 
 let rec valueToString =
     function
@@ -125,3 +132,6 @@ let rec valueToString =
     | VShape _ -> "<shape>"
     | VShapes _ -> "<shapes>"
     | VOutput _ -> "<output>"
+    | VEventListener _ -> "<event listener>"
+    | VAsyncFunction _ -> "<async function>"
+    | VPromise _ -> "<promise>"

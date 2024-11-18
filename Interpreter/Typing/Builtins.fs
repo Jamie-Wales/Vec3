@@ -211,7 +211,10 @@ let drawType =
                                     | _ -> false
                         )))
     
-    TFunction([ recTyp ], TUnit, false, true)
+    let token = { Lexeme = Identifier "id"; Position = { Column = 0; Line = 0 } }
+    let returnT = TRecord(TRowExtend(token, TInteger, TRowEmpty))
+    
+    TFunction([ recTyp ], returnT, false, true)
 
 let findIntegralType =
     let funcT =
@@ -221,6 +224,14 @@ let findIntegralType =
 
 let readTyp =
     TFunction([TString], TAny, false, true)
+
+let onType =
+    let idTyp = TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldOf (Identifier "id") TInteger)))
+    let eventTyp = TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldOf (Identifier "event") TInteger)))
+    let stateT = TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldsOf [(Identifier "x", TFloat); (Identifier "y", TFloat)])))
+    let returnT = TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldsOf [(Identifier "x", TFloat); (Identifier "y", TFloat)])))
+    
+    TFunction([idTyp; eventTyp; TAny], returnT, false, true)
     
 let BuiltinFunctions: Map<BuiltInFunction, TType> =
     [ Print, TFunction([ TAny ], TUnit, false, true)
@@ -282,6 +293,10 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       Err, TFunction([ TString ], TAny, false, true)
 
       Cast, castType
+      
+      On, onType
+      
+      Await, TAny
 
       ]
     |> Map.ofList

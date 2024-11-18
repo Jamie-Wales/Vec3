@@ -8,6 +8,8 @@ open Avalonia.Input
 open Avalonia.Media
 open Avalonia.Controls.Shapes
 open Vec3.Interpreter.Backend.Types
+open Vec3.Interpreter.Backend.VM
+
 
 /// <summary>
 /// The window used for drawing shapes.
@@ -20,15 +22,15 @@ type DrawWindow() as this =
     static let offset = 30
     let mutable currentVm: VM option = None
     
+    let mutable shapes: Map<int, Shape> = Map.empty
+    let mutable eventListeners: Map<int, (int * Function) list> = Map.empty
+    
     // listen for arrow keys
     do this.KeyDown.Add(fun e ->
-        match e.Key with
-        | Key.Left -> () 
-        | Key.Right ->  ()
-        | Key.Up -> ()
-        | Key.Down -> ()
-        | _ -> ()
+        let listenerId = this.keyToInt(e.Key)
+        this.handleEvent listenerId
     )
+    
     
     do
         AvaloniaXamlLoader.Load(this)
@@ -38,6 +40,51 @@ type DrawWindow() as this =
         this.Title <- "Vec3 Drawing"
         this.Width <- 800.0
         this.Height <- 600.0
+        this.Focusable <- true
+    
+    member private this.handleEvent listenerId =
+        let listeners = eventListeners.TryFind(listenerId)
+
+        printfn $"Handling event {listenerId}"
+        printfn $"Handling event {listeners}"
+        match listeners with
+        | Some lst -> 
+            lst |> List.iter (fun (shapeId, func) ->
+                    let shape = shapes.TryFind(shapeId)
+                    match shape with
+                    | Some shape ->
+                        let x = Canvas.GetLeft(shape) + 25.0
+                        let y = Canvas.GetTop(shape) + 25.0
+                        let args = VList([VList([VString "x"; VNumber(VFloat x)], LIST); VList([VString "y"; VNumber(VFloat y)], LIST)], RECORD)
+                        match currentVm with
+                        | Some vm ->
+                            let newVal = runFunction vm func [args]
+                            match newVal with
+                            | VList([VList([VString "x"; VNumber(VFloat x)], _); VList([VString "y"; VNumber(VFloat y)], _)], RECORD) ->
+                                match shape with
+                                | :? Rectangle as rect ->
+                                    Canvas.SetLeft(rect, x)
+                                    Canvas.SetTop(rect, y)
+                                | :? Ellipse as circle ->
+                                    Canvas.SetLeft(circle, x - circle.Width / 2.0)
+                                    Canvas.SetTop(circle, y - circle.Height / 2.0)
+                                | :? Avalonia.Controls.Shapes.Line as line ->
+                                    Canvas.SetLeft(line, x)
+                                    Canvas.SetTop(line, y)
+                                | _ -> ()
+                            | _ -> ()
+                        | _ -> ()
+                    | _ -> ()
+                )
+        | None -> ()
+        
+    member private this.keyToInt key =
+        match key with
+        | Key.Left -> 0
+        | Key.Right -> 1
+        | Key.Up -> 2
+        | Key.Down -> 3
+        | _ -> -1
         
     member private this.InitializeComponent() =
         canvasControl <- this.FindControl<Canvas>("Canvas")
@@ -57,12 +104,20 @@ type DrawWindow() as this =
                 | true, color -> color
                 | false, _ -> Colors.Black
         with _ -> Colors.Black
+   
+    member this.AddEventListener(vm: VM, shapeId: int, listenerId: int, func: Function) =
+        currentVm <- Some vm
+        let listeners = eventListeners.TryFind(listenerId)
+        let listeners = match listeners with
+                        | Some lst -> lst
+                        | None -> []
+        eventListeners <- eventListeners.Add(listenerId, (shapeId, func) :: listeners)
         
     member this.DrawShape(vm: VM, shape: Value) =
         currentVm <- Some vm
-        let (w, h, x, y, color, typ) = match shape with
-                                        | VShape(x, y, w, h, c, t) -> (x, y, w, h, c, t)
-                                        | _ -> raise <| InvalidProgramException("Unknown shape value")
+        let w, h, x, y, color, typ, id = match shape with
+                                            | VShape(x, y, w, h, c, t, id) -> (x, y, w, h, c, t, id)
+                                            | _ -> raise <| InvalidProgramException("Unknown shape value")
         
         let colorBrush = SolidColorBrush(this.ParseColor(color))
         
@@ -94,6 +149,8 @@ type DrawWindow() as this =
                 Canvas.SetTop(line, y)
                 line :> Shape
                 
+        printfn $"Adding shape with id {id}"
+        shapes <- shapes.Add(id, shape)
         canvasControl.Children.Add(shape)
         
     member this.Clear() =

@@ -138,11 +138,11 @@ type NotebookWindow () as this =
                 match parseAndCompileWithTE editor.Text vm typeEnv with
                 | Some (newVM, env) ->
                     typeEnv <- env
-                    let oldOutputLength = Seq.length vm.Streams.StandardOutput
+                    let oldOutputLength = Seq.length vm.Streams.StandardOutput.Value
                     vm <- run newVM
                     output.Foreground <- SolidColorBrush(Colors.Black)
                     
-                    let newOutput = vm.Streams.StandardOutput 
+                    let newOutput = vm.Streams.StandardOutput.Value 
                                   |> Seq.skip oldOutputLength 
                                   |> String.concat "\n"
                     output.Text <- newOutput

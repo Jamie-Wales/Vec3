@@ -61,6 +61,8 @@ rec map(list, func) -> if len(list) == 0 then
 						else
 							func(head(list)) :: map(tail(list), func)
 
+											
+
 // find the sum, product, any, and all of a list
 let sum = (list) -> fold(list, 0, (x, y) -> x + y)
 let product = (list) -> fold(list, 1, (x, y) -> x * y)
@@ -76,6 +78,13 @@ rec range(start, end) -> if start >= end then
 								[]
 							else
 								start :: range(start + 1, end)
+
+let Keys = {
+	Left = { event = 0 },
+	Right = { event = 1 },
+	Up = { event = 2 },
+	Down = { event = 3 }
+}
 """
 
 /// <summary>

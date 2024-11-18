@@ -43,7 +43,7 @@ let foldConstants (program: Program) : Program =
         | ECall (expr, args, typ) -> ECall(foldExpr expr, List.map foldExpr args, typ)
         | EList (elems, typ) -> EList(List.map foldExpr elems, typ)
         // | EIndex (expr, (start, end_, isRange), typ) -> EIndex(foldExpr expr, foldExpr index, typ)
-        | ELambda(args, body, rt, pr, typ) -> ELambda(args, foldExpr body, rt, pr, typ)
+        | ELambda(args, body, rt, pr, typ, isAsync) -> ELambda(args, foldExpr body, rt, pr, typ, isAsync)
         | EIf(condEx, thenEx, elseEx, typ) ->
             let cond = foldExpr condEx
             match cond with

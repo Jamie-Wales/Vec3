@@ -4,7 +4,9 @@
 
 module Vec3.Interpreter.Backend.VM
 
+open System.Threading.Tasks
 open System
+open Compiler
 open Microsoft.FSharp.Collections
 open Vec3.Interpreter
 open Vec3.Interpreter.Backend.Instructions
@@ -14,6 +16,8 @@ open Vec3.Interpreter.Backend.Builtins
 
 open Vec3.Interpreter.Token
 open Grammar
+
+let output = ref (Seq.empty)
 
 (*
 
@@ -40,7 +44,7 @@ let createOutputStreams () =
     { ConstantPool = Seq.empty
       Disassembly = Seq.empty
       Execution = Seq.empty
-      StandardOutput = Seq.empty
+      StandardOutput = output
       Globals = Seq.empty }
 
 let getCurrentFrame (vm: VM) = vm.Frames[vm.Frames.Count - 1]
@@ -93,8 +97,10 @@ let appendOutput (vm: VM) (streamType: StreamType) (str: string) =
             { vm.Streams with
                 Execution = appendToStream vm.Streams.Execution str }
         | StandardOutput ->
+            let appended = appendToStream vm.Streams.StandardOutput.Value str
+            output.Value <- appended
             { vm.Streams with
-                StandardOutput = appendToStream vm.Streams.StandardOutput str }
+                StandardOutput = output }
         | Globals ->
             { vm.Streams with
                 Globals = appendToStream vm.Streams.Globals str }
@@ -121,6 +127,13 @@ let defineGlobal (vm: VM) (name: string) (value: Value) =
 let getGlobal (vm: VM) (name: string) =
     Map.tryFind name vm.Globals
 
+let getStreamContent (stream: seq<string>) =
+    String.concat Environment.NewLine (Seq.toArray stream)
+
+let resetStreams (vm: VM) =
+    { vm with
+        Streams = createOutputStreams () }
+    
 
 let rec runFrameRecursive vm =
     let frame = getCurrentFrame vm
@@ -361,7 +374,8 @@ and runLoop vm =
 
             runLoop vm
 
-
+and joinOutput (vm1: VM) (vm2: VM) =
+    appendOutput vm1 StandardOutput (vm2.Streams.StandardOutput.ToString())
 
 and callValue (vm: VM) (argCount: int) (recursive: int): VM =
     let callee = peek vm argCount
@@ -416,17 +430,37 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
                 
             let value = func args
             let vm, value = match value with
-                            | VShape _ -> vm.Plots.Add(value); vm, VNil
+                            | VShape (_, _, _, _, _, _, id) ->
+                                vm.Canvas.Add(value)
+                                vm.Plots.Add(value)
+                                let record = VList([VList([VString "id"; VNumber (VInteger id)], LIST)], RECORD)
+                                vm, record
                             | VPlotData _ -> vm.Plots.Add(value); vm, VNil
                             | VPlotFunction _ -> vm.Plots.Add(value); vm, VNil
                             | VPlotFunctions _ -> vm.Plots.Add(value); vm, VNil
-                            | VShapes _ -> vm.Plots.Add(value); vm, VNil
+                            | VShapes (_, id) ->
+                                vm.Canvas.Add(value)
+                                vm.Plots.Add(value)
+                                let record = VList([VList([VString "id"; VNumber (VInteger id)], LIST)], RECORD)
+                                vm, record
                             | VOutput s ->
                                 appendOutput vm StandardOutput s, VNil
+                            | VEventListener (id, event, func) -> 
+                                vm.EventListeners.Add(id, event, func)
+                                vm, VNil
                             | _ -> vm, value
             
             let _, vm = pop vm
             push vm value
+        | VAsyncFunction func ->
+            let runAsyncFunction (func: Function) (args: Value list) : Async<Value> =
+                async {
+                    let res = runFunction vm func args
+                    return res
+                }
+            let args = [ 0 .. argCount - 1 ] |> List.map (fun _ -> let value, _ = pop vm in value) |> List.rev
+            let res = runAsyncFunction func args
+            push vm (VPromise res)
         | _ -> raise <| InvalidProgramException $"Can only call functions and closures {callee}"
     | 1 ->
         match callee with
@@ -456,13 +490,24 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
 
             let value = func args
             let vm, value = match value with
-                            | VShape _ -> vm.Plots.Add(value); vm, VNil
+                            | VShape (_,_,_,_,_,_,id) ->
+                                vm.Plots.Add(value)
+                                vm.Canvas.Add(value)
+                                let record = VList([VList([VString "id"; VNumber (VInteger id)], LIST)], RECORD)
+                                vm, record
                             | VPlotData _ -> vm.Plots.Add(value); vm, VNil
                             | VPlotFunction _ -> vm.Plots.Add(value); vm, VNil
                             | VPlotFunctions _ -> vm.Plots.Add(value); vm, VNil
-                            | VShapes _ -> vm.Plots.Add(value); vm, VNil
+                            | VShapes (_, id) ->
+                                vm.Plots.Add(value)
+                                vm.Canvas.Add(value)
+                                let record = VList([VList([VString "id"; VNumber (VInteger id)], LIST)], RECORD)
+                                vm, record
                             | VOutput s ->
                                 appendOutput vm StandardOutput s, VNil
+                            | VEventListener (id, event, func) -> 
+                                vm.EventListeners.Add(id, event, func)
+                                vm, VNil
                             | _ -> vm, value
             
             let _, vm = pop vm
@@ -472,18 +517,11 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
     | _ -> raise <| InvalidProgramException $"Invalid recursive value {recursive}"
 
 
-let getStreamContent (stream: seq<string>) =
-    String.concat Environment.NewLine (Seq.toArray stream)
-
-let resetStreams (vm: VM) =
-    { vm with
-        Streams = createOutputStreams () }
+    
+and run (vm: VM) = runLoop vm
     
     
-let run (vm: VM) = runLoop vm
-    
-    
-let rec createNewVM (mainFunc: Function) : VM =
+and createNewVM (mainFunc: Function) : VM =
     let constantPool =
         mainFunc.Chunk.ConstantPool
         |> Seq.indexed
@@ -498,11 +536,12 @@ let rec createNewVM (mainFunc: Function) : VM =
             { ConstantPool = constantPool
               Disassembly = [""]
               Execution = Seq.empty
-              StandardOutput = Seq.empty
+              StandardOutput = output
               Globals = Seq.empty }
           ExecutionHistory = ResizeArray<VM>()
           Plots = ResizeArray<Value>()
-          Canvas = ResizeArray<Value>() 
+          Canvas = ResizeArray<Value>()
+          EventListeners = ResizeArray<int * int * Function>() 
           }  
     let mainFrame =
         { Function = mainFunc
@@ -537,7 +576,7 @@ and specialCasedBuiltins (): Map<string, Value> =
                     let expr = SymbolicExpression.toExpr diff
                     
                     let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
-                    let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
+                    let expr = SExpression(ELambda([(param, None)], expr, None, true, None, false), None)
                     
                     let compiled = Compiler.compileProgram [expr]
                     match compiled with
@@ -557,7 +596,7 @@ and specialCasedBuiltins (): Map<string, Value> =
                   let expr = SymbolicExpression.toExpr integral
                   
                   let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
-                  let expr = SExpression(ELambda([(param, None)], expr, None, true, None), None)
+                  let expr = SExpression(ELambda([(param, None)], expr, None, true, None, false), None)
                   
                   let compiled = Compiler.compileProgram [expr]
                   match compiled with
@@ -570,3 +609,16 @@ and specialCasedBuiltins (): Map<string, Value> =
         ]
         |> List.map (fun (key, value) -> lexemeToString key, value)
         |> Map.ofList
+
+and runFunction (vm: VM) (func: Function) (args: Value list) : Value =
+    let vm = push vm (VFunction(func, None))
+    args |> List.iter (fun arg -> push vm arg |> ignore)
+    let vm = callValue vm (List.length args) 0
+    let vm = runLoop vm
+    let result, _ = pop vm
+    result
+    
+    
+    
+    
+    

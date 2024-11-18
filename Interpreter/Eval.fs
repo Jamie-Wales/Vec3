@@ -256,7 +256,7 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
         let expr = evalExpr env expr
 
         match expr with
-        | ELambda(params', body, _, _, _) ->
+        | ELambda(params', body, _, _, _, _) ->
             let params' = List.map fst params'
             let rec evalParams (env: Env) (params': Token list) (args: Expr list) =
                 match params', args with
@@ -332,7 +332,7 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
                     let args = List.map (evalExpr env) args
                     
                     match args with
-                    | [ EList(exprs, _); ELambda([param], body, _, _, _) ] ->
+                    | [ EList(exprs, _); ELambda([param], body, _, _, _, _) ] ->
                         let param = fst param
                         EList(List.map (fun e -> evalExpr (Map.add param.Lexeme e env) body) exprs, None)
                     | [ EList(exprs, _); EIdentifier _ as id ] ->
@@ -352,7 +352,7 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
                     let args = List.map (evalExpr env) args
                     
                     match args with
-                    | [ EList(exprs', _); init; ELambda([listParam; accParam], body, _, _, _); ] ->
+                    | [ EList(exprs', _); init; ELambda([listParam; accParam], body, _, _, _, _); ] ->
                         let listParam = fst listParam
                         let accParam = fst accParam
                         
@@ -564,7 +564,7 @@ let rec evalExpr (env: Env) (expr: Expr) : Expr =
                 | _ -> failwith "invalid"
             | _ -> failwith $"function {name} not found"
         | _ -> failwith "invalid"
-    | ELambda(params', body, rt, pr, t') -> ELambda(params', body, rt, pr, t')
+    | ELambda(params', body, rt, pr, t', a) -> ELambda(params', body, rt, pr, t', a)
     | EIdentifier(name, typ) ->
         match env.TryGetValue name.Lexeme with
         | true, expr -> expr
@@ -640,7 +640,7 @@ and evalStmt (env: Env) (stmt: Stmt) : Expr * Env =
     match stmt with
     | SExpression(expr, _) -> evalExpr env expr, env
     | SRecFunc (name, params', body, t) ->
-        let lambda = ELambda(params', body, None, false, t)
+        let lambda = ELambda(params', body, None, false, t, false)
         let env = Map.add name.Lexeme lambda env
         lambda, env
 

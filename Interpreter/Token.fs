@@ -91,6 +91,7 @@ type Keyword =
     | Rec
     | Match
     | Case
+    | Async
     
 /// <summary>
 /// Map of keywords to their respective keyword type.
@@ -113,6 +114,7 @@ let keywordMap =
       "rec", Keyword.Rec
       "match", Keyword.Match
       "case", Keyword.Case
+      "async", Keyword.Async
        ]
     |> Map.ofList
 
@@ -239,6 +241,7 @@ let keywordToString (kw: Keyword): string =
     | Rec -> "rec"
     | Match -> "match"
     | Case -> "case"
+    | Async -> "async"
 
 /// <summary>
 /// Converts a punctuation to a string.
@@ -350,6 +353,10 @@ type BuiltInFunction =
     
     | Cons
     
+    | On
+    
+    | Await
+    
 /// <summary>
 /// Map of built-in functions to their respective function type.
 /// </summary>
@@ -412,6 +419,9 @@ let builtInFunctionMap =
       Operator (ColonColon, Some Infix), BuiltInFunction.Cons
       
       Identifier "cast", BuiltInFunction.Cast
+      Identifier "on", BuiltInFunction.On
+      
+      Identifier "await", BuiltInFunction.Await
       
       ]
     |> Map.ofList

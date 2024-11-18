@@ -39,7 +39,7 @@ let add = (a, b) -> a + b
 let typed_add = (a: int, b: int): int -> a + b
 
 // Block syntax
-let factorial = (n: int) {
+rec factorial (n: int) {
     if n <= 1 then
         1
     else
@@ -55,17 +55,19 @@ let sign = (x) -> 1 if x > 0 else -1 if x < 0 else 0
 
 // 5. Lists and Operations
 let numbers = [1, 2, 3, 4, 5]
-let first = numbers[0]
-let mapped = map((x) -> x * 2, numbers)
+let head = numbers[0]
+let tail = numbers[1..]
+let mapped = map(numbers, (x) -> x * 2)
 
 // 6. Built-in Functions
 print("Output to console")
-len([1, 2, 3])        // List length
-map((x) -> x * x, [1, 2, 3])
 
 // 7. Mathematical Functions
 let f = (x) -> x^2 - 2*x + 1
 plotFunc("quadratic", f)
+let diff = differentiate(f)
+let integral = integrate(f)
+let defIntegral = findIntegral(f, 0.0, 1.0)
 
 // 8. Advanced Examples
 // Function composition

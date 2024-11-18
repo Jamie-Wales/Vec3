@@ -100,7 +100,13 @@ let data = {
     height = 50.0,
     colour = "red"
 }
-draw(data)
+
+let id = draw(data)
+
+on(id, Keys.Left, (state) -> { x = state.x + 10.0, y = cos(state.x) * 10.0 + 100.0 })
+on(id, Keys.Right, (state) -> { x = state.x - 10.0, y = cos(state.x) * 10.0 + 100.0 })
+on(id, Keys.Up, (state) -> { x = state.x, y = state.y + 20.0 })
+on(id, Keys.Down, (state) -> { x = state.x, y = state.y - 20.0 })
 
 // list casting
 let x = [1..10] : [float]
@@ -183,8 +189,11 @@ let x = [1..10] : [float]
         let shapes =
             vm.Canvas|> Seq.choose (function 
             | VShape _ as shape -> Some shape
+            | VShapes _ as shapes -> Some shapes
             | _ -> None)
             |> Seq.toList
+            
+        printfn $"{shapes}"
             
         if not (List.isEmpty shapes) then
             let drawWindow = DrawWindow()
@@ -192,6 +201,12 @@ let x = [1..10] : [float]
             Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
                 for shape in shapes do
                     drawWindow.DrawShape(vm, shape)
+                
+                for eventListener in vm.EventListeners do
+                    let shapeId, listenerId, func = eventListener
+                    drawWindow.AddEventListener(vm, shapeId, listenerId, func)
+                
+                vm.EventListeners.Clear()
             ) |> ignore
 
         // Handle other plot types
@@ -244,7 +259,7 @@ let x = [1..10] : [float]
             | _ -> ()
                 
         vm.Plots.Clear()
-            
+        
     member private this.LoadCode() =
         replState <- createNewVM(initFunction("Main"))
         let code = this.GetEditorText()
@@ -253,9 +268,10 @@ let x = [1..10] : [float]
             | Some vm ->
                 replState <- run vm 
                 standardOutput.Foreground <- SolidColorBrush(Colors.White)
-                let outputText = String.concat "\n" replState.Streams.StandardOutput
+                let outputText = String.concat "\n" output.Value
                 standardOutput.Text <- $"Vec3 code loaded and executed:\n%s{outputText}"
-                this.HandlePlotOutput(replState)  
+                this.HandlePlotOutput(replState)
+                vm.Streams.StandardOutput.Value <- Seq.empty
             | None -> 
                 standardOutput.Foreground <- SolidColorBrush(Colors.Red)
                 standardOutput.Text <- "Failed to compile code"
@@ -323,11 +339,11 @@ let x = [1..10] : [float]
                 match noTcParseAndCompile code replState with
                 | Some vm ->
                     let previousOutput = standardOutput.Text  
-                    let oldOutputLength = Seq.length replState.Streams.StandardOutput
+                    let oldOutputLength = Seq.length replState.Streams.StandardOutput.Value
                     replState <- run vm
                     standardOutput.Foreground <- SolidColorBrush(Colors.White)
                     
-                    let newOutput = replState.Streams.StandardOutput 
+                    let newOutput = replState.Streams.StandardOutput.Value 
                                   |> Seq.skip oldOutputLength 
                                   |> String.concat "\n"
                     if not (String.IsNullOrWhiteSpace(newOutput)) then
