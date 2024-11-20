@@ -18,7 +18,7 @@ type Expression =
     /// <summary>
     /// A variable.
     /// </summary>
-    | X
+    | X // maybe make this Var of string for multiple variables
     
     /// <summary>
     /// A constant value in the expression.
@@ -53,35 +53,6 @@ type Expression =
     | Floor of Expression
     | Ceiling of Expression
     | Truncate of Expression
-    
-    
-    with
-    
-    static member C (x: int) = Const x
-    static member C (x: float) = Const x
-    static member (~-) (x: Expression) = Negation x
-    static member (+) (x: Expression, y: Expression) = Addition (x, y)
-    static member (-) (x: Expression, y: Expression) = Subtraction (x, y)
-    static member (*) (x: Expression, y: Expression) = Multiplication (x, y)
-    static member (/) (x: Expression, y: Expression) = Division (x, y)
-    static member ( ** ) (x: Expression, y: Expression) = Power (x, y)
-    
-    static member Sin (x: Expression) = Sine x
-    static member Cos (x: Expression) = Cosine x
-    static member Tan (x: Expression) = Tangent x
-    
-    static member ASin (x: Expression) = ASine x
-    static member ACos (x: Expression) = ACosine x
-    static member ATan (x: Expression) = ATangent x
-    
-    static member Exp (x: Expression) = Exponential x
-    static member Log (x: Expression, y: Expression) = Logarithm (x, y)
-    static member Log2 (x: Expression) = Logarithm (Const 2.0, x)
-    static member Log10 (x: Expression) = Logarithm (Const 10.0, x)
-    static member LogN (n: float) (x: Expression) = Logarithm (Const n, x)
-    static member LogE (x: Expression) = Logarithm (Const Math.E, x)
-    static member Sqrt (x: Expression) = SquareRoot x
-    static member Abs (x: Expression) = AbsoluteValue x
     
     
 /// <summary>
@@ -283,7 +254,9 @@ let simplify (expression: Expression) : Expression =
         | Addition (x, Const 0.0) -> simplifier x
         
         | Subtraction (x, Const 0.0) -> simplifier x
-        | Subtraction (Const c, x) when c = 0.0 -> Negation (simplifier x)
+        | Subtraction (Const c, x) when c = 0.0 ->
+            let x = simplifier x
+            Negation x
         
         | Multiplication (Const 0.0, _) -> Const 0.0
         | Multiplication (_, Const 0.0) -> Const 0.0
@@ -395,11 +368,23 @@ let integrate (expression: Expression) : Expression =
         match simplify expression with
         | X -> Multiplication (Const 0.5, Power (X, Const 2.0))
         | Const x -> Multiplication (Const x, X)
-        | Negation x -> Negation (inte x)
-        | Addition (x, y) -> Addition (inte x, inte y)
-        | Subtraction (x, y) -> Subtraction (inte x, inte y)
-        | Multiplication (x, y) -> Multiplication (inte x, y)
-        | Division (x, y) -> Division (inte x, y)
+        | Negation x ->
+            let x = inte x
+            Negation x
+        | Addition (x, y) ->
+            let x = inte x
+            let y = inte y
+            Addition (x, y)
+        | Subtraction (x, y) ->
+            let x = inte x
+            let y = inte y
+            Subtraction (x, y)
+        | Multiplication (x, y) ->
+            let x = inte x
+            Multiplication (x, y)
+        | Division (x, y) ->
+            let x = inte x
+            Division (x, y)
         | Power (x, y) -> Division (Power (x, Addition (y, Const 1.0)), Addition (y, Const 1.0))
         
         | Sine x -> Negation (Cosine x)
@@ -414,7 +399,9 @@ let integrate (expression: Expression) : Expression =
         | Logarithm (x, y) -> Multiplication (y, Logarithm (Const Math.E, x))
         | SquareRoot x -> Multiplication (Const 0.5, Multiplication (x, SquareRoot x))
         
-        | AbsoluteValue x -> AbsoluteValue (inte x)
+        | AbsoluteValue x ->
+            let x = inte x
+            AbsoluteValue x
         | Floor _ -> Const 0.0
         | Ceiling _ -> Const 0.0
         | Truncate _ -> Const 0.0
@@ -467,3 +454,45 @@ let rec toString (expression: Expression) : string =
     | Ceiling x -> $"ceil({toString x})"
     | Truncate x -> $"trunc({toString x})"
     
+/// <summary>
+/// Find the Taylor series of an expression.
+/// </summary>
+/// <param name="expression">The expression to find the Taylor series of.</param>
+/// <param name="n">The number of terms in the Taylor series.</param>
+/// <returns>The Taylor series of the expression.</returns>
+let rec taylorSeries (expression: Expression) (n: int) : Expression =
+    let rec factorial (n: int) =
+        if n < 2 then 1
+        else n * factorial (n - 1)
+        
+    let rec taylor (expression: Expression) (n: int) : Expression =
+        match expression with
+        | X -> if n = 0 then X else if n % 2 = 0 then Const 0.0 else if n % 4 = 1 then X else Negation X
+        | Const x -> Const x
+        | Negation x -> Negation (taylor x n)
+        | Addition (x, y) -> Addition (taylor x n, taylor y n)
+        | Subtraction (x, y) -> Subtraction (taylor x n, taylor y n)
+        | Multiplication (x, y) -> Multiplication (taylor x n, taylor y n)
+        | Division (x, y) -> Division (taylor x n, taylor y n)
+        | Power (x, y) -> Power (taylor x n, taylor y n)
+        | Sine x -> if n % 4 = 0 then Const 0.0 else if n % 4 = 1 then taylor x n else if n % 4 = 2 then Negation (taylor x n) else Negation (taylor x n)
+        | Cosine x -> if n % 4 = 0 then taylor x n else if n % 4 = 1 then Const 0.0 else if n % 4 = 2 then taylor x n else Const 0.0
+        | Tangent x -> if n % 2 = 0 then Const 0.0 else if n % 2 = 1 then taylor x n else Const 0.0
+        | ASine x -> if n % 2 = 0 then Const 0.0 else if n % 2 = 1 then taylor x n else Const 0.0
+        | ACosine x -> if n % 2 = 0 then Const 0.0 else if n % 2 = 1 then taylor x n else Const 0.0
+        | ATangent x -> if n % 2 = 0 then Const 0.0 else if n % 2 = 1 then taylor x n else Const 0.0
+        | Exponential x -> if n = 0 then Const 1.0 else if n = 1 then taylor x n else Multiplication (taylor x n, taylorSeries x (n - 1))
+        | Logarithm (x, y) -> if n = 0 then Const 0.0 else if n = 1 then taylor x n else Division (taylor x n, taylor y n)
+        | SquareRoot x -> if n = 0 then Const 1.0 else if n = 1 then taylor x n else Division (taylor x n, Multiplication (Const 2.0, SquareRoot x))
+        | AbsoluteValue x -> if n = 0 then taylor x n else AbsoluteValue (taylor x n)
+        | Floor x -> if n = 0 then Const 0.0 else Floor (taylor x n)
+        | Ceiling x -> if n = 0 then Const 0.0 else Ceiling (taylor x n)
+        | Truncate x -> if n = 0 then Const 0.0 else Truncate (taylor x n)
+        
+    taylor expression n |> simplify
+        
+        
+        
+        
+        
+        

@@ -357,6 +357,8 @@ type BuiltInFunction =
     
     | Await
     
+    | TaylorSeries
+    
 /// <summary>
 /// Map of built-in functions to their respective function type.
 /// </summary>
@@ -395,6 +397,7 @@ let builtInFunctionMap =
       Identifier "differentiate", BuiltInFunction.Differentiate
       Identifier "integrate", BuiltInFunction.Integrate
       Identifier "findIntegral", BuiltInFunction.FindIntegral
+      Identifier "taylorSeries", BuiltInFunction.TaylorSeries
       
       Operator (Plus, Some Infix), BuiltInFunction.Add
       Operator (Minus, Some Infix), BuiltInFunction.Sub

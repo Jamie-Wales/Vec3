@@ -165,6 +165,16 @@ let integrateType =
     let retT = TFunction([ TFloat ], TFloat, true, false)
 
     TFunction([ funcT ], retT, false, true)
+    
+    
+let taylorSeriesT =
+    let funcT =
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+        
+    let retT = TFunction([ TFloat ], TFloat, true, false)
+    
+    TFunction([ funcT; TInteger; ], retT, false, true)
+    
 
 let plotFunsType =
     let funcT =
@@ -297,6 +307,8 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       On, onType
       
       Await, TAny
+      
+      TaylorSeries, taylorSeriesT
 
       ]
     |> Map.ofList

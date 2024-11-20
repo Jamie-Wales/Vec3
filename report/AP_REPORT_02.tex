@@ -10,6 +10,8 @@
 \newcommand{\la}{\leftarrow}
 \usepackage{algorithm}
 \usepackage{algorithmic}
+\usepackage{natbib}
+\usepackage{algorithmicx}
 \topmargin = 0pt
 \voffset = -80pt
 \oddsidemargin = 15pt
@@ -38,214 +40,157 @@
 
 
 \setcounter{page}{1}
-%\pagenumbering{roman}
-%\newpage
-
 
 \begin{abstract}
-Please replace this section with your own abstract. An abstract is a brief summary (maximum 250 words) of your entire project. It should cover your objectives, your methodologies used, a brief developmental history, your final results, in particular covering the optional tasks, and a discussion and conclusion. You do not cover the literature or background in an abstract nor should you use abbreviations or acronyms. The remainder of this report template has clear chapter titles and we suggest to stick to these although you can organise your material inside each chapter to your own preferences. A guideline in size is approximately 3,500 words (not including abstract, captions and references) but no real limit on figures, tables, diagrams, pseudo-code etc.
+Vec3 is a bytecode interpreted maths language complete with a GUI, plotting, full static type inference and various 
+maths functions.
+
+The language is designed to be simple to use and understand, with a focus on strict mathematical expressions and 
+plotting, but with more powerful constructs such as recursive bindings, first class functions and static type inference.
+
+The language and GUI are written in F\#.
 \end{abstract}
 
-\chapter{Introduction}
-\label{chap:intro}
+\chapter{Introduction}\label{ch:intro}
 
 The introduction should be brief and comprise the following:
 
-\section{Project statement}
-A (brief) statement including the nature of the project, i.e.\ what you will do, how you will accomplish it and what the final deliverable will be.
-
-\section{Aims and objectives}
-
-Clearly specify the main aim and objective(s) and subsequent tasks of your project. You can use a MoSCoW to further elaborate on each individual task. If you do so, use a table with three columns (e.g.\ Table \ref{Table1}), the first one having the four categories; the second column a brief description of the task and the third column further elaboration or comments on the task. Note that a MoSCoW is normally for functional requirements only. You should treat non-functional requirements in a separate MoSCoW.
-
-\begin{table}[h]
-\caption{MoSCoW}
-\begin{center}
-\begin{tabular}{|p{1in}|p{2in}|p{2.5in}|} \hline
-Priority & Task & Comments \\ \hline \hline
-\multirow{3}{1in}{Must}
-& Task M1 & Comment M1 \\ \cline{2-3}
-& Task M2 & Comment M2 \\ \cline{2-3}
-& ... & ... \\ \hline \hline
-\multirow{3}{1in}{Should}
-& Task S1 & Comment S1 \\ \cline{2-3}
-& Task S2 & Comment S2 \\ \cline{2-3}
-& ... & ... \\ \hline \hline
-\multirow{3}{1in}{Could}
-& Task C1 & Comment C1 \\ \cline{2-3}
-& Task C2 & Comment C2 \\ \cline{2-3}
-& ... & ... \\ \hline \hline
-\multirow{3}{1in}{Should not}
-& Task SN1 & Comment SN1 \\ \cline{2-3}
-& ... & ... \\ \hline
-\end{tabular}
-\label{Table1}
-\end{center}
-\end{table}
+\section{Project statement}\label{sec:project-statement}
 
 
-\chapter{Background}
+\section{Aims and objectives}\label{sec:aims-and-objectives}
 
-Give a brief background on similar software, e.g.\ \cite{Desmos:2023}, \cite{Matlab:2023}, etc.
-Also cite the books \cite{Nystrom:2021} or documentation \cite{WPF:2023} that you consulted.
-You should add additional references to the corresponding bib file (References.bib) referred to in the bottom of this document.
+\chapter{Background}\label{ch:background}
 
+\chapter{Development History}\label{ch:devhist}
 
-\chapter{Development History}\label{Chap:DevHist}
+\section{Sprint 1: Basic expressions}\label{sec:sprint-1:-basic-expressions}
 
-Describe the history of your development in terms of the iterations or sprints in your project (your Github repository or other version control should help you to retrospectively identify these). Use different sections for different sprints and subsections for specific details on the same sprint. Feel free to use subsubsections or paragraphs (which are not numbered) if needed. 
+This sprint focused on implementing a lexer and parser for the language, with precedence rules for the arithmetic 
+operators, parsed with Pratt parsing.
 
-\section{Sprint 1: Basic expressions and GUI}
-\subsection{Grammar in BNF}
+\subsection{Grammar in BNF}\label{subsec:grammar-in-bnf1}
+
 \begin{verbatim}
-<E>    ::= <T> <Eopt>
-<Eopt> ::= "+" <T> <Eopt> | "-" <T> <Eopt> | <empty>
-<T>    ::= <NR> <Topt>
-<Topt> ::= "*" <NR> <Topt> | "/" <NR> <Topt> | <empty>
-<NR>   ::= "Num" <value> | "(" <E> ")"
+<expr> ::= <term> | <term> "+" <expr> | <term> "-" <expr>
+<term> ::= <factor> | <factor> "*" <term> | <factor> "/" <term>
+<factor> ::= <number> | "(" <expr> ")"
+<number> ::= <int> | <float>
+<int> ::= <digit> | <digit> <int>
+<float> ::= <int> "." <int>
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 \end{verbatim}
 
-\subsection{Basic GUI}
-We used Avalonia UI with F\# to develop a GUI - see Figure \ref{gui01}.
+\section{Sprint 2: Variable assignment}\label{sec:variable-assignment}
 
-\begin{figure}[htb]
-\begin{center}
-\includegraphics[width=0.9 \columnwidth]{GUI_01.png}
-\caption{A GUI}
-\label{gui01}
-\end{center}
-\end{figure}
+\subsection{Grammar in BNF}\label{subsec:grammar-in-bnf2}
 
-\subsection{Testing}
-A subset of Table \ref{Table2} in Appendix \ref{app:test} could be referred to from here.
+\begin{verbatim}
+<stmtlist> ::= <stmt> | <stmt> <stmtlist>
+<stmt> ::= <expr> | "let" <identifier> "=" <expr>
 
-\section{Sprint 2: Adding unary minus, powers and mod}
+<expr> ::= <term> | <term> "+" <expr> | <term> "-" <expr>
+<term> ::= <factor> | <factor> "*" <term> | <factor> "/" <term> | <factor> "%" <term>
+<factor> ::= <number> | <identifier> | "(" <expr> ")" | <factor> "^" <factor>
 
-\subsection{BNF}
+<number> ::= <int> | <float>
 
-\subsection{Updated GUI}
+<int> ::= <digit> | <digit> <int>
+<float> ::= <int> "." <int>
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
-\section{Sprint 3: ...}
+<identifier> ::= <letter> | <letter> <identifier>
+<letter> ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+\end{verbatim}
 
-\section{Sprint n: Your penultimate version}
+\section{Sprint 3:; Interpreter}\label{sec:interpreter}
 
-Make sure that the total number of sprints n(+1) does not become too unwieldy. A rule of thumb would expect it to be somewhere between 6 and 12.
+\section{Sprint 4: Functions}\label{sec:functions}
 
-\subsection{BNF}
+\subsection{Grammar in BNF}\label{subsec:grammar-in-bnf3}
 
-\subsection{}
+\begin{verbatim}
+<stmtlist> ::= <stmt> | <stmt> <stmtlist>
+<stmt> ::= <expr> | "let" <identifier> "=" <expr>
+<expr> ::= <term> | <term> "+" <expr> | <term> "-" <expr>
+<term> ::= <factor> | <factor> "*" <term> | <factor> "/" <term> | <factor> "%" <term>
+<factor> ::= <number> | <identifier> | "(" <expr> ")" | <factor> "^" <factor> | <identifier> "(" <exprlist> ")" | <lambda>
+<lambda> ::= "(" <exprlist> ")" "->" <expr>
 
-\chapter{Final deliverable}\label{Impl}
+<number> ::= <int> | <float>
+<int> ::= <digit> | <digit> <int>
+<float> ::= <int> "." <int>
 
-In this chapter you cover the final or ``ultimate'' version of your project. It will show the final BNF, the final GUI, the architecture (which should be MVVM or MVC) that includes UML diagrams, additional algorithms if not already included in the previous sprint sections.
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+<identifier> ::= <letter> | <letter> <identifier>
+<letter> ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+<exprlist> ::= <expr> | <expr> "," <exprlist>
+	
+\end{verbatim}
 
-\section{Final BNF}
+\section{Sprint 5: Static type checking}\label{sec:static-type-checking}
 
-\section{Final GUI}
+\section{Sprint 6: Bytecode}\label{sec:bytecode}
 
-See Figure \ref{gui02}.
+\section{Sprint 7: GUI}\label{sec:gui}
 
-\begin{figure}[htb]
-%\begin{center}
-\includegraphics[width=0.9 \columnwidth]{GUI_02.png}
-\caption{A potentially final GUI!}
-\label{gui02}
-%\end{center}
-\end{figure}
+\section{Sprint 8: Plotting}\label{sec:plotting1}
 
-\section{Code architecture}
+\section{Sprint 9: Optimisation}\label{sec:optimisation1}
 
-Fig.\ \ref{class} shows a UML class diagram (class, sequence and state diagrams are the most frequently used UML diagrams). Illustrating your code architecture - that should be of the MVC family and, considering it is developed in C\# with WPF more specifcally the MVVM pattern - is very important.
+\chapter{Final deliverable}\label{ch:impl}
 
-\begin{figure}[htb]
-%\begin{center}
-\includegraphics[width=1.0 \columnwidth]{class.png}
-\caption{A UML class diagram to be replaced with yours!}
-\label{class}
-%\end{center}
-\end{figure}
+\section{Final BNF}\label{sec:final-bnf}
 
-\section{Algorithms}
+\section{Final GUI}\label{sec:final-gui}
 
-Algorithms can be described in this chapter if not already covered in previous sections. Pseudo-code is preferred over code snippets. If you use the latter then make sure it is well commented inside the code or via the figure caption. 
+\section{Lexer}\label{sec:lexer}
 
-\begin{algorithm}[th]
-\caption{ The Newton-Raphson method }
-\begin{algorithmic}[1]
-\STATE Initialise root based on estimate
-\STATE Set stop criterion
-\\ \texttt{const double error = 0.000001;}
-\WHILE {stop criterion not met}
-	\STATE Compute f(root)
-	\STATE Compute f'(root)
-	\STATE root := root - f(root)/f'(root)
-\ENDWHILE
-\end{algorithmic}
-\end{algorithm}
+\section{Parser}\label{sec:parser}
 
+\section{Expression}\label{sec:expression}
 
-Note that code snippets or lists of crucial programming code or large UML diagrams should go in Appendix \ref{app:other} (or further appendices).
+\section{Type Inference}\label{sec:type-inference}
 
-\subsection{Testing}
+\section{Optimisation}\label{sec:optimisation}
 
-Describe what testing you have done on the interpreter (lexer, parser and execution), GUI and GUI-Interpreter communication, plotting, etc. Table \ref{Table2} in Appendix \ref{app:test} should be completed to do basic arithmetic expression tests.
+\section{Compiler}\label{sec:compiler}
 
+\section{Virtual Machine}\label{sec:virtual-machine}
 
-\chapter{Discussion, conclusion and future work}
+\section{Plotting}\label{sec:plotting}
 
-Briefly discuss  your achievements and put them in perspective with the MoSCoW analysis you specified in Table \ref{Table1}. Also discuss future developments and how you see the deliverable improving if more time could be spent. Note that this section should not be used as a medium to vent frustrations on whatever did not work out (group issues, not enough time, illness, etc.) as this should be dealt with separately - keep it professional!
+\section{Code architecture}\label{sec:code-architecture}
 
+\chapter{Discussion, conclusion and future work}\label{ch:discussion-conclusion-and-future-work}
 
 \bibliographystyle{apalike}
-%\raggedright
 \bibliography{References}
 
 
 \appendix
-\chapter{Contributions}
+\chapter{Contributions}\label{ch:contributions}
 
-State here the \% contribution to the project of each individual member of the group and describe in brief what each member has done (if this corresponds to particular sections in the report then please specify these).
+50/50
 
-\chapter{Testing}
-\label{app:test}
-\section{Arithmetic expression testing}
+\chapter{Testing}\label{ch:test}
 
-\begin{table}[h]
-\caption{Arithmetic expression tests. Note that floating pointing values are accurate to three decimal places for the fractional part. ResE is expected result and ResA is actual result. \\}
-\begin{tabular}{|p{1.8in}|p{0.5in}|p{0.4in}|p{0.6in}|p{1.4in}|} \hline
-Expression & ResE & ResA& Pass/Fail & Action/comment \\ \hline \hline
-$5*3+(2*3-2)/2+6$ & 23 &  &  &  ... \\ \hline
-$9-3-2$ & 4 & & & left assoc.\  \\ \hline
-$10/3$ & 3 & & & int division  \\ \hline
-$10/3.0$ & 3.333 & & & float division \\ \hline
-$10\%3$ & 1 & & & \\ \hline
-$10 - -2$ & 12 & & & unary minus\\ \hline
-$-2 + 10$ & 8 & & & \\ \hline
-$3*5\verb|^|(-1+3)-2\verb|^|2*-3$ & 87 & & & power test \\ \hline
-$-3\verb|^|2$ & -9(*) or 9 & & & precedence \\ \hline
-$-7\%3$ & 2(*) or -1 & & & precedence (*)Python\\ \hline
-$2*3^2$ & 18 & & & precedence pow > mult \\ \hline
-$3*5\verb|^|(-1+3)-2\verb|^|-2*-3$ & 75.750 or 75 & & & \\ \hline
-$3*5\verb|^|(-1+3)-2.0\verb|^|-2*-3$ & 75.750 & & & \\ \hline
-$(((3*2--2)))$ & 8 & & & \\ \hline 
-$(((3*2--2))$ & Error & & & syntax error \\ \hline
-$-((3*5-2*3))$ & -9 & & &  minus expression \\ \hline
-$x = 3; (2*x)-x\verb|^|2*5$ & -39 & & & var assign \\ \hline
-$x = 3; (2*x)-x\verb|^|2*5/2$ & -16 & & & \\ \hline
-$x = 3; (2*x)-x\verb|^|2*(5/2)$ & -12 & & & \\ \hline
-$x = 3; (2*x)-x\verb|^|2*5/2.0$ & -16.5 & & & \\ \hline
-$x = 3; (2*x)-x\verb|^|2*5\%2$ & 5 & & &  \\ \hline
-$x = 3; (2*x)-x\verb|^|2*(5\%2)$ & -3 & & &  \\ \hline
-... & ... & ... & ... & ... \\ \hline
-\end{tabular}
-\label{Table2}
-\end{table}
+\section{Lexer testing}\label{sec:lexer-testing}
 
-\section{GUI testing}
+\section{Parser testing}\label{sec:parser-testing}
 
-\section{Plot testing}
+\section{Expression testing}\label{sec:arithmetic-expression-testing}
 
-\chapter{Other stuff}
-\label{app:other}
+\section{Variable assignment testing}\label{sec:variable-assignment-testing}
+
+\section{Function testing}\label{sec:function-testing}
+
+\section{GUI testing}\label{sec:gui-testing}
+
+\section{Plot testing}\label{sec:plot-testing}
+
+\chapter{Other stuff}\label{ch:other-stuff}
+	
+	
 \end{document}
 
