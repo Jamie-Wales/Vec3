@@ -272,6 +272,20 @@ type Type =
     /// <returns>True if the record type has the specified fields with the specified types, false otherwise.</returns>
     member this.hasFieldsOf (fields: (Lexeme * Type) list) =
         List.forall (fun (name, typ) -> this.hasFieldOf name typ) fields
+    
+    /// <summary>
+    /// Predicate to check the minimum number of dimensions of a tensor type.
+    /// </summary>
+    /// <param name="n">The minimum number of dimensions</param>
+    /// <returns>True if the tensor type has at least n dimensions, false otherwise.</returns>
+    member this.hasMinDims n =
+        match this with
+        | TTensor(_, d) -> match d with
+                            | Dims dims -> dims >= n
+                            | _ -> true
+        | TAlias(_, Some t) -> t.hasMinDims n
+        | TTuple ts -> List.length ts >= n
+        | _ -> false
 
 /// <summary>
 /// Represents the dimensions of a tensor type.
@@ -280,7 +294,7 @@ and Dims =
     /// <summary>
     /// A list of integers representing the dimensions of the tensor.
     /// </summary>
-    | Dims of int list
+    | Dims of int
     /// <summary>
     /// Any dimension.
     /// </summary>

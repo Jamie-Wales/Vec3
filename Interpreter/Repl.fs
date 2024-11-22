@@ -16,6 +16,7 @@ open Vec3.Interpreter.Preprocessor
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open Vec3.Interpreter.ConstantFolding
+open Vec3.Interpreter.DCE
 
 let numberToString (n: Number): string =
     match n with
@@ -109,6 +110,8 @@ let noTcParseAndCompile (code: string) (vm:VM) =
     let code = preprocessContent code
     match parse code with
     | Ok (_, program) ->
+            // let program = eliminate program
+            let program = foldConstants program
             match compileProgram program with
             | Ok (func, _) -> Some(loadFunction vm func)
             | Error (msg, _) ->
@@ -123,9 +126,12 @@ let parseAndCompile (code: string) (vm:VM) =
     let code = preprocessContent code
     match parse code with
     | Ok (_, program) ->
-        printfn $"{program}"
         match inferProgram Map.empty defaultTypeEnv program with
         | Ok (_, _, _, program) ->
+            
+            let program = eliminate program
+            let program = foldConstants program
+            
             match compileProgram program with
             | Ok (func, _) -> Some(loadFunction vm func)
             | Error (msg, _) ->
@@ -143,9 +149,10 @@ let parseAndCompileWithTE (code: string) (vm: VM) (env: TypeEnv) =
     let code = preprocessContent code
     match parse code with
     | Ok (_, program) ->
-        printfn $"{program}"
         match inferProgram Map.empty env program with
         | Ok (env, _, _, program) ->
+            // let program = eliminate program
+            // let program = foldConstants program
             match compileProgram program with
             | Ok (func, _) -> Some(loadFunction vm func, env)
             | Error (msg, _) ->

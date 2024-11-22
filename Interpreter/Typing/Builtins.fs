@@ -107,8 +107,8 @@ let crossProduct =
     let tensorTypeVar = TTypeVariable(freshTypeVar ())
 
     TFunction(
-        [ TTensor(tensorTypeVar, Dims [ 3 ]); TTensor(tensorTypeVar, Dims [ 3 ]) ],
-        TTensor(tensorTypeVar, Dims[3]),
+        [ TTensor(tensorTypeVar, Dims 3); TTensor(tensorTypeVar, Dims 3) ],
+        TTensor(tensorTypeVar, Dims 3),
         false,
         true
     )
@@ -119,16 +119,6 @@ let dotProduct =
     let constrain = TConstrain(Constrain(tensorTypeVar, _.IsArithmetic))
 
     TFunction([ TTensor(constrain, dimsVar); TTensor(constrain, dimsVar) ], constrain, false, true)
-
-let listCast =
-    let listType = TTypeVariable(freshTypeVar ())
-
-    TFunction([ listType ], TTensor(listType, Dims [ 1 ]), false, true)
-
-let tupleCast =
-    let listType = TTypeVariable(freshTypeVar ())
-
-    TFunction([ listType ], TTuple([ listType ]), false, true)
 
 let castType =
     let typ = TTypeVariable(freshTypeVar ())

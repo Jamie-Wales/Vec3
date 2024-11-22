@@ -3,8 +3,6 @@
 /// </summary>
 module Vec3.Interpreter.ConstantFolding
 
-// TODO: this
-
 open Token
 open Grammar
 
@@ -197,7 +195,9 @@ let foldConstants (program: Program) : Program =
     and foldExpr (expr: Expr) : Expr =
         match expr with
         | ETail(expr, typ) -> ETail(foldExpr expr, typ)
-        | ELiteral(lit, typ) -> ELiteral(lit, typ)
+        | ELiteral(lit, typ) -> match lit with
+                                | LNumber(LRational(a, b)) -> ELiteral(LNumber(simplifyRational(LRational(a, b))), typ)
+                                | _ -> ELiteral(lit, typ)
         | EBlock(stmts, typ) -> EBlock(foldStatements stmts, typ)
         | EIdentifier(token, typ) -> EIdentifier(token, typ)
         | EGrouping (expr, typ) -> EGrouping(foldExpr expr, typ)

@@ -436,3 +436,59 @@ let builtInFunctionMap =
 /// <returns>True if the lexeme is a built-in function, false otherwise.</returns>
 let isBuiltInFunction (s: Lexeme): bool =
     Map.containsKey s builtInFunctionMap
+
+let hasSideEffects = function
+    | Print -> true
+    | Input -> true
+    | Exit -> true
+    | Cos -> false
+    | Sin -> false
+    | Tan -> false
+    | ACos -> false
+    | ASin -> false
+    | ATan -> false
+    | Eval -> true
+    | Log -> false
+    | Exp -> false
+    | Trunc -> false
+    | Read -> true
+    | Env -> false
+    | Sqrt -> false
+    | Abs -> false
+    | Floor -> false
+    | Plot -> true
+    | PlotFunction -> true
+    | PlotFunctions -> true
+    | Draw -> true
+    | Ceil -> false
+    | Err -> true
+    | Add -> false
+    | Sub -> false
+    | Mul -> false
+    | Div -> false
+    | Mod -> false
+    | Pow -> false
+    | And -> false
+    | Or -> false
+    | Not -> false
+    | Neg -> false
+    | Unneg -> false
+    | Eq -> false
+    | Neq -> false
+    | Lt -> false
+    | Lte -> false
+    | Gt -> false
+    | Gte -> false
+    | CrossProduct -> false
+    | DotProduct -> false
+    | Cast -> true
+    | NewtonRaphson -> true
+    | Bisection -> true
+    | Differentiate -> true
+    | Integrate -> true
+    | FindIntegral -> true
+    | Cons -> false
+    | On -> true
+    | Await -> true
+    | TaylorSeries -> true
+    

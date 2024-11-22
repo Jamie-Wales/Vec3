@@ -33,6 +33,7 @@
         <Compile Include="Interpreter\Typing\Inference.fs" />
         <Compile Include="Interpreter\Eval.fs" />
         <Compile Include="Interpreter\ConstantFolding.fs" />
+        <Compile Include="Interpreter\DCE.fs" />
         <Compile Include="Interpreter\Prelude.fs" />
         <Compile Include="Interpreter\Repl.fs" />
         <Compile Include="Notebook.axaml.fs" />

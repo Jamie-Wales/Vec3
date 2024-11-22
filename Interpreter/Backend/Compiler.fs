@@ -290,7 +290,6 @@ and compileList (elements: Expr list) : Compiler<unit> =
 
 and compileIf (condition: Expr) (thenBranch: Expr) (elseBranch: Expr) : Compiler<unit> =
     fun state ->
-        printfn $"{elseBranch}"
         compileExpr condition state
         |> Result.bind (fun ((), state) ->
             emitJump (opCodeToByte OP_CODE.JUMP_IF_FALSE) state
@@ -371,7 +370,6 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bo
             | Ok((), finalState) ->
                 emitByte (byte 1) finalLambdaState |> ignore
                 
-                printfn $"{isAsync}"
                 let constIndex =
                     addConstant state.CurrentFunction.Chunk (if isAsync then VAsyncFunction(finalState
                     .CurrentFunction) else VFunction(finalState
@@ -487,7 +485,6 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
         | SExpression(expr, _) -> compileExpr expr state
         | SVariableDeclaration(name, initializer, _) -> compileVariableDeclaration name initializer state
         | SAsync(name, tup, expr, _) ->
-            printfn "here"
             let assign = SVariableDeclaration(name, ELambda(tup, expr, None, false, None, true), None)
             compileStmt assign state
         | SRecFunc(name, tup, expr, _) ->

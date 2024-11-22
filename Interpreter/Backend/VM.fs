@@ -606,6 +606,25 @@ and specialCasedBuiltins (): Map<string, Value> =
                         vm'.Stack[vm'.Stack.Count - 1]
                   | Error err -> raise <| InvalidProgramException $"{err}"
                 | _ -> raise <| InvalidProgramException "integrate expects a function"), "Integrate")
+          Identifier "taylorSeries",
+          VBuiltin((fun args ->
+              match args with
+                | [ VFunction(_, Some f); VNumber(VInteger n) ] ->
+                    let series = SymbolicExpression.taylorSeries f n
+                    let expr = SymbolicExpression.toExpr series
+                    
+                    let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
+                    let expr = SExpression(ELambda([(param, None)], expr, None, true, None, false), None)
+                    
+                    let compiled = Compiler.compileProgram [expr]
+                    match compiled with
+                    | Ok(func, _) ->
+                            let block = createNewVM(func)
+                            let vm' = run block
+                            vm'.Stack[vm'.Stack.Count - 1]
+                    | Error err -> raise <| InvalidProgramException $"{err}"
+                | _ -> raise <| InvalidProgramException "taylorSeries expects a function and an integer"), "TaylorSeries")
+          
         ]
         |> List.map (fun (key, value) -> lexemeToString key, value)
         |> Map.ofList

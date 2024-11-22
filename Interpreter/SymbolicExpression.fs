@@ -6,6 +6,7 @@
 module Vec3.Interpreter.SymbolicExpression
 
 open System
+open System.Linq.Expressions
 open Grammar
 open Token
 
@@ -464,32 +465,74 @@ let rec taylorSeries (expression: Expression) (n: int) : Expression =
     let rec factorial (n: int) =
         if n < 2 then 1
         else n * factorial (n - 1)
-        
+    
     let rec taylor (expression: Expression) (n: int) : Expression =
         match expression with
         | X -> if n = 0 then X else if n % 2 = 0 then Const 0.0 else if n % 4 = 1 then X else Negation X
         | Const x -> Const x
-        | Negation x -> Negation (taylor x n)
-        | Addition (x, y) -> Addition (taylor x n, taylor y n)
-        | Subtraction (x, y) -> Subtraction (taylor x n, taylor y n)
-        | Multiplication (x, y) -> Multiplication (taylor x n, taylor y n)
-        | Division (x, y) -> Division (taylor x n, taylor y n)
-        | Power (x, y) -> Power (taylor x n, taylor y n)
-        | Sine x -> if n % 4 = 0 then Const 0.0 else if n % 4 = 1 then taylor x n else if n % 4 = 2 then Negation (taylor x n) else Negation (taylor x n)
-        | Cosine x -> if n % 4 = 0 then taylor x n else if n % 4 = 1 then Const 0.0 else if n % 4 = 2 then taylor x n else Const 0.0
-        | Tangent x -> if n % 2 = 0 then Const 0.0 else if n % 2 = 1 then taylor x n else Const 0.0
-        | ASine x -> if n % 2 = 0 then Const 0.0 else if n % 2 = 1 then taylor x n else Const 0.0
-        | ACosine x -> if n % 2 = 0 then Const 0.0 else if n % 2 = 1 then taylor x n else Const 0.0
-        | ATangent x -> if n % 2 = 0 then Const 0.0 else if n % 2 = 1 then taylor x n else Const 0.0
-        | Exponential x -> if n = 0 then Const 1.0 else if n = 1 then taylor x n else Multiplication (taylor x n, taylorSeries x (n - 1))
-        | Logarithm (x, y) -> if n = 0 then Const 0.0 else if n = 1 then taylor x n else Division (taylor x n, taylor y n)
-        | SquareRoot x -> if n = 0 then Const 1.0 else if n = 1 then taylor x n else Division (taylor x n, Multiplication (Const 2.0, SquareRoot x))
-        | AbsoluteValue x -> if n = 0 then taylor x n else AbsoluteValue (taylor x n)
-        | Floor x -> if n = 0 then Const 0.0 else Floor (taylor x n)
-        | Ceiling x -> if n = 0 then Const 0.0 else Ceiling (taylor x n)
-        | Truncate x -> if n = 0 then Const 0.0 else Truncate (taylor x n)
+        | Negation x -> Negation (taylorSeries x n)
+        | Addition (x, y) -> Addition (taylorSeries x n, taylorSeries y n)
+        | Subtraction (x, y) -> Subtraction (taylorSeries x n, taylorSeries y n)
+        | Multiplication (x, y) -> Multiplication (taylorSeries x n, taylorSeries y n)
+        | Division (x, y) -> Division (taylorSeries x n, taylorSeries y n)
+        | Power (x, y) -> Power (taylorSeries x n, taylorSeries y n)
+        | AbsoluteValue x -> if n = 0 then taylorSeries x n else AbsoluteValue (taylorSeries x n)
+        | Floor x -> if n = 0 then Const 0.0 else Floor (taylorSeries x n)
+        | Ceiling x -> if n = 0 then Const 0.0 else Ceiling (taylorSeries x n)
+        | Truncate x -> if n = 0 then Const 0.0 else Truncate (taylorSeries x n)
         
-    taylor expression n |> simplify
+        | Sine e ->
+            let sign = if n % 2 = 0 then 1.0 else -1.0
+            let factorialValue = float (factorial (2 * n + 1))
+            let coefficient = Const (sign / factorialValue)
+            let powerTerm = Power (e, Const (2.0 * float n + 1.0))
+            Multiplication (coefficient, powerTerm)
+        | Cosine e ->
+            let sign = if n % 2 = 0 then 1.0 else -1.0
+            let factorialValue = float (factorial (2 * n))
+            let coefficient = Const (sign / factorialValue)
+            let powerTerm = Power (e, Const (2.0 * float n))
+            Multiplication (coefficient, powerTerm)
+        | Exponential e ->
+            let factorialValue = float (factorial n)
+            let coefficient = Const (1.0 / factorialValue)
+            let powerTerm = Power (e, Const (float n))
+            Multiplication (coefficient, powerTerm)
+        | ASine e ->
+            let num = float (factorial (2 * n))
+            let den = float ((1 <<< n) * factorial n * factorial n * (2 * n + 1))
+            let coefficient = Const (num / den)
+            let powerTerm = Power (e, Const (2.0 * float n + 1.0))
+            Multiplication (coefficient, powerTerm)
+        | ACosine e ->
+            Subtraction (Const (Math.PI / 2.0), taylor (ASine e) n)
+        | ATangent e ->
+            let sign = if n % 2 = 0 then 1.0 else -1.0
+            let coefficient = Const (sign / float (2 * n + 1))
+            let powerTerm = Power (e, Const (2.0 * float n + 1.0))
+            Multiplication (coefficient, powerTerm)
+        | Tangent _ -> Division (taylorSeries (Sine X) n, taylorSeries (Cosine X) n)
+        | Logarithm (Const b, e) ->
+            let lnBase = Const (Math.Log b)
+            let lnSeries = taylorSeries (Division (Subtraction (e, (Const 1.0)), Addition (Const 1.0, Subtraction (e, (Const 1.0))))) n
+            Division (lnSeries, lnBase)
+        | Logarithm (b, e) ->
+            let lnBase = taylorSeries (Logarithm (Const Math.E, b)) n
+            let lnSeries = taylorSeries (Logarithm (Const Math.E, e)) n
+            Division (lnSeries, lnBase)
+        | SquareRoot e ->
+            let factorialValue = float (factorial n)
+            let coefficient = Const (1.0 / factorialValue)
+            let powerTerm = Power (e, Const (0.5 * float n))
+            Multiplication (coefficient, powerTerm)
+            
+    let rec helper exp n =
+        if n = 0 then Const 0.0
+        else Addition (taylor exp n, helper exp (n - 1))
+        
+    helper expression n
+            
+           
         
         
         

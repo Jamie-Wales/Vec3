@@ -55,12 +55,12 @@ let builtins =
                   let xs =
                       match findField "x" (VList([], LIST)) with
                       | VList(xs, _) -> xs
-                      | _ -> raise <| InvalidProgramException "x must be a list"
+                      | _ -> raise <| InvalidProgramException $"x must be a list, got {args}"
 
                   let ys =
                       match findField "y" (VList([], LIST)) with
                       | VList(ys, _) -> ys
-                      | _ -> raise <| InvalidProgramException "y must be a list"
+                      | _ -> raise <| InvalidProgramException $"y must be a list, got {args}"
 
                   let plotType =
                       match findField "ptype" (VString "scatter") with
