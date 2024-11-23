@@ -50,6 +50,13 @@ let isDigit = Char.IsDigit
 let isLetter = Char.IsLetter
 
 /// <summary>
+/// Wrapper to check if a character is a symbol.
+/// </summary>
+let isSymbol = function
+    | '+' | '-' | '*' | '/' | '%' | '^' | ':' | ',' | '#' | '.' | '!' | '&' | '|' | '=' | '<' | '>' | '€' | '$' | '@' | '?' | '~' | 'X' -> true
+    | _ -> false
+
+/// <summary>
 /// Converts a character to an integer.
 /// </summary>
 /// <param name="c">The character to convert.</param>
@@ -87,6 +94,43 @@ let rec scIdentifier (iStr: char list) (iVal: string) : (char list * string) opt
     match iStr with
     | c :: tail when isLetter c || isDigit c || c = '_' -> scIdentifier tail (iVal + string c)
     | _ -> Some(iStr, iVal)
+   
+let rec scOperator (iStr: char list) (iVal: string) : (char list * Operator * int) option =
+    match iStr with
+    | c :: tail when isSymbol c -> scOperator tail (iVal + string c)
+    | _ ->
+        match iVal with
+        | "->" -> Some(iStr, Arrow, 2)
+        | "**" -> Some(iStr, StarStar, 2)
+        | "+" -> Some(iStr, Plus, 1)
+        | "-" -> Some(iStr, Minus, 1)
+        | "*" -> Some(iStr, Star, 1)
+        | "X" -> Some(iStr, Cross, 1)
+        | "/" -> Some(iStr, Slash, 1)
+        | "%" -> Some(iStr, Percent, 1)
+        | "^" -> Some(iStr, Caret, 1)
+        | ":" -> Some(iStr, Colon, 1)
+        | "," -> Some(iStr, Comma, 1)
+        | "$" -> Some(iStr, Dollar, 1)
+        | "::" -> Some(iStr, ColonColon, 2)
+        | "#" -> Some(iStr, Hash, 1)
+        | ".*" -> Some(iStr, DotStar, 2)
+        | ".." -> Some(iStr, DotDot, 2)
+        | "." -> Some(iStr, Dot, 1)
+        | "==" -> Some(iStr, EqualEqual, 2)
+        | "!=" -> Some(iStr, BangEqual, 2)
+        | "<=" -> Some(iStr, LessEqual, 2)
+        | "<" -> Some(iStr, Less, 1)
+        | ">=" -> Some(iStr, GreaterEqual, 2)
+        | ">" -> Some(iStr, Greater, 1)
+        | "=" -> Some(iStr, Equal, 1)
+        | "!" -> Some(iStr, Bang, 1)
+        | "&&" -> Some(iStr, AmpersandAmpersand, 2)
+        | "||" -> Some(iStr, PipePipe, 2)
+        | "&" -> Some(iStr, Ampersand, 1)
+        | "|" -> Some(iStr, Pipe, 1)
+        | _ -> Some(iStr, Custom iVal, iVal.Length)
+        
 
 /// <summary>
 /// Scan in a number.
@@ -223,46 +267,6 @@ let lexer (input: string) : LexerResult<Token list> =
                     { position with
                         Column = column
                         Line = line }
-        | '-' :: '>' :: tail ->
-            Ok
-                { Lexeme = Operator (Arrow, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 2 }
-        | '*' :: '*' :: tail ->
-            Ok
-                { Lexeme = Operator (StarStar, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 2 }
-        | '+' :: tail ->
-            Ok
-                { Lexeme = Operator (Plus, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-        | '-' :: tail ->
-            Ok
-                { Lexeme = Operator (Minus, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-        | '*' :: tail ->
-            Ok
-                { Lexeme = Operator (Star, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
         | 'X' :: tail ->
             Ok
                 { Lexeme = Operator (Cross, None)
@@ -271,38 +275,6 @@ let lexer (input: string) : LexerResult<Token list> =
                 tail
                 { position with
                     Column = position.Column + 1 }
-        | '$' :: tail ->
-            Ok
-                { Lexeme = Punctuation Dollar; Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-        | '/' :: tail ->
-            Ok
-                { Lexeme = Operator (Slash, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-        | '%' :: tail ->
-            Ok
-                { Lexeme = Operator (Percent, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-        | '^' :: tail ->
-            Ok
-                { Lexeme = Operator (Caret, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-
         | '(' :: tail ->
             Ok
                 { Lexeme = Punctuation LeftParen
@@ -351,28 +323,6 @@ let lexer (input: string) : LexerResult<Token list> =
                 tail
                 { position with
                     Column = position.Column + 1 }
-        
-        | ':' :: ':' :: tail ->
-            Ok
-                { Lexeme = Operator (ColonColon, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 2 }
-
-        | ':' :: tail ->
-            Ok { Lexeme = Punctuation Colon; Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-        | ',' :: tail ->
-            Ok { Lexeme = Punctuation Comma; Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
         | ';' :: tail ->
             Ok
                 { Lexeme = Punctuation Semicolon
@@ -381,16 +331,6 @@ let lexer (input: string) : LexerResult<Token list> =
                 tail
                 { position with
                     Column = position.Column + 1 }
-
-        | '#' :: tail ->
-            Ok
-                { Lexeme = Operator (Hash, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-        
         | '.' :: '*' :: tail ->
             Ok
                 { Lexeme = Operator (DotStar, None)
@@ -399,16 +339,6 @@ let lexer (input: string) : LexerResult<Token list> =
                 tail
                 { position with
                     Column = position.Column + 2 }
-                
-        | '.' :: '.' :: tail ->
-            Ok
-                { Lexeme = Operator (DotDot, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 2 }
-
         | '.' :: c :: tail when isDigit c ->
             let nRes = scNumber ('0' :: '.' :: c :: tail)
 
@@ -429,111 +359,24 @@ let lexer (input: string) : LexerResult<Token list> =
                     { position with
                         Column = position.Column + nLen }
 
-        | '.' :: tail ->
-            Ok
-                { Lexeme = Operator (Dot, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-        | '=' :: '=' :: tail ->
-            Ok
-                { Lexeme = Operator (EqualEqual, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 2 }
-        | '!' :: '=' :: tail ->
-            Ok
-                { Lexeme = Operator (BangEqual, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 2 }
-        | '<' :: '=' :: tail ->
-            Ok
-                { Lexeme = Operator (LessEqual, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 2 }
-        | '<' :: tail ->
-            Ok
-                { Lexeme = Operator (Less, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-        | '>' :: '=' :: tail ->
-            Ok
-                { Lexeme = Operator (GreaterEqual, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 2 }
-        | '>' :: tail ->
-            Ok
-                { Lexeme = Operator (Greater, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-        | '=' :: tail ->
-            Ok
-                { Lexeme = Operator (Equal, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-        | '!' :: tail ->
-            Ok
-                { Lexeme = Operator (Bang, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-        
-        | '&' :: '&' :: tail ->
-            Ok
-                { Lexeme = Operator (AmpersandAmpersand, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 2 }
-        | '|' :: '|' :: tail ->
-            Ok
-                { Lexeme = Operator (PipePipe, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                     Column = position.Column + 2 }
-                
-        | '&' :: tail ->
-            Ok
-                { Lexeme = Operator (Ampersand, None)
-                  Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
-                
-        | '|' :: tail ->
-            Ok { Lexeme = Operator (Pipe, None); Position = position }
-            :: scan
-                tail
-                { position with
-                    Column = position.Column + 1 }
+        | c :: tail when isSymbol c ->
+            let oRes = scOperator tail (string c)
+
+            match oRes with
+            | None ->
+                Error(UnknownCharacter(c, position))
+                :: scan
+                    tail
+                    { position with
+                        Column = position.Column + 1 }
+            | Some(oStr, oVal, oLen) ->
+                Ok
+                    { Lexeme = Operator (oVal, None)
+                      Position = position }
+                :: scan
+                    oStr
+                    { position with
+                        Column = position.Column + oLen }
 
         | c :: tail when isWhitespace c ->
             match c with

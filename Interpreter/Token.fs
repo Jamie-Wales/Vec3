@@ -49,6 +49,12 @@ type Operator =
     
     | ColonColon
     
+    | Colon
+    
+    | Comma
+    
+    | Dollar
+    
     /// <summary>
     /// For the future, custom operators can be added.
     /// </summary>
@@ -59,16 +65,13 @@ type Operator =
 /// </summary>
 type Punctuation =
     | Newline
-    | Comma
     | Semicolon
-    | Colon
     | LeftParen
     | RightParen
     | LeftBrace
     | RightBrace
     | LeftBracket
     | RightBracket
-    | Dollar
     
 /// <summary>
 /// Represents a keyword in the language.
@@ -215,6 +218,9 @@ let operatorToString (op: Operator): string =
     | Pipe -> "|"
     | ColonColon -> "::"
     | DotDot -> ".."
+    | Colon -> ":"
+    | Comma -> ","
+    | Dollar -> "$"
     | Custom s -> s
 
 /// <summary>
@@ -250,16 +256,14 @@ let keywordToString (kw: Keyword): string =
 /// <returns>The string representation of the punctuation.</returns>
 let punctuationToString (p: Punctuation): string =
     match p with
-    | Comma -> ","
     | Semicolon -> ";"
-    | Colon -> ":"
     | LeftParen -> "("
     | RightParen -> ")"
     | LeftBrace -> "{"
     | RightBrace -> "}"
     | LeftBracket -> "["
     | RightBracket -> "]"
-    | Dollar -> "$"
+    | Newline -> "\n"
 
 /// <summary>
 /// Converts a lexeme to a string.

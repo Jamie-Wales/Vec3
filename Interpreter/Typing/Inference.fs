@@ -1082,6 +1082,7 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
                 let env =
                     match name with
                     | { Lexeme = Identifier _ as id } -> Map.add id typ env
+                    | { Lexeme = Operator _ as op } -> Map.add op typ env
                     | _ -> env
 
                 Ok(env, aliases, sub, SVariableDeclaration(name, expr, Some typ))))
