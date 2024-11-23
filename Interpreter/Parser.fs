@@ -1462,6 +1462,7 @@ and block (state: ParserState) : ParseResult<Expr> =
 
     loop state []
 
+
 /// <summary>
 /// Parses a variable declaration.
 /// </summary>

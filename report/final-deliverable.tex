@@ -1,0 +1,147 @@
+\section{Final BNF}\label{sec:final-bnf}
+
+\section{Final GUI}\label{sec:final-gui}
+
+\section{Notable Features}\label{sec:notable-features}
+
+\section{Lexer}\label{sec:lexer}
+
+Initial lexer design was based on a simple regular expression based lexer, but this was later replaced with a more
+functional approach using pattern matching on the input string.
+
+The reason for this change was that the regular expression based lexer was difficult to extend and maintain due to 
+the lack of type safety.
+For example if we had a more general regex called before a more specific one, the more general one would always match
+first, even if the more specific one should have matched.
+
+This was solved by using a more functional approach, where the type system of F\# would inform us if a case would 
+never be matched due to the order of the cases or otherwise, preventing a class of easily overlooked errors during development.
+
+The lexer is now implemented as a recursive pattern matching function that takes a string and returns a list of 
+tokens, complete with their lexeme and position in the input string.
+
+Lexer errors are also accumulated in a list of type \textit{LexerError}, which are displayed to the user in the GUI\@.
+
+Something of note is that the lexer parses numbers itself, rather than passing them to the parser as strings.
+
+Additionally, due to the permittance of user defined operators, the lexer makes special considerations when lexing 
+special characters, as the distinction between a built-in operator (with precedence) and a user defined operator (
+currently without precedence) is made during lexing.
+
+Furthermore, both block comments (\textit{/* */}) and line comments (\textit{//}) are handled by the lexer by ignoring
+the contents of the comment.
+In future, it may be interesting represent comments as a token in the AST, allowing for systems such as documentation
+generation or formatting to be implemented.
+
+\section{Parser}\label{sec:parser}
+
+The parser is implemented using Pratt parsing\citep{pratt1973top}, which is a top-down operator precedence parsing 
+method that allows for easy extension and modification of the grammar.
+
+It works by assigning a precedence to each token, as well as functions specifying how to parse the token when 
+encountering it in a prefix, infix or postfix position.
+
+For example, take the expression $2 + 3 * 4$.
+
+The parser would first encounter the number \textit{2}, which has a precedence of 0 and a prefix function that
+simply returns the number.
+
+Thus, the current state of the parser is $2$.
+
+The parser would then encounter the operator \textit{+}, which has a precedence of 1 and a left associative infix
+function that takes the left hand side and the right hand side and returns a binary expression node.
+
+The parser then attempts to parse the right hand side of the operator with a precendence level higher than the
+plus operator, as Pratt parsing must ensure that higher precedence operations (such as multiplication) are parsed
+first.
+
+The parser would then encounter the number \textit{3}, which again is treated as a literal and returned.
+
+The parser then encounters the operator \textit{*}, which has a precedence of 2 (higher than the plus operator) and 
+as such the parser cannot yet resolve the \textit{+} operator; it must handle the higher precedence multiplication
+operator first.
+
+The parser saves the left hand side (the number 3) and then parses the right hand side of the multiplication 
+operator using a precedence level higher than the multiplication operator.
+
+It encounters the number \textit{4}, which is returned as a literal.
+
+The parser then returns the binary expression node for the multiplication operator, with the left hand side being
+the number 3 and the right hand side being the number 4.
+
+The parser then returns to the plus operator, which can now be resolved as the left hand side is the number 2 and the
+right hand side is the result of the multiplication operator.
+
+This is a simple example, but Pratt parsing can handle more complex expressions with ease, such as nested
+expressions and function calls.
+
+Using Pratt parsing has improved the extensibility of the parser, as adding new operators or changing the grammar
+is as simple as adding a new case to the parser.
+
+A slight limitation is during ambiguity, such as the \textit{(} symbol, which can be used for a grouping, a lambda 
+definition, a tuple or a \texit{unit} type when encountered in the prefix position.
+
+This is resolved by using a state machine approach, where the parser can move around the state at will, allowing 
+lookahead and backtracking in order to reach a point where the ambiguity is resolved.
+
+In order to simplify the Virtual Machine\ref{sec:virtual-machine}, the parser parses all binary and unary operations 
+as function calls, with the operator as the function name.
+
+In order to make type inference simpler for operators that are overloaded for both unary and binary operations (such 
+as the \textit{-} operator), the operator keeps track of the manner in which it is called (unary or binary) and
+returns the appropriate AST node, allowing for easier type inference (as the names of the otherwise overloaded 
+functions are different), and simplifies the bytecode generation process.
+
+This idea could possibly be extended to allow other overloaded function names (with varying numbers of arguments).
+
+\section{AST}\label{sec:expression}
+
+The AST of the language is represented as a list of statements, where a statement is either expression, a
+variable assignment or an other statement type.
+
+The AST is typed (after type inference\ref{sec:type-inference}) in order to allow for easier optimisation and
+bytecode generation.
+
+\section{Type Inference}\label{sec:type-inference}
+\input{type-inference}
+
+\section{Optimisation}\label{sec:optimisation}
+
+Before compilation, the AST is optimised by removing dead code and constant folding.
+
+\subsection{Dead code elimination}\label{subsec:dead-code-elimination}
+
+Dead code elimination is performed on the AST by removing any statements that are not used.
+
+For example, if a variable is declared but never used, the variable declaration is removed or if an expression is
+calculated but never used, the expression is removed.
+
+This is accomplished by checking every statement in the AST\@.
+If it's an expression node with no side effects, it is removed if it is not used.
+
+If it's a binding node, the rest of the AST is checked for uses of the variable.
+
+If the variable is not used, the binding is removed.
+
+This process is repeated until no more dead code can be removed, allowing for long chains of dead code to be 
+removed (for example if a variable is used in a function that is never called, the function would first be removed
+and then the variable).
+
+\subsection{Constant folding}\label{subsec:constant-folding}
+
+Constant folding is performed on the AST by evaluating constant expressions at compile time, such as $2 + 2 \ra 4$.
+
+This is accomplished using the initial interpreter implementation, which recursively evaluates the AST and replaces
+constant expressions with their evaluated value.
+
+Only constants are evaluated, and thus no variable resolution is performed due to the cost of this operation.
+
+\section{Bytecode Compiler}\label{sec:compiler}
+
+\section{Virtual Machine}\label{sec:virtual-machine}
+
+\section{Plotting}\label{sec:plotting}
+
+\section{Drawing}\label{sec:drawing}
+
+\section{Code architecture}\label{sec:code-architecture}

@@ -105,7 +105,7 @@ operators, parsed with Pratt parsing.
 <letter> ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
 \end{verbatim}
 
-\section{Sprint 3:; Interpreter}\label{sec:interpreter}
+\section{Sprint 3: Interpreter}\label{sec:interpreter}
 
 \section{Sprint 4: Functions}\label{sec:functions}
 
@@ -117,7 +117,7 @@ operators, parsed with Pratt parsing.
 <expr> ::= <term> | <term> "+" <expr> | <term> "-" <expr>
 <term> ::= <factor> | <factor> "*" <term> | <factor> "/" <term> | <factor> "%" <term>
 <factor> ::= <number> | <identifier> | "(" <expr> ")" | <factor> "^" <factor> | <identifier> "(" <exprlist> ")" | <lambda>
-<lambda> ::= "(" <exprlist> ")" "->" <expr>
+<lambda> ::= "(" <exprlist> ")" "->" <expr> 
 
 <number> ::= <int> | <float>
 <int> ::= <digit> | <digit> <int>
@@ -143,84 +143,7 @@ operators, parsed with Pratt parsing.
 \section{Sprint 9: Optimisation}\label{sec:optimisation1}
 
 \chapter{Final deliverable}\label{ch:impl}
-
-\section{Final BNF}\label{sec:final-bnf}
-
-\section{Final GUI}\label{sec:final-gui}
-
-\section{Lexer}\label{sec:lexer}
-
-Initial lexer design was based on a simple regular expression based lexer, but this was later replaced with a more
-functional approach using pattern matching on the input string.
-
-The reason for this change was that the regular expression based lexer was difficult to extend and maintain due to 
-the lack of type safety.
-For example if we had a more general regex called before a more specific one, the more general one would always match
-first, even if the more specific one should have matched.
-
-This was solved by using a more functional approach, where the type system would inform us if a case would never be 
-matched due to ordering.
-
-The lexer is now implemented as a recursive pattern matching function that takes a string and returns a list of 
-tokens, complete with their lexeme and position in the input string.
-
-Lexer errors are also accumulated in a list of type \textit{LexerError}, which can be displayed to the user in the GUI\@.
-
-Something of note is that the lexer parses numbers itself, rather than passing them to the parser as strings.
-
-\section{Parser}\label{sec:parser}
-
-\section{AST}\label{sec:expression}
-
-The AST of the language is represented as a list of statements, where a statement is either expression, a
-variable assignment or an other statement type.
-
-The AST is typed (after type inference\ref{sec:type-inference}) in order to allow for easier optimisation and
-bytecode generation.
-
-\section{Type Inference}\label{sec:type-inference}
-\input{type-inference}
-
-\section{Optimisation}\label{sec:optimisation}
-
-Before compilation, the AST is optimised by removing dead code and constant folding.
-
-\subsection{Dead code elimination}\label{subsec:dead-code-elimination}
-
-Dead code elimination is performed on the AST by removing any statements that are not used.
-
-For example, if a variable is declared but never used, the variable declaration is removed or if an expression is
-calculated but never used, the expression is removed.
-
-This is accomplished by checking every statement in the AST.
-If it's an expression node with no side effects, it is removed if it is not used.
-
-If it's a binding node, the rest of the AST is checked for uses of the variable.
-
-If the variable is not used, the binding is removed.
-
-This process is repeated until no more dead code can be removed, allowing for long chains of dead code to be 
-removed (for example if a variable is used in a function that is never called, the function would first be removed
-and then the variable).
-
-\subsection{Constant folding}\label{subsec:constant-folding}
-
-Constant folding is performed on the AST by evaluating constant expressions at compile time, such as $2 + 2 \ra 4$.
-
-This is accomplished using the initial interpreter implementation, which recursively evaluates the AST and replaces
-constant expressions with their evaluated value.
-
-Only constants are evaluated, and thus no variable resolution is performed due to the cost of this operation.
-
-\section{Bytecode Compiler}\label{sec:compiler}
-
-\section{Virtual Machine}\label{sec:virtual-machine}
-
-\section{Plotting}\label{sec:plotting}
-
-\section{Drawing}\label{sec:drawing}
-
-\section{Code architecture}\label{sec:code-architecture}
+\input{final-deliverable}
 
 \chapter{Discussion, conclusion and future work}\label{ch:discussion-conclusion-and-future-work}
 

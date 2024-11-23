@@ -49,11 +49,11 @@ rec fact(n) -> if n < 1 then 1 else n * fact(n - 1)
 let x = fact(5)
 print(x)
 
-// need to fix type inference function params, and locals also stay on the stack so i need to fix that
-rec map(list, func: any) -> if len(list) == 0 then 
-							[] 
-						  else 
-						    func(head(list)) :: map(tail(list), func)
+let (?) = (x, y) -> 3 * x + 2 * y
+let (?) = (x) -> 3 * x
+
+print(4 ? 5)
+print(?5)
 
 let casting = (5 * 4^3) : float
 print(casting)
