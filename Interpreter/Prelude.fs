@@ -61,6 +61,14 @@ rec map(list, func) -> if len(list) == 0 then
 						else
 							func(head(list)) :: map(tail(list), func)
 
+// filter a list with a predicate
+// currently type checking does not support this fully, can't infer type of func
+rec filter(list, func: (any) -> bool) -> if len(list) == 0 then 
+												[] 
+									     else if func(head(list)) then 
+												head(list) :: filter(tail(list), func) 
+										  else 
+												filter(tail(list), func)
 											
 
 // find the sum, product, any, and all of a list
@@ -79,12 +87,25 @@ rec range(start, end) -> if start >= end then
 							else
 								start :: range(start + 1, end)
 
+let (...) = (start, end) -> range(start, end)
+let (!!) = (list, index) -> list[index]
+
 let Keys = {
 	Left = { event = 0 },
 	Right = { event = 1 },
 	Up = { event = 2 },
 	Down = { event = 3 }
 }
+
+// join two lists
+// doesnt work, issue with calling stack order what ever
+rec append(list1, list2) -> if list1 == [] then 
+								list2 
+							else 
+								head(list1) :: append(tail(list1), list2)
+        
+// wrapper for append
+let (++) = (list1, list2) -> append(list1, list2)
 """
 
 /// <summary>

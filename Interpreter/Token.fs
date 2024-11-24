@@ -221,7 +221,7 @@ let operatorToString (op: Operator): string =
     | Colon -> ":"
     | Comma -> ","
     | Dollar -> "$"
-    | Custom s -> s
+    | Custom s -> s // Custom operators are just strings of symbols
 
 /// <summary>
 /// Converts a keyword to a string.

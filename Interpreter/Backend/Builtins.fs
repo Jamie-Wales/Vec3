@@ -12,12 +12,18 @@ open Vec3.Interpreter.Token
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
 
+/// <summary>
+/// For each new draw shape, we need a unique id.
+/// </summary>
 let getNewDrawId =
     let id = ref 0
     fun () ->
         id.Value <- id.Value + 1
         id.Value
 
+/// <summary>
+/// Parse a plot type from a string.
+/// </summary>
 let parsePlotType =
     function
     | "scatter" ->
@@ -238,18 +244,6 @@ let builtins =
           "Log10"
       )
 
-      // Identifier "env",
-      // VBuiltin((fun _ ->
-      //     let globals =
-      //         vm.Globals
-      //         |> Map.map (fun k v -> $"{k} = {valueToString v}")
-      //         |> Map.toSeq
-      //         |> Seq.map snd
-      //         |> Seq.toList
-      //
-      //     let globalsString = String.concat Environment.NewLine globals
-      //     printfn $"Globals: {globalsString}"
-      //     push vm (VString globalsString)), "Env")
       Identifier "input",
       VBuiltin(
           (fun _ ->
@@ -272,6 +266,16 @@ let builtins =
               VNil),
           "Exit"
       )
+      
+      Identifier "append",
+        VBuiltin(
+            (fun args ->
+                match args with
+                | [ VList(l1, t1); VList(l2, t2) ] -> VList(l1 @ l2, t1)
+                | _ -> raise <| InvalidProgramException "append expects two lists"),
+            "Append"
+        )
+      
       Identifier "dotProduct",
       VBuiltin(
           (fun args ->
@@ -357,7 +361,7 @@ let builtins =
           "Bisection"
       )
 
-      Identifier "assert",
+      Identifier "assert", // could do this in language
       VBuiltin(
           (fun args ->
               match args with
@@ -766,7 +770,7 @@ let builtins =
                   let res = List.skip i l in VList(res, LIST) // is range
               | [ VList(l, _); VNumber(VInteger i); VNumber(VInteger j) ] ->
                   let res = List.skip i l |> List.take (j - i) in VList(res, LIST) // is range
-              | _ -> raise <| InvalidProgramException "Expected a list and an integer for index"),
+              | _ -> raise <| InvalidProgramException $"Expected a list and an integer for index, {args}"),
           "Index"
       )
 

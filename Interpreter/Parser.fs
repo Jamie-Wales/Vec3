@@ -356,7 +356,7 @@ and listPattern (state: ParserState) : ParseResult<Pattern> =
         result {
             let! state, patterns = patternList state
             let! state = expect state (Punctuation RightBracket)
-            return! Ok(state, PList(patterns))
+            return (state, PList(patterns))
         }
 
 /// <summary>
@@ -373,7 +373,7 @@ and tuplePattern (state: ParserState) : ParseResult<Pattern> =
         result {
             let! state, patterns = patternList state
             let! state = expect state (Punctuation RightParen)
-            return! Ok(state, PTuple(patterns))
+            return state, PTuple(patterns)
         }
 
 
@@ -675,7 +675,7 @@ and matchCase (state: ParserState) : ParseResult<Expr> =
                 | Some { Lexeme = Operator(Comma, _) } ->
                     return! matchCaseBranches (advance state) ((pattern, branch) :: branches)
                 | Some { Lexeme = Punctuation RightBrace } ->
-                    return! Ok(advance state, List.rev ((pattern, branch) :: branches))
+                    return (advance state, List.rev ((pattern, branch) :: branches))
                 | _ -> return! Error(Expected("',' or '}' after case branch."), state)
             }
         | _ -> Error(Expected "case branch", state)
@@ -685,7 +685,7 @@ and matchCase (state: ParserState) : ParseResult<Expr> =
         let! state = expect state (Lexeme.Keyword Keyword.With)
         let! state = expect state (Punctuation LeftBrace)
         let! state, branches = matchCaseBranches state []
-        return! Ok(state, EMatch(expr, branches, None))
+        return (state, EMatch(expr, branches, None))
     }
 
 /// <summary>
@@ -756,7 +756,7 @@ and codeBlock (state: ParserState) : ParseResult<Expr> =
     result {
         let! state = expect state (Punctuation LeftBrace)
         let! state, expr = block state
-        return! Ok(state, ECodeBlock expr)
+        return (state, ECodeBlock expr)
     }
 
 /// <summary>
@@ -950,7 +950,7 @@ and recordFields
     : ParseResult<(Token * Expr * TType option) list> =
     result {
         match peek state with
-        | Some { Lexeme = Punctuation RightBrace } -> return! Ok(advance state, List.rev fields)
+        | Some { Lexeme = Punctuation RightBrace } -> return (advance state, List.rev fields)
         | Some { Lexeme = Lexeme.Identifier _ } ->
             match nextToken state with
             | Some(state, name) ->
@@ -962,7 +962,7 @@ and recordFields
                     | Some { Lexeme = Operator(Comma, _) } ->
                         return! recordFields (advance state) ((name, value, None) :: fields)
                     | Some { Lexeme = Punctuation RightBrace } ->
-                        return! Ok(advance state, List.rev ((name, value, None) :: fields))
+                        return (advance state, List.rev ((name, value, None) :: fields))
                     | _ -> return! Error(Expected "',' or '}' after record field.", state)
                 | Some(state, { Lexeme = Operator(Colon, _) }) ->
                     let! state, fieldType = typeHint state
@@ -973,7 +973,7 @@ and recordFields
                     | Some { Lexeme = Operator (Comma, _) } ->
                         return! recordFields (advance state) ((name, value, Some fieldType) :: fields)
                     | Some { Lexeme = Punctuation RightBrace } ->
-                        return! Ok(advance state, List.rev ((name, value, Some fieldType) :: fields))
+                        return (advance state, List.rev ((name, value, Some fieldType) :: fields))
                     | _ -> return! Error(Expected "',' or '}' after record field.", state)
                 | _ -> return! Error(Expected "field value", state)
             | _ -> return! Error(Expected "field name", state)
@@ -1046,12 +1046,12 @@ and listOrRange (state: ParserState) : ParseResult<Expr> =
             | Some(state, { Lexeme = Operator(DotDot, _) }) ->
                 let! state, end_ = expression state Precedence.None
                 let! state = expect state (Punctuation RightBracket)
-                return! Ok(state, ERange(start, end_, None))
+                return (state, ERange(start, end_, None))
             | Some(state, { Lexeme = Operator(Comma, _) }) ->
                 let! state, exprs = commaSeparatedList state
                 let! state = expect state (Punctuation RightBracket)
-                return! Ok(state, EList(start :: exprs, None))
-            | Some(state, { Lexeme = Punctuation RightBracket }) -> return! Ok(state, EList([ start ], None))
+                return (state, EList(start :: exprs, None))
+            | Some(state, { Lexeme = Punctuation RightBracket }) -> return (state, EList([ start ], None))
             | _ -> return! Error(Expected "',' or '..' after list element.", state)
         }
 
@@ -1069,7 +1069,7 @@ and grouping (state: ParserState) : ParseResult<Expr> =
     result {
         let! state, expr = expression state Precedence.None
         let! state = expect state (Punctuation RightParen)
-        return! Ok(state, EGrouping(expr, None))
+        return (state, EGrouping(expr, None))
     }
 
 /// <summary>
@@ -1094,7 +1094,7 @@ and index (state: ParserState) (left: Expr) : ParseResult<Expr> =
         result {
             let! state, end_ = expression state Precedence.None
             let! state = expect state (Punctuation RightBracket)
-            return! Ok(state, EIndex(left, (None, Some end_, false), None))
+            return (state, EIndex(left, (None, Some end_, false), None))
         }
     | _ ->
         result {
@@ -1106,14 +1106,14 @@ and index (state: ParserState) (left: Expr) : ParseResult<Expr> =
 
                 match peek state with
                 | Some { Lexeme = Punctuation RightBracket } ->
-                    return! Ok(advance state, EIndex(left, (Some start, None, false), None))
+                    return (advance state, EIndex(left, (Some start, None, false), None))
                 | _ ->
                     let! state, end_ = expression state Precedence.None
                     let! state = expect state (Punctuation RightBracket)
-                    return! Ok(state, EIndex(left, (Some start, Some end_, false), None))
+                    return (state, EIndex(left, (Some start, Some end_, false), None))
             | _ ->
                 let! state = expect state (Punctuation RightBracket)
-                return! Ok(state, EIndex(left, (Some start, None, false), None))
+                return (state, EIndex(left, (Some start, None, false), None))
         }
 
 /// <summary>
@@ -1137,8 +1137,8 @@ and ifElse (state: ParserState) : ParseResult<Expr> =
         | Some(state, { Lexeme = Keyword Else }) ->
             let! state, elseBranch = expression state Precedence.None
             let elseBranch = ETail(elseBranch, None)
-            return! Ok(state, EIf(condition, thenBranch, elseBranch, None))
-        | _ -> return! Ok(state, EIf(condition, thenBranch, ELiteral(LUnit, TUnit), Some TUnit))
+            return (state, EIf(condition, thenBranch, elseBranch, None))
+        | _ -> return (state, EIf(condition, thenBranch, ELiteral(LUnit, TUnit), Some TUnit))
     }
 
 /// <summary>
@@ -1155,7 +1155,7 @@ and ternary (state: ParserState) (trueBranch: Expr) : ParseResult<Expr> =
         let! state, condition = expression state Precedence.None
         let! state = expect state (Lexeme.Keyword Keyword.Else)
         let! state, falseBranch = expression state Precedence.None
-        return! Ok(state, EIf(condition, trueBranch, falseBranch, None))
+        return (state, EIf(condition, trueBranch, falseBranch, None))
     }
 
 /// <summary>
@@ -1312,10 +1312,10 @@ and lambda (state: ParserState) : ParseResult<Expr> =
         | Some(state, { Lexeme = Operator(Colon, _) }) ->
             let! state, returnType = typeHint state
             let! state, body = parseBody state
-            return! Ok(state, ELambda(parameters, body, Some returnType, false, None, false))
+            return (state, ELambda(parameters, body, Some returnType, false, None, false))
         | _ ->
             let! state, body = parseBody state
-            return! Ok(state, ELambda(parameters, body, None, false, None, false))
+            return (state, ELambda(parameters, body, None, false, None, false))
     }
 
 /// <summary>
@@ -1344,7 +1344,7 @@ and funcType (state: ParserState) : ParseResult<TType> =
         let! state, paramList = parseParams state []
         let! state = expect state (Operator(Arrow, None))
         let! state, returnType = typeHint state
-        return! Ok(state, TFunction(paramList, returnType, false, false))
+        return (state, TFunction(paramList, returnType, false, false))
     }
 
 /// <summary>
@@ -1361,7 +1361,7 @@ and tensorType (state: ParserState) : ParseResult<TType> =
     result {
         let! state, innerType = typeHint state
         let! state = expect state (Punctuation RightBracket)
-        return! Ok(state, TTensor(innerType, DAny))
+        return (state, TTensor(innerType, DAny))
     }
 
 
@@ -1389,7 +1389,7 @@ and recordType (state: ParserState) : ParseResult<TType> =
                 | Some(state, { Lexeme = Operator(Comma, _) }) ->
                     return! parseFields state ((fieldName, fieldType) :: fields)
                 | Some(state, { Lexeme = Punctuation RightBrace }) ->
-                    return! Ok(state, ((fieldName, fieldType) :: fields))
+                    return (state, ((fieldName, fieldType) :: fields))
                 | _ -> return! Error(Expected "',' or '}' after record field.", state)
             }
         | _ -> Error(Expected "field name", state)
@@ -1506,9 +1506,9 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
                         None
                     )
 
-                return! Ok(state, SVariableDeclaration(name, expr, varType))
-            | None -> return! Ok(state, SVariableDeclaration(name, expr, varType))
-        | None -> return! Ok(state, SVariableDeclaration(name, expr, varType))
+                return (state, SVariableDeclaration(name, expr, varType))
+            | None -> return (state, SVariableDeclaration(name, expr, varType))
+        | None -> return (state, SVariableDeclaration(name, expr, varType))
     }
 
 and operatorDecl (state: ParserState) : ParseResult<Stmt> =
@@ -1531,10 +1531,10 @@ and operatorDecl (state: ParserState) : ParseResult<Stmt> =
             match fixity with
             | 1 ->
                 let op = { Lexeme = Operator(op, Some Prefix); Position = pos }
-                return! Ok(state, SVariableDeclaration(op, func, None))
+                return (state, SVariableDeclaration(op, func, None))
             | 2 ->
                 let op = { Lexeme = Operator(op, Some Infix); Position = pos }
-                return! Ok(state, SVariableDeclaration(op, func, None))
+                return (state, SVariableDeclaration(op, func, None))
             | _ ->
                 return! Error(Expected "unary or binary operator.", state)
         | _ -> return! Error(Expected "lambda expression.", state)
@@ -1558,8 +1558,8 @@ and assertStatement (state: ParserState) : ParseResult<Stmt> =
         | Some { Lexeme = Operator(Comma, _) } ->
             let state = advance state
             let! state, message = expression state Precedence.Assignment
-            return! Ok(state, SAssertStatement(expr, Some message, Some TUnit))
-        | _ -> return! Ok(state, SAssertStatement(expr, None, Some TUnit))
+            return (state, SAssertStatement(expr, Some message, Some TUnit))
+        | _ -> return (state, SAssertStatement(expr, None, Some TUnit))
     }
 
 /// <summary>
@@ -1577,7 +1577,7 @@ and typeDecl (state: ParserState) : ParseResult<Stmt> =
         let! state, name = expectIdentifier state
         let! state = expect state (Operator(Equal, None))
         let! state, typ = typeHint state
-        return! Ok(state, STypeDeclaration(name, typ, None))
+        return (state, STypeDeclaration(name, typ, None))
     }
 
 /// <summary>
@@ -1622,21 +1622,21 @@ and recFunc (state: ParserState) : ParseResult<Stmt> =
         match nextToken state with
         | Some(state, { Lexeme = Operator(Arrow, _) }) ->
             let! state, expr = expression state Precedence.Assignment
-            return! Ok(state, SRecFunc(name, parameters, expr, None))
+            return (state, SRecFunc(name, parameters, expr, None))
         | Some(state, { Lexeme = Operator(Colon, _) }) ->
             let! state, returnType = typeHint state
 
             match nextToken state with
             | Some(state, { Lexeme = Operator(Arrow, _) }) ->
                 let! state, expr = expression state Precedence.Assignment
-                return! Ok(state, SRecFunc(name, parameters, expr, Some returnType))
+                return (state, SRecFunc(name, parameters, expr, Some returnType))
             | Some(state, { Lexeme = Punctuation LeftBrace }) ->
                 let! state, expr = block state
-                return! Ok(state, SRecFunc(name, parameters, expr, Some returnType))
+                return (state, SRecFunc(name, parameters, expr, Some returnType))
             | _ -> return! Error(Expected "function body.", state)
         | Some(state, { Lexeme = Punctuation LeftBrace }) ->
             let! state, expr = block state
-            return! Ok(state, SRecFunc(name, parameters, expr, None))
+            return (state, SRecFunc(name, parameters, expr, None))
         | _ -> return! Error(Expected "function body.", state)
     }
 
@@ -1646,7 +1646,7 @@ and asyncFunc (state: ParserState) : ParseResult<Stmt> =
     result {
         match! recFunc state with
         | state, SRecFunc(name, parameters, expr, returnType) ->
-            return! Ok(state, SAsync(name, parameters, expr, returnType))
+            return (state, SAsync(name, parameters, expr, returnType))
         | _ -> return! Error(Expected "recursive function.", state)
     }
 
