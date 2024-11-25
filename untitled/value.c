@@ -44,38 +44,19 @@ Vec3Value* vec3_new_number(Number number)
     return value;
 }
 
-// Modified list creation to handle variadic arguments properly
-Vec3Value* vec3_new_list(size_t count, ...)
+Vec3Value* vec3_new_list(Vec3Value* value, ...)
 {
+    va_list ap;
     Vec3Value* output = malloc(sizeof(Vec3Value));
     output->object.type = TYPE_LIST;
     output->object.ref_count = 1;
     output->object.destructor = vec3_destroy_list;
-    output->as.list = create_new_list(NULL); // Start with empty list
-
-    if (count > 0) {
-        va_list ap;
-        va_start(ap, count);
-
-        // Add first argument
-        Vec3Value* first = va_arg(ap, Vec3Value*);
-        if (first != NULL) {
-            output->as.list->value = first;
-            vec3_incref(first);
-            output->as.list->length = 1;
-        }
-
-        // Add remaining arguments
-        for (size_t i = 1; i < count; i++) {
-            Vec3Value* arg = va_arg(ap, Vec3Value*);
-            if (arg != NULL) {
-                vec3_list_append(output, arg);
-            }
-        }
-
-        va_end(ap);
-    }
-
+    output->as.list = create_new_list(value);
+    va_start(ap, value);
+    Vec3Value* arg = va_arg(ap, Vec3Value*);
+    if (arg == NULL)
+        vec3_list_append(output, arg);
+    va_end(ap);
     return output;
 }
 
@@ -157,11 +138,7 @@ void vec3_print(const Vec3Value* value)
             if (!first) {
                 printf(", ");
             }
-            if (current->value == NULL) {
-                printf("null");
-            } else {
-                vec3_print(current->value);
-            }
+            vec3_print(current->value);
             first = false;
             current = current->next;
         }
@@ -171,15 +148,11 @@ void vec3_print(const Vec3Value* value)
     case TYPE_NIL:
         printf("nil");
         break;
-    case TYPE_BOOL:
-        printf(value->as.boolean ? "true" : "false");
-        break;
     default:
         printf("<unknown>");
         break;
     }
 }
-
 Vec3Value* vec3_sqrt(Vec3Value* value)
 {
     vec3_incref(value);

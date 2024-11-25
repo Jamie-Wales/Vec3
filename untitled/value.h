@@ -48,7 +48,7 @@ void vec3_decref(Vec3Value* value);
 
 Vec3Value* vec3_new_number(Number number);
 Vec3Value* vec3_new_string(const char* chars);
-Vec3Value* vec3_new_list(size_t count, ...);
+Vec3Value* vec3_new_list(Vec3Value* value, ...);
 Vec3Value* vec3_new_nil(void);
 
 void vec3_destroy_string(Vec3Object* object);

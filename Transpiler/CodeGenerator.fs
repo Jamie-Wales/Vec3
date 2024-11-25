@@ -25,11 +25,10 @@ let rec generateExpr (expr: Expr) : string =
         | Identifier name -> name
         | _ -> failwith "Expected identifier"
     | EList(exprs, _) ->
-            sprintf "({ Vec3Value* list = vec3_new_list(%d);\n%s\n    list; })"
-                exprs.Length
-                (exprs 
-                 |> List.map (fun e -> $"    vec3_list_append(list, %s{generateExpr e});")
-                 |> String.concat "\n")
+        let args = (exprs
+         |> List.map (fun e -> if (List.rev exprs).Head = e then $"%s{generateExpr e}" else $"%s{generateExpr e},")
+         |> String.concat "\n")
+        in $"vec3_new_list({exprs.Length}, {args});"
     | ECall(func, args, _) ->
         match func with
         | EIdentifier(id, _) ->
@@ -43,11 +42,18 @@ let rec generateExpr (expr: Expr) : string =
                 | [left; right] -> $"vec3_subtract(%s{generateExpr left}, %s{generateExpr right})"
                 | [arg] -> $"vec3_negate(%s{generateExpr arg})"
                 | _ -> failwith "Invalid number of arguments for -"
+            | Operator(ColonColon, _) ->
+                match args with
+                | [left; right] ->
+                    let leftExpr = generateExpr left
+                    let rightExpr = generateExpr right in
+                    sprintf  $"vec3_cons(%s{leftExpr}, %s{rightExpr})"
+                | _ -> failwith "Invalid number of arguments for print"
             | Identifier "print" ->
                 match args with
                 | [arg] -> 
                     let exprStr = generateExpr arg
-                    sprintf "({ Vec3Value* tmp = %s; vec3_print(tmp); printf(\"\\n\"); tmp; })" exprStr
+                    $"vec3_print({exprStr});"
                 | _ -> failwith "Invalid number of arguments for print"
             | _ ->
                 let funcName = lexemeToString id.Lexeme
@@ -65,10 +71,10 @@ let generateStmt (stmt: Stmt) : string =
     | SVariableDeclaration(name, expr, _) ->
         match name.Lexeme with
         | Identifier id ->
-            $"Vec3Value* %s{id} = %s{generateExpr expr};"
+            $"Vec3Value* %s{id} = %s{generateExpr expr}"
         | _ -> failwith "Expected identifier in variable declaration"
     | SExpression(expr, _) ->
-        sprintf "{ Vec3Value* result = %s; vec3_decref(result); }" (generateExpr expr)
+        $"{generateExpr expr}"
     | _ -> failwith "Unsupported statement type"
 
 /// Generate the complete C code from a program
@@ -78,6 +84,7 @@ let generateCCode (program: Program) : string =
 #include "number.h"
 #include "value.h"
 #include "vec3_math.h"
+#include "vec3_list.h"
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
