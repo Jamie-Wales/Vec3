@@ -164,7 +164,7 @@ and runCurrentFrame vm =
         match opcode with
         | RETURN ->
             let currentFrame = getCurrentFrame vm
-            let argCount = currentFrame.Function.Arity
+            let argCount = List.length currentFrame.Function.Locals
            // let localCount = currentFrame.Function.Locals.Length
             let vm, shouldPop = readByte vm
             
@@ -273,7 +273,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         callValue vm (int argCount) (int recursive)
     | RETURN ->
         let currentFrame = getCurrentFrame vm
-        let argCount = currentFrame.Function.Arity
+        let argCount = List.length currentFrame.Function.Locals
       //  let localCount = currentFrame.Function.Locals.Length
         let vm, shouldPop = readByte vm
         let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
