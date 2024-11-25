@@ -216,12 +216,6 @@ let drawType =
     
     TFunction([ recTyp ], returnT, false, true)
 
-let findIntegralType =
-    let funcT =
-        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
-    
-    TFunction([funcT; TFloat; TFloat], TFloat, false, true)
-
 let readTyp =
     TFunction([TString], TAny, false, true)
 
@@ -266,7 +260,6 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
 
       Differentiate, differentiateType
       Integrate, integrateType
-      FindIntegral, findIntegralType
 
       Cons, consType
       Add, plus

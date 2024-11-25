@@ -1023,7 +1023,7 @@ and commaSeparatedList (state: ParserState) : ParseResult<Expr list> =
                 | Some { Lexeme = Operator(Comma, _) } ->
                     let state = advance state
                     loop state (expr :: exprs)
-                | _ -> Ok(state, expr :: exprs)
+                | _ -> Ok(state, List.rev (expr :: exprs))
         }
 
     loop state []

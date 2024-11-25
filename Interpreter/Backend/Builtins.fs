@@ -536,19 +536,6 @@ let builtins =
           "Draw"
       )
 
-      Identifier "findIntegral",
-      VBuiltin(
-          (fun args ->
-              match args with
-              | [ VFunction(_, Some f); VNumber(VFloat b); VNumber(VFloat a) ] ->
-                  let res = SymbolicExpression.findIntegral f a b
-                  VNumber(VFloat res)
-              | _ ->
-                  raise
-                  <| InvalidProgramException "findIntegral expects a function, a lower bound, and an upper bound"),
-          "FindIntegral"
-      )
-
       Operator(Plus, Some Infix),
       VBuiltin(
           (fun args ->

@@ -106,6 +106,9 @@ rec append(list1, list2) -> if list1 == [] then
         
 // wrapper for append
 let (++) = (list1, list2) -> append(list1, list2)
+
+let findIntegral = (f, x, y) -> integrate(f)(y) - integrate(f)(x)
+
 """
 
 /// <summary>
