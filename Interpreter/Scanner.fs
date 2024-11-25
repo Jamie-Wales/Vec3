@@ -172,7 +172,6 @@ let scNumber (nStr: char list) : (char list * Number * int) option =
     | c :: tail when isDigit c ->
         let iStr, iVal, iLen = scInt tail (intVal c) 1
 
-        printfn $"{iStr}"
         match iStr with
         | '/' :: ratTail ->
             printfn "rat"
