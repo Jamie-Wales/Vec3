@@ -40,6 +40,8 @@
         <Compile Include="PlotWindow.axaml.fs" />
         <Compile Include="Draw.axaml.fs" />
         <Compile Include="MainWindow.axaml.fs" />
+        <Compile Include="Transpiler\CodeGenerator.fs" />
+        <Compile Include="Transpiler/Transpiler.fs"/>
         <Compile Include="App.axaml.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
@@ -48,6 +50,7 @@
         <Content Include="grammar/vec3.tmLanguage.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
+        <Compile Include="Transpiler\Transpiler.fs" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Avalonia" Version="11.1.0" />
