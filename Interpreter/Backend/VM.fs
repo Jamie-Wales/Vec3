@@ -397,13 +397,6 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
                   StackBase = vm.Stack.Count - argCount
                   Locals = Array.zeroCreate func.Locals.Length }
             
-            // let args =
-            //     [ 0 .. argCount - 1 ]
-            //     |> List.map (fun _ -> let value, _ = pop vm in value)
-            //     |> List.rev
-            // let _, vm = pop vm
-            // args |> List.iter (fun arg -> push vm arg |> ignore)
-            
             vm.Frames.Add(frame)
             vm
         | VClosure closure ->
