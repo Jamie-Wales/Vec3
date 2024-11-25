@@ -56,7 +56,7 @@ type Operator =
     | Dollar
     
     /// <summary>
-    /// For the future, custom operators can be added.
+    /// User defined operators (no precedence)
     /// </summary>
     | Custom of string
     

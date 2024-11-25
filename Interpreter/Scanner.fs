@@ -132,6 +132,7 @@ let rec scOperator (iStr: char list) (iVal: string) : (char list * Operator * in
         | _ -> Some(iStr, Custom iVal, iVal.Length)
         
 
+// TODO: rationals dont work !!
 /// <summary>
 /// Scan in a number.
 /// </summary>
@@ -171,8 +172,10 @@ let scNumber (nStr: char list) : (char list * Number * int) option =
     | c :: tail when isDigit c ->
         let iStr, iVal, iLen = scInt tail (intVal c) 1
 
+        printfn $"{iStr}"
         match iStr with
         | '/' :: ratTail ->
+            printfn "rat"
             let fStr, fVal, fLen = scInt ratTail 0 0
             Some(fStr, LRational(iVal, int fVal), iLen + fLen + 1)
         | '.' :: d :: fracTail when isDigit d ->

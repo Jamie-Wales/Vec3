@@ -158,10 +158,10 @@ let rec GCD a b =
     else
         GCD b r
 
-let simplifyRational rat =
+let simplifyRational (rat: Number): Number =
     match rat with
     | LRational(a, b) ->
-        let gcd = GCD a b
+        let gcd = GCD b a
         let a = a / gcd
         let b = b / gcd
         LRational(a, b)
@@ -196,7 +196,7 @@ let foldConstants (program: Program) : Program =
         match expr with
         | ETail(expr, typ) -> ETail(foldExpr expr, typ)
         | ELiteral(lit, typ) -> match lit with
-                                | LNumber(LRational(a, b)) -> ELiteral(LNumber(simplifyRational(LRational(a, b))), typ)
+                                // | LNumber(LRational(a, b)) -> ELiteral(LNumber(simplifyRational(LRational(a, b))), typ)
                                 | _ -> ELiteral(lit, typ)
         | EBlock(stmts, typ) -> EBlock(foldStatements stmts, typ)
         | EIdentifier(token, typ) -> EIdentifier(token, typ)
