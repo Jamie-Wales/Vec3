@@ -27,6 +27,7 @@ type PlotType =
     | Line
     | Bar
     | Histogram
+    | Signal
     
 type CompoundType =
     | LIST
@@ -87,7 +88,7 @@ type CallFrame =
     { Closure: Closure
       IP: int
       StackBase: int
-      Locals: Value array }
+     }
 
 type VM =
     { Frames: ResizeArray<CallFrame>

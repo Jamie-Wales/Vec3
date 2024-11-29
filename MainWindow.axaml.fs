@@ -247,6 +247,8 @@ let x = [1..10] : [float]
                 | Bar ->
                     plotWindow.PlotControl.Plot.Add.Bars(y, x) |> ignore
                 | Histogram -> failwith "todo"
+                | Signal ->
+                    plotWindow.PlotControl.Plot.Add.Signal(y) |> ignore
                     
                 plotWindow.PlotControl.Plot.Title(title)
                 plotWindow.PlotControl.Refresh()

@@ -30,7 +30,6 @@ let loadFunction (vm: VM) (func: Function) : VM =
         Closure = closure
         IP = 0
         StackBase = vm.Stack.Count
-        Locals = [||]
     }
     vm.Frames.Add(frame)
     vm
@@ -175,7 +174,10 @@ and runCurrentFrame vm =
             let vm, shouldPop = readByte vm
             
             let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
-            List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int argCount) - 1 ]
+            // get values 
+            // List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int argCount) - 1 ]
+            let locals = List.fold (fun acc _ -> let c, _ = pop vm in c :: acc) [] [ 0 .. (int argCount) - 1 ]
+            
             if int shouldPop = 1 then
                 let _ = pop vm
                 ()
@@ -188,7 +190,6 @@ and runCurrentFrame vm =
 
 
 and executeOpcode (vm: VM) (opcode: OP_CODE) =
-    printfn $"{opCodeToString opcode}"
     let vm = appendOutput vm Execution $"Executing: {opCodeToString opcode}"
 
     match opcode with
@@ -343,14 +344,16 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
 
                 | _ -> vm, []
             
+            let rec getUpvaluesVals (vm: VM) (count: int) : Value list =
+                match count with
+                | n when n > 0 ->
+                    let value = peek vm (n - 1)
+                    let values = getUpvaluesVals vm (n - 1)
+                    value :: values
+                | _ -> []
+            
             let vm, vals = popUpValues vm (int upValueCount)
-            
-            let frame = getCurrentFrame vm
-            let upvalues = frame.Closure.UpValuesValues
-            let locals = frame.Locals
-            
-            let upvalues = Array.append upvalues locals
-            
+            let upvalues = Seq.toArray <| getUpvaluesVals vm (int upValueCount)
             
             // how do i set the upvalues ?
             // where do i get the upvalues from ?
@@ -430,15 +433,12 @@ and joinOutput (vm1: VM) (vm2: VM) =
 
 and callValue (vm: VM) (argCount: int) (recursive: int): VM =
     let callee = peek vm argCount
-
+    
     match recursive with
     | 0 ->
         match callee with
         | VFunction(func, _) ->
             if argCount <> func.Arity then
-                // print the given args
-                let args = [ 0 .. argCount - 1 ] |> List.map (fun _ -> let value, _ = pop vm in value) |> List.rev
-                printfn $"Args: {args}"
                 raise <| InvalidProgramException $"Expected {func.Arity} arguments but got {argCount} for function {func}"
             
             // remove caller from stack
@@ -447,7 +447,7 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
                 { Closure = closure
                   IP = 0
                   StackBase = vm.Stack.Count - argCount
-                  Locals = Array.zeroCreate func.Locals.Length }
+                  }
             
             vm.Frames.Add(frame)
             vm
@@ -459,13 +459,11 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
                 { Closure = closure
                   IP = 0
                   StackBase = vm.Stack.Count - argCount
-                  Locals = Array.zeroCreate closure.Function.Locals.Length }
+                   }
 
             vm.Frames.Add(frame)
             vm
-        | VBuiltin (func, name) ->
-            printfn $"Calling builtin function: {name}"
-
+        | VBuiltin (func, _) ->
             let args =
                 [ 0 .. argCount - 1 ]
                 |> List.map (fun _ -> let value, _ = pop vm in value)
@@ -515,7 +513,7 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
                 { Closure = closure
                   IP = 0
                   StackBase = vm.Stack.Count - argCount
-                  Locals = Array.zeroCreate closure.Function.Locals.Length }
+                   }
                 
             vm.Frames.Add(frame)
             match runFrameRecursive vm with
@@ -534,7 +532,7 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
                 { Closure = closure
                   IP = 0
                   StackBase = vm.Stack.Count - argCount
-                  Locals = Array.zeroCreate func.Locals.Length }
+                 }
             vm.Frames.Add(frame)
             match runFrameRecursive vm with
             | VFunction _,  vm  ->
@@ -543,9 +541,7 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
             | v, vm ->
                 let _ = push vm v in
                 vm
-        | VBuiltin (func, name) ->
-            printfn $"Calling builtin function: {name}"
-
+        | VBuiltin (func, _) ->
             let args =
                 [ 0 .. argCount - 1 ]
                 |> List.map (fun _ -> let value, _ = pop vm in value)
@@ -611,7 +607,7 @@ and createNewVM (mainFunc: Function) : VM =
         { Closure = closure
           IP = 0
           StackBase = 0
-          Locals = [||] }
+          }
     vm.Frames.Add(mainFrame)
     vm
     

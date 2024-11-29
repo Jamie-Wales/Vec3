@@ -168,6 +168,7 @@ type NotebookWindow () as this =
                             let x = List.map extractNumber xs |> Array.ofList
                             let y = List.map extractNumber ys |> Array.ofList
                             
+                            
                             match plotType with
                             | Scatter -> 
                                 plotControl.Plot.Add.Scatter(x, y) |> ignore
@@ -176,6 +177,7 @@ type NotebookWindow () as this =
                             | Bar ->
                                 plotControl.Plot.Add.Bars(y, x) |> ignore
                             | Histogram -> failwith "todo"
+                            | Signal -> plotControl.Plot.Add.Signal(y) |> ignore
                             
                             plotControl.Refresh()
                             plotsPanel.Children.Add(plotControl)

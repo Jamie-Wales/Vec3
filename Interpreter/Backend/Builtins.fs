@@ -27,14 +27,13 @@ let getNewDrawId =
 let parsePlotType =
     function
     | "scatter" ->
-        printf "Parsing Scatter"
         Scatter
     | "line" ->
-        printf "Parsing line"
         Line
     | "bar" ->
-        printf "Parsing Bar"
         Bar
+    | "signal" ->
+        Signal
     | name -> raise <| InvalidProgramException $"Unknown plot type: {name}"
 
 
