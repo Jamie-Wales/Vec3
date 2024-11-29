@@ -18,8 +18,9 @@ let consType =
 let plotFunType =
     let funConstrain =
         TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
-
-    TFunction([ TString; funConstrain ], TUnit, false, true)
+    
+    TConstrain(Constrain(freshTypeVar(), (fun t -> t = TFunction([ TString; funConstrain ], TUnit, false, true) || t = TFunction([ TString; funConstrain; TFloat; TFloat  ], TUnit, false, true))))
+   
 
 let plus =
     let typeVar = freshTypeVar ()

@@ -61,7 +61,7 @@ and Value =
     | VList of Value list * CompoundType
     | VBuiltin of (Value list -> Value) * string
     | VPlotData of string * Value list * Value list * PlotType
-    | VPlotFunction of string * (double -> double)
+    | VPlotFunction of string * (double -> double) * float option * float option * float option
     | VPlotFunctions of string * (double -> double) list
     | VShape of (float * float * float * float * string * string * int * bool)
     | VShapes of (float * float * float * float * string * string) list * int

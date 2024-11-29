@@ -13,6 +13,7 @@ open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Compiler
 open Vec3.Interpreter.Parser
+open Vec3.Interpreter.SymbolicExpression
 open Vec3.Interpreter.Typing
 open System.Threading.Tasks
 open System.Threading
@@ -251,11 +252,23 @@ let x = [1..10] : [float]
                 plotWindow.PlotControl.Refresh()
                 plotWindow.Show()
                         
-            | VPlotFunction (title, f) ->
+            | VPlotFunction (title, f, start, end_, area) ->
                 let plotWindow = PlotWindow()
                 plotWindow.Title <- title
                 plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
                 plotWindow.PlotControl.Plot.Title(title)
+                // start and end are for integral plots
+                match start, end_, area with
+                | Some start, Some end_, Some area ->
+                    let startHeight = f start
+                    let endHeight = f end_
+                    
+                    plotWindow.PlotControl.Plot.Add.Line(start, 0.0, start, startHeight) |> ignore
+                    plotWindow.PlotControl.Plot.Add.Line(end_, 0.0, end_, endHeight) |> ignore
+                    
+                    plotWindow.PlotControl.Plot.Add.Annotation($"Area: %f{area}") |> ignore
+                | _ -> ()
+                    
                 plotWindow.PlotControl.Refresh()
                 plotWindow.Show()
             
@@ -272,7 +285,7 @@ let x = [1..10] : [float]
         vm.Plots.Clear()
         
     member private this.LoadCode() =
-        replState <- createNewVM(initFunction("Main"))
+        replState <- createNewVM (initFunction "Main")
         let code = this.GetEditorText()
         try 
             match parseAndCompile code replState with
@@ -347,29 +360,35 @@ let x = [1..10] : [float]
                 standardOutput.Text <- $"%s{standardOutput.Text}\n<Vec3> help()\nOpening syntax guide window..."
                 replInput.Text <- ""
             else
-                match noTcParseAndCompile code replState with
-                | Some vm ->
-                    let previousOutput = standardOutput.Text  
-                    let oldOutputLength = Seq.length replState.Streams.StandardOutput.Value
-                    replState <- run vm
-                    standardOutput.Foreground <- SolidColorBrush(Colors.White)
-                    Seq.iter (fun v -> printfn $"{v}") vm.Stack
-                    let topOfStack = vm.Stack[Seq.length vm.Stack - 1] |> valueToString
-                    
-                    let newOutput = replState.Streams.StandardOutput.Value 
-                                  |> Seq.skip oldOutputLength 
-                                  |> String.concat "\n"
-                    if not (String.IsNullOrWhiteSpace(newOutput)) then
-                        standardOutput.Text <- $"%s{previousOutput}\n<Vec3> %s{code}\n%s{newOutput}\n%s{topOfStack}"
-                    else
-                        standardOutput.Text <- $"%s{previousOutput}\n<Vec3> %s{code}\n%s{topOfStack}"
-                            
-                    this.HandlePlotOutput(replState)
-                    replInput.Text <- ""  
-                | None -> 
+                try
+                    match noTcParseAndCompile code replState with
+                    | Some vm ->
+                        let previousOutput = standardOutput.Text  
+                        let oldOutputLength = Seq.length replState.Streams.StandardOutput.Value
+                        replState <- run vm
+                        standardOutput.Foreground <- SolidColorBrush(Colors.White)
+                        Seq.iter (fun v -> printfn $"{v}") vm.Stack
+                        let topOfStack = vm.Stack[Seq.length vm.Stack - 1] |> valueToString
+                        
+                        let newOutput = replState.Streams.StandardOutput.Value 
+                                      |> Seq.skip oldOutputLength 
+                                      |> String.concat "\n"
+                        if not (String.IsNullOrWhiteSpace(newOutput)) then
+                            standardOutput.Text <- $"%s{previousOutput}\n<Vec3> %s{code}\n%s{newOutput}\n%s{topOfStack}"
+                        else
+                            standardOutput.Text <- $"%s{previousOutput}\n<Vec3> %s{code}\n%s{topOfStack}"
+                                
+                        this.HandlePlotOutput(replState)
+                        replInput.Text <- ""  
+                    | None -> 
+                        standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                        standardOutput.Text <- $"%s{standardOutput.Text}\nFailed to compile: %s{replInput.Text}"
+                with
+                | ex ->
+                    printfn $"Error: {ex}"
                     standardOutput.Foreground <- SolidColorBrush(Colors.Red)
-                    standardOutput.Text <- $"%s{standardOutput.Text}\nFailed to compile: %s{replInput.Text}"
-
+                    standardOutput.Text <- $"%s{standardOutput.Text}\nError: %s{ex.Message}"
+                    replInput.Text <- ""
     
     member private this.GetEditorText() : string =
         if textEditor <> null then

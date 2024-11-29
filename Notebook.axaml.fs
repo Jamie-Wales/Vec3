@@ -180,13 +180,25 @@ type NotebookWindow () as this =
                             plotControl.Refresh()
                             plotsPanel.Children.Add(plotControl)
                                 
-                        | VPlotFunction (title, f) ->
+                        | VPlotFunction (title, f, start, end_, area) ->
                             let plotControl = AvaPlot()
                             plotControl.Height <- 300
                             plotControl.Width <- 400
                             plotControl.Margin <- Thickness(0, 10, 0, 10)
                             plotControl.Plot.Title(title)
                             plotControl.Plot.Add.Function(f) |> ignore
+                            
+                            match start, end_, area with
+                            | Some start, Some end_, Some area -> 
+                                let startHeight = f start
+                                let endHeight = f end_
+                                
+                                plotControl.Plot.Add.Line(start, 0.0, start, startHeight) |> ignore
+                                plotControl.Plot.Add.Line(end_, 0.0, end_, endHeight) |> ignore
+                                
+                                plotControl.Plot.Add.Annotation($"Area: %f{area}") |> ignore
+                            | _ -> ()
+                            
                             plotControl.Refresh()
                             
                             plotsPanel.Children.Add(plotControl)
