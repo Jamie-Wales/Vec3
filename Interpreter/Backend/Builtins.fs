@@ -86,7 +86,7 @@ let builtins =
       VBuiltin(
           (fun args ->
               match args with
-              | [ VString title; VFunction(_, Some f) ] ->
+              | [ VString title; VClosure(_, Some f) ] ->
                   let builtin = SymbolicExpression.toBuiltin f
 
                   VPlotFunction(title, builtin)
@@ -101,7 +101,7 @@ let builtins =
                   let funcs =
                       List.map
                           (function
-                          | VFunction(_, Some f) -> SymbolicExpression.toBuiltin f
+                          | VClosure(_, Some f) -> SymbolicExpression.toBuiltin f
                           | _ -> raise <| InvalidProgramException "plotFuncs expects a list of functions")
                           funcs
 
@@ -334,8 +334,13 @@ let builtins =
       VBuiltin(
           (fun args ->
               match args with
-              | [ VFunction(_, Some f1)
-                  VFunction(_, Some f2)
+              | [ VClosure(_, Some f1)
+                  VClosure(_, Some f2)
+                  VNumber(VFloat init)
+                  VNumber(VFloat tol)
+                  VNumber(VInteger it) ]
+              | [ VClosure(_, Some f1)
+                  VClosure(_, Some f2)
                   VNumber(VFloat init)
                   VNumber(VFloat tol)
                   VNumber(VInteger it) ] ->
@@ -344,8 +349,8 @@ let builtins =
 
                   let res = newtonRaphson builtin1 builtin2 init tol it
                   VNumber(VFloat(res))
-              | [ VFunction(_, Some f1)
-                  VFunction(_, Some f2)
+              | [ VClosure(_, Some f1)
+                  VClosure(_, Some f2)
                   VNumber(VInteger init)
                   VNumber(VFloat tol)
                   VNumber(VInteger it) ] ->
@@ -354,8 +359,8 @@ let builtins =
 
                   let res = newtonRaphson builtin1 builtin2 init tol it
                   VNumber(VFloat(res))
-              | [ VFunction(_, Some f1)
-                  VFunction(_, Some f2)
+              | [ VClosure(_, Some f1)
+                  VClosure(_, Some f2)
                   VNumber(VFloat init)
                   VNumber(VInteger tol)
                   VNumber(VInteger it) ] ->
@@ -364,8 +369,8 @@ let builtins =
 
                   let res = newtonRaphson builtin1 builtin2 init tol it
                   VNumber(VFloat(res))
-              | [ VFunction(_, Some f1)
-                  VFunction(_, Some f2)
+              | [ VClosure(_, Some f1)
+                  VClosure(_, Some f2)
                   VNumber(VInteger init)
                   VNumber(VInteger tol)
                   VNumber(VInteger it) ] ->
@@ -385,7 +390,7 @@ let builtins =
       VBuiltin(
           (fun args ->
               match args with
-              | [ VFunction(_, Some f)
+              | [ VClosure(_, Some f)
                   VNumber(a)
                   VNumber(b)
                   VNumber(tol)
@@ -852,7 +857,8 @@ let builtins =
       Identifier "on",
         VBuiltin((fun args ->
             match args with
-            | [ VList([VList([VString "id"; VNumber(VInteger shapeId)], _)], RECORD); VList([VList([VString "event"; VNumber(VInteger eventId)], _)], RECORD); VFunction(func, _) ] ->
+            | [ VList([VList([VString "id"; VNumber(VInteger shapeId)], _)], RECORD); VList([VList([VString "event";  VNumber(VInteger eventId)], _)], RECORD); VClosure(func, _) ] ->
+                let func = func.Function
                 VEventListener(shapeId, eventId, func)
             | _ -> raise <| InvalidProgramException $"Expected a shape id, an event id, and a function for on {args}"),
              "On")

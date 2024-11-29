@@ -184,7 +184,7 @@ let x = [1..10] : [float]
                 
         loadButton.Click.AddHandler(fun _ _ -> this.LoadCode())
         textEditor.TextChanged.AddHandler(fun _ _ -> this.TextChanged())
-        runButton.Click.AddHandler(fun _ _ -> this.run() |> ignore)
+        runButton.Click.AddHandler(fun _ _ -> this.run())
         openNotebookButton.Click.AddHandler(fun _ _ -> this.OpenNotebook())
         
     member private this.OpenNotebook() =
@@ -353,22 +353,24 @@ let x = [1..10] : [float]
                     let oldOutputLength = Seq.length replState.Streams.StandardOutput.Value
                     replState <- run vm
                     standardOutput.Foreground <- SolidColorBrush(Colors.White)
+                    Seq.iter (fun v -> printfn $"{v}") vm.Stack
+                    let topOfStack = vm.Stack[Seq.length vm.Stack - 1] |> valueToString
                     
                     let newOutput = replState.Streams.StandardOutput.Value 
                                   |> Seq.skip oldOutputLength 
                                   |> String.concat "\n"
                     if not (String.IsNullOrWhiteSpace(newOutput)) then
-                        standardOutput.Text <- $"%s{previousOutput}\n<Vec3> %s{code}\n%s{newOutput}"
+                        standardOutput.Text <- $"%s{previousOutput}\n<Vec3> %s{code}\n%s{newOutput}\n%s{topOfStack}"
                     else
-                        standardOutput.Text <- $"%s{previousOutput}\n<Vec3> %s{code}"
+                        standardOutput.Text <- $"%s{previousOutput}\n<Vec3> %s{code}\n%s{topOfStack}"
                             
                     this.HandlePlotOutput(replState)
                     replInput.Text <- ""  
                 | None -> 
                     standardOutput.Foreground <- SolidColorBrush(Colors.Red)
                     standardOutput.Text <- $"%s{standardOutput.Text}\nFailed to compile: %s{replInput.Text}"
-        true
 
+    
     member private this.GetEditorText() : string =
         if textEditor <> null then
             textEditor.Text

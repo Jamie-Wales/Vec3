@@ -22,7 +22,7 @@ let rec valuesEqual (a: Value) (b: Value) =
     | VBoolean x, VBoolean y -> x = y
     | VString x, VString y -> x = y
     | VFunction (f1, _), VFunction (f2, _) -> f1.Name = f2.Name && f1.Arity = f2.Arity
-    | VClosure c1, VClosure c2 -> c1.Function = c2.Function
+    | VClosure (c1, _), VClosure (c2, _) -> c1.Function = c2.Function
     | VNil, VNil -> true
     | VList (l1, typ1), VList (l2, typ2) -> 
         if List.length l1 <> List.length l2 || typ1 <> typ2 then false

@@ -22,17 +22,33 @@ type OutputStreams =
       StandardOutput: Ref<seq<string>>
       Globals: seq<string> }
 
-type Chunk =
-    { Code: ResizeArray<byte>
-      Lines: ResizeArray<LineInfo>
-      ConstantPool: ResizeArray<Value> }
-
-
-and PlotType =
+type PlotType =
     | Scatter
     | Line
     | Bar
     | Histogram
+    
+type CompoundType =
+    | LIST
+    | RECORD
+    | TUPLE
+    
+type Local =
+    { Name: string; Depth: int; Index: int }
+    
+    
+type VNumber =
+    | VInteger of int
+    | VFloat of float
+    | VRational of int * int
+    | VComplex of float * float
+    | VChar of char
+    
+    
+type Chunk =
+    { Code: ResizeArray<byte>
+      Lines: ResizeArray<LineInfo>
+      ConstantPool: ResizeArray<Value> }
 
 and Value =
     | VNumber of VNumber
@@ -40,7 +56,7 @@ and Value =
     | VBoolean of bool
     | VFunction of Function * Expression option
     | VAsyncFunction of Function 
-    | VClosure of Closure
+    | VClosure of Closure * Expression option
     | VNil
     | VList of Value list * CompoundType
     | VBuiltin of (Value list -> Value) * string
@@ -54,21 +70,6 @@ and Value =
     | VEventListener of int * int * Function
     | VPromise of Async<Value>
 
-and CompoundType =
-    | LIST
-    | RECORD
-    | TUPLE
-
-and VNumber =
-    | VInteger of int
-    | VFloat of float
-    | VRational of int * int
-    | VComplex of float * float
-    | VChar of char
-
-and Local =
-    { Name: string; Depth: int; Index: int }
-
 and Function =
     { Arity: int
       Chunk: Chunk
@@ -77,15 +78,18 @@ and Function =
 
 and Closure =
     { Function: Function
-      UpValues: Value list }
+      UpValues: Local list
+      UpValuesValues: Value array
+      }
 
-and CallFrame =
-    { Function: Function
+
+type CallFrame =
+    { Closure: Closure
       IP: int
       StackBase: int
       Locals: Value array }
 
-and VM =
+type VM =
     { Frames: ResizeArray<CallFrame>
       Stack: ResizeArray<Value>
       ScopeDepth: int
@@ -108,7 +112,8 @@ let rec valueToString =
     | VFunction(func, Some f) ->
         $"<fn {func.Name} : f(x) = {toString f}>"
     | VFunction(f, _) -> $"<fn {f.Name}>"
-    | VClosure c -> $"<closure {c.Function.Name}>"
+    | VClosure (c, Some f) -> $"<closure {c.Function.Name} : f(x) = {toString f}>"
+    | VClosure (c, _) -> $"<closure {c.Function.Name}>"
     | VNil -> "nil"
     | VList(l, typ) ->
         match typ with

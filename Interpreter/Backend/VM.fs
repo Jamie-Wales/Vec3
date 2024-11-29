@@ -2,9 +2,14 @@
 /// The virtual machine for the interpreter.
 /// </summary>
 
+// might do a hacky thing for upvalues, store them in an env or something
+// and then just look them up in the env.
+// but how do i set them ??
+// think current issue is how thte return clears teh stack of info.
+// also maybe affects recursive funcs ??
+
 module Vec3.Interpreter.Backend.VM
 
-open System.Threading.Tasks
 open System
 open Compiler
 open Microsoft.FSharp.Collections
@@ -17,22 +22,12 @@ open Vec3.Interpreter.Backend.Builtins
 open Vec3.Interpreter.Token
 open Grammar
 
-let output = ref (Seq.empty)
-
-(*
-
-this fails on index error ??
-let abs = (x) -> if x < 0 then -x else x
-
-print(abs(-100))
-
-additionally, cos(tan(arg)) fails with index error
-why ? 
-*)
+let output = ref Seq.empty
 
 let loadFunction (vm: VM) (func: Function) : VM =
+    let closure = { Function = func; UpValues = []; UpValuesValues = [||] }
     let frame = {
-        Function = func
+        Closure = closure
         IP = 0
         StackBase = vm.Stack.Count
         Locals = [||]
@@ -51,7 +46,7 @@ let getCurrentFrame (vm: VM) = vm.Frames[vm.Frames.Count - 1]
 
 let readByte (vm: VM) =
     let frame = getCurrentFrame vm
-    let byte = frame.Function.Chunk.Code[frame.IP]
+    let byte = frame.Closure.Function.Chunk.Code[frame.IP]
     let updatedFrame = { frame with IP = frame.IP + 1 }
     vm.Frames[vm.Frames.Count - 1] <- updatedFrame
     (vm, byte)
@@ -60,10 +55,10 @@ let readConstant (vm: VM) =
     let vm, byte = readByte vm
     let frame = getCurrentFrame vm
 
-    if int byte >= frame.Function.Chunk.ConstantPool.Count then
-        raise <| InvalidProgramException $"Constant index out of range: {byte} (pool size: {frame.Function.Chunk.ConstantPool.Count})"
+    if int byte >= frame.Closure.Function.Chunk.ConstantPool.Count then
+        raise <| InvalidProgramException $"Constant index out of range: {byte} (pool size: {frame.Closure.Function.Chunk.ConstantPool.Count})"
 
-    let constant = frame.Function.Chunk.ConstantPool[int byte]
+    let constant = frame.Closure.Function.Chunk.ConstantPool[int byte]
     (constant, vm)
 
 let readConstantLong (vm: VM) =
@@ -73,10 +68,10 @@ let readConstantLong (vm: VM) =
     let frame = getCurrentFrame vm
     let index = (int byte1) ||| ((int byte2) <<< 8) ||| ((int byte3) <<< 16)
 
-    if index >= frame.Function.Chunk.ConstantPool.Count then
-        raise <| InvalidProgramException $"Long constant index out of range: %d{index} (pool size: %d{frame.Function.Chunk.ConstantPool.Count})"
+    if index >= frame.Closure.Function.Chunk.ConstantPool.Count then
+        raise <| InvalidProgramException $"Long constant index out of range: %d{index} (pool size: %d{frame.Closure.Function.Chunk.ConstantPool.Count})"
 
-    let constant = frame.Function.Chunk.ConstantPool[index]
+    let constant = frame.Closure.Function.Chunk.ConstantPool[index]
     (constant, vm)
 
 
@@ -107,6 +102,18 @@ let appendOutput (vm: VM) (streamType: StreamType) (str: string) =
 
     { vm with Streams = updatedStreams }
 
+let findUpValue (vm: VM) (depth: int) (index: int) =
+    let frame = getCurrentFrame vm
+
+    let rec findUpValue' frame depth index =
+        if depth = 0 then
+            vm.Stack[frame.StackBase + index]
+        else
+            let frame = vm.Frames[vm.Frames.Count - depth]
+            findUpValue' frame (depth - 1) index
+
+    findUpValue' frame depth index
+    
 let push (vm: VM) (value: Value) =
     vm.Stack.Add(value)
     vm
@@ -137,7 +144,7 @@ let resetStreams (vm: VM) =
 
 let rec runFrameRecursive vm =
     let frame = getCurrentFrame vm
-    if frame.IP >= frame.Function.Chunk.Code.Count then
+    if frame.IP >= frame.Closure.Function.Chunk.Code.Count then
         VNil, vm
     else
         let vm, instruction = readByte vm
@@ -155,7 +162,7 @@ let rec runFrameRecursive vm =
 and runCurrentFrame vm =
     let frame = getCurrentFrame vm
 
-    if frame.IP >= frame.Function.Chunk.Code.Count then
+    if frame.IP >= frame.Closure.Function.Chunk.Code.Count then
         VNil, vm
     else
         let vm, instruction = readByte vm
@@ -164,13 +171,11 @@ and runCurrentFrame vm =
         match opcode with
         | RETURN ->
             let currentFrame = getCurrentFrame vm
-            let argCount = List.length currentFrame.Function.Locals
-           // let localCount = currentFrame.Function.Locals.Length
+            let argCount = List.length currentFrame.Closure.Function.Locals
             let vm, shouldPop = readByte vm
             
             let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
             List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int argCount) - 1 ]
-           // List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int localCount) - 1 ]
             if int shouldPop = 1 then
                 let _ = pop vm
                 ()
@@ -203,6 +208,25 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             appendOutput vm Execution $"Pushed long constant onto stack: {valueToString constant}"
 
         vm
+    | GET_UPVALUE -> // broken currently, how do i get the upvalues ????????????????????????/
+        let vm, slot = readByte vm
+        
+        let rec findClosure (curDepth : int) =
+            let closure = peek vm curDepth
+            match closure with
+            | VClosure _ -> closure
+            | _ -> findClosure (curDepth + 1)
+        
+        let closure = findClosure 1
+
+        match closure with
+        | VClosure ({ UpValues = upValues; UpValuesValues = vals }, _) ->
+            let upValue = upValues[int slot]
+            let upValue = vals[upValue.Index]
+            let vm = push vm upValue
+            vm
+        | _ -> raise <| InvalidProgramException "Expected closure for GET_UPVALUE"
+        
     | GET_LOCAL ->
         let vm, slot = readByte vm
         let frame = getCurrentFrame vm
@@ -273,7 +297,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         callValue vm (int argCount) (int recursive)
     | RETURN ->
         let currentFrame = getCurrentFrame vm
-        let argCount = List.length currentFrame.Function.Locals
+        let argCount = List.length currentFrame.Closure.Function.Locals
       //  let localCount = currentFrame.Function.Locals.Length
         let vm, shouldPop = readByte vm
         let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
@@ -298,14 +322,41 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
         let constant, vm = readConstant vm
 
         match constant with
-        | VFunction(func, _) ->
-            let upValues =
-                func.Locals
-                |> Seq.filter (fun local -> local.Depth > 0)
-                |> Seq.map (fun local -> vm.Stack[local.Index])
-                |> Seq.toList
+        | VFunction(func, f) ->
+            let vm, upValueCount = readByte vm
+            
+            let rec popUpValues (vm: VM) (count: int) : VM * Local list =
+                match count with
+                | n when n > 0 ->
+                    let vm, index = readByte vm
+                    let vm, depth = readByte vm
+                    let name, vm = readConstant vm
+                    let name = match name with
+                                 | VString s -> s
+                                 | _ -> raise <| InvalidProgramException "Expected string constant for upvalue name"
+                    
+                    
+                    let vm, upValues = popUpValues vm (n - 1)
+                    let upValue = { Index = int index; Depth = int depth; Name = name }
 
-            let closure = VClosure { Function = func; UpValues = upValues }
+                    vm, upValue :: upValues
+
+                | _ -> vm, []
+            
+            let vm, vals = popUpValues vm (int upValueCount)
+            
+            let frame = getCurrentFrame vm
+            let upvalues = frame.Closure.UpValuesValues
+            let locals = frame.Locals
+            
+            let upvalues = Array.append upvalues locals
+            
+            
+            // how do i set the upvalues ?
+            // where do i get the upvalues from ?
+            // answer: from the stack
+            
+            let closure = VClosure ({ Function = func; UpValues = vals; UpValuesValues = upvalues }, f)
             let vm = push vm closure
             vm
         | _ -> raise <| InvalidProgramException "Expected function constant for closure"
@@ -352,7 +403,7 @@ and runLoop vm =
         vm
     else
         let frame = getCurrentFrame vm
-        if frame.IP >= frame.Function.Chunk.Code.Count then
+        if frame.IP >= frame.Closure.Function.Chunk.Code.Count then
             if vm.Frames.Count > 1 then
                 let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm 
                 vm.Frames.RemoveAt(vm.Frames.Count - 1)
@@ -391,27 +442,26 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
                 raise <| InvalidProgramException $"Expected {func.Arity} arguments but got {argCount} for function {func}"
             
             // remove caller from stack
+            let closure = { Function = func; UpValues = []; UpValuesValues = [||] }
             let frame =
-                { Function = func
+                { Closure = closure
                   IP = 0
                   StackBase = vm.Stack.Count - argCount
                   Locals = Array.zeroCreate func.Locals.Length }
             
             vm.Frames.Add(frame)
             vm
-        | VClosure closure ->
+        | VClosure (closure, _) ->
             if argCount <> closure.Function.Arity then
                 raise <| InvalidProgramException $"Expected {closure.Function.Arity} arguments but got {argCount} for closure"
 
             let frame =
-                { Function = closure.Function
+                { Closure = closure
                   IP = 0
                   StackBase = vm.Stack.Count - argCount
                   Locals = Array.zeroCreate closure.Function.Locals.Length }
 
             vm.Frames.Add(frame)
-            let frame = getCurrentFrame vm
-            closure.UpValues |> Seq.iteri (fun i upValue -> frame.Locals[i] <- upValue)
             vm
         | VBuiltin (func, name) ->
             printfn $"Calling builtin function: {name}"
@@ -457,11 +507,31 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
         | _ -> raise <| InvalidProgramException $"Can only call functions and closures {callee}"
     | 1 ->
         match callee with
+        | VClosure (closure, _) ->
+            if argCount <> closure.Function.Arity then
+                raise <| InvalidProgramException $"Expected {closure.Function.Arity} arguments but got {argCount} for closure"
+                
+            let frame =
+                { Closure = closure
+                  IP = 0
+                  StackBase = vm.Stack.Count - argCount
+                  Locals = Array.zeroCreate closure.Function.Locals.Length }
+                
+            vm.Frames.Add(frame)
+            match runFrameRecursive vm with
+            | VFunction _,  vm  ->
+                vm.Frames.RemoveAt(vm.Frames.Count- 1)
+                callValue vm argCount 1
+            | v, vm ->
+                let _ = push vm v in
+                vm
+            
         | VFunction(func, _) ->
             if argCount <> func.Arity then
                 raise <| InvalidProgramException $"Expected {func.Arity} arguments but got {argCount} for function {func.Name}"
+            let closure = { Function = func; UpValues = []; UpValuesValues = [||] }
             let frame =
-                { Function = func
+                { Closure = closure
                   IP = 0
                   StackBase = vm.Stack.Count - argCount
                   Locals = Array.zeroCreate func.Locals.Length }
@@ -535,9 +605,10 @@ and createNewVM (mainFunc: Function) : VM =
           Plots = ResizeArray<Value>()
           Canvas = ResizeArray<Value>()
           EventListeners = ResizeArray<int * int * Function>() 
-          }  
+          }
+    let closure = { Function = mainFunc; UpValues = []; UpValuesValues = [||] }
     let mainFrame =
-        { Function = mainFunc
+        { Closure = closure
           IP = 0
           StackBase = 0
           Locals = [||] }
@@ -551,7 +622,7 @@ and specialCasedBuiltins (): Map<string, Value> =
               | [VBlock e] ->
                   match e with
                   | EBlock (stmts, _) ->
-                      let compiled = Compiler.compileProgram stmts
+                      let compiled = compileProgram stmts
                       match compiled with
                       | Ok(func, _) ->
                           let block = createNewVM(func)
@@ -564,14 +635,14 @@ and specialCasedBuiltins (): Map<string, Value> =
           Identifier "differentiate",
           VBuiltin((fun args ->
               match args with
-                | [ VFunction(_, Some f) ] ->
+                | [ VClosure(_, Some f) ] ->
                     let diff = SymbolicExpression.differentiate f
                     let expr = SymbolicExpression.toExpr diff
                     
                     let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
                     let expr = SExpression(ELambda([(param, None)], expr, None, true, None, false), None)
                     
-                    let compiled = Compiler.compileProgram [expr]
+                    let compiled = compileProgram [expr]
                     match compiled with
                     | Ok(func, _) ->
                         let block = createNewVM(func)
@@ -584,14 +655,14 @@ and specialCasedBuiltins (): Map<string, Value> =
           Identifier "integrate",
           VBuiltin((fun args ->
               match args with
-              | [ VFunction(_, Some f) ] ->
+              | [ VClosure(_, Some f) ] ->
                   let integral = SymbolicExpression.integrate f
                   let expr = SymbolicExpression.toExpr integral
                   
                   let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
                   let expr = SExpression(ELambda([(param, None)], expr, None, true, None, false), None)
                   
-                  let compiled = Compiler.compileProgram [expr]
+                  let compiled = compileProgram [expr]
                   match compiled with
                   | Ok(func, _) ->
                         let block = createNewVM(func)
@@ -602,14 +673,14 @@ and specialCasedBuiltins (): Map<string, Value> =
           Identifier "taylorSeries",
           VBuiltin((fun args ->
               match args with
-                | [ VFunction(_, Some f); VNumber(VInteger n) ] ->
+                | [ VClosure(_, Some f); VNumber(VInteger n) ] ->
                     let series = SymbolicExpression.taylorSeries f n
                     let expr = SymbolicExpression.toExpr series
                     
                     let param = { Lexeme = Identifier "x"; Position = { Line = 0; Column = 0 } }
                     let expr = SExpression(ELambda([(param, None)], expr, None, true, None, false), None)
                     
-                    let compiled = Compiler.compileProgram [expr]
+                    let compiled = compileProgram [expr]
                     match compiled with
                     | Ok(func, _) ->
                             let block = createNewVM(func)

@@ -24,6 +24,7 @@ type OP_CODE =
     | Exception
     
     | COMPOUND_CREATE
+    | GET_UPVALUE
     
 let opCodeToByte =
     function
@@ -46,6 +47,7 @@ let opCodeToByte =
     | CLOSURE -> 25uy
     
     | COMPOUND_CREATE -> 26uy
+    | GET_UPVALUE -> 27uy
     
     | Exception -> 255uy
     
@@ -70,6 +72,7 @@ let byteToOpCode byte =
     | 24uy -> CALL
     | 25uy -> CLOSURE
     | 26uy -> COMPOUND_CREATE
+    | 27uy -> GET_UPVALUE
     | 255uy -> Exception
     | _ -> raise (System.Exception("Unknown OpCode"))
 
@@ -93,6 +96,7 @@ let opCodeToString =
     | CALL -> "CALL"
     | CLOSURE -> "CLOSURE"
     | COMPOUND_CREATE -> "COMPOUND_CREATE"
+    | GET_UPVALUE -> "GET_UPVALUE"
     
     | Exception -> "Exception"
     
