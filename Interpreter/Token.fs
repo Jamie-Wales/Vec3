@@ -7,6 +7,7 @@ module Vec3.Interpreter.Token
 /// Type representing a number in the language.
 /// </summary>
 type Number =
+    | LChar of char
     | LFloat of float
     | LInteger of int
     | LRational of int * int
@@ -48,6 +49,8 @@ type Operator =
     | DotStar
     
     | ColonColon
+    
+    | PlusPlus
     
     | Colon
     
@@ -95,6 +98,7 @@ type Keyword =
     | Match
     | Case
     | Async
+    | Import
     
 /// <summary>
 /// Map of keywords to their respective keyword type.
@@ -118,6 +122,7 @@ let keywordMap =
       "match", Keyword.Match
       "case", Keyword.Case
       "async", Keyword.Async
+      "import", Keyword.Import
        ]
     |> Map.ofList
 
@@ -184,6 +189,7 @@ let numberToString (n: Number): string =
     | LInteger i -> $"Integer({i})"
     | LRational (n, d) -> $"Rational({n}/{d})"
     | LComplex (r, i) -> $"Complex({r}i{i})"
+    | LChar c -> $"Char('{c}')"
 
 /// <summary>
 /// Converts an operator to a string.
@@ -221,6 +227,7 @@ let operatorToString (op: Operator): string =
     | Colon -> ":"
     | Comma -> ","
     | Dollar -> "$"
+    | PlusPlus -> "++"
     | Custom s -> s // Custom operators are just strings of symbols
 
 /// <summary>
@@ -248,6 +255,7 @@ let keywordToString (kw: Keyword): string =
     | Match -> "match"
     | Case -> "case"
     | Async -> "async"
+    | Import -> "import"
 
 /// <summary>
 /// Converts a punctuation to a string.
@@ -312,7 +320,7 @@ type BuiltInFunction =
     | Read
     
     | Env
-    | Sqrt
+    | Root
     | Abs
     | Floor
     
@@ -361,6 +369,7 @@ type BuiltInFunction =
     | Await
     
     | TaylorSeries
+    | Concat
     
 /// <summary>
 /// Map of built-in functions to their respective function type.
@@ -384,7 +393,7 @@ let builtInFunctionMap =
       Identifier "BUILTIN_LOG", BuiltInFunction.Log
       
       Identifier "env", BuiltInFunction.Env
-      Identifier "BUILTIN_SQRT", BuiltInFunction.Sqrt
+      Identifier "BUILTIN_ROOT", BuiltInFunction.Root
       Identifier "BUILTIN_ABS", BuiltInFunction.Abs
       Identifier "BUILTIN_FLOOR", BuiltInFunction.Floor
       Identifier "plot", BuiltInFunction.Plot
@@ -422,6 +431,7 @@ let builtInFunctionMap =
       Operator (Cross, Some Infix), BuiltInFunction.CrossProduct
       Operator (DotStar, Some Infix), BuiltInFunction.DotProduct
       Operator (ColonColon, Some Infix), BuiltInFunction.Cons
+      Operator (PlusPlus, Some Infix), BuiltInFunction.Concat
       
       Identifier "cast", BuiltInFunction.Cast
       Identifier "on", BuiltInFunction.On
@@ -455,7 +465,7 @@ let hasSideEffects = function
     | Trunc -> false
     | Read -> true
     | Env -> false
-    | Sqrt -> false
+    | Root -> false
     | Abs -> false
     | Floor -> false
     | Plot -> true
@@ -488,9 +498,9 @@ let hasSideEffects = function
     | Bisection -> true
     | Differentiate -> true
     | Integrate -> true
-    | FindIntegral -> true
     | Cons -> false
     | On -> true
     | Await -> true
     | TaylorSeries -> true
+    | Concat -> false
     

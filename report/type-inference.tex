@@ -11,6 +11,11 @@ Of course this is not strictly true in practice due to external factors, but it 
 rules out a large class of errors, most of which human, and as such it is a valuable tool for a maths language to
 have as the user is less likely to make trivial mistakes.
 
+Another thing to note is that in order to make the language more intuitive to use, the \textbf{integer} type will 
+coerce into any other number type (\textbf{float, rational, complex}). 
+
+This allows for expressions such as $5.0 ^ 5$ type checking successfully, with the result being a float.
+
 \subsection{Type Inference Algorithm}\label{subsec:type-inference-algorithm}
 
 The algorithm used to infer types is based on Algorithm W\citep{milner1978theory}.
@@ -159,7 +164,7 @@ A reference implementation of the algorithm is given in Algorithm~\ref{alg:row-p
     \label{alg:row-polymorphism}
 \end{algorithm}
 
-With some creativity, row polymorphism can be used to represent semi-tagged unions.
+With some creativity, row polymorphism can be used to represent semi-algebraic data types or tagged unions.
 For example, consider the built-in \textit{on} function (used to add event listeners for shapes)\ref{sec:drawing}:
 
 \begin{minted}{fsharp}
@@ -177,8 +182,9 @@ let on = (shape, key: { 43hr4h54j3: int }, func) -> ...
 
 This has pretty good type safety, as the function will only accept keys with said field, which is hidden from the user.
 
-This doesn't have quite as good safety guarantees as a true tagged union, but is certainly safer than say C enums, 
-preventing mistakes such as using incorrect argument order.
+This doesn't have quite as good safety guarantees as a true algebraic data type, i.e.\ in the form 
+$data bool = True | False$, but is certainly safer than say C enums, preventing mistakes such as using incorrect 
+argument order.
 
 \subsection{Recursive Bindings}\label{subsec:recursive-bindings}
 
@@ -230,9 +236,10 @@ replaced with \textit{int}.
 
 The second int would then be unified with the type \textit{int}, and the unification would be successful.
 
-However, if the operator was used with an int and a float, the first constraint would be unified with the type
-\textit{int}, replacing the type variable \textit{a} with \textit{int}, and the second constraint would be unified with 
-the type int, which does not unify with float, and so the unification would fail.
+However, if the operator was used with an rational and a float, the first constraint would be unified with the type
+\textit{rational}, replacing the type variable \textit{a} with \textit{rational}, and the second constraint would be 
+unified 
+with the type rational, which does not unify with float, and so the unification would fail.
 
 This type constrain acts as a normal type, allowing for user defined ah-hoc functions, such as:
 

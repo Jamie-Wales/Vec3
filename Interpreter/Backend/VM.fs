@@ -423,7 +423,7 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
                 
             let value = func args
             let vm, value = match value with
-                            | VShape (_, _, _, _, _, _, id) ->
+                            | VShape (_, _, _, _, _, _, id, _) ->
                                 vm.Canvas.Add(value)
                                 vm.Plots.Add(value)
                                 let record = VList([VList([VString "id"; VNumber (VInteger id)], LIST)], RECORD)
@@ -483,7 +483,7 @@ and callValue (vm: VM) (argCount: int) (recursive: int): VM =
 
             let value = func args
             let vm, value = match value with
-                            | VShape (_,_,_,_,_,_,id) ->
+                            | VShape (_,_,_,_,_,_,id, _) ->
                                 vm.Plots.Add(value)
                                 vm.Canvas.Add(value)
                                 let record = VList([VList([VString "id"; VNumber (VInteger id)], LIST)], RECORD)

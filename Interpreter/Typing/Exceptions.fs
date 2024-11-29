@@ -41,6 +41,7 @@ type TypeError =
     | InvalidFields of (Token * Expr * TType) list * TType
     | InvalidFieldAccess of Token * TType
     | InvalidRange of Expr * Expr
+    | ImportError of Token option * string * string
 
 /// <summary>
 /// Allows for multiple type errors to be thrown.
@@ -99,6 +100,9 @@ let formatTypeError (error: TypeError) : string =
     | InvalidFields(tokens, typ) -> $"""Invalid fields at Line: {String.concat ", " (List.map (fun (t, _,_) -> $"{t.Lexeme}") tokens)}, got {typ}"""
     | InvalidFieldAccess(token, typ) -> $"Invalid field access at Line: {token.Position.Line}, got {typ}"
     | InvalidRange(expr, typ) -> $"Invalid range at Line: {expr}, got {typ}"
+    | ImportError(token, path, msg) -> match token with
+                                        | Some t -> $"Import error at Line: {t.Position.Line}, path: {path}, message: {msg}"
+                                        | None -> $"Import error at path: {path}, message: {msg}"
         
 /// <summary>
 /// Pretty print a list of type errors.

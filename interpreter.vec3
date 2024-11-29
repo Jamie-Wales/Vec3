@@ -1,0 +1,63 @@
+// interpreter written in vec3
+
+rec lexIdent (charList) ->
+    if len(charList) == 0 then {
+        []
+    } else {
+        let c = charList[0]
+        let tail = charList[1..]
+        if c >= 'a' && c <= 'z' then {
+            let rst = lexIdent(tail)
+            let ident = rst[0]
+            let rest = rst[1..]
+            let c: string = c
+            let c = c ++ ident
+            c :: rest
+        } else {
+            "" :: charList
+        }
+    }
+    
+    
+rec lexNum (charList : [char]) : [string, [char]] { // [num, rest]
+    if charList == [] {
+        []
+    } else {
+        let c = charList[0]
+        let tail = charList[1..]
+        if c >= '0' && c <= '9' then {
+            let rst = lexNum(tail)
+            let num = rst[0]
+            let rest = rst[1]
+            [(c : string) ++ num, rest]
+        } else {
+            ["", charList]
+        }
+    }
+}
+
+rec lexer (charList : [char]) {
+    if charList == [] {
+        []
+    } else {
+        let c = charList[0]
+        if c == ' ' then {
+            lexer(charList[1..])
+        } else {
+            if c >= 'a' && c <= 'z' then {
+                let rst = lexIdent(charList)
+                let ident = rst[0]
+                let rest = rst[1]
+                ident :: lexer(rest)
+            } else if c >= '0' && c <= '9' then {
+                let rst = lexNum(charList)
+                let num = rst[0]
+                let rest = rst[1]
+                num :: lexer(rest)
+            } else {
+                c : string :: lexer(charList[1..])
+            }
+        }
+    }
+}
+

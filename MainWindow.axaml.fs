@@ -55,6 +55,15 @@ let (?) = (x) -> 3 * x
 print(4 ? 5)
 print(?5)
 
+let x = [1,2,3]
+let y = [3,2,1]
+
+// x[5] // error due to indexing
+
+print(x + y)
+print(x X y)
+print(x .* y)
+
 let casting = (5 * 4^3) : float
 print(casting)
 

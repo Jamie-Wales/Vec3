@@ -410,17 +410,6 @@ let integrate (expression: Expression) : Expression =
     inte expression |> simplify
 
 /// <summary>
-/// Find the definite integral of an expression.
-/// </summary>
-/// <param name="expression">The expression to integrate.</param>
-/// <param name="a">The lower bound of the integral.</param>
-/// <param name="b">The upper bound of the integral.</param>
-/// <returns>The definite integral of the expression.</returns>
-let findIntegral (expression: Expression) (a: float) (b: float) : float =
-    let integral = integrate expression
-    abs <| evaluate b integral - evaluate a integral
-
-/// <summary>
 /// Convert an expression to a string.
 /// </summary>
 /// <param name="expression">The expression to convert.</param>

@@ -28,6 +28,8 @@ type Type =
     | TFloat
     | TRational
     | TComplex
+    
+    | TChar
 
     | TBool
 
@@ -107,6 +109,7 @@ type Type =
         | TInteger
         | TFloat
         | TRational
+        | TChar
         | TComplex -> true
         | TAlias(_, Some t) -> t.IsNumeric
         | _ -> false
@@ -120,6 +123,7 @@ type Type =
         | TInteger
         | TFloat
         | TRational
+        | TChar
         | TComplex -> true
         | TAlias(_, Some t) -> t.IsArithmetic
         | TTensor(typ, _) -> typ.IsArithmetic
@@ -136,6 +140,7 @@ type Type =
         | TInteger
         | TFloat
         | TRational
+        | TChar
         | TComplex -> true
         | TTypeVariable _ -> true
         | TConstrain _ -> true
@@ -347,6 +352,7 @@ let typeMap =
       "complex", TComplex
       "bool", TBool
       "string", TString
+      "char", TChar
       "unit", TUnit
       "any", TAny
       "never", TNever ]
@@ -426,6 +432,7 @@ and Stmt =
     | STypeDeclaration of Token * Type * Type option
     | SRecFunc of Token * (Token * Type option) list * Expr * Type option
     | SAsync of Token * (Token * Type option) list * Expr * Type option
+    | SImport of Token option * string * Type option // maybe binding name, module name (path), type
   
 /// <summary>
 /// Various patterns for pattern matching.

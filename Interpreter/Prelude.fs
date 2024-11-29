@@ -18,11 +18,15 @@ let asin = (x) -> BUILTIN_ASIN(x)
 let atan = (x) -> BUILTIN_ATAN(x)
 let log = (x, y) -> BUILTIN_LOG(x, y)
 let exp = (x) -> BUILTIN_EXP(x)
-let sqrt = (x) -> BUILTIN_SQRT(x)
+let root = (x, y) -> BUILTIN_ROOT(x, y)
 let abs = (x) -> BUILTIN_ABS(x)
 let floor = (x) -> BUILTIN_FLOOR(x)
 let ceil = (x) -> BUILTIN_CEIL(x)
 let trunc = (x) -> BUILTIN_TRUNC(x)
+
+// special cased roots
+let sqrt = (x) -> root(x, 2)
+let cubeRoot = (x) -> root(x, 3)
 
 // list operations
 let max = (x, y) -> if x > y then x else y
@@ -107,7 +111,10 @@ rec append(list1, list2) -> if list1 == [] then
 // wrapper for append
 let (++) = (list1, list2) -> append(list1, list2)
 
-let findIntegral = (f, x, y) -> integrate(f)(y) - integrate(f)(x)
+let findIntegral = (f, x, y) {
+	let integral = integrate(f)
+	integral(y) - integral(x)
+}
 
 """
 

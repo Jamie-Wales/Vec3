@@ -4,14 +4,20 @@
 
 module Vec3.Interpreter.Typing.Inference
 
+// TODO: more on the drawing (trails as rudy said to do them)
+// TODO: CLOSURES!!
+
+open System
 open Microsoft.FSharp.Collections
 open Microsoft.FSharp.Core
 open Types
 open Substitution
+open Vec3.Interpreter
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open Builtins
 open Exceptions
+open Parser
 
 type ResultBuilder() =
     member this.Bind(x, f) = Result.bind f x
@@ -78,6 +84,7 @@ let checkLiteral (lit: Literal) : TType =
     | LNumber(LFloat _) -> TFloat
     | LNumber(LRational _) -> TRational
     | LNumber(LComplex _) -> TComplex
+    | LNumber(LChar _) -> TChar
 
     | LString _ -> TString
     | LBool _ -> TBool
@@ -119,9 +126,17 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
 
     match t1, t2 with
     | TInteger, TInteger
+    | TInteger, TFloat
+    | TFloat, TInteger
+    | TRational, TInteger
+    | TInteger, TRational
+    | TComplex, TInteger
+    | TInteger, TComplex
     | TFloat, TFloat
     | TRational, TRational
     | TComplex, TComplex
+    
+    | TChar, TChar
 
     | TBool, TBool
     | TString, TString
@@ -464,7 +479,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                | EIdentifier(name, _) ->
                    // Identifiers are pure if they are pure in the environment
                    checkIdentifier newEnv name
-                   |> Result.map (_.IsPure)
+                   |> Result.map _.IsPure
                    |> Result.defaultValue false
                | ECall(callee, args, _) ->
                    // Calls are pure if the callee is pure and all arguments are pure
@@ -580,6 +595,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                 | STypeDeclaration _ -> TUnit
                 | SRecFunc _ -> TUnit
                 | SAsync _ -> TUnit
+                | SImport _ -> TUnit
 
             return (lastStmtType, sub, EBlock(stmts, Some lastStmtType))
         }
@@ -699,21 +715,28 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         }
 
     | EIndex(expr, (start, end_, isRange), _) ->
-        // TODO:: rewrite this, it's a mess
+        let startNum =
+            match start with
+            | Some(ELiteral(LNumber(LInteger n), _)) -> Some n
+            | _ -> None
+
+        let endNum =
+            match end_ with
+            | Some(ELiteral(LNumber(LInteger n), _)) -> Some n
+            | _ -> None
+            
+        // result {
+        //     let! (t, sub, expr) = infer aliases env expr
+        //     // check its tensor
+        //     
+        // }
+        
+        // TODO:: rewrite this
         
         // this is a really horrible case, must be rewritten
         // start and end are optional, but one ust be present
         // isRange indicates if the index is a range, ie [1:2], or [:8], or [1:], returns a tensor
         // or if false then it is a single index, ie [1], returns a single element
-        let startExpr =
-            match start with
-            | Some(ELiteral(LNumber(LInteger n), _)) -> Some n
-            | _ -> None
-
-        let endExpr =
-            match end_ with
-            | Some(ELiteral(LNumber(LInteger n), _)) -> Some n
-            | _ -> None
 
         let exprResult = infer aliases env expr
 
@@ -723,7 +746,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                 match t with
                 | TTensor(typ, _) -> typ
                 | TTuple types -> TTuple types
-                | _ -> TNever
+                | _ -> TTypeVariable(freshTypeVar ())
             | _ -> TNever
 
         let startResult = Option.map (infer aliases env) start
@@ -782,7 +805,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             | Ok _, Ok _ ->
                 let returnType =
                     if isRange then
-                        match startExpr, endExpr with
+                        match startNum, endNum with
                         | Some start, Some end_ ->
                             let start = if start < 0 then 0 else start
                             let end_ = if end_ < 0 then 0 else end_
@@ -802,9 +825,9 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                     // must be tensor or tuple. start or end is known, can check length of tuple (constraint)
                     let toUnify =
                         match typ with
-                        | TTensor(typ, _) ->
+                        | TTensor _ ->
                             if isRange then
-                                match startExpr, endExpr with
+                                match startNum, endNum with
                                 | Some start, Some end_ ->
                                     let start = if start < 0 then 0 else start
                                     let end_ = if end_ < 0 then 0 else end_
@@ -814,13 +837,13 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                                     TConstrain(Constrain(freshTypeVar (), fun typ -> typ.hasMinDims end_))
                                 | _, _ -> TConstrain(Constrain(freshTypeVar (), fun typ -> typ.hasMinDims 0))
                             else
-                                match startExpr with
+                                match startNum with
                                 | Some start ->
                                     let start = if start < 0 then 0 else start
                                     TConstrain(Constrain(freshTypeVar (), fun typ -> typ.hasMinDims start))
                                 | _ -> TConstrain(Constrain(freshTypeVar (), fun typ -> typ.hasMinDims 0))
                         | TTuple _ ->
-                            match startExpr, endExpr with
+                            match startNum, endNum with
                             | Some start, Some end_ ->
                                 let start = if start < 0 then 0 else start
                                 let end_ = if end_ < 0 then 0 else end_
@@ -1266,6 +1289,20 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
                     sub,
                     SAsync(name, paramList, expr, Some(TFunction(paramTypes, bodyType, false, false)))
                 )))
+    | SImport (name, path, _) ->
+        // todo, binding to name (create record)
+        try
+            let parsed = parseFile path
+            let _, parsed = match parsed with | Ok parsed -> parsed | Error e -> raise <| Exception $"{e}"
+            let result = inferProgram aliases env parsed
+            match result with
+            | Ok(env', aliases', sub, _) ->
+                let newEnv = combineMaps env env'
+                let newAliases = combineMaps aliases aliases'
+                Ok(newEnv, newAliases, sub, SImport(name, path, Some TUnit))
+            | Error errors -> Error errors
+        with
+        | ex -> Error [ TypeError.ImportError(name, path, ex.Message) ]
 
 
 /// <summary>

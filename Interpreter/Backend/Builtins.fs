@@ -127,15 +127,19 @@ let builtins =
 
       Identifier "print",
       VBuiltin((fun args -> VOutput $"""{String.concat " " (List.map valueToString args)}"""), "Print")
-      Identifier "BUILTIN_SQRT",
+      
+      Identifier "BUILTIN_ROOT",
       VBuiltin(
           (fun args ->
-              match args with
-              | [ VNumber(VFloat f) ] -> VNumber(VFloat(sqrt f))
-              | [ VNumber(VInteger i) ] -> VNumber(VFloat(sqrt (float i)))
-              | _ -> raise <| InvalidProgramException "sqrt expects a float"),
-          "Sqrt"
-      )
+            match args with
+            | [VNumber(f); VNumber(VInteger 2)] ->
+                VNumber(VFloat(Math.Sqrt(floatValue f)))
+            | [VNumber(f); VNumber(r)] ->
+                VNumber(VFloat(Math.Pow(floatValue f, 1.0 / floatValue r)))
+            | _ -> raise <| InvalidProgramException "root expects a float and an int"
+          ), "Root"
+          )
+      
       Identifier "BUILTIN_ABS",
       VBuiltin(
           (fun args ->
@@ -280,7 +284,8 @@ let builtins =
       VBuiltin(
           (fun args ->
               match args with
-              | [ VList(l1', _) as l1; VList(l2', _) as l2 ] when List.length l1' = List.length l2' -> dotProduct l1 l2
+              | [ VList(l1', _) as l1; VList(l2', _) as l2 ] when List.length l1' = List.length l2' ->
+                  dotProduct l1 l2
               | _ ->
                   raise
                   <| InvalidProgramException "dotProduct expects two lists of the same length"),
@@ -301,6 +306,7 @@ let builtins =
           (fun args ->
               match args with
               | [ VNumber(VFloat num) ] -> VNumber(VFloat(truncate num))
+              | [ VNumber(VInteger num) ] -> VNumber(VFloat(truncate num))
               | _ -> raise <| InvalidProgramException "truncate expects a float"),
           "Truncate"
       )
@@ -335,6 +341,36 @@ let builtins =
 
                   let res = newtonRaphson builtin1 builtin2 init tol it
                   VNumber(VFloat(res))
+              | [ VFunction(_, Some f1)
+                  VFunction(_, Some f2)
+                  VNumber(VInteger init)
+                  VNumber(VFloat tol)
+                  VNumber(VInteger it) ] ->
+                  let builtin1 = SymbolicExpression.toBuiltin f1
+                  let builtin2 = SymbolicExpression.toBuiltin f2
+
+                  let res = newtonRaphson builtin1 builtin2 init tol it
+                  VNumber(VFloat(res))
+              | [ VFunction(_, Some f1)
+                  VFunction(_, Some f2)
+                  VNumber(VFloat init)
+                  VNumber(VInteger tol)
+                  VNumber(VInteger it) ] ->
+                  let builtin1 = SymbolicExpression.toBuiltin f1
+                  let builtin2 = SymbolicExpression.toBuiltin f2
+
+                  let res = newtonRaphson builtin1 builtin2 init tol it
+                  VNumber(VFloat(res))
+              | [ VFunction(_, Some f1)
+                  VFunction(_, Some f2)
+                  VNumber(VInteger init)
+                  VNumber(VInteger tol)
+                  VNumber(VInteger it) ] ->
+                  let builtin1 = SymbolicExpression.toBuiltin f1
+                  let builtin2 = SymbolicExpression.toBuiltin f2
+
+                  let res = newtonRaphson builtin1 builtin2 init tol it
+                  VNumber(VFloat(res))
               | _ ->
                   raise
                   <| InvalidProgramException
@@ -347,10 +383,14 @@ let builtins =
           (fun args ->
               match args with
               | [ VFunction(_, Some f)
-                  VNumber(VFloat(a))
-                  VNumber(VFloat(b))
-                  VNumber(VFloat(tol))
-                  VNumber(VInteger(it)) ] ->
+                  VNumber(a)
+                  VNumber(b)
+                  VNumber(tol)
+                  VNumber(VInteger it) ] ->
+                  let a = floatValue a
+                  let b = floatValue b
+                  let tol = floatValue tol
+                  
                   let builtin = SymbolicExpression.toBuiltin f
                   let res = bisection builtin a b tol it
                   VNumber(VFloat(res))
@@ -417,8 +457,6 @@ let builtins =
                       | Some(VList([ VString "x"; VNumber(VFloat x) ], _)) -> x
                       | _ -> raise <| InvalidProgramException "draw expects an x"
 
-
-
                   let y =
                       elems
                       |> List.tryFind (function
@@ -451,8 +489,19 @@ let builtins =
                       match typ with
                       | Some(VList([ VString "shape"; VString c ], _)) -> c
                       | _ -> "circle"
+                  
+                  let trace =
+                      elems
+                      |> List.tryFind (function
+                          | VList([ VString "trace"; VBoolean _ ], _) -> true
+                          | _ -> false)
+                  
+                  let trace =
+                      match trace with
+                      | Some(VList([ VString "trace"; VBoolean t ], _)) -> t
+                      | _ -> false
 
-                  VShape(width, height, x, y, colour, typ, getNewDrawId())
+                  VShape(width, height, x, y, colour, typ, getNewDrawId(), trace)
               | [ VList(elems, LIST) ] ->
                   let res =
                       elems
@@ -562,6 +611,16 @@ let builtins =
               | _ -> raise <| InvalidProgramException "Expected two arguments for *"),
           "Multiply"
       )
+      
+      Operator(PlusPlus, Some Infix),
+        VBuiltin(
+            (fun args ->
+                match args with
+                | [ VString a; VString b ] -> VString(a + b)
+                | [ VList(a, _); VList(b, _) ] -> VList(a @ b, LIST)
+                | _ -> raise <| InvalidProgramException "Expected two strings for ++"),
+            "Concat"
+        )
 
       Operator(Slash, Some Infix),
       VBuiltin(
@@ -577,7 +636,7 @@ let builtins =
           (fun args ->
               match args with
               | [ VNumber(VInteger a); VNumber(VInteger b) ] -> VNumber(VInteger(a % b))
-              | [ VNumber(VFloat a); VNumber(VFloat b) ] -> VNumber(VFloat(a % b))
+              | [ VNumber(a); VNumber(b) ] -> VNumber(VFloat(floatValue a % floatValue b))
               | _ -> raise <| InvalidProgramException "Expected two integers or floats for %"),
           "Mod"
       )

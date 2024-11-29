@@ -8,6 +8,7 @@ open Microsoft.FSharp.Core
 open Token
 open Grammar
 open Scanner
+open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 
 let rec getDefault =
@@ -273,6 +274,7 @@ let number (state: ParserState) : ParseResult<Expr> =
         | LFloat f -> Ok(state, ELiteral(LNumber(LFloat(f)), TFloat))
         | LRational(n, d) -> Ok(state, ELiteral(LNumber(LRational(n, d)), TRational))
         | LComplex(r, i) -> Ok(state, ELiteral(LNumber(LComplex(r, i)), TComplex))
+        | LChar c -> Ok(state, ELiteral(LNumber(LChar c), TChar))
     | _ -> Error(Expected "Number", state)
 
 /// <summary>
@@ -392,6 +394,7 @@ and numberPattern (state: ParserState) : ParseResult<Pattern> =
         | LFloat f -> Ok(state, PLiteral(LNumber(LFloat(f))))
         | LRational(n, d) -> Ok(state, PLiteral(LNumber(LRational(n, d))))
         | LComplex(r, i) -> Ok(state, PLiteral(LNumber(LComplex(r, i))))
+        | LChar c -> Ok(state, PLiteral(LNumber(LChar c)))
     | _ -> Error(Expected("Number"), state)
 
 /// <summary>
@@ -506,6 +509,7 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
               Postfix = None
               Precedence = Precedence.Index }
         | Plus
+        | PlusPlus
         | Minus ->
             { Prefix = Some unary
               Infix = Some binary
@@ -520,6 +524,8 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
               Infix = Some binary
               Postfix = None
               Precedence = Precedence.Factor }
+            
+            
         | Caret
         | StarStar ->
             { Prefix = None
@@ -566,7 +572,7 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
               Infix = Some binary
               Postfix = None
               Precedence = Precedence.None }
-            
+
         | Colon ->
             { Prefix = None
               Infix = Some cast
@@ -711,6 +717,7 @@ and cast (state: ParserState) (left: Expr) : ParseResult<Expr> =
             | TInteger -> Some(ELiteral(LNumber(LInteger 0), TInteger))
             | TFloat -> Some(ELiteral(LNumber(LFloat 0), TFloat))
             | TRational -> Some(ELiteral(LNumber(LRational(0, 0)), TRational))
+            | TChar -> Some(ELiteral(LNumber(LChar 'a'), TChar))
             | TComplex -> Some(ELiteral(LNumber(LComplex(0, 0)), TComplex))
             | TString -> Some(ELiteral((LString ""), TString))
             | TTensor(typ1, _) ->
@@ -908,12 +915,12 @@ and unary (state: ParserState) : ParseResult<Expr> =
             match op with
             | { Lexeme = Operator(op, _)
                 Position = pos } ->
-                { Lexeme = Operator(op, Some Prefix)
+                { Lexeme = Operator(op, Some Prefix) // Unary function, therefore fixity is Prefix
                   Position = pos }
             | _ -> op
 
         expression state Precedence.Unary
-        |> Result.bind (fun (state, expr) -> Ok(state, ECall(EIdentifier(op, None), [ expr ], None)))
+        |> Result.bind (fun (state, expr) -> Ok(state, ECall(EIdentifier(op, None), [ expr ], None))) // Parse as function call
     | _ -> Error(Expected "operator", state)
 
 /// <summary>
@@ -929,10 +936,10 @@ and leftBrace (state: ParserState) : ParseResult<Expr> =
     | Some { Lexeme = Punctuation RightBrace } -> Ok(advance state, ERecordEmpty(TRowEmpty))
     | Some { Lexeme = Identifier _ } ->
         match peek (advance state) with
-        | Some { Lexeme = Operator(Colon, _) } -> record state
-        | Some { Lexeme = Operator(Equal, _) } -> record state
+        | Some { Lexeme = Operator(Colon, _) }
+        | Some { Lexeme = Operator(Equal, _) } -> record state // Must be a record
         // | Some { Lexeme = Lexeme.Keyword Keyword.With } -> recordUpdate state // TODO, not with identifier, just arb epxpr
-        | _ -> block state
+        | _ -> block state // Otherwise is a block
     | _ -> block state
 
 /// <summary>
@@ -970,7 +977,7 @@ and recordFields
                     let! state, value = expression state Precedence.Assignment
 
                     match peek state with
-                    | Some { Lexeme = Operator (Comma, _) } ->
+                    | Some { Lexeme = Operator(Comma, _) } ->
                         return! recordFields (advance state) ((name, value, Some fieldType) :: fields)
                     | Some { Lexeme = Punctuation RightBrace } ->
                         return (advance state, List.rev ((name, value, Some fieldType) :: fields))
@@ -1382,14 +1389,13 @@ and recordType (state: ParserState) : ParseResult<TType> =
         | Some(state, { Lexeme = Punctuation RightBrace }) -> Ok(state, fields)
         | Some(state, ({ Lexeme = Identifier _ } as fieldName)) ->
             result {
-                let! state = expect state (Operator (Colon, None))
+                let! state = expect state (Operator(Colon, None))
                 let! state, fieldType = typeHint state
 
                 match nextToken state with
                 | Some(state, { Lexeme = Operator(Comma, _) }) ->
                     return! parseFields state ((fieldName, fieldType) :: fields)
-                | Some(state, { Lexeme = Punctuation RightBrace }) ->
-                    return (state, ((fieldName, fieldType) :: fields))
+                | Some(state, { Lexeme = Punctuation RightBrace }) -> return (state, ((fieldName, fieldType) :: fields))
                 | _ -> return! Error(Expected "',' or '}' after record field.", state)
             }
         | _ -> Error(Expected "field name", state)
@@ -1425,6 +1431,7 @@ and typeHint (state: ParserState) : ParseResult<TType> =
         | "unit" -> Ok(state, TUnit)
         | "never" -> Ok(state, TNever)
         | "any" -> Ok(state, TAny)
+        | "char" -> Ok(state, TChar)
         | _ -> Ok(state, TAlias(tok, None))
     | Some(state, { Lexeme = Punctuation LeftParen }) -> funcType state
     | Some(state, { Lexeme = Punctuation LeftBracket }) -> tensorType state
@@ -1477,38 +1484,48 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
     result {
         let! state, name = expectIdentifier state
 
-        let typeResult =
+        let! state, varType =
             match peek state with
             | Some { Lexeme = Operator(Colon, _) } ->
                 let state = advance state
                 typeHint state |> Result.bind (fun (state, typ) -> Ok(state, Some typ))
             | _ -> Ok(state, None)
 
-        let! state, varType = typeResult
         let! state = expect state (Operator(Equal, None))
-        let! state, expr = expression state Precedence.Assignment
 
-        match varType with
-        | Some typ ->
-            let defaultPos = { Line = 0; Column = 0 }
-            let id = getDefault typ
+        match peek state with
+        | Some { Lexeme = Keyword Import } ->
+            let state = advance state
+            let! state, token = string state
 
-            match id with
+            match token with
+            | ELiteral(LString(value), _) -> return (state, SImport(Some name, value, varType))
+            | _ -> return! Error(Expected "identifier.", state)
+        | _ ->
+
+            let! state, expr = expression state Precedence.Assignment
+
+            match varType with
             | Some typ ->
-                let expr =
-                    ECall(
-                        EIdentifier(
-                            { Lexeme = Identifier "cast"
-                              Position = defaultPos },
-                            None
-                        ),
-                        [ expr; typ ],
-                        None
-                    )
+                let defaultPos = { Line = 0; Column = 0 }
+                let id = getDefault typ
 
-                return (state, SVariableDeclaration(name, expr, varType))
+                match id with
+                | Some typ ->
+                    let expr =
+                        ECall(
+                            EIdentifier(
+                                { Lexeme = Identifier "cast"
+                                  Position = defaultPos },
+                                None
+                            ),
+                            [ expr; typ ],
+                            None
+                        )
+
+                    return (state, SVariableDeclaration(name, expr, varType))
+                | None -> return (state, SVariableDeclaration(name, expr, varType))
             | None -> return (state, SVariableDeclaration(name, expr, varType))
-        | None -> return (state, SVariableDeclaration(name, expr, varType))
     }
 
 and operatorDecl (state: ParserState) : ParseResult<Stmt> =
@@ -1518,25 +1535,35 @@ and operatorDecl (state: ParserState) : ParseResult<Stmt> =
         let! state = expect state (Punctuation LeftParen)
         let! state, op = expectOperator state
         let pos = op.Position
-        let op = match op.Lexeme with
-                 | Operator(op, _) -> op
-                 | _ -> failwith "Expected operator."
+
+        let op =
+            match op.Lexeme with
+            | Operator(op, _) -> op
+            | _ -> failwith "Expected operator."
+
         let! state = expect state (Punctuation RightParen)
         let! state = expect state (Operator(Equal, None))
         let! state = expect state (Punctuation LeftParen)
         let! state, func = lambda state
+
         match func with
         | ELambda(parameters, _, _, false, None, false) ->
             let fixity = Seq.length parameters
+
             match fixity with
             | 1 ->
-                let op = { Lexeme = Operator(op, Some Prefix); Position = pos }
+                let op =
+                    { Lexeme = Operator(op, Some Prefix)
+                      Position = pos }
+
                 return (state, SVariableDeclaration(op, func, None))
             | 2 ->
-                let op = { Lexeme = Operator(op, Some Infix); Position = pos }
+                let op =
+                    { Lexeme = Operator(op, Some Infix)
+                      Position = pos }
+
                 return (state, SVariableDeclaration(op, func, None))
-            | _ ->
-                return! Error(Expected "unary or binary operator.", state)
+            | _ -> return! Error(Expected "unary or binary operator.", state)
         | _ -> return! Error(Expected "lambda expression.", state)
     }
 
@@ -1650,7 +1677,6 @@ and asyncFunc (state: ParserState) : ParseResult<Stmt> =
         | _ -> return! Error(Expected "recursive function.", state)
     }
 
-
 /// <summary>
 /// Parses a statement.
 /// </summary>
@@ -1666,6 +1692,7 @@ and statement (state: ParserState) : ParseResult<Stmt> =
             match kw with
             | Keyword.Let ->
                 let state = advance state
+
                 match peek state with
                 | Some { Lexeme = Identifier _ } -> varDecl state
                 | Some { Lexeme = Punctuation LeftParen } -> operatorDecl state
@@ -1674,6 +1701,16 @@ and statement (state: ParserState) : ParseResult<Stmt> =
             | Keyword.Type -> typeDecl (advance state)
             | Keyword.Rec -> recFunc (advance state)
             | Keyword.Async -> asyncFunc (advance state)
+            | Keyword.Import ->
+                result {
+                    let state = advance state
+                    let state = advance state
+                    let! state, token = string state
+
+                    match token with
+                    | ELiteral(LString(path), _) -> return (state, SImport(None, path, None))
+                    | _ -> return! Error(Expected "string literal.", state)
+                }
             | _ ->
                 expression state Precedence.None
                 |> Result.bind (fun (state, expr) -> Ok(state, SExpression(expr, None)))

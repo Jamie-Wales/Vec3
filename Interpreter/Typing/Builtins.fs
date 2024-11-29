@@ -238,6 +238,7 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       ATan, TFunction([ TFloat ], TFloat, true, true)
       Log, logType
       Exp, expType
+      Root, TFunction([TFloat; TFloat], TFloat, true, true)
       
       Eval, TFunction([TAny], TAny, false, true)
       
@@ -245,7 +246,6 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
 
       Env, TFunction([], TUnit, false, true)
       Exit, TFunction([], TUnit, false, true)
-      Sqrt, TFunction([ TFloat ], TFloat, true, true)
       Abs, TFunction([ TFloat ], TFloat, true, true)
       Floor, TFunction([ TFloat ], TFloat, true, true)
       Ceil, TFunction([ TFloat ], TFloat, true, true)
@@ -292,6 +292,8 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       Await, TAny
       
       TaylorSeries, taylorSeriesT
+      
+      Concat, TFunction([ TString; TString ], TString, false, true)
 
       ]
     |> Map.ofList

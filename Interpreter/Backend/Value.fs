@@ -35,6 +35,7 @@ and numbersEqual (a: VNumber) (b: VNumber) =
     | VFloat x, VFloat y -> x = y
     | VRational(n1, d1), VRational(n2, d2) -> n1 * d2 = n2 * d1
     | VComplex(r1, i1), VComplex(r2, i2) -> r1 = r2 && i1 = i2
+    | VChar x, VChar y -> x = y
     | _ -> 
         let f1, f2 = (floatValue a, floatValue b)
         f1 = f2
@@ -45,6 +46,7 @@ and floatValue =
     | VFloat f -> f
     | VRational(n, d) -> float n / float d
     | VComplex(r, _) -> r  // Note: This loses imaginary part information
+    | VChar c -> float c
 
 let toComplex =
     function
@@ -52,6 +54,7 @@ let toComplex =
     | VFloat f -> VComplex(f, 0.0)
     | VRational(n, d) -> VComplex(float n / float d, 0.0)
     | VComplex(r, i) -> VComplex(r, i)
+    | VChar c -> VComplex(float c, 0.0)
 
 let rec add a b =
     match (a, b) with
@@ -62,6 +65,7 @@ let rec add a b =
         VNumber(VRational(n, d))  // Consider simplifying the fraction
     | VNumber(VComplex(r1, i1)), VNumber(VComplex(r2, i2)) -> 
         VNumber(VComplex(r1 + r2, i1 + i2))
+    | VNumber(VChar x), VNumber(VChar y) -> VNumber(VChar(char(int x + int y)))
     | VNumber x, VNumber y ->
         VNumber(VFloat(floatValue x + floatValue y))
     | VList (l1, t), VList (l2, _) ->
@@ -79,6 +83,7 @@ let rec subtract a b =
         VNumber(VRational(n, d))  
     | VNumber(VComplex(r1, i1)), VNumber(VComplex(r2, i2)) -> 
         VNumber(VComplex(r1 - r2, i1 - i2))
+    | VNumber (VChar x), VNumber (VChar y) -> VNumber (VChar (char (int x - int y)))
     | VNumber x, VNumber y ->
         VNumber(VFloat(floatValue x - floatValue y))
     | VList (l1, t), VList (l2, _) ->
@@ -94,6 +99,7 @@ let rec multiply a b =
         VNumber(VRational(n1 * n2, d1 * d2))  
     | VNumber(VComplex(a, b)), VNumber(VComplex(c, d)) -> 
         VNumber(VComplex(a*c - b*d, a*d + b*c))
+    | VNumber(VChar x), VNumber(VChar y) -> VNumber(VChar(char(int x * int y)))
     | VNumber x, VNumber y ->
         VNumber(VFloat(floatValue x * floatValue y))
     | VList (l1, t), VList (l2, _) ->
@@ -111,6 +117,7 @@ let rec divide a b =
     | VNumber(VComplex(a, b)), VNumber(VComplex(c, d)) when c <> 0.0 || d <> 0.0 -> 
         let denominator = c*c + d*d
         VNumber(VComplex((a*c + b*d) / denominator, (b*c - a*d) / denominator))
+    | VNumber(VChar x), VNumber(VChar y) -> VNumber(VChar(char(int x / int y)))
     | VNumber x, VNumber y ->
         let f1, f2 = floatValue x, floatValue y
         if f2 = 0.0 then raise <| InvalidOperationException("Cannot divide by zero")
@@ -152,6 +159,7 @@ let negate value =
     | VNumber(VFloat n) -> VNumber(VFloat(-n))
     | VNumber(VRational(n, d)) -> VNumber(VRational(-n, d))
     | VNumber(VComplex(r, i)) -> VNumber(VComplex(-r, -i))
+    | VNumber(VChar c) -> VNumber(VChar(char(-int c)))
     | _ -> raise <| InvalidOperationException("Can only negate numbers")
 
 let unnegate value =
@@ -188,6 +196,7 @@ let compare a b =
             match res with
             | 0 -> compare i1 i2
             | _ -> res
+        | VChar x, VChar y -> compare x y
         | _ -> compare (floatValue x) (floatValue y)
     | _ -> raise <| InvalidOperationException("Can only compare numbers")
 
@@ -198,6 +207,7 @@ let rec cast org castTyp =
       | VNumber(VFloat _) -> castToFloat org
       | VNumber(VRational _) -> castToRat org
       | VNumber(VComplex _) -> castToComp org
+      | VNumber(VChar _) -> castToChar org
       | VString _ -> castToString org
       | VList (l, LIST) -> castToList org (List.tryHead l)
       | _ -> org
@@ -214,6 +224,7 @@ and castToBool a =
 and castToList a typ =
     match a with
     | VList (l, _) -> if Option.isSome typ then VList (List.map (fun el -> cast el (Option.get typ)) l, LIST) else VList (l, LIST)
+    | VString s -> VList (s |> Seq.map (fun c -> VNumber (VChar c)) |> Seq.toList, LIST)
     | _ -> VList ([a], LIST)
     
 and castToInt a =
@@ -222,6 +233,7 @@ and castToInt a =
     | VNumber (VFloat f) -> VNumber (VInteger (int f))
     | VNumber (VRational (num, denom)) -> VNumber (VInteger (num / denom))
     | VNumber (VComplex (r, _)) -> VNumber (VInteger (int r))
+    | VNumber (VChar c) -> VNumber (VInteger (int c))
     | VString s -> 
         match Int32.TryParse(s) with
         | true, i -> VNumber (VInteger i)
@@ -235,12 +247,23 @@ and castToFloat a =
     | VNumber (VInteger i) -> VNumber (VFloat (float i))
     | VNumber (VRational (num, denom)) -> VNumber (VFloat ((float num) / (float denom)))
     | VNumber (VComplex (r, _)) -> VNumber (VFloat r)
+    | VNumber (VChar c) -> VNumber (VFloat (float c))
     | VString s ->
         match Double.TryParse(s) with
         | true, f -> VNumber (VFloat f)
         | _ -> raise <| InvalidOperationException("Invalid string for float conversion")
     | VBoolean b -> VNumber (VFloat (if b then 1.0 else 0.0))
     | _ -> raise <| InvalidOperationException("Cannot cast to float")
+
+and castToChar a =
+    match a with
+    | VNumber (VInteger i) -> VNumber (VChar (char i))
+    | VString s -> 
+        match String.length s with
+        | 1 -> VNumber (VChar s.[0])
+        | _ -> raise <| InvalidOperationException("Invalid string for char conversion")
+    | _ -> raise <| InvalidOperationException("Cannot cast to char")
+    
     
 and castToRat a =
     match a with
@@ -250,6 +273,7 @@ and castToRat a =
         let num = int (f * 10000.0)
         let denom = 10000
         VNumber (VRational (num, denom))
+    | VNumber (VChar c) -> VNumber (VRational (int c, 1))
     | VNumber (VComplex (r, _)) -> VNumber (VRational (int (r * 10000.0), 10000))
     | VString s ->
         match Double.TryParse(s) with
@@ -267,6 +291,7 @@ and castToComp a =
     | VNumber (VInteger i) -> VNumber (VComplex (float i, 0.0))
     | VNumber (VFloat f) -> VNumber (VComplex (f, 0.0))
     | VNumber (VRational (num, denom)) -> VNumber (VComplex ((float num) / (float denom), 0.0))
+    | VNumber (VChar c) -> VNumber (VComplex (float c, 0.0))
     | VString s ->
         match Double.TryParse(s) with
         | true, f -> VNumber (VComplex (f, 0.0))
@@ -282,6 +307,7 @@ and castToString a =
     | VNumber (VFloat f) -> VString (string f)
     | VNumber (VRational (num, denom)) -> VString $"%d{num}/%d{denom}"
     | VNumber (VComplex (r, i)) -> VString $"%f{r} + %f{i}"
+    | VNumber (VChar c) -> VString $"'%c{c}'"
     | VList (l, _) -> VString ("[" + String.concat ", " (List.map (fun el -> match castToString el with VString s -> s | _ -> "") l) + "]")
     | _ -> VString ""
 

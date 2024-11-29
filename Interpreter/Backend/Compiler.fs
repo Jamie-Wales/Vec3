@@ -7,10 +7,12 @@ module Vec3.Interpreter.Backend.Compiler
 
 open Microsoft.FSharp.Core
 open System
+open Vec3.Interpreter
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Grammar
+open Vec3.Interpreter.Prelude
 open Vec3.Interpreter.SymbolicExpression
 open Vec3.Interpreter.Token
 
@@ -91,6 +93,7 @@ let rec compileLiteral (lit: Literal) : Compiler<unit> =
         | LFloat f -> emitConstant (VNumber(VFloat f)) state
         | LRational(n, d) -> emitConstant (VNumber(VRational(n, d))) state
         | LComplex(r, i) -> emitConstant (VNumber(VComplex(r, i))) state
+        | LChar c -> emitConstant (VNumber(VChar c)) state
 
     fun state ->
         match lit with
@@ -506,6 +509,20 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
 
             compileCall callee args false state
         | STypeDeclaration _ -> Ok((), state)
+        | SImport (_, path, _) ->
+            // handle imports here
+            try
+                let parsed = Parser.parseFile path
+                match parsed with
+                | Ok (_, program) ->
+                    let (_,_,_,p) = preludeChecked
+                    let program = p @ program
+                    List.iter (fun stmt -> compileStmt stmt state |> ignore) program
+                    Ok((), state)
+                | Error e -> Error($"{e}", state)
+                
+            with
+            | e -> Error(e.Message, state)
 
 and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit> =
     fun state ->
@@ -520,7 +537,7 @@ and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit
 
                 emitBytes [| byte (opCodeToByte OP_CODE.DEFINE_GLOBAL); byte constIndex |] state)
 
-let compileProgramState (program: Program) (state: CompilerState) : CompilerResult<Chunk> =
+and compileProgramState (program: Program) (state: CompilerState) : CompilerResult<Chunk> =
     let rec compileStmts stmts state =
         match stmts with
         | [] -> Ok((), state)
@@ -536,7 +553,7 @@ let compileProgramState (program: Program) (state: CompilerState) : CompilerResu
             state.CurrentFunction.Chunk, state)))
 
 
-let compileProgram (program: Program) : CompilerResult<Function> =
+and compileProgram (program: Program) : CompilerResult<Function> =
     let initialState =
         { CurrentFunction = initFunction "REPL_Input"
           ScopeDepth = 0

@@ -51,7 +51,7 @@ and Value =
     | VPlotData of string * Value list * Value list * PlotType
     | VPlotFunction of string * (double -> double)
     | VPlotFunctions of string * (double -> double) list
-    | VShape of (float * float * float * float * string * string * int)
+    | VShape of (float * float * float * float * string * string * int * bool)
     | VShapes of (float * float * float * float * string * string) list * int
     | VOutput of string
     | VBlock of Expr
@@ -68,6 +68,7 @@ and VNumber =
     | VFloat of float
     | VRational of int * int
     | VComplex of float * float
+    | VChar of char
 
 and Local =
     { Name: string; Depth: int; Index: int }
@@ -105,6 +106,7 @@ let rec valueToString =
     | VNumber(VFloat f) -> $"%f{f}"
     | VNumber(VRational(n, d)) -> $"%d{n}/%d{d}"
     | VNumber(VComplex(r, i)) -> $"%f{r} + %f{i}i"
+    | VNumber(VChar c) -> $"'{c}'"
     | VBoolean b -> string b
     | VString s -> s
     | VFunction(func, Some f) ->

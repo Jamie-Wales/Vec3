@@ -10,6 +10,7 @@ open Avalonia.Controls.Shapes
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.VM
 
+type ShapeInfo = { x: float; y: float; w: float; h: float; color: string; typ: string; id: int; trace: bool }
 
 /// <summary>
 /// The window used for drawing shapes.
@@ -24,6 +25,8 @@ type DrawWindow() as this =
     
     let mutable shapes: Map<int, Shape> = Map.empty
     let mutable eventListeners: Map<int, (int * Function) list> = Map.empty
+    let mutable shapeInfo: Map<int, ShapeInfo> = Map.empty
+    
     
     // listen for arrow keys
     do this.KeyDown.Add(fun e ->
@@ -45,22 +48,33 @@ type DrawWindow() as this =
     member private this.handleEvent listenerId =
         let listeners = eventListeners.TryFind(listenerId)
 
-        printfn $"Handling event {listenerId}"
-        printfn $"Handling event {listeners}"
         match listeners with
         | Some lst -> 
             lst |> List.iter (fun (shapeId, func) ->
                     let shape = shapes.TryFind(shapeId)
-                    match shape with
-                    | Some shape ->
-                        let x = Canvas.GetLeft(shape) + 25.0
-                        let y = Canvas.GetTop(shape) + 25.0
-                        let args = VList([VList([VString "x"; VNumber(VFloat x)], LIST); VList([VString "y"; VNumber(VFloat y)], LIST)], RECORD)
+                    let shapeInfo = shapeInfo.TryFind(shapeId)
+                    if Option.isNone shape || Option.isNone shapeInfo then
+                        raise <| Exception $"Shape with id {shapeId} not found"
+                    else
+                        let shape = Option.get shape
+                        let shapeInfo = Option.get shapeInfo
+                        
+                        let prevX = Canvas.GetLeft(shape) + 25.0
+                        let prevY = Canvas.GetTop(shape) + 25.0
+                        let args = VList([VList([VString "x"; VNumber(VFloat prevX)], LIST); VList([VString "y"; VNumber(VFloat prevY)], LIST)], RECORD)
                         match currentVm with
                         | Some vm ->
                             let newVal = runFunction vm func [args]
                             match newVal with
                             | VList([VList([VString "x"; VNumber(VFloat x)], _); VList([VString "y"; VNumber(VFloat y)], _)], RECORD) ->
+                                if shapeInfo.trace then
+                                    let trail = Avalonia.Controls.Shapes.Line()
+                                    trail.StartPoint <- Point(prevX, prevY)
+                                    trail.EndPoint <- Point(x, y)
+                                    trail.Stroke <- SolidColorBrush(Colors.Black)
+                                    trail.StrokeThickness <- 1.0
+                                    canvasControl.Children.Add(trail)
+                                
                                 match shape with
                                 | :? Rectangle as rect ->
                                     Canvas.SetLeft(rect, x)
@@ -74,7 +88,6 @@ type DrawWindow() as this =
                                 | _ -> ()
                             | _ -> ()
                         | _ -> ()
-                    | _ -> ()
                 )
         | None -> ()
         
@@ -115,9 +128,9 @@ type DrawWindow() as this =
         
     member this.DrawShape(vm: VM, shape: Value) =
         currentVm <- Some vm
-        let w, h, x, y, color, typ, id = match shape with
-                                            | VShape(x, y, w, h, c, t, id) -> (x, y, w, h, c, t, id)
-                                            | _ -> raise <| InvalidProgramException("Unknown shape value")
+        let w, h, x, y, color, typ, id, trail = match shape with
+                                                | VShape(x, y, w, h, c, t, id, trail) -> (x, y, w, h, c, t, id, trail)
+                                                | _ -> raise <| InvalidProgramException("Unknown shape value")
         
         let colorBrush = SolidColorBrush(this.ParseColor(color))
         
@@ -151,6 +164,7 @@ type DrawWindow() as this =
                 
         printfn $"Adding shape with id {id}"
         shapes <- shapes.Add(id, shape)
+        shapeInfo <- shapeInfo.Add(id, { x = x; y = y; w = w; h = h; color = color; typ = typ; id = id; trace = trail })
         canvasControl.Children.Add(shape)
         
     member this.Clear() =

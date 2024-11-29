@@ -191,6 +191,7 @@ let foldConstants (program: Program) : Program =
         | STypeDeclaration(tok, typ, typ2) -> STypeDeclaration(tok, typ, typ2)
         | SRecFunc(token, tuples, expr, typeOption) -> SRecFunc(token, tuples, foldExpr expr, typeOption)
         | SAsync(token, tuples, expr, typeOption) -> SAsync(token, tuples, foldExpr expr, typeOption)
+        | SImport(token, path, typ) -> SImport(token, path, typ) // maybe fold in imports?
 
     and foldExpr (expr: Expr) : Expr =
         match expr with

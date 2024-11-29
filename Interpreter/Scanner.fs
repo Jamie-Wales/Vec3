@@ -103,6 +103,7 @@ let rec scOperator (iStr: char list) (iVal: string) : (char list * Operator * in
         | "->" -> Some(iStr, Arrow, 2)
         | "**" -> Some(iStr, StarStar, 2)
         | "+" -> Some(iStr, Plus, 1)
+        | "++" -> Some(iStr, PlusPlus, 2)
         | "-" -> Some(iStr, Minus, 1)
         | "*" -> Some(iStr, Star, 1)
         | "X" -> Some(iStr, Cross, 1)
@@ -408,6 +409,13 @@ let lexer (input: string) : LexerResult<Token list> =
                     nStr
                     { position with
                         Column = position.Column + nLen }
+        
+        | ''' :: ch :: ''' :: tail ->
+            Ok { Lexeme = Number (LChar ch); Position = position }
+            :: scan
+                tail
+                { position with
+                    Column = position.Column + 3 }
 
         | '"' :: tail ->
             match scString tail with

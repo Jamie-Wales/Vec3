@@ -55,6 +55,7 @@ let rec hasSideEffectsStmt (stmt: Stmt) : bool =
     | SRecFunc _ -> true
     | SAsync _ -> true
     | STypeDeclaration _ -> true
+    | SImport _ -> true
 
 let rec eliminate (program: Program) : Program =
     let rec pass (stmts: Stmt list) : Stmt list =
@@ -83,6 +84,8 @@ let rec eliminate (program: Program) : Program =
                 pass rest 
         | STypeDeclaration _ as stmt :: rest ->
             stmt :: pass rest
+        | SImport _ as stmt :: rest ->
+            stmt :: pass rest
     
     let rec refine stmts =
         let refined = pass stmts
@@ -103,6 +106,7 @@ and isUsedInStmt (name: Lexeme) (stmt: Stmt) : bool =
     | SAssertStatement(expr, _, _) -> isUsedE name expr
     | SRecFunc(_, _, body, _) -> isUsedE name body
     | SAsync(_, _, body, _) -> isUsedE name body
+    | SImport _ -> false
     | STypeDeclaration _ -> false
     
 and isUsedE (name: Lexeme) (expr: Expr) : bool =
