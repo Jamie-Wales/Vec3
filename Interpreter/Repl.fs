@@ -11,8 +11,6 @@ open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Typing.Inference
 open Vec3.Interpreter.Typing.Types
 open Vec3.Interpreter.Typing.Exceptions
-open Vec3.Interpreter.Eval
-open Vec3.Interpreter.Preprocessor
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 open Vec3.Interpreter.ConstantFolding
@@ -24,6 +22,7 @@ let numberToString (n: Number): string =
     | LInteger i -> $"Integer({i})"
     | LRational (n, d) -> $"Rational({n}/{d})"
     | LComplex (r, i) -> $"Complex({r}i{i})"
+    | LChar c -> $"Char({c})"
     
 let litToString = function
     | LNumber n -> numberToString n
@@ -37,29 +36,6 @@ let rec exprToString  = function
     | ETuple (exprs, _) -> $"""({String.concat ", " (List.map exprToString exprs)})"""
     | _ -> "()"
 
-let evalRepl =
-    let rec repl' (aliases: AliasMap) (env: Env) (typeEnv: TypeEnv) =
-        Console.Write ">> "
-        let input = Console.ReadLine()
-        let input = preprocessContent input
-        match parse input with
-        | Ok (_, program) ->
-            let typeCheck = inferProgram aliases typeEnv program
-            match typeCheck with
-            | Ok (typeEnv, aliases, _, program) ->
-                let program = foldConstants program
-                let value, env = evalProgram env program
-                printfn $"{exprToString value}"
-                repl' aliases env typeEnv
-            | Error errors -> 
-                printfn $"{formatTypeErrors errors}"
-                repl' aliases env typeEnv
-        | Error (e, s) ->  
-            printfn $"{formatParserError e s}"
-            repl' aliases env typeEnv
-                
-    repl' Map.empty Map.empty defaultTypeEnv
-    ()
 
 let executeInRepl (input: string) (vm: VM) : VM =
     try
@@ -107,7 +83,6 @@ let startRepl () =
 *)
 let noTcParseAndCompile (code: string) (vm:VM) =
     let code = Prelude.prelude + code
-    let code = preprocessContent code
     match parse code with
     | Ok (_, program) ->
             // let program = eliminate program
@@ -123,7 +98,6 @@ let noTcParseAndCompile (code: string) (vm:VM) =
         
 let parseAndCompile (code: string) (vm:VM) =
     let code = Prelude.prelude + code
-    let code = preprocessContent code
     match parse code with
     | Ok (_, program) ->
         match inferProgram Map.empty defaultTypeEnv program with
@@ -146,7 +120,6 @@ let parseAndCompile (code: string) (vm:VM) =
 
 let parseAndCompileWithTE (code: string) (vm: VM) (env: TypeEnv) =
     let code = Prelude.prelude + code
-    let code = preprocessContent code
     match parse code with
     | Ok (_, program) ->
         match inferProgram Map.empty env program with

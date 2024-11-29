@@ -354,9 +354,7 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bo
                     let state = addLocal (lexemeToString param.Lexeme) state
 
                     { state with
-                        CurrentFunction =
-                            { state.CurrentFunction with
-                                Arity = state.CurrentFunction.Arity + 1 } })
+                        CurrentFunction.Arity = state.CurrentFunction.Arity + 1 })
                 lambdaState
 
         let builtin =
@@ -515,7 +513,7 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
                 let parsed = Parser.parseFile path
                 match parsed with
                 | Ok (_, program) ->
-                    let (_,_,_,p) = preludeChecked
+                    let _,_,_,p = preludeChecked
                     let program = p @ program
                     List.iter (fun stmt -> compileStmt stmt state |> ignore) program
                     Ok((), state)

@@ -38,8 +38,11 @@ let parsePlotType =
     | name -> raise <| InvalidProgramException $"Unknown plot type: {name}"
 
 
+/// <summary>
+/// Built-in functions.
+/// </summary>
 let builtins =
-    [ Identifier "plot",
+    [ Identifier "plot", // standard plot
       VBuiltin(
           (fun args ->
               match args with

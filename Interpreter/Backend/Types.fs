@@ -3,11 +3,7 @@
 /// </summary>
 module Vec3.Interpreter.Backend.Types
 
-open System
-open System.Runtime.InteropServices.JavaScript
-open System.Threading.Tasks
 open Vec3.Interpreter.Grammar
-open Vec3.Interpreter.PrettyPrinter
 open Vec3.Interpreter.SymbolicExpression
 
 type LineInfo = { Offset: int; LineNumber: int }
@@ -130,7 +126,7 @@ let rec valueToString =
     | VPlotData _ -> "<plot data>"
     | VPlotFunction _ -> "<plot function>"
     | VPlotFunctions _ -> "<plot functions>"
-    | VBlock v -> printExpr v
+    | VBlock _ -> $"<block>"
     | VShape _ -> "<shape>"
     | VShapes _ -> "<shapes>"
     | VOutput _ -> "<output>"

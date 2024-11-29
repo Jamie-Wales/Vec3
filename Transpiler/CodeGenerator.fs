@@ -90,4 +90,4 @@ let generateCCode (program: Program) : string =
 #include <string.h>
 #include <stdlib.h>
 """
-    sprintf "%s\n\nint main(void) {\n    %s\n    return 0;\n}\n" headers stmts
+    $"%s{headers}\n\nint main(void) {{\n    %s{stmts}\n    return 0;\n}}\n"

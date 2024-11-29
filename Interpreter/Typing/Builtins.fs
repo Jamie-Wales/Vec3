@@ -227,6 +227,9 @@ let onType =
     
     TFunction([idTyp; eventTyp; TAny], returnT, false, true)
     
+/// <summary>
+/// Map of built-in functions to their types.
+/// </summary>
 let BuiltinFunctions: Map<BuiltInFunction, TType> =
     [ Print, TFunction([ TAny ], TUnit, false, true)
       Input, TFunction([], TString, false, true)
@@ -298,6 +301,9 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       ]
     |> Map.ofList
 
+/// <summary>
+/// Map of built-in constants to their types.
+/// </summary>
 let BuiltinConstants: Map<Lexeme, TType> =
     [ Identifier "PI", TFloat; Identifier "E", TFloat; Identifier "TAU", TFloat ]
     |> Map.ofList

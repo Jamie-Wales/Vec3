@@ -7,10 +7,22 @@ module Vec3.Interpreter.Typing.Substitution
 open Vec3.Interpreter.Typing.Types
 open Vec3.Interpreter.Grammar
 
-// make this immutable later, as it specialises functions too much
+/// <summary>
+/// Concretely resolved types.
+/// </summary>
 let resolvedTypes: Ref<ResolvedType> = ref Map.empty
+
+/// <summary>
+/// Concretely resolved dimensions.
+/// </summary>
 let resolvedDims: Ref<ResolvedDims> = ref Map.empty
 
+/// <summary>
+/// Attempts to resolve a type alias to its concrete type.
+/// </summary>
+/// <param name="typ">The type to resolve.</param>
+/// <param name="env">The alias environment.</param>
+/// <returns>The resolved type.</returns>
 let rec resolveAlias (typ: TType) (env: AliasMap) : TType =
     match typ with
     | TAlias(name, _) ->
@@ -27,6 +39,13 @@ let rec resolveAlias (typ: TType) (env: AliasMap) : TType =
     | TRowExtend(label, typ, row) -> TRowExtend(label, resolveAlias typ env, resolveAlias row env)
     | _ -> typ
 
+/// <summary>
+/// Attempts to apply any necessary substitutions to a type, for example, replacing type variables with concrete types.
+/// </summary>
+/// <param name="env">The alias environment.</param>
+/// <param name="sub">The substitution to apply.</param>
+/// <param name="t">The type to apply the substitution to.</param>
+/// <returns>The type with the substitution applied.</returns>
 let rec applySubstitution (env: AliasMap) (sub: Substitution) (t: TType) : TType =
     let t = resolveAlias t env
 
@@ -58,6 +77,12 @@ let rec applySubstitution (env: AliasMap) (sub: Substitution) (t: TType) : TType
     | TRowExtend(label, typ, row) -> TRowExtend(label, applySubstitution env sub typ, applySubstitution env sub row)
     | t -> t
 
-// attempts to substitute type variables with concrete types in an environment
+/// <summary>
+/// Applies a substitution to a type environment.
+/// </summary>
+/// <param name="aliases">The alias environment.</param>
+/// <param name="sub">The substitution to apply.</param>
+/// <param name="env">The type environment to apply the substitution to.</param>
+/// <returns>The type environment with the substitution applied.</returns>
 let applySubstitutionToEnv (aliases: AliasMap) (sub: Substitution) (env: TypeEnv) : TypeEnv =
     Map.map (fun _ -> applySubstitution aliases sub) env

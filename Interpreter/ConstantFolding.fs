@@ -6,6 +6,14 @@ module Vec3.Interpreter.ConstantFolding
 open Token
 open Grammar
 
+/// <summary>
+/// Helper function to perform arithmetic operations on numbers.
+/// </summary>
+/// <param name="op">The operation to perform.</param>
+/// <param name="left">The left operand.</param>
+/// <param name="right">The right operand.</param>
+/// <param name="expr">The original expression.</param>
+/// <returns>The result of the operation, or the expression itself.</returns>
 let performArithmetic op left right expr =
     match left, right with
     | ELiteral(LNumber(LFloat a), _), ELiteral(LNumber(LFloat b), _) ->
@@ -50,6 +58,13 @@ let performArithmetic op left right expr =
         
     | _, _ -> expr
         
+/// <summary>
+/// Helper function to perform equality operations on values.
+/// </summary>
+/// <param name="a">The left operand.</param>
+/// <param name="b">The right operand.</param>
+/// <param name="expr">The original expression.</param>
+/// <returns>The result of the operation, or the expression itself.</returns>
 let rec performEquality a b expr =
     match a, b with
     | ELiteral(LNumber(LFloat a), _), ELiteral(LNumber(LFloat b), _) -> ELiteral(LBool(a = b), TBool)
@@ -63,6 +78,12 @@ let rec performEquality a b expr =
         if List.length lst1 <> List.length lst2 || typ1 <> typ2 then
             ELiteral(LBool(false), TBool)
         else
+            /// <summary>
+            /// Check that two lists are equal.
+            /// </summary>
+            /// <param name="lst1">The first list.</param>
+            /// <param name="lst2">The second list.</param>
+            /// <returns>True if the lists are equal, false otherwise.</returns>
             let rec loop lst1 lst2 =
                 match lst1, lst2 with
                 | [], [] -> ELiteral(LBool(true), TBool)
@@ -71,7 +92,7 @@ let rec performEquality a b expr =
                     match eq with
                     | ELiteral(LBool true, _) -> loop xs ys
                     | _ -> eq
-                | _, _ -> failwith "bad"
+                | _, _ -> ELiteral(LBool(false), TBool)
             loop lst1 lst2
     | ERecordExtend((field1, value1, typ1), record1, _), ERecordExtend((field2, value2, typ2), record2, _) ->
         if field1 <> field2 || typ1 <> typ2 then
@@ -83,6 +104,13 @@ let rec performEquality a b expr =
             | _ -> eq
     | _ -> ELiteral(LBool(false), TBool)
 
+/// <summary>
+/// A helper function to compare two values.
+/// </summary>
+/// <param name="a">The left operand.</param>
+/// <param name="b">The right operand.</param>
+/// <param name="expr">The original expression.</param>
+/// <returns>The result of the comparison.</returns>
 let performComparision a b expr : int =
     match a, b with
     | ELiteral(LNumber(LFloat a), _), ELiteral(LNumber(LFloat b), _) -> compare a b
@@ -91,6 +119,13 @@ let performComparision a b expr : int =
     | ELiteral(LNumber(LComplex(a, b)), _), ELiteral(LNumber(LComplex(c, d)), _) -> compare a c
     | _, _ -> expr // ? what to do here
         
+/// <summary>
+/// Helper function to perform unary operations on numbers.
+/// </summary>
+/// <param name="op">The operation to perform.</param>
+/// <param name="a">The operand.</param>
+/// <param name="expr">The original expression.</param>
+/// <returns>The result of the operation, or the expression itself.</returns>
 let performUnary op a  expr=
     match a with
     | ELiteral(LNumber(LFloat a), _) ->
@@ -120,6 +155,9 @@ let performUnary op a  expr=
     | _ -> expr
         
 
+/// <summary>
+/// Map of builtin functions to their implementations.
+/// </summary>
 let builtins: Map<Lexeme, Expr list -> Expr -> Expr> =
     [
         Operator(Plus, Some Infix), (fun (lst: Expr list) -> performArithmetic Plus lst[0] lst[1])
@@ -151,6 +189,12 @@ let builtins: Map<Lexeme, Expr list -> Expr -> Expr> =
     ]
     |> Map.ofList
 
+/// <summary>
+/// Find the greatest common divisor of two numbers.
+/// </summary>
+/// <param name="a">The first number.</param>
+/// <param name="b">The second number.</param>
+/// <returns>The greatest common divisor.</returns>
 let rec GCD a b =
     let r = a / b
     if r = 0 then
@@ -158,6 +202,11 @@ let rec GCD a b =
     else
         GCD b r
 
+/// <summary>
+/// Simplify a rational number.
+/// </summary>
+/// <param name="rat">The rational number to simplify.</param>
+/// <returns>The simplified rational number.</returns>
 let simplifyRational (rat: Number): Number =
     match rat with
     | LRational(a, b) ->
@@ -167,6 +216,15 @@ let simplifyRational (rat: Number): Number =
         LRational(a, b)
     | _ -> failwith "bad"
     
+/// <summary>
+/// Helper function to perform indexing on lists.
+/// </summary>
+/// <param name="expr">The expression to index.</param>
+/// <param name="start">An optional start</param>
+/// <param name="end_">An optional end</param>
+/// <param name="isRange">Whether the index is a range.</param>
+/// <param name="typ">The type of the expression.</param>
+/// <returns>The indexed expression.</returns>
 let performIndex expr start end_ isRange typ =
     match expr, start, end_ with
     | EList(lst, t), Some (ELiteral(LNumber(LInteger s), _)), Some (ELiteral(LNumber(LInteger e), _)) ->
@@ -180,9 +238,24 @@ let performIndex expr start end_ isRange typ =
     | _ ->
         EIndex(expr, (start, end_, isRange), typ)
 
+/// <summary>
+/// Fold constants in the program.
+/// </summary>
+/// <param name="program">The program to fold.</param>
+/// <returns>The folded program.</returns>
 let foldConstants (program: Program) : Program =
+    /// <summary>
+    /// Fold a list of statements.
+    /// </summary>
+    /// <param name="stmts">The statements to fold.</param>
+    /// <returns>The folded statements.</returns>
     let rec foldStatements (stmts: Stmt list) : Stmt list = List.map foldStmt stmts
 
+    /// <summary>
+    /// Fold a statement.
+    /// </summary>
+    /// <param name="stmt">The statement to fold.</param>
+    /// <returns>The folded statement.</returns>
     and foldStmt (stmt: Stmt) : Stmt =
         match stmt with
         | SVariableDeclaration(tok, expr, typ) -> SVariableDeclaration(tok, foldExpr expr, typ)
@@ -193,6 +266,11 @@ let foldConstants (program: Program) : Program =
         | SAsync(token, tuples, expr, typeOption) -> SAsync(token, tuples, foldExpr expr, typeOption)
         | SImport(token, path, typ) -> SImport(token, path, typ) // maybe fold in imports?
 
+    /// <summary>
+    /// Fold an expression.
+    /// </summary>
+    /// <param name="expr">The expression to fold.</param>
+    /// <returns>The folded expression.</returns>
     and foldExpr (expr: Expr) : Expr =
         match expr with
         | ETail(expr, typ) -> ETail(foldExpr expr, typ)
@@ -245,4 +323,4 @@ let foldConstants (program: Program) : Program =
         | ECodeBlock e -> ECodeBlock e
         | EMatch(expr, cases, typ) -> EMatch(foldExpr expr, cases, typ)
 
-    foldStatements program
+    in foldStatements program

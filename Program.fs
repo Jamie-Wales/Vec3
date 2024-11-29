@@ -4,11 +4,6 @@ open System
 open System.IO
 open Avalonia
 open Vec3.Transpiler.Transpiler
-open Vec3.Interpreter.Repl
-open Vec3.Interpreter
-open Vec3.Interpreter.Parser
-open Vec3.Interpreter.Eval
-open Vec3.Interpreter.Typing.Exceptions
 
 /// <summary>
 /// The main program module (entry point).
@@ -36,31 +31,6 @@ module Program =
         match argv with
         | [||]
         | [| "-g" |] -> buildAvaloniaApp().StartWithClassicDesktopLifetime(argv)
-        | [| "-r" |] ->
-            evalRepl
-            0
-        | [| "-f"; filename |] ->
-            let content = System.IO.File.ReadAllText filename
-            let content = Preprocessor.preprocessContent content
-
-            match parse content with
-            | Ok(_, program) ->
-                let typeCheck =
-                    Typing.Inference.inferProgram Map.empty Typing.Inference.defaultTypeEnv program
-
-                match typeCheck with
-                | Ok(_, _, _, program) ->
-                    let program = ConstantFolding.foldConstants program
-                    let value, _ = evalProgram defaultEnv program
-                    printfn $"{exprToString value}"
-                    0
-                | Error errors ->
-                    printfn $"{formatTypeErrors errors}"
-                    1
-            | Error(e, s) ->
-                printfn $"{formatParserError e s}"
-                1
-                    
         | [| "-c"; filename |] ->
             let config = 
                 if argv.Length > 2 

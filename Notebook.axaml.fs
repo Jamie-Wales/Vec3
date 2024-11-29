@@ -13,8 +13,8 @@ open AvaloniaEdit.TextMate
 open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Compiler
-open Vec3.Interpreter.Repl
 open Vec3.Interpreter.Typing
+open Vec3.Interpreter.Repl
 
 /// <summary>
 /// The notebook window.

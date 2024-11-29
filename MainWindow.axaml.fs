@@ -43,6 +43,7 @@ REPL for quick commands click 'Play' or Shift+Enter.
 Type 'help()' in the REPL for more information."""
 
     let initialCode = """// Vec3 Editor Example
+// Vec3 Editor Example
 
 rec fact(n) -> if n < 1 then 1 else n * fact(n - 1)
 
@@ -107,15 +108,16 @@ let data = {
     y = 100.0,
     width = 50.0,
     height = 50.0,
-    colour = "red"
+    colour = "red",
+    trace = true
 }
 
 let id = draw(data)
 
-on(id, Keys.Left, (state) -> { x = state.x + 10.0, y = cos(state.x) * 10.0 + 100.0 })
-on(id, Keys.Right, (state) -> { x = state.x - 10.0, y = cos(state.x) * 10.0 + 100.0 })
-on(id, Keys.Up, (state) -> { x = state.x, y = state.y + 20.0 })
-on(id, Keys.Down, (state) -> { x = state.x, y = state.y - 20.0 })
+on(id, Keys.Right, (state) -> { x = state.x + 10.0, y = cos(state.x) * 10.0 + 100.0 })
+on(id, Keys.Left, (state) -> { x = state.x - 10.0, y = cos(state.x) * 10.0 + 100.0 })
+on(id, Keys.Down, (state) -> { x = state.x, y = state.y + 20.0 })
+on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
 
 // list casting
 let x = [1..10] : [float]
