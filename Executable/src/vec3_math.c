@@ -64,15 +64,15 @@ Vec3Value* vec3_multiply(Vec3Value* a, Vec3Value* b)
         case NUMBER_FLOAT:
             break;
         }
-    } else if (a->object.type == TYPE_LIST && b->object.type == TYPE_LIST) {
-        if (a->as.list.length == b->as.list.length) {
-            result = vec3_new_list(a->as.list.length);
-            for (size_t i = 0; i < a->as.list.length; i++) {
-                Vec3Value* item_result = vec3_multiply(a->as.list.items[i], b->as.list.items[i]);
-                vec3_list_append(result, item_result);
-                vec3_decref(item_result);
-            }
-        }
+        /* } else if (a->object.type == TYPE_LIST && b->object.type == TYPE_LIST) { */
+        /*     if (a->as.list->length == b->as.list->length) { */
+        /*         result = vec3_new_list(a->as.list->length); */
+        /*         for (size_t i = 0; i < a->as.list.length; i++) { */
+        /*             Vec3Value* item_result = vec3_multiply(a->as.list.items[i], b->as.list.items[i]); */
+        /*             vec3_list_append(result, item_result); */
+        /*             vec3_decref(item_result); */
+        /*         } */
+        /*     } */
     }
 
     vec3_decref(a);

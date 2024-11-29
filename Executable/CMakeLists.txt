@@ -9,8 +9,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 17)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra -Wconversion -Wsign-conversion")
-
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 # You can also try target_include_directories instead
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME}

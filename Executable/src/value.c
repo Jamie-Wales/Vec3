@@ -1,4 +1,5 @@
 #include "value.h"
+#include "vec3_list.h"
 #include <assert.h>
 #include <math.h>
 #include <stdarg.h>
@@ -33,15 +34,6 @@ void vec3_destroy_string(Vec3Object* object)
     free(value->as.string.chars);
 }
 
-void vec3_destroy_list(Vec3Object* object)
-{
-    Vec3Value* value = (Vec3Value*)object;
-    for (size_t i = 0; i < value->as.list.length; i++) {
-        vec3_decref(value->as.list.items[i]);
-    }
-    free(value->as.list.items);
-}
-
 Vec3Value* vec3_new_number(Number number)
 {
     Vec3Value* value = malloc(sizeof(Vec3Value));
@@ -50,6 +42,41 @@ Vec3Value* vec3_new_number(Number number)
     value->object.destructor = NULL;
     value->as.number = number;
     return value;
+}
+
+// Modified list creation to handle variadic arguments properly
+Vec3Value* vec3_new_list(size_t count, ...)
+{
+    Vec3Value* output = malloc(sizeof(Vec3Value));
+    output->object.type = TYPE_LIST;
+    output->object.ref_count = 1;
+    output->object.destructor = vec3_destroy_list;
+    output->as.list = create_new_list(NULL); // Start with empty list
+
+    if (count > 0) {
+        va_list ap;
+        va_start(ap, count);
+
+        // Add first argument
+        Vec3Value* first = va_arg(ap, Vec3Value*);
+        if (first != NULL) {
+            output->as.list->value = first;
+            vec3_incref(first);
+            output->as.list->length = 1;
+        }
+
+        // Add remaining arguments
+        for (size_t i = 1; i < count; i++) {
+            Vec3Value* arg = va_arg(ap, Vec3Value*);
+            if (arg != NULL) {
+                vec3_list_append(output, arg);
+            }
+        }
+
+        va_end(ap);
+    }
+
+    return output;
 }
 
 Vec3Value* vec3_new_string(const char* chars)
@@ -62,33 +89,6 @@ Vec3Value* vec3_new_string(const char* chars)
     value->as.string.chars = strdup(chars);
     return value;
 }
-Vec3Value* vec3_new_list(size_t initial_capacity)
-{
-    Vec3Value* value = malloc(sizeof(Vec3Value));
-    value->object.type = TYPE_LIST;
-    value->object.ref_count = 1;
-    value->object.destructor = vec3_destroy_list;
-    value->as.list.items = malloc(sizeof(Vec3Value*) * initial_capacity);
-    value->as.list.length = 0;
-    value->as.list.capacity = initial_capacity;
-    return value;
-}
-
-Vec3Value* vec3_new_list_values(size_t count, ...)
-{
-    Vec3Value* list = vec3_new_list(count);
-    va_list args;
-    va_start(args, count);
-
-    for (size_t i = 0; i < count; i++) {
-        Vec3Value* value = va_arg(args, Vec3Value*);
-        vec3_list_append(list, value);
-    }
-
-    va_end(args);
-    return list;
-}
-
 Vec3Value* vec3_new_bool(bool b)
 {
     Vec3Value* value = malloc(sizeof(Vec3Value));
@@ -107,47 +107,6 @@ Vec3Value* vec3_new_nil(void)
     value->object.destructor = NULL;
     return value;
 }
-void vec3_list_append(Vec3Value* list, Vec3Value* value)
-{
-    assert(list->object.type == TYPE_LIST);
-
-    if (list->as.list.length >= list->as.list.capacity) {
-        size_t new_capacity = list->as.list.capacity * 2;
-        list->as.list.items = realloc(list->as.list.items,
-            sizeof(Vec3Value*) * new_capacity);
-        list->as.list.capacity = new_capacity;
-    }
-
-    vec3_incref(value);
-    list->as.list.items[list->as.list.length++] = value;
-}
-
-Vec3Value* vec3_list_get(Vec3Value* list, size_t index)
-{
-    assert(list->object.type == TYPE_LIST);
-
-    if (index >= list->as.list.length) {
-        return vec3_new_nil();
-    }
-
-    Vec3Value* value = list->as.list.items[index];
-    vec3_incref(value);
-    return value;
-}
-
-void vec3_list_set(Vec3Value* list, size_t index, Vec3Value* value)
-{
-    assert(list->object.type == TYPE_LIST);
-
-    if (index >= list->as.list.length) {
-        return;
-    }
-
-    vec3_incref(value);
-    vec3_decref(list->as.list.items[index]);
-    list->as.list.items[index] = value;
-}
-
 bool vec3_is_truthy(const Vec3Value* value)
 {
     if (value == NULL || value->object.type == TYPE_NIL) {
@@ -169,7 +128,7 @@ bool vec3_is_truthy(const Vec3Value* value)
     case TYPE_STRING:
         return value->as.string.length > 0;
     case TYPE_LIST:
-        return value->as.list.length > 0;
+        return value->as.list->length > 0;
     default:
         return true;
     }
@@ -189,23 +148,38 @@ void vec3_print(const Vec3Value* value)
     case TYPE_STRING:
         printf("\"%s\"", value->as.string.chars);
         break;
-    case TYPE_LIST:
+    case TYPE_LIST: {
         printf("[");
-        for (size_t i = 0; i < value->as.list.length; i++) {
-            if (i > 0)
+        vec3_list* current = value->as.list;
+        bool first = true;
+
+        while (current != NULL) {
+            if (!first) {
                 printf(", ");
-            vec3_print(value->as.list.items[i]);
+            }
+            if (current->value == NULL) {
+                printf("null");
+            } else {
+                vec3_print(current->value);
+            }
+            first = false;
+            current = current->next;
         }
         printf("]");
         break;
+    }
     case TYPE_NIL:
         printf("nil");
+        break;
+    case TYPE_BOOL:
+        printf(value->as.boolean ? "true" : "false");
         break;
     default:
         printf("<unknown>");
         break;
     }
 }
+
 Vec3Value* vec3_sqrt(Vec3Value* value)
 {
     vec3_incref(value);
@@ -420,23 +394,6 @@ Vec3Value* vec3_not(Vec3Value* value)
     bool result = !vec3_is_truthy(value);
     vec3_decref(value);
     return vec3_new_bool(result);
-}
-
-// List operations
-Vec3Value* vec3_cons(Vec3Value* value, Vec3Value* list)
-{
-    if (list->object.type != TYPE_LIST) {
-        return vec3_new_nil();
-    }
-
-    Vec3Value* new_list = vec3_new_list(list->as.list.length + 1);
-    vec3_list_append(new_list, value);
-
-    for (size_t i = 0; i < list->as.list.length; i++) {
-        vec3_list_append(new_list, list->as.list.items[i]);
-    }
-
-    return new_list;
 }
 
 // Basic I/O

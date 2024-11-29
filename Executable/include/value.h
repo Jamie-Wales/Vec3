@@ -2,7 +2,6 @@
 #include "number.h"
 #include <stdbool.h>
 #include <stddef.h>
-
 typedef struct Vec3Value Vec3Value;
 typedef struct Vec3Object Vec3Object;
 
@@ -27,18 +26,19 @@ typedef struct {
     size_t length;
 } String;
 
-typedef struct {
-    Vec3Value** items;
+typedef struct vec3_list {
+    Vec3Value* value;
+    struct vec3_list* prev;
+    struct vec3_list* next;
     size_t length;
-    size_t capacity;
-} List;
+} vec3_list;
 
 typedef struct Vec3Value {
     Vec3Object object;
     union {
         Number number;
         String string;
-        List list;
+        vec3_list* list;
         bool boolean;
     } as;
 } Vec3Value;
@@ -48,15 +48,10 @@ void vec3_decref(Vec3Value* value);
 
 Vec3Value* vec3_new_number(Number number);
 Vec3Value* vec3_new_string(const char* chars);
-Vec3Value* vec3_new_list(size_t initial_capacity);
+Vec3Value* vec3_new_list(size_t count, ...);
 Vec3Value* vec3_new_nil(void);
 
 void vec3_destroy_string(Vec3Object* object);
-void vec3_destroy_list(Vec3Object* object);
-
-void vec3_list_append(Vec3Value* list, Vec3Value* value);
-Vec3Value* vec3_list_get(Vec3Value* list, size_t index);
-void vec3_list_set(Vec3Value* list, size_t index, Vec3Value* value);
 
 void vec3_print(const Vec3Value* value);
 bool vec3_is_truthy(const Vec3Value* value);
@@ -64,7 +59,6 @@ bool vec3_is_truthy(const Vec3Value* value);
 #define VEC3_E 2.71828182845904523536
 #define VEC3_TAU 6.28318530717958647692
 
-Vec3Value* vec3_new_list_values(size_t count, ...);
 // Basic math operations
 Vec3Value* vec3_power(Vec3Value* base, Vec3Value* exp);
 Vec3Value* vec3_sqrt(Vec3Value* value);
@@ -86,9 +80,6 @@ Vec3Value* vec3_log(Vec3Value* base, Vec3Value* value);
 Vec3Value* vec3_log10(Vec3Value* value);
 
 // List operations
-Vec3Value* vec3_cons(Vec3Value* value, Vec3Value* list);
-Vec3Value* vec3_index(Vec3Value* list, Vec3Value* index);
-Vec3Value* vec3_select(Vec3Value* list, Vec3Value* key);
 
 // Comparison operations
 Vec3Value* vec3_equal(Vec3Value* a, Vec3Value* b);
