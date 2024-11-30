@@ -26,9 +26,9 @@
         <Compile Include="Interpreter\Backend\Compiler.fs"/>
         <Compile Include="Interpreter\Backend\Builtins.fs"/>
         <Compile Include="Interpreter\Backend\VM.fs"/>
-        <Compile Include="Interpreter\ConstantFolding.fs"/>
-        <Compile Include="Interpreter\DCE.fs"/>
         <Compile Include="Interpreter\Repl.fs"/>
+        <Compile Include="Interpreter\Optimisation\ConstantFolding.fs" />
+        <Compile Include="Interpreter\Optimisation\DCE.fs" />
         <Compile Include="Transpiler\CodeGenerator.fs"/>
         <Compile Include="Transpiler\Transpiler.fs"/>
         <Compile Include="GUI\Draw.axaml.fs" />

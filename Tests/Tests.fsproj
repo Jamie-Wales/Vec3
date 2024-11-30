@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <IsPackable>false</IsPackable>
+        <GenerateProgramFile>false</GenerateProgramFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Program.fs"/>
+        <Compile Include="Parser.fs" />
+        <Compile Include="Scanner.fs" />
+        <Compile Include="SymbolicExpression.fs" />
+        <Compile Include="Token.fs" />
+        <Compile Include="Optimisation\DCE.fs" />
+        <Compile Include="Optimisation\ConstantFolding.fs" />
+        <Compile Include="Typing\Inference.fs" />
+        <Folder Include="Typing\Substitution\" />
+        <Compile Include="Backend\Compiler.fs" />
+        <Compile Include="Backend\VM.fs" />
+        <Compile Include="Backend\Value.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="6.0.2"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1"/>
+        <PackageReference Include="NUnit" Version="4.2.2"/>
+        <PackageReference Include="NUnit.Analyzers" Version="4.3.0"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="4.6.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Vec3\Vec3.fsproj" />
+    </ItemGroup>
+
+</Project>

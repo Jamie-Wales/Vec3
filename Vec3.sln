@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vec3", "Vec3/Vec3.fsproj", "{610CAC0C-456B-434B-A4A6-175FB0833160}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "Tests\Tests.fsproj", "{CC223DAB-0948-4439-83AE-26B033C464EB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{610CAC0C-456B-434B-A4A6-175FB0833160}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{610CAC0C-456B-434B-A4A6-175FB0833160}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{610CAC0C-456B-434B-A4A6-175FB0833160}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC223DAB-0948-4439-83AE-26B033C464EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC223DAB-0948-4439-83AE-26B033C464EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC223DAB-0948-4439-83AE-26B033C464EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC223DAB-0948-4439-83AE-26B033C464EB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

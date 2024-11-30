@@ -1,0 +1,2 @@
+module Tests.Optimisation.ConstantFolding
+
