@@ -18,9 +18,16 @@ let consType =
 let plotFunType =
     let funConstrain =
         TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
-    
-    TConstrain(Constrain(freshTypeVar(), (fun t -> t = TFunction([ TString; funConstrain ], TUnit, false, true) || t = TFunction([ TString; funConstrain; TFloat; TFloat  ], TUnit, false, true))))
-   
+
+    TConstrain(
+        Constrain(
+            freshTypeVar (),
+            (fun t ->
+                t = TFunction([ TString; funConstrain ], TUnit, false, true)
+                || t = TFunction([ TString; funConstrain; TFloat; TFloat ], TUnit, false, true))
+        )
+    )
+
 
 let plus =
     let typeVar = freshTypeVar ()
@@ -156,16 +163,16 @@ let integrateType =
     let retT = TFunction([ TFloat ], TFloat, true, false)
 
     TFunction([ funcT ], retT, false, true)
-    
-    
+
+
 let taylorSeriesT =
     let funcT =
         TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
-        
+
     let retT = TFunction([ TFloat ], TFloat, true, false)
-    
-    TFunction([ funcT; TInteger; ], retT, false, true)
-    
+
+    TFunction([ funcT; TInteger ], retT, false, true)
+
 
 let plotFunsType =
     let funcT =
@@ -174,11 +181,13 @@ let plotFunsType =
     TFunction([ TString; TTensor(funcT, DAny) ], TUnit, false, true)
 
 let plotType =
-    let tensWithArithFieldsFunc = fun (t: TType) -> match t with
-                                                    | TTensor(typ, _) -> typ.IsArithmetic
-                                                    | _ -> false
-                    
-    
+    let tensWithArithFieldsFunc =
+        fun (t: TType) ->
+            match t with
+            | TTensor(typ, _) -> typ.IsArithmetic
+            | _ -> false
+
+
     let func =
         fun (t: TType) ->
             t.hasFieldsThat
@@ -190,7 +199,7 @@ let plotType =
     let recTyp = TConstrain(Constrain(freshTypeVar (), func))
 
     TFunction([ recTyp ], TUnit, false, true)
-    
+
 let drawType =
     let recTyp =
         TConstrain(
@@ -203,31 +212,48 @@ let drawType =
                           (Identifier "x", fun t -> t = TFloat)
                           (Identifier "y", fun t -> t = TFloat)
                           (Identifier "colour", fun t -> t = TString) ]
-                   || (t.IsList && match t with
-                                    | TTensor (t, _) -> t.hasFieldsThat [ (Identifier "width", fun t -> t = TFloat)
-                                                                          (Identifier "height", fun t -> t = TFloat)
-                                                                          (Identifier "x", fun t -> t = TFloat)
-                                                                          (Identifier "y", fun t -> t = TFloat)
-                                                                          (Identifier "colour", fun t -> t = TString) ] 
-                                    | _ -> false
-                        )))
-    
-    let token = { Lexeme = Identifier "id"; Position = { Column = 0; Line = 0 } }
+                    || (t.IsList
+                        && match t with
+                           | TTensor(t, _) ->
+                               t.hasFieldsThat
+                                   [ (Identifier "width", fun t -> t = TFloat)
+                                     (Identifier "height", fun t -> t = TFloat)
+                                     (Identifier "x", fun t -> t = TFloat)
+                                     (Identifier "y", fun t -> t = TFloat)
+                                     (Identifier "colour", fun t -> t = TString) ]
+                           | _ -> false)
+            )
+        )
+
+    let token =
+        { Lexeme = Identifier "id"
+          Position = { Column = 0; Line = 0 } }
+
     let returnT = TRecord(TRowExtend(token, TInteger, TRowEmpty))
-    
+
     TFunction([ recTyp ], returnT, false, true)
 
-let readTyp =
-    TFunction([TString], TAny, false, true)
+let readTyp = TFunction([ TString ], TAny, false, true)
 
 let onType =
-    let idTyp = TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldOf (Identifier "id") TInteger)))
-    let eventTyp = TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldOf (Identifier "event") TInteger)))
-    let stateT = TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldsOf [(Identifier "x", TFloat); (Identifier "y", TFloat)])))
-    let returnT = TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldsOf [(Identifier "x", TFloat); (Identifier "y", TFloat)])))
-    
-    TFunction([idTyp; eventTyp; TAny], returnT, false, true)
-    
+    let idTyp =
+        TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldOf (Identifier "id") TInteger)))
+
+    let eventTyp =
+        TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldOf (Identifier "event") TInteger)))
+
+    let stateT =
+        TConstrain(
+            Constrain(freshTypeVar (), (fun t -> t.hasFieldsOf [ (Identifier "x", TFloat); (Identifier "y", TFloat) ]))
+        )
+
+    let returnT =
+        TConstrain(
+            Constrain(freshTypeVar (), (fun t -> t.hasFieldsOf [ (Identifier "x", TFloat); (Identifier "y", TFloat) ]))
+        )
+
+    TFunction([ idTyp; eventTyp; TAny ], returnT, false, true)
+
 /// <summary>
 /// Map of built-in functions to their types.
 /// </summary>
@@ -242,10 +268,10 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       ATan, TFunction([ TFloat ], TFloat, true, true)
       Log, logType
       Exp, expType
-      Root, TFunction([TFloat; TFloat], TFloat, true, true)
-      
-      Eval, TFunction([TAny], TAny, false, true)
-      
+      Root, TFunction([ TFloat; TFloat ], TFloat, true, true)
+
+      Eval, TFunction([ TAny ], TAny, false, true)
+
       Read, readTyp
 
       Env, TFunction([], TUnit, false, true)
@@ -286,17 +312,17 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
 
       CrossProduct, crossProduct
       DotProduct, dotProduct
-      
+
       Err, TFunction([ TString ], TAny, false, true)
 
       Cast, castType
-      
+
       On, onType
-      
+
       Await, TAny
-      
+
       TaylorSeries, taylorSeriesT
-      
+
       Concat, TFunction([ TString; TString ], TString, false, true)
 
       ]

@@ -22,10 +22,10 @@ type OP_CODE =
     | CALL
     | CLOSURE
     | Exception
-    
+
     | COMPOUND_CREATE
     | GET_UPVALUE
-    
+
 let opCodeToByte =
     function
     | CONSTANT -> 0uy
@@ -45,12 +45,12 @@ let opCodeToByte =
     | LOOP -> 23uy
     | CALL -> 24uy
     | CLOSURE -> 25uy
-    
+
     | COMPOUND_CREATE -> 26uy
     | GET_UPVALUE -> 27uy
-    
+
     | Exception -> 255uy
-    
+
 
 let byteToOpCode byte =
     match byte with
@@ -97,7 +97,5 @@ let opCodeToString =
     | CLOSURE -> "CLOSURE"
     | COMPOUND_CREATE -> "COMPOUND_CREATE"
     | GET_UPVALUE -> "GET_UPVALUE"
-    
+
     | Exception -> "Exception"
-    
-    

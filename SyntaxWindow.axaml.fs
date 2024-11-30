@@ -10,13 +10,14 @@ open AvaloniaEdit.TextMate
 /// <summary>
 /// Example window.
 /// </summary>
-type SyntaxWindow () as this =
-    inherit Window ()
+type SyntaxWindow() as this =
+    inherit Window()
 
     let mutable syntaxEditor: TextEditor = null
     let mutable textMateInstallation: TextMate.Installation = null
 
-    let syntaxExample = """// Vec3 Syntax Guide
+    let syntaxExample =
+        """// Vec3 Syntax Guide
 
 // 1. Basic Types
 let integer: int = 42
@@ -97,19 +98,19 @@ let newton = (f, x0, tolerance, maxIter) {
 
     member private this.InitializeComponent() =
         syntaxEditor <- this.FindControl<TextEditor>("SyntaxEditor")
-        
+
         let registryOptions = RegistryOptions(ThemeName.DarkPlus)
-        
+
         if syntaxEditor <> null then
             syntaxEditor.ShowLineNumbers <- true
-            syntaxEditor.Options.ShowTabs <- false 
-            syntaxEditor.Options.ShowSpaces <- false 
-            syntaxEditor.Options.ShowEndOfLine <- false 
+            syntaxEditor.Options.ShowTabs <- false
+            syntaxEditor.Options.ShowSpaces <- false
+            syntaxEditor.Options.ShowEndOfLine <- false
             syntaxEditor.Options.HighlightCurrentLine <- true
             syntaxEditor.Text <- syntaxExample
 
             textMateInstallation <- TextMate.Installation(syntaxEditor, registryOptions)
-            
+
             let fsharpLanguage = registryOptions.GetLanguageByExtension(".fs")
             let scopeName = registryOptions.GetScopeByLanguageId(fsharpLanguage.Id)
             textMateInstallation.SetGrammar(scopeName)
@@ -120,11 +121,12 @@ let newton = (f, x0, tolerance, maxIter) {
         if textMateInstallation <> null then
             let applyColor colorKey (action: IBrush -> unit) =
                 let mutable colorString = ""
+
                 if textMateInstallation.TryGetThemeColor(colorKey, &colorString) then
                     match Color.TryParse(colorString) with
                     | true, color ->
                         let brush = SolidColorBrush(color)
-                        action(brush)
+                        action (brush)
                     | _ -> ()
 
             applyColor "editor.background" (fun brush -> syntaxEditor.Background <- brush)

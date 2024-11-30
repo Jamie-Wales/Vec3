@@ -4,7 +4,6 @@
 
 module Vec3.Interpreter.Backend.Chunk
 
-open System.Text
 open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Types
 
@@ -79,14 +78,14 @@ let getLineNumber (chunk: Chunk) (offset: int) =
 //     | OP_CODE.GET_GLOBAL -> constantInstruction chunk "OP_GET_GLOBAL" offset
 //     | OP_CODE.CALL -> constantInstruction chunk "OP_CALL" offset
 //     | OP_CODE.CLOSURE -> constantInstruction chunk "OP_CLOSURE" offset
-    // | OP_CODE.JUMP -> 
-    //     let jump = (int chunk.Code[offset + 1] <<< 8) ||| int chunk.Code[offset + 2]
-    //     printf $"OP_JUMP          {offset, 4} -> {offset + 3 + jump, 4}"
-    //     offset + 3
-    // | OP_CODE.JUMP_IF_FALSE ->
-    //     let jump = (int chunk.Code[offset + 1] <<< 8) ||| int chunk.Code[offset + 2]
-    //     printf $"OP_JUMP_IF_FALSE {offset, 4} -> {offset + 3 + jump, 4}"
-    //     offset + 3
+// | OP_CODE.JUMP ->
+//     let jump = (int chunk.Code[offset + 1] <<< 8) ||| int chunk.Code[offset + 2]
+//     printf $"OP_JUMP          {offset, 4} -> {offset + 3 + jump, 4}"
+//     offset + 3
+// | OP_CODE.JUMP_IF_FALSE ->
+//     let jump = (int chunk.Code[offset + 1] <<< 8) ||| int chunk.Code[offset + 2]
+//     printf $"OP_JUMP_IF_FALSE {offset, 4} -> {offset + 3 + jump, 4}"
+//     offset + 3
 //     | OP_CODE.COMPOUND_CREATE -> simpleInstruction "OP_COMPOUND_CREATE" offset
 //     | OP_CODE.COMPOUND_GET -> simpleInstruction "OP_COMPOUND_GET" offset
 //     | _ ->

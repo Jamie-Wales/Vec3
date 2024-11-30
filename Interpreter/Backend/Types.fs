@@ -28,24 +28,24 @@ type PlotType =
     | Bar
     | Histogram
     | Signal
-    
+
 type CompoundType =
     | LIST
     | RECORD
     | TUPLE
-    
+
 type Local =
     { Name: string; Depth: int; Index: int }
-    
-    
+
+
 type VNumber =
     | VInteger of int
     | VFloat of float
     | VRational of int * int
     | VComplex of float * float
     | VChar of char
-    
-    
+
+
 type Chunk =
     { Code: ResizeArray<byte>
       Lines: ResizeArray<LineInfo>
@@ -56,7 +56,7 @@ and Value =
     | VString of string
     | VBoolean of bool
     | VFunction of Function * Expression option
-    | VAsyncFunction of Function 
+    | VAsyncFunction of Function
     | VClosure of Closure * Expression option
     | VNil
     | VList of Value list * CompoundType
@@ -80,15 +80,13 @@ and Function =
 and Closure =
     { Function: Function
       UpValues: Local list
-      UpValuesValues: Value array
-      }
+      UpValuesValues: Value array }
 
 
 type CallFrame =
     { Closure: Closure
       IP: int
-      StackBase: int
-     }
+      StackBase: int }
 
 type VM =
     { Frames: ResizeArray<CallFrame>
@@ -110,24 +108,25 @@ let rec valueToString =
     | VNumber(VChar c) -> $"'{c}'"
     | VBoolean b -> string b
     | VString s -> s
-    | VFunction(func, Some f) ->
-        $"<fn {func.Name} : f(x) = {toString f}>"
+    | VFunction(func, Some f) -> $"<fn {func.Name} : f(x) = {toString f}>"
     | VFunction(f, _) -> $"<fn {f.Name}>"
-    | VClosure (c, Some f) -> $"<closure {c.Function.Name} : f(x) = {toString f}>"
-    | VClosure (c, _) -> $"<closure {c.Function.Name}>"
+    | VClosure(c, Some f) -> $"<closure {c.Function.Name} : f(x) = {toString f}>"
+    | VClosure(c, _) -> $"<closure {c.Function.Name}>"
     | VNil -> "nil"
     | VList(l, typ) ->
         match typ with
-        | LIST ->
-            $"""[{String.concat ", " (List.map valueToString l)}]"""
+        | LIST -> $"""[{String.concat ", " (List.map valueToString l)}]"""
         | RECORD ->
             let fields =
                 l
-                |> List.map (fun v -> match v with VList([VString s; v], _) -> s, v | _ -> failwith "bad")
+                |> List.map (fun v ->
+                    match v with
+                    | VList([ VString s; v ], _) -> s, v
+                    | _ -> failwith "bad")
                 |> List.map (fun (s, v) -> $"""{s}: {valueToString v}""")
+
             $"""{{{String.concat ", " fields}}}"""
-        | TUPLE ->
-            $"""({String.concat ", " (List.map valueToString l)})"""
+        | TUPLE -> $"""({String.concat ", " (List.map valueToString l)})"""
     | VBuiltin _ -> "<builtin>"
     | VPlotData _ -> "<plot data>"
     | VPlotFunction _ -> "<plot function>"

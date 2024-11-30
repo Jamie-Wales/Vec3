@@ -28,7 +28,7 @@ type Type =
     | TFloat
     | TRational
     | TComplex
-    
+
     | TChar
 
     | TBool
@@ -39,7 +39,7 @@ type Type =
     /// Represents the unit type (a type with only one value).
     /// </summary>
     | TUnit
-    
+
     /// <summary>
     /// The bottom type, unsolvable type.
     /// </summary>
@@ -203,7 +203,7 @@ type Type =
     /// </summary>
     /// <param name="name">The lexeme that is expected in the record</param>
     /// <returns>True if the record type has the specified field, false otherwise.</returns>
-    member this.hasField (name: Lexeme) =
+    member this.hasField(name: Lexeme) =
         match this with
         | TRecord row ->
             let rec hasField' row =
@@ -260,7 +260,7 @@ type Type =
     /// </summary>
     /// <param name="fields">A list of lexemes and predicates that the fields must satisfy</param>
     /// <returns>True if the record type has the specified fields that all satisfy the predicates, false otherwise.</returns>
-    member this.hasFieldsThat (fields: (Lexeme * (Type -> bool)) list) =
+    member this.hasFieldsThat(fields: (Lexeme * (Type -> bool)) list) =
         List.forall (fun (name, constrain) -> this.hasFieldThat name constrain) fields
 
     /// <summary>
@@ -275,9 +275,9 @@ type Type =
     /// </summary>
     /// <param name="fields">A list of lexemes and types that the fields must have</param>
     /// <returns>True if the record type has the specified fields with the specified types, false otherwise.</returns>
-    member this.hasFieldsOf (fields: (Lexeme * Type) list) =
+    member this.hasFieldsOf(fields: (Lexeme * Type) list) =
         List.forall (fun (name, typ) -> this.hasFieldOf name typ) fields
-    
+
     /// <summary>
     /// Predicate to check the minimum number of dimensions of a tensor type.
     /// </summary>
@@ -285,9 +285,10 @@ type Type =
     /// <returns>True if the tensor type has at least n dimensions, false otherwise.</returns>
     member this.hasMinDims n =
         match this with
-        | TTensor(_, d) -> match d with
-                            | Dims dims -> dims >= n
-                            | _ -> true
+        | TTensor(_, d) ->
+            match d with
+            | Dims dims -> dims >= n
+            | _ -> true
         | TAlias(_, Some t) -> t.hasMinDims n
         | TTuple ts -> List.length ts >= n
         | _ -> false
@@ -374,7 +375,7 @@ type Expr =
     | ELiteral of Literal * Type
     | EIdentifier of Token * Type option
     | EGrouping of Expr * Type option
-    
+
     | EIf of Expr * Expr * Expr * Type option
     | ETernary of Expr * Expr * Expr * Type option
 
@@ -382,7 +383,7 @@ type Expr =
     | ETuple of Expr list * Type option
 
     | ECall of Expr * Expr list * Type option
-    
+
     /// <summary>
     /// Indexing operation on a list or tensor.
     /// Expr (list or tensor), (start, end, isRange), type
@@ -398,7 +399,7 @@ type Expr =
     | ERange of Expr * Expr * Type option
 
     | ERecordSelect of Expr * Token * Type option
-    
+
     /// <summary>
     /// Records represented recursively as a row type.
     /// </summary>
@@ -415,12 +416,12 @@ type Expr =
     /// A tail call (for tail recursion).
     /// </summary>
     | ETail of Expr * Type option
-    
+
     /// <summary>
     /// Pattern matching expression.
     /// </summary>
     | EMatch of Expr * (Pattern * Expr) list * Type option
-    
+
 
 /// <summary>
 /// A statement in the language (something that does not return a value).
@@ -433,7 +434,7 @@ and Stmt =
     | SRecFunc of Token * (Token * Type option) list * Expr * Type option
     | SAsync of Token * (Token * Type option) list * Expr * Type option
     | SImport of Token option * string * Type option // maybe binding name, module name (path), type
-  
+
 /// <summary>
 /// Various patterns for pattern matching.
 /// </summary>

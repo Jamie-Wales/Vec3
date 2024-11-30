@@ -1,7 +1,9 @@
 {
   "scopeName": "source.vec3",
   "name": "Vec3",
-  "fileTypes": ["vec3"],
+  "fileTypes": [
+    "vec3"
+  ],
   "patterns": [
     {
       "name": "comment.line.double-slash",
@@ -62,21 +64,27 @@
       "name": "meta.module",
       "match": "\\bmodule\\s+([A-Z][a-zA-Z0-9_.]*)\\b",
       "captures": {
-        "1": { "name": "entity.name.module" }
+        "1": {
+          "name": "entity.name.module"
+        }
       }
     },
     {
       "name": "meta.type",
       "match": "\\btype\\s+([A-Z][a-zA-Z0-9_]*)\\s*=",
       "captures": {
-        "1": { "name": "entity.name.type" }
+        "1": {
+          "name": "entity.name.type"
+        }
       }
     },
     {
       "name": "meta.function",
       "begin": "\\blet\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*=\\s*\\(",
       "beginCaptures": {
-        "1": { "name": "entity.name.function" }
+        "1": {
+          "name": "entity.name.function"
+        }
       },
       "end": "\\)",
       "patterns": [
@@ -96,7 +104,9 @@
     }
   ],
   "repository": {},
-  "extensions": [".vec3"],
+  "extensions": [
+    ".vec3"
+  ],
   "foldingStartMarker": "^\\s*(module|let|if|for|while|match|with|open)\\b",
   "foldingStopMarker": "^\\s*\\}"
 }

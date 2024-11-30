@@ -9,11 +9,11 @@
         Width="800" Height="600">
     <Grid Margin="10, 30">
         <ae:TextEditor Name="SyntaxEditor"
-                      FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
-                      FontSize="13"
-                      ShowLineNumbers="True"
-                      IsReadOnly="True"
-                      HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Visible" />
+                       FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+                       FontSize="13"
+                       ShowLineNumbers="True"
+                       IsReadOnly="True"
+                       HorizontalScrollBarVisibility="Auto"
+                       VerticalScrollBarVisibility="Visible" />
     </Grid>
 </Window>

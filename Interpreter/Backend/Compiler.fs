@@ -85,13 +85,12 @@ let addUpValue (name: string) (depth: int) (state: CompilerState) : CompilerStat
     let upValue =
         { Name = name
           Index = state.CurrentFunction.UpValues.Length
-          Depth = depth 
-          }
-    
+          Depth = depth }
+
     let updatedFunction =
         { state.CurrentFunction with
             UpValues = upValue :: state.CurrentFunction.UpValues }
-    
+
     { state with
         CurrentFunction = updatedFunction }
 
@@ -129,8 +128,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
             compileLambda parameters body pr isAsync state
         | ECall(callee, arguments, _) -> compileCall callee arguments false state
         | EList(elements, _) -> compileList elements state
-        | EIndex(list, (start, end_, isRange), _) ->
-            compileIndex list start end_ isRange state
+        | EIndex(list, (start, end_, isRange), _) -> compileIndex list start end_ isRange state
         | ETuple(elements, _) -> compileTuple elements state
         | ECodeBlock(expr) -> compileCodeBlock expr state
         | ERange(start, stop, _) ->
@@ -180,7 +178,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
                 match token with
                 | { Lexeme = Identifier n } -> n
                 | _ -> raise <| System.Exception("Invalid record field name")
-            
+
             // compile as call
             let callee =
                 EIdentifier(
@@ -188,7 +186,7 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
                       Position = { Line = 0; Column = 0 } },
                     None
                 )
-                
+
             compileCall callee [ expr; ELiteral(LString name, TString) ] false state
 
         | EBlock(stmts, _) -> compileBlock stmts state // scope is fucked up think its global
@@ -204,10 +202,10 @@ and compileIndex (list: Expr) (start: Expr option) (end_: Expr option) (isRange:
     fun state ->
         if isRange && (Option.isNone start && Option.isNone end_) then
             raise <| InvalidProgramException("Range must have both start and end")
-        
+
         if not isRange && (Option.isSome start && Option.isSome end_) then
             raise <| InvalidProgramException("Index must have either start or end")
-            
+
         if not isRange && (Option.isSome start && Option.isNone end_) then
             // is index
             let start = Option.get start
@@ -218,10 +216,10 @@ and compileIndex (list: Expr) (start: Expr option) (end_: Expr option) (isRange:
                       Position = { Line = 0; Column = 0 } },
                     None
                 )
-                
+
             compileCall callee [ list; start ] false state
-            
-        
+
+
         else if not isRange && (Option.isNone start && Option.isSome end_) then
             let end_ = Option.get end_
             // compile as call
@@ -231,9 +229,9 @@ and compileIndex (list: Expr) (start: Expr option) (end_: Expr option) (isRange:
                       Position = { Line = 0; Column = 0 } },
                     None
                 )
-                
+
             compileCall callee [ list; end_ ] false state
-            
+
         else if Option.isNone start then
             // compile as call
             let callee =
@@ -242,12 +240,12 @@ and compileIndex (list: Expr) (start: Expr option) (end_: Expr option) (isRange:
                       Position = { Line = 0; Column = 0 } },
                     None
                 )
-                
+
             compileCall callee [ list; ELiteral(LNumber(LInteger 0), TInteger); Option.get end_ ] false state
-            
+
         else if Option.isNone end_ then
             let start = Option.get start
-            
+
             // compile as call
             let callee =
                 EIdentifier(
@@ -255,12 +253,12 @@ and compileIndex (list: Expr) (start: Expr option) (end_: Expr option) (isRange:
                       Position = { Line = 0; Column = 0 } },
                     None
                 )
-                
+
             compileCall callee [ list; start; ELiteral(LNumber(LInteger 0), TInteger) ] false state
         else
             let start = Option.get start
             let end_ = Option.get end_
-            
+
             // compile as call
             let callee =
                 EIdentifier(
@@ -268,7 +266,7 @@ and compileIndex (list: Expr) (start: Expr option) (end_: Expr option) (isRange:
                       Position = { Line = 0; Column = 0 } },
                     None
                 )
-                
+
             compileCall callee [ list; start; end_ ] false state
 
 and compileTuple (elements: Expr list) : Compiler<unit> =
@@ -307,16 +305,16 @@ and compileIf (condition: Expr) (thenBranch: Expr) (elseBranch: Expr) : Compiler
         |> Result.bind (fun ((), state) ->
             emitJump (opCodeToByte OP_CODE.JUMP_IF_FALSE) state
             |> Result.bind (fun thenJump ->
-                 compileExpr thenBranch state
-                 |> Result.bind (fun ((), state) ->
-                     emitJump (opCodeToByte OP_CODE.JUMP) state
-                     |> Result.bind (fun elseJump ->
-                          patchJump thenJump state
-                          compileExpr elseBranch state
-                              |> Result.bind(fun ((), state) -> 
-                                  patchJump elseJump state
-                                  Ok((), state)
-                              )))))
+                compileExpr thenBranch state
+                |> Result.bind (fun ((), state) ->
+                    emitJump (opCodeToByte OP_CODE.JUMP) state
+                    |> Result.bind (fun elseJump ->
+                        patchJump thenJump state
+
+                        compileExpr elseBranch state
+                        |> Result.bind (fun ((), state) ->
+                            patchJump elseJump state
+                            Ok((), state))))))
 
 // block is a new scope and an expression, therefore last expression is returned in the block
 and compileBlock (stmts: Stmt list) : Compiler<unit> =
@@ -350,9 +348,9 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bo
     fun state ->
         let functionName = $"lambda_{state.CurrentFunction.Function.Name}"
         let lambdaFunction = initFunction functionName
-        
+
         let currentFunction = state.CurrentFunction
-        
+
         let upvalues = currentFunction.Function.Locals
         let upvaluesfull = upvalues @ currentFunction.UpValues
 
@@ -371,8 +369,10 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bo
                     { state with
                         CurrentFunction.Function.Arity = state.CurrentFunction.Function.Arity + 1 })
                 lambdaState
-        
-        let compiledParamsState = upvalues |> List.fold (fun state upvalue -> addUpValue upvalue.Name upvalue.Depth state) compiledParamsState
+
+        let compiledParamsState =
+            upvalues
+            |> List.fold (fun state upvalue -> addUpValue upvalue.Name upvalue.Depth state) compiledParamsState
 
         let builtin =
             if pur then
@@ -385,21 +385,28 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bo
             emitOpCode OP_CODE.RETURN finalLambdaState
             |> Result.bind (fun ((), finalState) ->
                 emitByte (byte 1) finalLambdaState |> ignore
-                
+
                 let constIndex =
-                    addConstant state.CurrentFunction.Function.Chunk (if isAsync then VAsyncFunction(finalState.CurrentFunction.Function) else VFunction(finalState.CurrentFunction.Function, builtin))
+                    addConstant
+                        state.CurrentFunction.Function.Chunk
+                        (if isAsync then
+                             VAsyncFunction(finalState.CurrentFunction.Function)
+                         else
+                             VFunction(finalState.CurrentFunction.Function, builtin))
 
                 emitBytes [| byte (opCodeToByte OP_CODE.CLOSURE); byte constIndex |] state
-                |> Result.bind(fun ((), state) ->
+                |> Result.bind (fun ((), state) ->
                     emitByte (byte (List.length upvalues)) state
                     |> Result.bind (fun ((), state) ->
                         let upvalues =
-                            upvalues 
+                            upvalues
                             |> Seq.map (fun upvalue ->
-                                let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString upvalue.Name)
-                                [| byte upvalue.Index; byte upvalue.Depth; byte constIndex |]
-                                )
+                                let constIndex =
+                                    addConstant state.CurrentFunction.Function.Chunk (VString upvalue.Name)
+
+                                [| byte upvalue.Index; byte upvalue.Depth; byte constIndex |])
                             |> Seq.concat
+
                         emitBytes upvalues state))))
 
 and compileAsBuiltin (parameters: Token list) (body: Expr) : Expression =
@@ -438,12 +445,17 @@ and compileIdentifier (token: Token) : Compiler<unit> =
     fun state ->
         let name = lexemeToString token.Lexeme
 
-        match state.CurrentFunction.Function.Locals |> List.tryFind (fun local -> local.Name = name) with
+        match
+            state.CurrentFunction.Function.Locals
+            |> List.tryFind (fun local -> local.Name = name)
+        with
         | Some local -> emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte local.Index |] state
         | None ->
-            match state.CurrentFunction.UpValues |> List.tryFind (fun upvalue -> upvalue.Name = name) with
-            | Some upvalue ->
-                emitBytes [| byte (opCodeToByte OP_CODE.GET_UPVALUE); byte upvalue.Index |] state
+            match
+                state.CurrentFunction.UpValues
+                |> List.tryFind (fun upvalue -> upvalue.Name = name)
+            with
+            | Some upvalue -> emitBytes [| byte (opCodeToByte OP_CODE.GET_UPVALUE); byte upvalue.Index |] state
             | None ->
                 let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString name)
                 emitBytes [| byte (opCodeToByte OP_CODE.GET_GLOBAL); byte constIndex |] state
@@ -459,22 +471,22 @@ and compileMatch (expr: Expr) (cases: (Pattern * Expr) list) : Compiler<unit> =
         // how to compile cons ?
         // how to compile record ?
         // answer is to compile as call to builtin
-        
+
         // translate to series of if else
         // EIF(ECall(match, [ pattern compile, expr compile ]), case, else EIF(ECall(match, [ pattern compile, expr compile ]), case, else ...))
-        
-        // compile as call to lambda for access to local variables, sorry no impl case as call with pattern 
+
+        // compile as call to lambda for access to local variables, sorry no impl case as call with pattern
         let rec patternToExpression (pattern: Pattern) : Expr =
             match pattern with
             | PWildcard -> ELiteral(LBool true, TBool)
             | PIdentifier name -> EIdentifier(name, None)
             | PTuple ps -> ETuple(List.map patternToExpression ps, None)
             | PList ps -> EList(List.map patternToExpression ps, None)
-            | PCons (head, tail) -> EList([ patternToExpression head; patternToExpression tail ], None)
+            | PCons(head, tail) -> EList([ patternToExpression head; patternToExpression tail ], None)
             | PLiteral lit -> ELiteral(lit, TAny)
             | PRecordEmpty -> ERecordEmpty TRowEmpty
             | PType _ -> ELiteral(LBool true, TBool)
-            
+
         let rec generateExpression (cases: (Pattern * Expr) list) : Expr =
             match cases with
             | [] ->
@@ -484,9 +496,9 @@ and compileMatch (expr: Expr) (cases: (Pattern * Expr) list) : Compiler<unit> =
                           Position = { Line = 0; Column = 0 } },
                         None
                     )
-                    
+
                 ECall(errIdentifier, [ ELiteral(LString "No match found", TString) ], None)
-                
+
             | (pattern, case) :: rest ->
                 ETernary(
                     ECall(
@@ -502,7 +514,7 @@ and compileMatch (expr: Expr) (cases: (Pattern * Expr) list) : Compiler<unit> =
                     generateExpression rest,
                     None
                 )
-                
+
         let expression = generateExpression cases
         compileExpr expression state
 
@@ -512,10 +524,14 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
         | SExpression(expr, _) -> compileExpr expr state
         | SVariableDeclaration(name, initializer, _) -> compileVariableDeclaration name initializer state
         | SAsync(name, tup, expr, _) ->
-            let assign = SVariableDeclaration(name, ELambda(tup, expr, None, false, None, true), None)
+            let assign =
+                SVariableDeclaration(name, ELambda(tup, expr, None, false, None, true), None)
+
             compileStmt assign state
         | SRecFunc(name, tup, expr, _) ->
-            let assign = SVariableDeclaration(name, ELambda(tup, expr, None, false, None, false), None)
+            let assign =
+                SVariableDeclaration(name, ELambda(tup, expr, None, false, None, false), None)
+
             compileStmt assign state
         | SAssertStatement(expr, msg, _) ->
             let callee =
@@ -533,20 +549,21 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
 
             compileCall callee args false state
         | STypeDeclaration _ -> Ok((), state)
-        | SImport (_, path, _) ->
+        | SImport(_, path, _) ->
             // handle imports here
             try
                 let parsed = Parser.parseFile path
+
                 match parsed with
-                | Ok (_, program) ->
-                    let _,_,_,p = preludeChecked
+                | Ok(_, program) ->
+                    let _, _, _, p = preludeChecked
                     let program = p @ program
                     List.iter (fun stmt -> compileStmt stmt state |> ignore) program
                     Ok((), state)
                 | Error e -> Error($"{e}", state)
-                
-            with
-            | e -> Error(e.Message, state)
+
+            with e ->
+                Error(e.Message, state)
 
 and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit> =
     fun state ->
@@ -572,18 +589,23 @@ and compileProgramState (program: Program) (state: CompilerState) : CompilerResu
     compileStmts program state
     |> Result.bind (fun ((), state) ->
         emitOpCode OP_CODE.RETURN state
-        |> Result.map (fun ((), state) -> (
-            emitByte (byte 0) state |> ignore
-            state.CurrentFunction.Function.Chunk, state)))
+        |> Result.map (fun ((), state) ->
+            (emitByte (byte 0) state |> ignore
+             state.CurrentFunction.Function.Chunk, state)))
 
 
 and compileProgram (program: Program) : CompilerResult<Function> =
     let func = initFunction "REPL_Input"
+
     let initialState =
-        { CurrentFunction = { Function = func; UpValues = []; UpValuesValues = [||] }
+        { CurrentFunction =
+            { Function = func
+              UpValues = []
+              UpValuesValues = [||] }
           ScopeDepth = 0
           CurrentLine = 1
           LocalCount = 0 }
+
     let rec compileStmts stmts state =
         match stmts with
         | [] -> Ok((), state)
@@ -594,6 +616,6 @@ and compileProgram (program: Program) : CompilerResult<Function> =
     compileStmts program initialState
     |> Result.bind (fun ((), state) ->
         emitOpCode OP_CODE.RETURN state
-        |> Result.map (fun ((), state) -> (
-            emitByte (byte 0) state |> ignore
-            state.CurrentFunction.Function, state)))
+        |> Result.map (fun ((), state) ->
+            (emitByte (byte 0) state |> ignore
+             state.CurrentFunction.Function, state)))

@@ -1,7 +1,7 @@
 /// <summary>
 /// Exceptions for the type checker.
 /// </summary>
-/// 
+///
 module Vec3.Interpreter.Typing.Exceptions
 
 open Vec3.Interpreter.Token
@@ -63,7 +63,8 @@ let formatTypeError (error: TypeError) : string =
     | UndefinedVariable token -> $"Undefined variable {token.Lexeme} at Line: {token.Position.Line}"
     | UndefinedFunction token -> $"Undefined function {token.Lexeme} at Line: {token.Position.Line}"
     | UndefinedType token -> $"Undefined type {token.Lexeme} at Line: {token.Position.Line}"
-    | TypeMismatch(token, expected, actual) -> $"Type mismatch at Line: {token.Position.Line}, expected {expected}, got {actual}"
+    | TypeMismatch(token, expected, actual) ->
+        $"Type mismatch at Line: {token.Position.Line}, expected {expected}, got {actual}"
     | InvalidAssignment(token, expected, actual) ->
         $"Invalid assignment at Line: {token.Position.Line}, expected {expected}, got {actual}"
     | InvalidArgumentCount(expr, expected, actual) ->
@@ -83,10 +84,10 @@ let formatTypeError (error: TypeError) : string =
         $"Invalid function return at Line: {token.Position.Line}, expected {expected}, got {actual}"
     | InvalidFunctionBody(token, expected, actual) ->
         $"Invalid function body at Line: {token.Position.Line}, expected {expected}, got {actual}"
-    | InvalidBlock(token, expected, actual) -> $"Invalid block at Line: {token.Position.Line}, expected {expected}, got {actual}"
+    | InvalidBlock(token, expected, actual) ->
+        $"Invalid block at Line: {token.Position.Line}, expected {expected}, got {actual}"
     | InvalidCall(expr, typ) -> $"Invalid call at expr: {expr}, got {typ}"
-    | InvalidCallType(expr, expected, actual) ->
-        $"Invalid call type at expr: {expr}, expected {expected}, got {actual}"
+    | InvalidCallType(expr, expected, actual) -> $"Invalid call type at expr: {expr}, expected {expected}, got {actual}"
     | InvalidCallReturn(token, expected, actual) ->
         $"Invalid call return at Line: {token.Position.Line}, expected {expected}, got {actual}"
     | InvalidCallBody(token, expected, actual) ->
@@ -97,13 +98,15 @@ let formatTypeError (error: TypeError) : string =
     | InvalidIndex(expr, typ) -> $"Invalid index at expr: {expr}, got {typ}"
     | InvalidAssert(expr, typ) -> $"Invalid assert at expr: {expr}, got {typ}"
     | InvalidField(token, typ) -> $"Invalid field at Line: {token.Position.Line}, got {typ}"
-    | InvalidFields(tokens, typ) -> $"""Invalid fields at Line: {String.concat ", " (List.map (fun (t, _,_) -> $"{t.Lexeme}") tokens)}, got {typ}"""
+    | InvalidFields(tokens, typ) ->
+        $"""Invalid fields at Line: {String.concat ", " (List.map (fun (t, _, _) -> $"{t.Lexeme}") tokens)}, got {typ}"""
     | InvalidFieldAccess(token, typ) -> $"Invalid field access at Line: {token.Position.Line}, got {typ}"
     | InvalidRange(expr, typ) -> $"Invalid range at Line: {expr}, got {typ}"
-    | ImportError(token, path, msg) -> match token with
-                                        | Some t -> $"Import error at Line: {t.Position.Line}, path: {path}, message: {msg}"
-                                        | None -> $"Import error at path: {path}, message: {msg}"
-        
+    | ImportError(token, path, msg) ->
+        match token with
+        | Some t -> $"Import error at Line: {t.Position.Line}, path: {path}, message: {msg}"
+        | None -> $"Import error at path: {path}, message: {msg}"
+
 /// <summary>
 /// Pretty print a list of type errors.
 /// </summary>

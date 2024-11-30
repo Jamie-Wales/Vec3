@@ -7,7 +7,8 @@ module Vec3.Interpreter.Prelude
 open Parser
 open Vec3.Interpreter.Typing
 
-let prelude = """
+let prelude =
+    """
 // wrapper functions for built-in functions
 // to make them first-class
 let cos = (x) -> BUILTIN_COS(x)
@@ -123,8 +124,7 @@ let findIntegral = (f, x, y) {
 /// </summary>
 let preludeParsed =
     match parse prelude with
-    | Ok(_, program) ->
-        program
+    | Ok(_, program) -> program
     | _ -> failwith "error parsing"
 
 /// <summary>

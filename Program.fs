@@ -9,7 +9,7 @@ open Vec3.Transpiler.Transpiler
 /// The main program module (entry point).
 /// </summary>
 module Program =
-    
+
     let readFile (filePath: string) : string =
         if File.Exists(filePath) then
             File.ReadAllText(filePath)
@@ -32,14 +32,16 @@ module Program =
         | [||]
         | [| "-g" |] -> buildAvaloniaApp().StartWithClassicDesktopLifetime(argv)
         | [| "-c"; filename |] ->
-            let config = 
-                if argv.Length > 2 
-                then createConfig (Some argv.[2])
-                else defaultConfig
-                
+            let config =
+                if argv.Length > 2 then
+                    createConfig (Some argv.[2])
+                else
+                    defaultConfig
+
             printfn $"Transpiling %s{filename}..."
+
             match transpile filename config with
-            | Ok exePath -> 
+            | Ok exePath ->
                 printfn $"Successfully compiled to %s{exePath}"
                 0
             | Error err ->

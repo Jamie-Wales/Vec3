@@ -31,8 +31,8 @@ let rec resolveAlias (typ: TType) (env: AliasMap) : TType =
         match resolved with
         | Some t -> resolveAlias t env
         | None -> typ
-    | TFunction(params', ret, pr, bt) -> TFunction(List.map (fun t -> resolveAlias t env) params', resolveAlias ret 
-    env, pr, bt)
+    | TFunction(params', ret, pr, bt) ->
+        TFunction(List.map (fun t -> resolveAlias t env) params', resolveAlias ret env, pr, bt)
     | TTuple types -> TTuple(List.map (fun t -> resolveAlias t env) types)
     | TTensor(typ, dims) -> TTensor(resolveAlias typ env, dims)
     | TRecord row -> TRecord(resolveAlias row env)

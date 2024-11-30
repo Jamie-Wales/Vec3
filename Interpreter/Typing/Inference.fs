@@ -135,7 +135,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
     | TFloat, TFloat
     | TRational, TRational
     | TComplex, TComplex
-    
+
     | TChar, TChar
 
     | TBool, TBool
@@ -478,9 +478,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                | ELiteral _ -> true // Literals are pure. However, should consider that maybe string literals are not pure
                | EIdentifier(name, _) ->
                    // Identifiers are pure if they are pure in the environment
-                   checkIdentifier newEnv name
-                   |> Result.map _.IsPure
-                   |> Result.defaultValue false
+                   checkIdentifier newEnv name |> Result.map _.IsPure |> Result.defaultValue false
                | ECall(callee, args, _) ->
                    // Calls are pure if the callee is pure and all arguments are pure
                    // For example, cos(1.0) is pure.
@@ -724,15 +722,15 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             match end_ with
             | Some(ELiteral(LNumber(LInteger n), _)) -> Some n
             | _ -> None
-            
+
         // result {
         //     let! (t, sub, expr) = infer aliases env expr
         //     // check its tensor
-        //     
+        //
         // }
-        
+
         // TODO:: rewrite this
-        
+
         // this is a really horrible case, must be rewritten
         // start and end are optional, but one ust be present
         // isRange indicates if the index is a range, ie [1:2], or [:8], or [1:], returns a tensor
@@ -1289,20 +1287,26 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
                     sub,
                     SAsync(name, paramList, expr, Some(TFunction(paramTypes, bodyType, false, false)))
                 )))
-    | SImport (name, path, _) ->
+    | SImport(name, path, _) ->
         // todo, binding to name (create record)
         try
             let parsed = parseFile path
-            let _, parsed = match parsed with | Ok parsed -> parsed | Error e -> raise <| Exception $"{e}"
+
+            let _, parsed =
+                match parsed with
+                | Ok parsed -> parsed
+                | Error e -> raise <| Exception $"{e}"
+
             let result = inferProgram aliases env parsed
+
             match result with
             | Ok(env', aliases', sub, _) ->
                 let newEnv = combineMaps env env'
                 let newAliases = combineMaps aliases aliases'
                 Ok(newEnv, newAliases, sub, SImport(name, path, Some TUnit))
             | Error errors -> Error errors
-        with
-        | ex -> Error [ TypeError.ImportError(name, path, ex.Message) ]
+        with ex ->
+            Error [ TypeError.ImportError(name, path, ex.Message) ]
 
 
 /// <summary>

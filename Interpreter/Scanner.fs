@@ -52,8 +52,30 @@ let isLetter = Char.IsLetter
 /// <summary>
 /// Wrapper to check if a character is a symbol.
 /// </summary>
-let isSymbol = function
-    | '+' | '-' | '*' | '/' | '%' | '^' | ':' | ',' | '#' | '.' | '!' | '&' | '|' | '=' | '<' | '>' | '€' | '$' | '@' | '?' | '~' | 'X' -> true
+let isSymbol =
+    function
+    | '+'
+    | '-'
+    | '*'
+    | '/'
+    | '%'
+    | '^'
+    | ':'
+    | ','
+    | '#'
+    | '.'
+    | '!'
+    | '&'
+    | '|'
+    | '='
+    | '<'
+    | '>'
+    | '€'
+    | '$'
+    | '@'
+    | '?'
+    | '~'
+    | 'X' -> true
     | _ -> false
 
 /// <summary>
@@ -94,7 +116,7 @@ let rec scIdentifier (iStr: char list) (iVal: string) : (char list * string) opt
     match iStr with
     | c :: tail when isLetter c || isDigit c || c = '_' -> scIdentifier tail (iVal + string c)
     | _ -> Some(iStr, iVal)
-   
+
 let rec scOperator (iStr: char list) (iVal: string) : (char list * Operator * int) option =
     match iStr with
     | c :: tail when isSymbol c -> scOperator tail (iVal + string c)
@@ -131,7 +153,7 @@ let rec scOperator (iStr: char list) (iVal: string) : (char list * Operator * in
         | "&" -> Some(iStr, Ampersand, 1)
         | "|" -> Some(iStr, Pipe, 1)
         | _ -> Some(iStr, Custom iVal, iVal.Length)
-        
+
 
 // TODO: rationals dont work !!
 /// <summary>
@@ -196,16 +218,16 @@ let scNumber (nStr: char list) : (char list * Number * int) option =
                     Some(eStr, LFloat((float iVal + fVal) * (10.0 ** float expVal)), iLen + fLen + eLen + 2)
             | _ -> Some(fStr, LFloat(float iVal + fVal), iLen + fLen + 1)
         | 'e' :: expTail ->
-                match expTail with
-                | '+' :: expTail ->
-                    let eStr, expVal, eLen = scInt expTail 0 0
-                    Some(eStr, LFloat((float iVal) * (10.0 ** float expVal)), iLen + eLen + 2)
-                | '-' :: expTail ->
-                    let eStr, expVal, eLen = scInt expTail 0 0
-                    Some(eStr, LFloat((float iVal) * (10.0 ** float -expVal)), iLen + + eLen + 2)
-                | _ ->
-                    let eStr, expVal, eLen = scInt expTail 0 0
-                    Some(eStr, LFloat((float iVal) * (10.0 ** float expVal)), iLen + eLen + 2)
+            match expTail with
+            | '+' :: expTail ->
+                let eStr, expVal, eLen = scInt expTail 0 0
+                Some(eStr, LFloat((float iVal) * (10.0 ** float expVal)), iLen + eLen + 2)
+            | '-' :: expTail ->
+                let eStr, expVal, eLen = scInt expTail 0 0
+                Some(eStr, LFloat((float iVal) * (10.0 ** float -expVal)), iLen + +eLen + 2)
+            | _ ->
+                let eStr, expVal, eLen = scInt expTail 0 0
+                Some(eStr, LFloat((float iVal) * (10.0 ** float expVal)), iLen + eLen + 2)
         | _ -> Some(iStr, LInteger iVal, iLen)
     | _ -> None
 
@@ -237,14 +259,11 @@ let lexer (input: string) : LexerResult<Token list> =
                 | '\n' :: tail -> tail, column
                 | _ :: tail -> discardComment tail (column + 1)
                 | [] -> [], column
-            
+
             let tail, len = discardComment tail position.Column
-            
-            scan
-                tail
-                { position with
-                    Column = len }
-        
+
+            scan tail { position with Column = len }
+
         | '/' :: '*' :: tail ->
             /// <summary>
             /// Discards a block comment.
@@ -259,9 +278,9 @@ let lexer (input: string) : LexerResult<Token list> =
                 | '\n' :: tail -> discardBlockComment tail 0 (line + 1)
                 | _ :: tail -> discardBlockComment tail (column + 1) line
                 | [] -> [], column, line
-                
+
             let tail, column, line = discardBlockComment tail position.Column position.Line
-            
+
             if List.isEmpty tail then
                 [ Error(UnterminatedBlockComment position) ]
             else
@@ -272,7 +291,7 @@ let lexer (input: string) : LexerResult<Token list> =
                         Line = line }
         | 'X' :: tail ->
             Ok
-                { Lexeme = Operator (Cross, None)
+                { Lexeme = Operator(Cross, None)
                   Position = position }
             :: scan
                 tail
@@ -304,7 +323,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | ']' :: tail ->
             Ok
-                { Lexeme = Punctuation RightBracket 
+                { Lexeme = Punctuation RightBracket
                   Position = position }
             :: scan
                 tail
@@ -336,7 +355,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     Column = position.Column + 1 }
         | '.' :: '*' :: tail ->
             Ok
-                { Lexeme = Operator (DotStar, None)
+                { Lexeme = Operator(DotStar, None)
                   Position = position }
             :: scan
                 tail
@@ -374,7 +393,7 @@ let lexer (input: string) : LexerResult<Token list> =
                         Column = position.Column + 1 }
             | Some(oStr, oVal, oLen) ->
                 Ok
-                    { Lexeme = Operator (oVal, None)
+                    { Lexeme = Operator(oVal, None)
                       Position = position }
                 :: scan
                     oStr
@@ -409,9 +428,11 @@ let lexer (input: string) : LexerResult<Token list> =
                     nStr
                     { position with
                         Column = position.Column + nLen }
-        
+
         | ''' :: ch :: ''' :: tail ->
-            Ok { Lexeme = Number (LChar ch); Position = position }
+            Ok
+                { Lexeme = Number(LChar ch)
+                  Position = position }
             :: scan
                 tail
                 { position with

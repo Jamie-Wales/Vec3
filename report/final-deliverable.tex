@@ -140,8 +140,99 @@ Only constants are evaluated, and thus no variable resolution is performed due t
 
 \section{Virtual Machine}\label{sec:virtual-machine}
 
+\section{Prelude}\label{sec:prelude}
+
+A prelude is implicitly included in every program, which contains some useful functions defined in the language, as 
+well as wrappers for the built-in functions of the Virtual Machine.
+
+Notable functions include:
+
+\begin{itemize}
+    \item \textit{map}, \textit{fold} and \textit{filter} functions for lists.
+    \item \textit{range} function for generating a list of numbers.
+    \item \textit{sqrt}, \textit{cubeRoot} which are specialisations of the \textit{root} function.
+    \item \textit{head}, \textit{tail} and \textit{len} functions for lists.
+    \item \textit{findIntegral} function for finding the integral of a function.
+\end{itemize}
+
+We felt it was useful implementing these in-language functions as it allows for more concise and readable code, as
+well as showcasing the power of the language.
+
 \section{Plotting}\label{sec:plotting}
 
+The plotting system is implemented using ScottPlot\citep{scottPlot}, a plotting library for .NET\@.
+
+The functionality is exposed to the user through 3 built-in functions: \textit{plot}, \textit{plotFunc} and 
+\textit{plotFuncs}.
+
+\textit{plot} takes in a record of configuration options of the following type:
+
+\begin{minted}{fsharp}
+    type PlotConfig = {
+        title: string,
+        XValues: [float],
+        YValues: [float],
+        ptype: "bar" | "scatter" | "signal",
+    }
+\end{minted}
+
+The resulting plot is then displayed in a separate window based on these configuration options.
+
+TODO: IMAGES OF PLOTS
+
+The \textit{plotFunc} function takes in a string title and a pure function of type \textit{float -> float}.
+
+The function is then plotted on the graph with an infinite range of x values.
+
+Optionally, the user can also specify two more float values, \textit{start} and \textit{end}, in which case the 
+integral of the function is calculated and displayed on the graph.
+
+TODO: IMAGES OF PLOTS
+
+The \textit{plotFuncs} function takes in a string title and a list of pure functions of type \textit{float -> float}.
+
+This allows for multiple plots to be placed on the same window, which we felt was valuable for comparing functions 
+or plotting derivatives.
+
 \section{Drawing}\label{sec:drawing}
+
+As well as plotting, the user also has the option of drawing arbitrary shapes on a canvas, and attaching event 
+listeners to them.
+
+This is done by means of the \textit{draw} function, which takes in a record of configuration options of the following
+type:
+
+\begin{minted}{fsharp}
+    type DrawConfig = {
+        x: float,
+        y: float,
+        width: float,
+        height: float,
+        color: string,
+        shape: "rectangle" | "circle",
+        trace: bool, 
+    }
+\end{minted}
+
+Or a list of the above record type, allowing for multiple shapes to be drawn on the same canvas.
+
+The \textit{draw} function then returns a unique identifier for the shape, which can be used to attach event 
+listeners, allowing for movement of the shape through key presses.
+
+The following example attached event listeners to a shape which moves it left and right following the \textit{cos} curve:
+
+\begin{minted}{fsharp}
+on(id, Keys.Right, (state) -> { x = state.x + 10.0, y = cos(state.x) * 10.0 + 100.0 })
+on(id, Keys.Left, (state) -> { x = state.x - 10.0, y = cos(state.x) * 10.0 + 100.0 })
+\end{minted}
+
+Where keys is a record defined in the prelude of the language (see~\autoref{sec:prelude}).
+
+Additionally, the \textit{trace} option allows for the shape to leave a trail behind it, which can be useful for
+animations or visualising movement.
+
+TODO: IMAGES OF DRAWING
+
+\section{Notebook View}\label{sec:notebook-view}
 
 \section{Code architecture}\label{sec:code-architecture}

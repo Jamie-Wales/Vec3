@@ -62,7 +62,7 @@ let rec eliminate (program: Program) : Program =
         match stmts with
         | [] -> []
         | SVariableDeclaration(name, expr, t) :: rest ->
-            let rest = pass rest 
+            let rest = pass rest
 
             if isUsed name.Lexeme rest then
                 SVariableDeclaration(name, expr, t) :: rest
@@ -77,28 +77,19 @@ let rec eliminate (program: Program) : Program =
             else
                 rest
         | SAssertStatement _ as stmt :: rest -> stmt :: pass rest
-        | SExpression(expr, _) as stmt :: rest ->
-            if hasSideEffects expr then
-                stmt :: pass rest
-            else
-                pass rest 
-        | STypeDeclaration _ as stmt :: rest ->
-            stmt :: pass rest
-        | SImport _ as stmt :: rest ->
-            stmt :: pass rest
-    
+        | SExpression(expr, _) as stmt :: rest -> if hasSideEffects expr then stmt :: pass rest else pass rest
+        | STypeDeclaration _ as stmt :: rest -> stmt :: pass rest
+        | SImport _ as stmt :: rest -> stmt :: pass rest
+
     let rec refine stmts =
         let refined = pass stmts
-        if refined = stmts then
-            refined
-        else
-            refine refined
-        
+        if refined = stmts then refined else refine refined
+
     program |> List.filter hasSideEffectsStmt |> refine
-        
+
 and isUsed (name: Lexeme) (stmts: Stmt list) : bool =
     stmts |> List.exists (isUsedInStmt name)
-    
+
 and isUsedInStmt (name: Lexeme) (stmt: Stmt) : bool =
     match stmt with
     | SExpression(expr, _) -> isUsedE name expr
@@ -108,7 +99,7 @@ and isUsedInStmt (name: Lexeme) (stmt: Stmt) : bool =
     | SAsync(_, _, body, _) -> isUsedE name body
     | SImport _ -> false
     | STypeDeclaration _ -> false
-    
+
 and isUsedE (name: Lexeme) (expr: Expr) : bool =
     match expr with
     | ELiteral _ -> false
@@ -118,8 +109,7 @@ and isUsedE (name: Lexeme) (expr: Expr) : bool =
     | EIdentifier(name_, _) -> name = name_.Lexeme
     | ECall(callee, args, _) -> isUsedE name callee || List.exists (isUsedE name) args
     | ETernary(cond, thenBranch, elseBranch, _)
-    | EIf(cond, thenBranch, elseBranch, _) ->
-        isUsedE name cond || isUsedE name thenBranch || isUsedE name elseBranch
+    | EIf(cond, thenBranch, elseBranch, _) -> isUsedE name cond || isUsedE name thenBranch || isUsedE name elseBranch
     | EIndex(expr, (Some start, Some end_, _), _) -> isUsedE name expr || isUsedE name start || isUsedE name end_
     | EBlock(stmts, _) -> isUsed name stmts
     | ELambda(_, body, _, _, _, _) -> isUsedE name body
@@ -139,4 +129,3 @@ and isUsedE (name: Lexeme) (expr: Expr) : bool =
     | EMatch(expr, cases, _) -> isUsedE name expr || List.exists (fun (_, e) -> isUsedE name e) cases
     | ERecordRestrict(expr, _, _) -> isUsedE name expr
     | ETail(expr, _) -> isUsedE name expr
-

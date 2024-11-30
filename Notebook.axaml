@@ -2,8 +2,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
-        xmlns:icons="using:Avalonia.Controls.Primitives"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="Vec3.NotebookWindow"
         Title="Vec3 Notebook"
@@ -12,33 +10,33 @@
         ExtendClientAreaToDecorationsHint="True"
         Width="1200" Height="800">
 
-<Window.Styles>
-    <Style Selector="Button.cell-button">
-        <Setter Property="Width" Value="32"/>
-        <Setter Property="Height" Value="32"/>
-        <Setter Property="CornerRadius" Value="16"/>
-        <Setter Property="Padding" Value="8"/>
-    </Style>
-    <Style Selector="Button">
-        <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="Padding" Value="15,8"/>
-    </Style>
-    <Style Selector="Button:pointerover">
-        <Setter Property="Background" Value="OrangeRed"/>
-        <Setter Property="RenderTransform" Value="scale(1.02)"/>
-    </Style>
-    <Style Selector="Button:pressed">
-        <Setter Property="RenderTransform" Value="scale(0.98)"/>
-    </Style>
-    <!-- Remove the .card style to avoid inheritance conflicts -->
-    <Style Selector="Border.cell">
-        <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="DarkOrange"/>
-        <Setter Property="Background" Value="White"/>
-        <Setter Property="Margin" Value="0,5"/>
-    </Style>
-</Window.Styles>
+    <Window.Styles>
+        <Style Selector="Button.cell-button">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="8" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="15,8" />
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="OrangeRed" />
+            <Setter Property="RenderTransform" Value="scale(1.02)" />
+        </Style>
+        <Style Selector="Button:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.98)" />
+        </Style>
+        <!-- Remove the .card style to avoid inheritance conflicts -->
+        <Style Selector="Border.cell">
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="DarkOrange" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Margin" Value="0,5" />
+        </Style>
+    </Window.Styles>
     <Panel>
         <ExperimentalAcrylicBorder IsHitTestVisible="False">
             <ExperimentalAcrylicBorder.Material>
@@ -53,58 +51,58 @@
         <Grid RowDefinitions="Auto,*" Margin="10,30,10,10">
             <!-- Toolbar -->
             <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
-                <Button Name="AddCodeButton" 
-                        Background="MidnightBlue" 
+                <Button Name="AddCodeButton"
+                        Background="MidnightBlue"
                         Foreground="White">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <PathIcon Data="{StaticResource CodeRegular}" Foreground="White"/>
-                        <TextBlock Text="Add Code"/>
+                        <PathIcon Data="{StaticResource CodeRegular}" Foreground="White" />
+                        <TextBlock Text="Add Code" />
                     </StackPanel>
                     <Button.Transitions>
                         <Transitions>
-                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15"/>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
                         </Transitions>
                     </Button.Transitions>
                 </Button>
 
-                <Button Name="AddTextButton" 
-                        Background="ForestGreen" 
+                <Button Name="AddTextButton"
+                        Background="ForestGreen"
                         Foreground="White">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <PathIcon Data="{StaticResource TextRegular}" Foreground="White"/>
-                        <TextBlock Text="Add Text"/>
+                        <PathIcon Data="{StaticResource TextRegular}" Foreground="White" />
+                        <TextBlock Text="Add Text" />
                     </StackPanel>
                     <Button.Transitions>
                         <Transitions>
-                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15"/>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
                         </Transitions>
                     </Button.Transitions>
                 </Button>
 
-                <Button Name="ExportButton" 
-                        Background="DarkOrange" 
+                <Button Name="ExportButton"
+                        Background="DarkOrange"
                         Foreground="White">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <PathIcon Data="{StaticResource ArrowExportRegular}" Foreground="White"/>
-                        <TextBlock Text="Export"/>
+                        <PathIcon Data="{StaticResource ArrowExportRegular}" Foreground="White" />
+                        <TextBlock Text="Export" />
                     </StackPanel>
                     <Button.Transitions>
                         <Transitions>
-                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15"/>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
                         </Transitions>
                     </Button.Transitions>
                 </Button>
 
-                <Button Name="ImportButton" 
-                        Background="Purple" 
+                <Button Name="ImportButton"
+                        Background="Purple"
                         Foreground="White">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <PathIcon Data="{StaticResource ArrowImportRegular}" Foreground="White"/>
-                        <TextBlock Text="Import"/>
+                        <PathIcon Data="{StaticResource ArrowImportRegular}" Foreground="White" />
+                        <TextBlock Text="Import" />
                     </StackPanel>
                     <Button.Transitions>
                         <Transitions>
-                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15"/>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
                         </Transitions>
                     </Button.Transitions>
                 </Button>

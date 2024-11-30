@@ -17,6 +17,7 @@ open Vec3.Interpreter.Backend.Value
 /// </summary>
 let getNewDrawId =
     let id = ref 0
+
     fun () ->
         id.Value <- id.Value + 1
         id.Value
@@ -26,14 +27,10 @@ let getNewDrawId =
 /// </summary>
 let parsePlotType =
     function
-    | "scatter" ->
-        Scatter
-    | "line" ->
-        Line
-    | "bar" ->
-        Bar
-    | "signal" ->
-        Signal
+    | "scatter" -> Scatter
+    | "line" -> Line
+    | "bar" -> Bar
+    | "signal" -> Signal
     | name -> raise <| InvalidProgramException $"Unknown plot type: {name}"
 
 
@@ -92,22 +89,22 @@ let builtins =
               | [ VString title; VClosure(_, Some f); VNumber(VFloat start); VNumber(VFloat end_) ] ->
                   let integral = SymbolicExpression.integrate f
                   let builtinIntegral = SymbolicExpression.toBuiltin integral
-                  
+
                   let area = builtinIntegral end_ - builtinIntegral start
-                  
+
                   let builtin = SymbolicExpression.toBuiltin f
 
                   VPlotFunction(title, builtin, Some start, Some end_, Some area)
               | [ VString title; VClosure(_, Some f); VNumber(VInteger start); VNumber(VInteger end_) ] ->
                   let integral = SymbolicExpression.integrate f
                   let builtinIntegral = SymbolicExpression.toBuiltin integral
-                  
+
                   let area = builtinIntegral end_ - builtinIntegral start
-                  
+
                   let builtin = SymbolicExpression.toBuiltin f
 
                   VPlotFunction(title, builtin, Some start, Some end_, Some area)
-                  
+
               | _ -> raise <| InvalidProgramException "plotFunc expects a title and a function"),
           "PlotFunc"
       )
@@ -148,19 +145,17 @@ let builtins =
 
       Identifier "print",
       VBuiltin((fun args -> VOutput $"""{String.concat " " (List.map valueToString args)}"""), "Print")
-      
+
       Identifier "BUILTIN_ROOT",
       VBuiltin(
           (fun args ->
-            match args with
-            | [VNumber(f); VNumber(VInteger 2)] ->
-                VNumber(VFloat(Math.Sqrt(floatValue f)))
-            | [VNumber(f); VNumber(r)] ->
-                VNumber(VFloat(Math.Pow(floatValue f, 1.0 / floatValue r)))
-            | _ -> raise <| InvalidProgramException "root expects a float and an int"
-          ), "Root"
-          )
-      
+              match args with
+              | [ VNumber(f); VNumber(VInteger 2) ] -> VNumber(VFloat(Math.Sqrt(floatValue f)))
+              | [ VNumber(f); VNumber(r) ] -> VNumber(VFloat(Math.Pow(floatValue f, 1.0 / floatValue r)))
+              | _ -> raise <| InvalidProgramException "root expects a float and an int"),
+          "Root"
+      )
+
       Identifier "BUILTIN_ABS",
       VBuiltin(
           (fun args ->
@@ -291,22 +286,21 @@ let builtins =
               VNil),
           "Exit"
       )
-      
+
       Identifier "append",
-        VBuiltin(
-            (fun args ->
-                match args with
-                | [ VList(l1, t1); VList(l2, t2) ] -> VList(l1 @ l2, t1)
-                | _ -> raise <| InvalidProgramException "append expects two lists"),
-            "Append"
-        )
-      
+      VBuiltin(
+          (fun args ->
+              match args with
+              | [ VList(l1, t1); VList(l2, t2) ] -> VList(l1 @ l2, t1)
+              | _ -> raise <| InvalidProgramException "append expects two lists"),
+          "Append"
+      )
+
       Identifier "dotProduct",
       VBuiltin(
           (fun args ->
               match args with
-              | [ VList(l1', _) as l1; VList(l2', _) as l2 ] when List.length l1' = List.length l2' ->
-                  dotProduct l1 l2
+              | [ VList(l1', _) as l1; VList(l2', _) as l2 ] when List.length l1' = List.length l2' -> dotProduct l1 l2
               | _ ->
                   raise
                   <| InvalidProgramException "dotProduct expects two lists of the same length"),
@@ -408,15 +402,11 @@ let builtins =
       VBuiltin(
           (fun args ->
               match args with
-              | [ VClosure(_, Some f)
-                  VNumber(a)
-                  VNumber(b)
-                  VNumber(tol)
-                  VNumber(VInteger it) ] ->
+              | [ VClosure(_, Some f); VNumber(a); VNumber(b); VNumber(tol); VNumber(VInteger it) ] ->
                   let a = floatValue a
                   let b = floatValue b
                   let tol = floatValue tol
-                  
+
                   let builtin = SymbolicExpression.toBuiltin f
                   let res = bisection builtin a b tol it
                   VNumber(VFloat(res))
@@ -515,19 +505,19 @@ let builtins =
                       match typ with
                       | Some(VList([ VString "shape"; VString c ], _)) -> c
                       | _ -> "circle"
-                  
+
                   let trace =
                       elems
                       |> List.tryFind (function
                           | VList([ VString "trace"; VBoolean _ ], _) -> true
                           | _ -> false)
-                  
+
                   let trace =
                       match trace with
                       | Some(VList([ VString "trace"; VBoolean t ], _)) -> t
                       | _ -> false
 
-                  VShape(width, height, x, y, colour, typ, getNewDrawId(), trace)
+                  VShape(width, height, x, y, colour, typ, getNewDrawId (), trace)
               | [ VList(elems, LIST) ] ->
                   let res =
                       elems
@@ -606,7 +596,7 @@ let builtins =
                               (width, height, x, y, colour, typ)
                           | _ -> raise <| InvalidProgramException("draw expects a list of records"))
 
-                  VShapes (res, getNewDrawId())
+                  VShapes(res, getNewDrawId ())
               | _ -> raise <| InvalidProgramException "draw expects a title and a list of functions"),
           "Draw"
       )
@@ -637,16 +627,16 @@ let builtins =
               | _ -> raise <| InvalidProgramException "Expected two arguments for *"),
           "Multiply"
       )
-      
+
       Operator(PlusPlus, Some Infix),
-        VBuiltin(
-            (fun args ->
-                match args with
-                | [ VString a; VString b ] -> VString(a + b)
-                | [ VList(a, _); VList(b, _) ] -> VList(a @ b, LIST)
-                | _ -> raise <| InvalidProgramException "Expected two strings for ++"),
-            "Concat"
-        )
+      VBuiltin(
+          (fun args ->
+              match args with
+              | [ VString a; VString b ] -> VString(a + b)
+              | [ VList(a, _); VList(b, _) ] -> VList(a @ b, LIST)
+              | _ -> raise <| InvalidProgramException "Expected two strings for ++"),
+          "Concat"
+      )
 
       Operator(Slash, Some Infix),
       VBuiltin(
@@ -842,7 +832,9 @@ let builtins =
                   let res = List.skip i l in VList(res, LIST) // is range
               | [ VList(l, _); VNumber(VInteger i); VNumber(VInteger j) ] ->
                   let res = List.skip i l |> List.take (j - i) in VList(res, LIST) // is range
-              | _ -> raise <| InvalidProgramException $"Expected a list and an integer for index, {args}"),
+              | _ ->
+                  raise
+                  <| InvalidProgramException $"Expected a list and an integer for index, {args}"),
           "Index"
       )
 
@@ -864,31 +856,42 @@ let builtins =
           "Select"
       )
       Identifier "match",
-        VBuiltin((fun args ->
-            match args with
-            | [ pattern; expr ] ->
-                match pattern, expr with
-                | VBoolean true, _ -> VBoolean true
-                | VBoolean false, _ -> VBoolean false
-                | p, x -> valuesEqual p x |> VBoolean
-            | _ -> raise <| InvalidProgramException "Expected a pattern and an expression for match"), "Match")
+      VBuiltin(
+          (fun args ->
+              match args with
+              | [ pattern; expr ] ->
+                  match pattern, expr with
+                  | VBoolean true, _ -> VBoolean true
+                  | VBoolean false, _ -> VBoolean false
+                  | p, x -> valuesEqual p x |> VBoolean
+              | _ ->
+                  raise
+                  <| InvalidProgramException "Expected a pattern and an expression for match"),
+          "Match"
+      )
       Identifier "on",
-        VBuiltin((fun args ->
-            match args with
-            | [ VList([VList([VString "id"; VNumber(VInteger shapeId)], _)], RECORD); VList([VList([VString "event";  VNumber(VInteger eventId)], _)], RECORD); VClosure(func, _) ] ->
-                let func = func.Function
-                VEventListener(shapeId, eventId, func)
-            | _ -> raise <| InvalidProgramException $"Expected a shape id, an event id, and a function for on {args}"),
-             "On")
-      
+      VBuiltin(
+          (fun args ->
+              match args with
+              | [ VList([ VList([ VString "id"; VNumber(VInteger shapeId) ], _) ], RECORD)
+                  VList([ VList([ VString "event"; VNumber(VInteger eventId) ], _) ], RECORD)
+                  VClosure(func, _) ] ->
+                  let func = func.Function
+                  VEventListener(shapeId, eventId, func)
+              | _ ->
+                  raise
+                  <| InvalidProgramException $"Expected a shape id, an event id, and a function for on {args}"),
+          "On"
+      )
+
       Identifier "await",
-        VBuiltin((fun args ->
-            match args with
-            | [ VPromise(task) ] ->
-                Async.RunSynchronously task
-            | _ -> failwith "not a promise"
-            ), "Async")
-      ]
+      VBuiltin(
+          (fun args ->
+              match args with
+              | [ VPromise(task) ] -> Async.RunSynchronously task
+              | _ -> failwith "not a promise"),
+          "Async"
+      ) ]
 
 
     |> List.map (fun (key, value) -> lexemeToString key, value)

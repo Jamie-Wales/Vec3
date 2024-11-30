@@ -8,8 +8,6 @@ open Microsoft.FSharp.Core
 open Token
 open Grammar
 open Scanner
-open Vec3.Interpreter.Grammar
-open Vec3.Interpreter.Token
 
 let rec getDefault =
     function
@@ -524,8 +522,8 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
               Infix = Some binary
               Postfix = None
               Precedence = Precedence.Factor }
-            
-            
+
+
         | Caret
         | StarStar ->
             { Prefix = None
