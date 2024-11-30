@@ -175,8 +175,7 @@ and runCurrentFrame vm =
             
             let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
             // get values 
-            // List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int argCount) - 1 ]
-            let locals = List.fold (fun acc _ -> let c, _ = pop vm in c :: acc) [] [ 0 .. (int argCount) - 1 ]
+            List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int argCount) - 1 ]
             
             if int shouldPop = 1 then
                 let _ = pop vm
@@ -222,7 +221,9 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
 
         match closure with
         | VClosure ({ UpValues = upValues; UpValuesValues = vals }, _) ->
+            let upValues = List.rev upValues
             let upValue = upValues[int slot]
+            let vals = Array.rev vals
             let upValue = vals[upValue.Index]
             let vm = push vm upValue
             vm
@@ -332,6 +333,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
                     let vm, index = readByte vm
                     let vm, depth = readByte vm
                     let name, vm = readConstant vm
+                    
                     let name = match name with
                                  | VString s -> s
                                  | _ -> raise <| InvalidProgramException "Expected string constant for upvalue name"
@@ -346,14 +348,18 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             
             let rec getUpvaluesVals (vm: VM) (count: int) : Value list =
                 match count with
-                | n when n > 0 ->
+                | n when n > 0 && n < vm.Stack.Count ->
                     let value = peek vm (n - 1)
                     let values = getUpvaluesVals vm (n - 1)
                     value :: values
                 | _ -> []
             
+            let prevUpvals = getCurrentFrame vm |> _.Closure.UpValuesValues
+            let prevUv = getCurrentFrame vm |> _.Closure.UpValues
             let vm, vals = popUpValues vm (int upValueCount)
+            let vals = List.append vals prevUv
             let upvalues = Seq.toArray <| getUpvaluesVals vm (int upValueCount)
+            let upvalues = Array.append upvalues prevUpvals
             
             // how do i set the upvalues ?
             // where do i get the upvalues from ?

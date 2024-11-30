@@ -87,11 +87,11 @@ let addUpValue (name: string) (depth: int) (state: CompilerState) : CompilerStat
           Index = state.CurrentFunction.UpValues.Length
           Depth = depth 
           }
-
+    
     let updatedFunction =
         { state.CurrentFunction with
             UpValues = upValue :: state.CurrentFunction.UpValues }
-
+    
     { state with
         CurrentFunction = updatedFunction }
 
@@ -353,7 +353,8 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bo
         
         let currentFunction = state.CurrentFunction
         
-        let upvalues = currentFunction.Function.Locals @ currentFunction.UpValues
+        let upvalues = currentFunction.Function.Locals
+        let upvaluesfull = upvalues @ currentFunction.UpValues
 
         let lambdaState =
             { state with
