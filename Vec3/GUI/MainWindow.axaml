@@ -1,0 +1,152 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+        x:Class="Vec3.MainWindow"
+        Title="Vec3 Editor"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
+        Width="1200" Height="800">
+
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="15,8" />
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="OrangeRed" />
+            <Setter Property="RenderTransform" Value="scale(1.02)" />
+        </Style>
+        <Style Selector="Button:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.98)" />
+        </Style>
+        <Style Selector="Border.card">
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="DarkOrange" />
+            <Setter Property="Background" Value="#1E1E1E" />
+        </Style>
+    </Window.Styles>
+
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="#2D2D2D"
+                    TintOpacity="1"
+                    MaterialOpacity="0.65" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <Grid ColumnDefinitions="0.6*, 0.4*" RowDefinitions="Auto,*, Auto" Margin="10, 30, 10, 10">
+            <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+                <Button Name="LoadButton"
+                        Background="MidnightBlue"
+                        Foreground="White"
+                        HotKey="Shift+l">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource ArrowDownloadRegular}" Foreground="White" />
+                        <TextBlock Text="Load Code" />
+                    </StackPanel>
+                    <Button.Transitions>
+                        <Transitions>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
+                        </Transitions>
+                    </Button.Transitions>
+                </Button>
+
+                <Button Name="OpenNotebookButton"
+                        Background="Purple"
+                        Foreground="White">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource BookRegular}" Foreground="White" />
+                        <TextBlock Text="Open Notebook" />
+                    </StackPanel>
+                    <Button.Transitions>
+                        <Transitions>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
+                        </Transitions>
+                    </Button.Transitions>
+                </Button>
+            </StackPanel>
+
+            <Border Grid.Row="1"
+                    Grid.Column="0"
+                    Margin="0,0,10,10"
+                    Classes="card"
+                    Background="White"
+                    ClipToBounds="True">
+                <avaloniaEdit:TextEditor
+                    Name="Editor"
+                    FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+                    FontSize="14"
+                    FontWeight="Light"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Visible" />
+            </Border>
+            <Border Grid.Row="1"
+                    Grid.Column="1"
+                    Classes="card"
+                    Margin="0,0,0,10">
+                <ScrollViewer Margin="10">
+                    <TextBlock Name="StandardOutput"
+                               TextWrapping="Wrap"
+                               Foreground="White"
+                               FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+                               FontSize="14" />
+                </ScrollViewer>
+            </Border>
+
+            <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="Auto, *, Auto" Margin="0">
+                <TextBlock Grid.Column="0"
+                           Text="V3>"
+                           FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+                           FontSize="16"
+                           FontWeight="Bold"
+                           Foreground="White"
+                           VerticalAlignment="Center"
+                           Margin="10,0" />
+                <Border Grid.Column="1"
+                        Classes="card"
+                        Margin="0,0,10,0"
+                        ClipToBounds="True">
+                    <avaloniaEdit:TextEditor
+                        Name="ReplInput"
+                        FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+                        FontSize="14"
+                        FontWeight="Light"
+                        Height="60"
+                        Padding="10,8,10,8"
+                        HorizontalScrollBarVisibility="Auto"
+                        VerticalScrollBarVisibility="Disabled" />
+                </Border>
+                <Button Grid.Column="2"
+                        HotKey="Shift+Enter"
+                        Name="RunButton"
+                        Height="60"
+                        Width="80"
+                        Background="ForestGreen"
+                        Foreground="White"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center">
+                    <StackPanel Orientation="Vertical" Spacing="4">
+                        <PathIcon Data="{StaticResource PlayRegular}" Foreground="White" />
+                        <TextBlock Text="Run" />
+                    </StackPanel>
+                    <Button.Transitions>
+                        <Transitions>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
+                        </Transitions>
+                    </Button.Transitions>
+                </Button>
+            </Grid>
+        </Grid>
+    </Panel>
+
+</Window>

@@ -1,0 +1,8 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{a}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{[}\PYG{l+m+mi}{1}\PYG{o}{,}\PYG{l+m+mi}{2}\PYG{o}{,}\PYG{l+m+mi}{3}\PYG{o}{]}
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{b}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{[}\PYG{l+m+mi}{1}\PYG{o}{,}\PYG{l+m+mi}{2}\PYG{o}{]}
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{c}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{a}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{b}\PYG{+w}{ }\PYG{c+c1}{// Error: Vectors must be of the same length}
+
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{d}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{[}\PYG{l+m+mi}{1}\PYG{o}{,}\PYG{l+m+mi}{2}\PYG{o}{,}\PYG{l+m+mi}{3}\PYG{o}{]}
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{e}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{d}\PYG{o}{[}\PYG{l+m+mi}{4}\PYG{o}{]}\PYG{+w}{ }\PYG{c+c1}{// Error: Index out of bounds}
+\end{MintedVerbatim}

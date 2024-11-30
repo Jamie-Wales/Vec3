@@ -1,0 +1,57 @@
+\begin{thebibliography}{}
+
+\bibitem[Bierman et~al., 2014]{bierman2014understanding}
+Bierman, G., Abadi, M., and Torgersen, M. (2014).
+\newblock Understanding typescript.
+\newblock In {\em ECOOP 2014--Object-Oriented Programming: 28th European
+  Conference, Uppsala, Sweden, July 28--August 1, 2014. Proceedings 28}, pages
+  257--281. Springer.
+
+\bibitem[Freeman and Pfenning, 1991]{freeman1991refinement}
+Freeman, T. and Pfenning, F. (1991).
+\newblock Refinement types for ml.
+\newblock In {\em Proceedings of the ACM SIGPLAN 1991 conference on Programming
+  language design and implementation}, pages 268--277.
+
+\bibitem[Garcia et~al., 2016]{garcia2016abstracting}
+Garcia, R., Clark, A.~M., and Tanter, {\'E}. (2016).
+\newblock Abstracting gradual typing.
+\newblock {\em ACM SIGPLAN Notices}, 51(1):429--442.
+
+\bibitem[{Haskell}, 2024]{haskellDocs}
+{Haskell} (2024).
+\newblock Haskell documentation.
+\newblock \url{https://www.haskell.org/documentation/}.
+
+\bibitem[{Microsoft}, 2024]{fsharpdocs}
+{Microsoft} (2024).
+\newblock F\# documentation.
+\newblock \url{https://docs.microsoft.com/en-us/dotnet/fsharp/}.
+
+\bibitem[Milner, 1978]{milner1978theory}
+Milner, R. (1978).
+\newblock A theory of type polymorphism in programming.
+\newblock {\em Journal of computer and system sciences}, 17(3):348--375.
+
+\bibitem[Morris and McKinna, 2019]{morris2019abstracting}
+Morris, J.~G. and McKinna, J. (2019).
+\newblock Abstracting extensible data types: or, rows by any other name.
+\newblock {\em Proceedings of the ACM on Programming Languages}, 3(POPL):1--28.
+
+\bibitem[{OCaml}, 2024]{ocamlDocs}
+{OCaml} (2024).
+\newblock Ocaml documentation.
+\newblock \url{https://ocaml.org/docs/}.
+
+\bibitem[Sulzmann, 2000]{sulzmann2000general}
+Sulzmann, M.~F. (2000).
+\newblock {\em A general framework for Hindley/Milner type systems with
+  constraints}.
+\newblock Yale University.
+
+\bibitem[Timany et~al., 2024]{timany2024logical}
+Timany, A., Krebbers, R., Dreyer, D., and Birkedal, L. (2024).
+\newblock A logical approach to type soundness.
+\newblock {\em Journal of the ACM}, 71(6):1--75.
+
+\end{thebibliography}

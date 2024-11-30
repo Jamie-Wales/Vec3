@@ -1,0 +1,8 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{+w}{    }\PYG{k}{type}\PYG{+w}{ }\PYG{n+nc}{PlotConfig}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{\PYGZob{}}
+\PYG{+w}{        }\PYG{n}{title}\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{string}\PYG{o}{,}
+\PYG{+w}{        }\PYG{n}{XValues}\PYG{o}{:}\PYG{+w}{ }\PYG{o}{[}\PYG{k+kt}{float}\PYG{o}{]}\PYG{o}{,}
+\PYG{+w}{        }\PYG{n}{YValues}\PYG{o}{:}\PYG{+w}{ }\PYG{o}{[}\PYG{k+kt}{float}\PYG{o}{]}\PYG{o}{,}
+\PYG{+w}{        }\PYG{n}{ptype}\PYG{o}{:}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{bar}\PYG{l+s}{\PYGZdq{}}\PYG{+w}{ }\PYG{o}{|}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{scatter}\PYG{l+s}{\PYGZdq{}}\PYG{+w}{ }\PYG{o}{|}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{signal}\PYG{l+s}{\PYGZdq{}}\PYG{o}{,}
+\PYG{+w}{    }\PYG{o}{\PYGZcb{}}
+\end{MintedVerbatim}

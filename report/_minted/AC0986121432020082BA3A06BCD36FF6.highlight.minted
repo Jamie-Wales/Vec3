@@ -1,0 +1,3 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{n}{on}\PYG{o}{(}\PYG{n}{shape}\PYG{o}{,}\PYG{+w}{ }\PYG{n+nn}{Keys}\PYG{p}{.}\PYG{n}{Down}\PYG{o}{,}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{state}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{o}{..}\PYG{o}{.}\PYG{o}{)}
+\end{MintedVerbatim}
