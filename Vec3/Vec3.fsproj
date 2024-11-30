@@ -8,16 +8,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Interpreter\Token.fs"/>
-        <Compile Include="Interpreter\Grammar.fs"/>
-        <Compile Include="Interpreter\Scanner.fs"/>
-        <Compile Include="Interpreter\Parser.fs"/>
+        <Compile Include="Interpreter\SyntaxAnalysis\Token.fs"/>
+        <Compile Include="Interpreter\SyntaxAnalysis\Grammar.fs"/>
+        <Compile Include="Interpreter\SyntaxAnalysis\Scanner.fs"/>
+        <Compile Include="Interpreter\SyntaxAnalysis\Parser.fs"/>
         <Compile Include="Interpreter\SymbolicExpression.fs"/>
-        <Compile Include="Interpreter\Typing\Exceptions.fs"/>
-        <Compile Include="Interpreter\Typing\Types.fs"/>
-        <Compile Include="Interpreter\Typing\Substitution.fs"/>
-        <Compile Include="Interpreter\Typing\Builtins.fs"/>
-        <Compile Include="Interpreter\Typing\Inference.fs"/>
+        <Compile Include="Interpreter\TypeAnalysis\Exceptions.fs" />
+        <Compile Include="Interpreter\TypeAnalysis\Types.fs" />
+        <Compile Include="Interpreter\TypeAnalysis\Substitution.fs" />
+        <Compile Include="Interpreter\TypeAnalysis\Builtins.fs" />
+        <Compile Include="Interpreter\TypeAnalysis\Inference.fs" />
         <Compile Include="Interpreter\Prelude.fs"/>
         <Compile Include="Interpreter\Backend\Types.fs"/>
         <Compile Include="Interpreter\Backend\Value.fs"/>
