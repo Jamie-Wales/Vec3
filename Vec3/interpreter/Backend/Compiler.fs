@@ -85,15 +85,17 @@ let addUpValue (name: string) (depth: int) (state: CompilerState) : CompilerStat
     let upValue =
         { Name = name
           Index = state.CurrentFunction.UpValues.Length
-          Depth = depth }
-
+          Location = if depth = 0 then 
+                       Local(state.LocalCount)
+                        else 
+                       Enclosing(depth) }
+    
     let updatedFunction =
         { state.CurrentFunction with
             UpValues = upValue :: state.CurrentFunction.UpValues }
-
+    
     { state with
         CurrentFunction = updatedFunction }
-
 
 let rec compileLiteral (lit: Literal) : Compiler<unit> =
     let compileNumber (n: Token.Number) state =
@@ -348,11 +350,30 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bo
     fun state ->
         let functionName = $"lambda_{state.CurrentFunction.Function.Name}"
         let lambdaFunction = initFunction functionName
-
         let currentFunction = state.CurrentFunction
+        
+        // Create upvalues from current function's locals
+        let localUpvalues = 
+            currentFunction.Function.Locals
+            |> List.map (fun local -> 
+                { Index = local.Index
+                  Name = local.Name
+                  Location = Local local.Index })
 
-        let upvalues = currentFunction.Function.Locals
-        let upvaluesfull = upvalues @ currentFunction.UpValues
+        // Get the existing upvalues and convert them to Enclosing
+        let enclosingUpvalues =
+            currentFunction.UpValues
+            |> List.map (fun upvalue ->
+                { Index = upvalue.Index
+                  Name = upvalue.Name
+                  Location = 
+                    match upvalue.Location with
+                    | Local idx -> Local idx
+                    | Enclosing idx -> Enclosing(idx + 1)
+                    | Global name -> Global name })
+
+        // Combine all upvalues
+        let allUpvalues = localUpvalues @ enclosingUpvalues
 
         let lambdaState =
             { state with
@@ -360,19 +381,24 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bo
                 ScopeDepth = state.ScopeDepth + 1
                 LocalCount = 0 }
 
+        // First add parameters as locals
         let compiledParamsState =
             parameters
             |> List.fold
                 (fun state param ->
                     let state = addLocal (lexemeToString param.Lexeme) state
-
                     { state with
                         CurrentFunction.Function.Arity = state.CurrentFunction.Function.Arity + 1 })
                 lambdaState
 
+        // Then add upvalues to the new function
         let compiledParamsState =
-            upvalues
-            |> List.fold (fun state upvalue -> addUpValue upvalue.Name upvalue.Depth state) compiledParamsState
+            allUpvalues
+            |> List.fold (fun state upvalue -> 
+                match upvalue.Location with
+                | Local idx -> addUpValue upvalue.Name 0 state
+                | Enclosing idx -> addUpValue upvalue.Name idx state
+                | Global name -> state) compiledParamsState
 
         let builtin =
             if pur then
@@ -396,18 +422,24 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bo
 
                 emitBytes [| byte (opCodeToByte OP_CODE.CLOSURE); byte constIndex |] state
                 |> Result.bind (fun ((), state) ->
-                    emitByte (byte (List.length upvalues)) state
+                    // Use allUpvalues instead of upvalues for the count and emission
+                    emitByte (byte (List.length allUpvalues)) state
                     |> Result.bind (fun ((), state) ->
-                        let upvalues =
-                            upvalues
+                        let upvalueBytes =
+                            allUpvalues
                             |> Seq.map (fun upvalue ->
                                 let constIndex =
                                     addConstant state.CurrentFunction.Function.Chunk (VString upvalue.Name)
-
-                                [| byte upvalue.Index; byte upvalue.Depth; byte constIndex |])
+                                match upvalue.Location with
+                                | Local idx -> 
+                                    [| byte idx; byte 1uy; byte constIndex |] // 1 for local
+                                | Enclosing idx -> 
+                                    [| byte idx; byte 0uy; byte constIndex |] // 0 for enclosing
+                                | Global name ->
+                                    [| byte 0uy; byte 0uy; byte constIndex |]) // Both 0 for global
                             |> Seq.concat
 
-                        emitBytes upvalues state))))
+                        emitBytes upvalueBytes state))))
 
 and compileAsBuiltin (parameters: Token list) (body: Expr) : Expression =
     // what we could do is make every unit return its compiled value

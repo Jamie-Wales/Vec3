@@ -1,4 +1,4 @@
-/// <summary>
+// <summary>
 /// Types for the backend.
 /// </summary>
 module Vec3.Interpreter.Backend.Types
@@ -34,22 +34,45 @@ type CompoundType =
     | RECORD
     | TUPLE
 
-type Local =
-    { Name: string; Depth: int; Index: int }
+and UpValueLocation = 
+    | Local of int
+    | Enclosing of int
+    | Global of string
 
+and Local = {
+    Name: string
+    Depth: int
+    Index: int
+}
 
-type VNumber =
+and UpValue = {
+    Index: int
+    Name: string
+    Location: UpValueLocation
+}
+
+and VNumber =
     | VInteger of int
     | VFloat of float
     | VRational of int * int
     | VComplex of float * float
     | VChar of char
 
-
-type Chunk =
+and Chunk =
     { Code: ResizeArray<byte>
       Lines: ResizeArray<LineInfo>
       ConstantPool: ResizeArray<Value> }
+
+and Function =
+    { Arity: int
+      Chunk: Chunk
+      Name: string
+      Locals: Local list }
+
+and Closure =
+    { Function: Function
+      UpValues: UpValue list 
+      UpValuesValues: Value array }
 
 and Value =
     | VNumber of VNumber
@@ -71,24 +94,12 @@ and Value =
     | VEventListener of int * int * Function
     | VPromise of Async<Value>
 
-and Function =
-    { Arity: int
-      Chunk: Chunk
-      Name: string
-      Locals: Local list }
-
-and Closure =
-    { Function: Function
-      UpValues: Local list
-      UpValuesValues: Value array }
-
-
-type CallFrame =
+and CallFrame =
     { Closure: Closure
       IP: int
       StackBase: int }
 
-type VM =
+and VM =
     { Frames: ResizeArray<CallFrame>
       Stack: ResizeArray<Value>
       ScopeDepth: int
@@ -97,8 +108,7 @@ type VM =
       ExecutionHistory: ResizeArray<VM>
       Plots: ResizeArray<Value>
       Canvas: ResizeArray<Value>
-      EventListeners: ResizeArray<int * int * Function> } // shape id, event id, function
-
+      EventListeners: ResizeArray<int * int * Function> }
 let rec valueToString =
     function
     | VNumber(VInteger n) -> string n
