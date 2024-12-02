@@ -143,136 +143,138 @@ let rec executeOpcode (vm: VM) (opcode: OP_CODE) : VM * OpCodeResult =
         (vm, Continue)
 
 and executeOpcodeImpl (vm: VM) (opcode: OP_CODE) : VM =
-    match opcode with
-    | CONSTANT ->
-        let constant, vm = readConstant vm
-        let vm = push vm constant
-        appendOutput vm Execution $"Pushed constant onto stack: {valueToString constant}"
-        
-    | CONSTANT_LONG ->
-        let constant, vm = readConstantLong vm
-        let vm = push vm constant
-        appendOutput vm Execution $"Pushed long constant onto stack: {valueToString constant}"
-        
-    | GET_LOCAL ->
-        let vm, slot = readByte vm
-        let frame = getCurrentFrame vm
-        let index = frame.StackBase + int slot
-        if index >= vm.Stack.Count then
-            raise <| InvalidProgramException($"GET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}")
-        let value = vm.Stack[index]
-        push vm value
-        
-    | SET_LOCAL ->
-        let vm, slot = readByte vm
-        let value, vm = pop vm
-        let frame = getCurrentFrame vm
-        let index = frame.StackBase + int slot
-        if index >= vm.Stack.Count then
-            raise <| InvalidProgramException($"SET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}")
-        vm.Stack[index] <- value
-        vm
-        
-    | TRUE -> push vm (VBoolean true)
-    | FALSE -> push vm (VBoolean false)
-    | NIL -> push vm VNil
-    
-    | POP ->
-        let _, vm = pop vm
-        vm
-        
-    | DEFINE_GLOBAL ->
-        let constant, vm = readConstant vm
-        match constant with
-        | VString name ->
-            let value, vm = pop vm
-            let vm = appendOutput vm Execution $"Defining global variable: {name} = {valueToString value}"
-            defineGlobal vm name value
-        | _ -> raise <| InvalidProgramException("Expected string constant for variable name in DEFINE_GLOBAL")
-        
-    | GET_GLOBAL ->
-        let constant, vm = readConstant vm
-        match constant with
-        | VString name ->
-            match getGlobal vm name with
-            | Some value -> push vm value
-            | None -> raise <| InvalidProgramException($"Undefined variable '{name}'")
-        | _ -> raise <| InvalidProgramException("Expected string constant for variable name in GET_GLOBAL")
-        
-    | SET_GLOBAL ->
-        let constant, vm = readConstant vm
-        match constant with
-        | VString name ->
-            let value, vm = pop vm
-            if vm.Globals.ContainsKey(name) then
-                defineGlobal vm name value
-            else
-                raise <| InvalidProgramException($"Undefined variable '{name}'")
-        | _ -> raise <| InvalidProgramException("Expected string constant for variable name in SET_GLOBAL")
-        
-    | GET_UPVALUE ->
-        let vm, slot = readByte vm
-        let frame = getCurrentFrame vm
-        let upValue = frame.Closure.UpValues[int slot]
-        
-        match upValue.Location with
-        | Local index ->
-            let value = vm.Stack[frame.StackBase + index]
-            push vm value
-        | Enclosing index ->
-            let enclosingFrame = vm.Frames[vm.Frames.Count - 2]
-            let value = enclosingFrame.Closure.UpValuesValues[index]
-            push vm value
-        | Global name ->
-            match Map.tryFind name vm.Globals with
-            | Some value -> push vm value
-            | None -> raise <| InvalidProgramException($"Undefined variable '{name}'")
-        
+   match opcode with
+   | CONSTANT ->
+       let constant, vm = readConstant vm
+       let vm = push vm constant
+       appendOutput vm Execution $"Pushed constant onto stack: {valueToString constant}"
+       
+   | CONSTANT_LONG ->
+       let constant, vm = readConstantLong vm
+       let vm = push vm constant
+       appendOutput vm Execution $"Pushed long constant onto stack: {valueToString constant}"
+       
+   | GET_LOCAL ->
+       let vm, slot = readByte vm
+       let frame = getCurrentFrame vm
+       let index = frame.StackBase + int slot
+       printfn $"GET_LOCAL: slot={slot}, stackBase={frame.StackBase}, index={index}, stackSize={vm.Stack.Count}"
+       
+       // Add validation
+       if frame.StackBase < 0 || frame.StackBase >= vm.Stack.Count then
+           raise <| InvalidProgramException(
+               $"Invalid stack base: {frame.StackBase} (stack size: {vm.Stack.Count})")
+               
+       if index < 0 || index >= vm.Stack.Count then
+           raise <| InvalidProgramException(
+               $"GET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}")
+               
+       let value = vm.Stack[index]
+       printfn $"Getting local value: {valueToString value}"
+       push vm value
+           
+   | SET_LOCAL ->
+       let vm, slot = readByte vm
+       let value, vm = pop vm
+       let frame = getCurrentFrame vm
+       let index = frame.StackBase + int slot
+       if index >= vm.Stack.Count then
+           raise <| InvalidProgramException($"SET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}")
+       vm.Stack[index] <- value
+       vm
+       
+   | TRUE -> push vm (VBoolean true)
+   | FALSE -> push vm (VBoolean false)
+   | NIL -> push vm VNil
+   
+   | POP ->
+       let _, vm = pop vm
+       vm
+       
+   | DEFINE_GLOBAL ->
+       let constant, vm = readConstant vm
+       match constant with
+       | VString name ->
+           let value, vm = pop vm
+           let vm = appendOutput vm Execution $"Defining global variable: {name} = {valueToString value}"
+           defineGlobal vm name value
+       | _ -> raise <| InvalidProgramException("Expected string constant for variable name in DEFINE_GLOBAL")
+       
+   | GET_GLOBAL ->
+       let constant, vm = readConstant vm
+       match constant with
+       | VString name ->
+           match getGlobal vm name with
+           | Some value -> push vm value
+           | None -> raise <| InvalidProgramException($"Undefined variable '{name}'")
+       | _ -> raise <| InvalidProgramException("Expected string constant for variable name in GET_GLOBAL")
+       
+   | SET_GLOBAL ->
+       let constant, vm = readConstant vm
+       match constant with
+       | VString name ->
+           let value, vm = pop vm
+           if vm.Globals.ContainsKey(name) then
+               defineGlobal vm name value
+           else
+               raise <| InvalidProgramException($"Undefined variable '{name}'")
+
     | CLOSURE ->
         let constant, vm = readConstant vm
         match constant with
         | VFunction(func, f) ->
             let vm, upValueCount = readByte vm
-            let rec popUpValues (vm: VM) (count: int) : VM * UpValue list =
-                match count with
-                | n when n > 0 ->
+            printfn $"Creating closure with {upValueCount} upvalues (func: {func.Name})"
+                
+            // Helper to safely create upvalues
+            let rec createUpValues (vm: VM) (count: int) (acc: UpValue list) (values: Value list) =
+                if count <= 0 then 
+                    vm, List.rev acc, Array.ofList (List.rev values)
+                else
                     let vm, index = readByte vm
                     let vm, isLocal = readByte vm
-                    let name, vm = readConstant vm
-                    let name =
-                      match name with
-                      | VString s -> s
-                      | _ -> raise <| InvalidProgramException("Expected string constant for upvalue name")
+                    printfn $"Creating upvalue {acc.Length}: index={index}, isLocal={isLocal}"
+                        
                     let location = 
-                        if isLocal = 1uy then Local(int index)
-                        else Enclosing(int index)
-                              
-                    let vm, upValues = popUpValues vm (n - 1)
+                        if isLocal = 1uy then 
+                            let frame = getCurrentFrame vm
+                            Local(int index)
+                        else 
+                            Enclosing(int index)
+                                
                     let upValue = {
-                        Index = int index
-                        Name = name
+                        Index = acc.Length
+                        Name = sprintf "upvalue_%d" acc.Length
                         Location = location
                     }
-                    vm, upValue :: upValues
-                | _ -> vm, []
+                    
+                    // Get the actual value for this upvalue
+                    let value =
+                        match location with
+                        | Local idx -> 
+                            let frame = getCurrentFrame vm
+                            if frame.StackBase + idx >= vm.Stack.Count then
+                                VNil
+                            else
+                                vm.Stack[frame.StackBase + idx]
+                        | Enclosing idx ->
+                            if vm.Frames.Count < 2 then
+                                VNil
+                            else
+                                let enclosingFrame = vm.Frames[vm.Frames.Count - 2]
+                                if idx >= enclosingFrame.Closure.UpValuesValues.Length then
+                                    VNil
+                                else
+                                    enclosingFrame.Closure.UpValuesValues[idx]
+                        | Global name ->
+                            match Map.tryFind name vm.Globals with
+                            | Some v -> v
+                            | None -> VNil
+                            
+                    createUpValues vm (count - 1) (upValue :: acc) (value :: values)
                 
-            let vm, upValues = popUpValues vm (int upValueCount)
-            
-            let upValuesValues = 
-                upValues 
-                |> List.map (fun upValue ->
-                    match upValue.Location with
-                    | Local idx -> 
-                        let frame = getCurrentFrame vm
-                        vm.Stack[frame.StackBase + idx]
-                    | Enclosing idx ->
-                        let enclosingFrame = vm.Frames[vm.Frames.Count - 2]
-                        enclosingFrame.Closure.UpValuesValues[idx]
-                    | Global name ->
-                        match Map.tryFind name vm.Globals with
-                        | Some v -> v
-                        | None -> VNil)
-                |> Array.ofList
+            let vm, upValues, upValuesValues = createUpValues vm (int upValueCount) [] []
+            printfn $"Created {upValues.Length} upvalues with {Array.length upValuesValues} values"
                 
             let closure = VClosure(
                 { Function = func
@@ -280,44 +282,75 @@ and executeOpcodeImpl (vm: VM) (opcode: OP_CODE) : VM =
                   UpValuesValues = upValuesValues },
                 f
             )
+            printfn $"Created closure for {func.Name} with {upValues.Length} upvalues"
             push vm closure
+       
         | _ -> raise <| InvalidProgramException("Expected function constant for closure")
-        
-    | JUMP ->
-        let vm, byte1 = readByte vm
-        let vm, byte2 = readByte vm
-        let jump = int ((byte1 <<< 8) ||| byte2)
+   
+    | GET_UPVALUE ->
+        let vm, slot = readByte vm
         let frame = getCurrentFrame vm
-        let frame = { frame with IP = frame.IP + jump }
-        vm.Frames[vm.Frames.Count - 1] <- frame
-        vm
+        printfn $"Getting upvalue at slot {slot} (total upvalues: {frame.Closure.UpValues.Length})"
         
-    | JUMP_IF_FALSE ->
-        let vm, byte1 = readByte vm
-        let vm, byte2 = readByte vm
-        let jump = int ((byte1 <<< 8) ||| byte2)
-        let condition, vm = pop vm
-        if not (isTruthy condition) then
-            let frame = getCurrentFrame vm
-            let frame = { frame with IP = frame.IP + jump }
-            vm.Frames[vm.Frames.Count - 1] <- frame
-            vm
-        else
-            vm
+        if int slot >= frame.Closure.UpValues.Length then
+            raise <| InvalidProgramException($"Invalid upvalue slot: {slot} (total upvalues: {frame.Closure.UpValues.Length})")
             
-    | COMPOUND_CREATE ->
-        let structure, vm = pop vm
-        let count, vm = pop vm
-        match (structure, count) with
-        | VList(values, typ), VNumber(VInteger n) when n >= 0 ->
-            let values' = [0 .. n - 1] 
-                         |> List.map (fun _ -> let value, _ = pop vm in value) 
-                         |> List.rev
-            let list = VList(List.append values values', typ)
-            push vm list
-        | _ -> raise <| InvalidProgramException("Expected list and integer for list create")
-        
-    | _ -> raise <| InvalidProgramException($"Unimplemented opcode: {opCodeToString opcode}")
+        let upValue = frame.Closure.UpValues[int slot]
+        let value =
+            match upValue.Location with
+            | Local index ->
+                if frame.StackBase + index >= vm.Stack.Count then
+                    raise <| InvalidProgramException($"Invalid local index for upvalue: {index} (stack base: {frame.StackBase}, stack size: {vm.Stack.Count})")
+                vm.Stack[frame.StackBase + index]
+                
+            | Enclosing index ->
+                if index >= frame.Closure.UpValuesValues.Length then
+                    raise <| InvalidProgramException($"Invalid upvalue index: {index} (total values: {frame.Closure.UpValuesValues.Length})")
+                frame.Closure.UpValuesValues[index]
+                
+            | Global name ->
+                match Map.tryFind name vm.Globals with
+                | Some v -> v
+                | None -> 
+                    raise <| InvalidProgramException($"Undefined global variable '{name}' referenced by upvalue")
+                    
+        push vm value
+           
+   | JUMP ->
+       let vm, byte1 = readByte vm
+       let vm, byte2 = readByte vm
+       let jump = int ((byte1 <<< 8) ||| byte2)
+       let frame = getCurrentFrame vm
+       let frame = { frame with IP = frame.IP + jump }
+       vm.Frames[vm.Frames.Count - 1] <- frame
+       vm
+       
+   | JUMP_IF_FALSE ->
+       let vm, byte1 = readByte vm
+       let vm, byte2 = readByte vm
+       let jump = int ((byte1 <<< 8) ||| byte2)
+       let condition, vm = pop vm
+       if not (isTruthy condition) then
+           let frame = getCurrentFrame vm
+           let frame = { frame with IP = frame.IP + jump }
+           vm.Frames[vm.Frames.Count - 1] <- frame
+           vm
+       else
+           vm
+           
+   | COMPOUND_CREATE ->
+       let structure, vm = pop vm
+       let count, vm = pop vm
+       match (structure, count) with
+       | VList(values, typ), VNumber(VInteger n) when n >= 0 ->
+           let values' = [0 .. n - 1] 
+                        |> List.map (fun _ -> let value, _ = pop vm in value) 
+                        |> List.rev
+           let list = VList(List.append values values', typ)
+           push vm list
+       | _ -> raise <| InvalidProgramException("Expected list and integer for list create")
+       
+   | _ -> raise <| InvalidProgramException($"Unimplemented opcode: {opCodeToString opcode}")
 
 let rec runFrameRecursive (vm: VM) : VM * Value =
     let rec loop (vm: VM) (acc: Value) =
@@ -368,130 +401,48 @@ and runLoop (vm: VM) : VM =
                 | Continue -> 
                     loop vm
     loop vm
-and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
-    let callee = peek vm argCount
-    match (callee, recursive) with
-    | (VFunction(func, _), 0) ->
-        if argCount <> func.Arity then
-            raise <| InvalidProgramException($"Expected {func.Arity} arguments but got {argCount}")
-        let closure = {
-            Function = func
-            UpValues = []
-            UpValuesValues = [||]
-        }
-        let frame = {
-            Closure = closure
-            IP = 0
-            StackBase = vm.Stack.Count - argCount
-        }
-        vm.Frames.Add(frame)
-        vm
-        
-    | (VClosure(closure, _), 0) ->
-        if argCount <> closure.Function.Arity then
-            raise <| InvalidProgramException($"Expected {closure.Function.Arity} arguments but got {argCount}")
-        let frame = {
-            Closure = closure
-            IP = 0
-            StackBase = vm.Stack.Count - argCount
-        }
-        vm.Frames.Add(frame)
-        vm
-        
-    | (VBuiltin(func, _), _) ->
-        let args = [0 .. argCount - 1] 
-                  |> List.map (fun _ -> let value, _ = pop vm in value) 
-                  |> List.rev
-        
-        let value = func args
-        let vm, value = 
-            match value with
-            | VShape(_, _, _, _, _, _, id, _) ->
-                vm.Canvas.Add(value)
-                vm.Plots.Add(value)
-                let record = VList([VList([VString "id"; VNumber(VInteger id)], LIST)], RECORD)
-                vm, record
-            | VPlotData _ ->
-                vm.Plots.Add(value)
-                vm, VNil
-            | VPlotFunction _ ->
-                vm.Plots.Add(value)
-                vm, VNil
-            | VPlotFunctions _ ->
-                vm.Plots.Add(value)
-                vm, VNil
-            | VShapes(_, id) ->
-                vm.Canvas.Add(value)
-                vm.Plots.Add(value)
-                let record = VList([VList([VString "id"; VNumber(VInteger id)], LIST)], RECORD)
-                vm, record
-            | VOutput s -> 
-                appendOutput vm StandardOutput s, VNil
-            | VEventListener(id, event, func) ->
-                vm.EventListeners.Add(id, event, func)
-                vm, VNil
-            | _ -> vm, value
-        
-        let _, vm = pop vm
-        push vm value
-        
-    | (VClosure(closure, _), 1) ->
-        if argCount <> closure.Function.Arity then
-            raise <| InvalidProgramException($"Expected {closure.Function.Arity} arguments but got {argCount}")
-        let frame = {
-            Closure = closure
-            IP = 0
-            StackBase = vm.Stack.Count - argCount
-        }
-        vm.Frames.Add(frame)
-        
-        match runFrameRecursive vm with
-        | vm, VFunction _ ->
-            vm.Frames.RemoveAt(vm.Frames.Count - 1)
-            callValue vm argCount 1
-        | vm, v -> 
-            let vm = push vm v
-            vm
-            
-    | (VFunction(func, _), 1) ->
-        if argCount <> func.Arity then
-            raise <| InvalidProgramException($"Expected {func.Arity} arguments but got {argCount}")
-        let closure = {
-            Function = func
-            UpValues = []
-            UpValuesValues = [||]
-        }
-        let frame = {
-            Closure = closure
-            IP = 0
-            StackBase = vm.Stack.Count - argCount
-        }
-        vm.Frames.Add(frame)
-        
-        match runFrameRecursive vm with
-        | vm, VFunction _ ->
-            vm.Frames.RemoveAt(vm.Frames.Count - 1)
-            callValue vm argCount 1
-        | vm, v -> 
-            let vm = push vm v
-            vm
-            
-    | (VAsyncFunction func, _) ->
-        let runAsyncFunction (func: Function) (args: Value list) : Async<Value> =
-            async {
-                let res = runFunction vm func args
-                return res
-            }
-            
-        let args = [0 .. argCount - 1] 
-                  |> List.map (fun _ -> let value, _ = pop vm in value) 
-                  |> List.rev
-                  
-        let res = runAsyncFunction func args
-        push vm (VPromise res)
-        
-    | _ -> raise <| InvalidProgramException($"Invalid call combination: {callee}, {recursive}")
 
+and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
+    printfn $"\nCALL: argCount={argCount}, recursive={recursive}, stack size={vm.Stack.Count}"
+    let callee = peek vm argCount
+    printfn $"Callee: {valueToString callee}"
+    
+    match (callee, recursive) with
+    | (VFunction(func, _), 0) 
+    | (VClosure({ Function = func }, _), 0) ->
+        printfn $"Calling function {func.Name} with arity {func.Arity}"
+        if argCount <> func.Arity then
+            raise <| InvalidProgramException($"Expected {func.Arity} arguments but got {argCount}")
+            
+        // Calculate new stack base
+        let stackBase = vm.Stack.Count - argCount
+        printfn $"New stack base: {stackBase}"
+        
+        // Create new frame
+        let frame = {
+            Closure = 
+                match callee with
+                | VClosure(closure, _) -> 
+                    printfn "Using existing closure with upvalues"
+                    printfn $"Closure upvalue count: {closure.UpValues.Length}"
+                    // Important: Create a new closure with the same upvalues and values
+                    { closure with
+                        UpValuesValues = Array.copy closure.UpValuesValues }
+                | VFunction(f, _) -> 
+                    printfn "Creating new closure from function"
+                    { Function = f
+                      UpValues = []
+                      UpValuesValues = [||] }
+                | _ -> failwith "Impossible"
+            IP = 0
+            StackBase = stackBase
+        }
+        
+        // Add the new frame
+        printfn $"Adding new frame (frame count before: {vm.Frames.Count})"
+        vm.Frames.Add(frame)
+        printfn $"Frame count after: {vm.Frames.Count}"
+        vm
 and run (vm: VM) = runLoop vm
 
 and runFunction (vm: VM) (func: Function) (args: Value list) : Value =
