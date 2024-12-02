@@ -68,7 +68,7 @@ let initFunction (name: string) =
       Locals = [] }
 
 let addLocal (name: string) (state: CompilerState) : CompilerState =
-    let local =
+    let local: Local =
         { Name = name
           Depth = state.ScopeDepth
           Index = state.LocalCount }
@@ -85,17 +85,15 @@ let addUpValue (name: string) (depth: int) (state: CompilerState) : CompilerStat
     let upValue =
         { Name = name
           Index = state.CurrentFunction.UpValues.Length
-          Location = if depth = 0 then 
-                       Local(state.LocalCount)
-                        else 
-                       Enclosing(depth) }
-    
+          Depth = depth }
+
     let updatedFunction =
         { state.CurrentFunction with
             UpValues = upValue :: state.CurrentFunction.UpValues }
-    
+
     { state with
         CurrentFunction = updatedFunction }
+
 
 let rec compileLiteral (lit: Literal) : Compiler<unit> =
     let compileNumber (n: Token.Number) state =
@@ -344,145 +342,72 @@ and compileBlock (stmts: Stmt list) : Compiler<unit> =
             ((),
              { newState with
                  ScopeDepth = newState.ScopeDepth - 1 }))
+
+
 and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bool) : Compiler<unit> =
     fun state ->
         let functionName = $"lambda_{state.CurrentFunction.Function.Name}"
-        printfn $"Compiling lambda {functionName}"
         let lambdaFunction = initFunction functionName
-        
-        // Create initial state with new function
-        let initialState = 
-            { state with 
-                CurrentFunction = 
-                    { Function = lambdaFunction
-                      UpValues = []
-                      UpValuesValues = [||] }
-                ScopeDepth = 0
+
+        let currentFunction = state.CurrentFunction
+
+        let upvalues = currentFunction.Function.Locals @ currentFunction.UpValues
+
+        let lambdaState =
+            { state with
+                CurrentFunction.Function = lambdaFunction
+                ScopeDepth = state.ScopeDepth + 1
                 LocalCount = 0 }
-                
-        // Add parameters first
-        let stateWithParams = 
-            parameters 
-            |> List.fold 
-                (fun st param -> 
-                    let name = lexemeToString param.Lexeme
-                    let st = addLocal name st
-                    { st with 
-                        CurrentFunction.Function.Arity = st.CurrentFunction.Function.Arity + 1 })
-                initialState
 
-        // Helper to resolve variable 
-        let rec resolveVariable (name: string) (state: CompilerState) (enclosingState: CompilerState option) =
-            // First check locals in current function
-            match state.CurrentFunction.Function.Locals |> List.tryFind (fun l -> l.Name = name) with
-            | Some local -> 
-                printfn $"Found {name} as local at index {local.Index}"
-                Some(Local(local.Index))
-            | None ->
-                // Check enclosing function's locals if we have an enclosing state
-                match enclosingState with
-                | Some enclosing ->
-                    match enclosing.CurrentFunction.Function.Locals |> List.tryFind (fun l -> l.Name = name) with
-                    | Some local ->
-                        printfn $"Found {name} in enclosing scope at index {local.Index}"
-                        // Create new upvalue capturing this local
-                        Some(Enclosing(local.Index))
-                    | None ->
-                        // Recursively check outer scopes
-                        match enclosing.CurrentFunction.UpValues |> List.tryFind (fun u -> u.Name = name) with
-                        | Some upvalue ->
-                            printfn $"Found {name} as upvalue in enclosing scope"
-                            Some(upvalue.Location)
-                        | None -> None
-                | None -> None
+        let compiledParamsState =
+            parameters
+            |> List.fold
+                (fun state param ->
+                    let state = addLocal (lexemeToString param.Lexeme) state
 
-        // Walk the body expression to find all variable references that need to be captured
-        let rec captureUpValues expr (state: CompilerState) (enclosingState: CompilerState option) =
-            match expr with
-            | EIdentifier(token, _) ->
-                let name = lexemeToString token.Lexeme
-                printfn $"Capturing identifier: {name}"
-                match resolveVariable name state enclosingState with
-                | Some(Enclosing idx) ->
-                    printfn $"Capturing {name} as upvalue at index {idx}"
-                    let upValue = {
-                        Name = name
-                        Index = state.CurrentFunction.UpValues.Length
-                        Location = Enclosing(idx)
-                    }
-                    { state with 
-                        CurrentFunction = 
-                            { state.CurrentFunction with
-                                UpValues = upValue :: state.CurrentFunction.UpValues }}
-                | Some(Local idx) when enclosingState.IsSome ->
-                    // If we're in a nested function and find a local, it needs to be captured
-                    printfn $"Capturing local {name} as upvalue"
-                    let upValue = {
-                        Name = name
-                        Index = state.CurrentFunction.UpValues.Length
-                        Location = Local(idx)
-                    }
-                    { state with 
-                        CurrentFunction = 
-                            { state.CurrentFunction with
-                                UpValues = upValue :: state.CurrentFunction.UpValues }}
-                | _ -> 
-                    printfn $"No capture needed for {name}"
-                    state
-            | ELambda(params, innerBody, _, _, _, _) ->
-                // For nested lambdas, use current state as the enclosing state
-                captureUpValues innerBody state (Some state)
-            | ECall(callee, args, _) ->
-                // Capture upvalues in function calls
-                List.fold 
-                    (fun st expr -> captureUpValues expr st enclosingState)
-                    (captureUpValues callee state enclosingState)
-                    args
-            | EBlock(stmts, _) ->
-                // Capture upvalues in block statements
-                List.fold 
-                    (fun st stmt -> 
-                        match stmt with
-                        | SExpression(expr, _) -> captureUpValues expr st enclosingState
-                        | _ -> st)
-                    state
-                    stmts
-            | _ -> state
+                    { state with
+                        CurrentFunction.Function.Arity = state.CurrentFunction.Function.Arity + 1 })
+                lambdaState
 
-        let stateWithUpValues = captureUpValues body stateWithParams (Some state)
+        let compiledParamsState =
+            upvalues
+            |> List.fold (fun state upvalue -> addUpValue upvalue.Name upvalue.Depth state) compiledParamsState
 
-        // Now compile the body with upvalues captured
-        compileExpr body stateWithUpValues
-        |> Result.bind (fun ((), finalState) ->
-            emitOpCode OP_CODE.RETURN finalState
-            |> Result.bind (fun ((), state) ->
-                emitByte (byte 1) state
+        let builtin =
+            if pur then
+                Some <| compileAsBuiltin parameters body
+            else
+                None
+
+        compileExpr body compiledParamsState
+        |> Result.bind (fun ((), finalLambdaState) ->
+            emitOpCode OP_CODE.RETURN finalLambdaState
+            |> Result.bind (fun ((), finalState) ->
+                emitByte (byte 1) finalLambdaState |> ignore
+
+                let constIndex =
+                    addConstant
+                        state.CurrentFunction.Function.Chunk
+                        (if isAsync then
+                             VAsyncFunction(finalState.CurrentFunction.Function)
+                         else
+                             VFunction(finalState.CurrentFunction.Function, builtin))
+
+                emitBytes [| byte (opCodeToByte OP_CODE.CLOSURE); byte constIndex |] state
                 |> Result.bind (fun ((), state) ->
-                    let func = VFunction(finalState.CurrentFunction.Function, None)
-                    let constIndex = addConstant state.CurrentFunction.Function.Chunk func
-                    
-                    // Emit closure with actual upvalue count
-                    let upvalueCount = List.length finalState.CurrentFunction.UpValues
-                    emitBytes [| 
-                        byte (opCodeToByte OP_CODE.CLOSURE)
-                        byte constIndex
-                        byte upvalueCount
-                    |] state
+                    emitByte (byte (List.length upvalues)) state
                     |> Result.bind (fun ((), state) ->
-                        // Emit upvalue information
-                        finalState.CurrentFunction.UpValues
-                        |> List.fold 
-                            (fun result upValue ->
-                                result 
-                                |> Result.bind (fun ((), state) ->
-                                    match upValue.Location with
-                                    | Local i ->
-                                        emitBytes [| byte i; byte 1 |] state // isLocal = 1
-                                    | Enclosing i ->
-                                        emitBytes [| byte i; byte 0 |] state // isLocal = 0
-                                    | Global name ->
-                                        emitBytes [| byte 0; byte 0 |] state)) // placeholder for globals
-                            (Ok((), state))))))
+                        let upvalues =
+                            upvalues
+                            |> Seq.map (fun upvalue ->
+                                let constIndex =
+                                    addConstant state.CurrentFunction.Function.Chunk (VString upvalue.Name)
+
+                                [| byte upvalue.Index; byte upvalue.Depth; byte constIndex |])
+                            |> Seq.concat
+
+                        emitBytes upvalues state))))
+
 and compileAsBuiltin (parameters: Token list) (body: Expr) : Expression =
     // what we could do is make every unit return its compiled value
     // add to a map of lexeme to builtins on function def
@@ -518,24 +443,22 @@ and compileGrouping grouping : Compiler<unit> = fun state -> compileExpr groupin
 and compileIdentifier (token: Token) : Compiler<unit> =
     fun state ->
         let name = lexemeToString token.Lexeme
-        printfn $"Compiling identifier: {name} in function {state.CurrentFunction.Function.Name}"
 
-        // First check if this identifier is marked as needing to be captured as an upvalue
-        match state.CurrentFunction.UpValues |> List.tryFind (fun upvalue -> upvalue.Name = name) with
-        | Some upvalue -> 
-            printfn $"Found as upvalue at index {upvalue.Index}"
-            emitBytes [| byte (opCodeToByte OP_CODE.GET_UPVALUE); byte upvalue.Index |] state
+        match
+            state.CurrentFunction.Function.Locals
+            |> List.tryFind (fun local -> local.Name = name)
+        with
+        | Some local -> emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte local.Index |] state
         | None ->
-            // If not an upvalue, check locals
-            match state.CurrentFunction.Function.Locals |> List.tryFind (fun local -> local.Name = name) with
-            | Some local -> 
-                printfn $"Found as local at index {local.Index}"
-                emitBytes [| byte (opCodeToByte OP_CODE.GET_LOCAL); byte local.Index |] state
+            match
+                state.CurrentFunction.UpValues
+                |> List.tryFind (fun upvalue -> upvalue.Name = name)
+            with
+            | Some upvalue -> emitBytes [| byte (opCodeToByte OP_CODE.GET_UPVALUE); byte upvalue.Index |] state
             | None ->
-                // Finally check globals
-                printfn $"Not found locally or as upvalue, treating as global"
                 let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString name)
                 emitBytes [| byte (opCodeToByte OP_CODE.GET_GLOBAL); byte constIndex |] state
+
 and compileMatch (expr: Expr) (cases: (Pattern * Expr) list) : Compiler<unit> =
     fun state ->
         // hwo to do this ?

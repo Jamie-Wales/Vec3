@@ -34,21 +34,10 @@ type CompoundType =
     | RECORD
     | TUPLE
 
-and UpValueLocation = 
-    | Local of int
-    | Enclosing of int
-    | Global of string
-
 and Local = {
     Name: string
     Depth: int
     Index: int
-}
-
-and UpValue = {
-    Index: int
-    Name: string
-    Location: UpValueLocation
 }
 
 and VNumber =
@@ -71,7 +60,7 @@ and Function =
 
 and Closure =
     { Function: Function
-      UpValues: UpValue list 
+      UpValues: Local list 
       UpValuesValues: Value array }
 
 and Value =
