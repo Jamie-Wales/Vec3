@@ -218,7 +218,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             appendOutput vm Execution $"Pushed long constant onto stack: {valueToString constant}"
 
         vm
-    | GET_UPVALUE -> // broken currently, how do i get the upvalues ????????????????????????/
+    | GET_UPVALUE ->
         let vm, slot = readByte vm
 
         let rec findClosure (curDepth: int) =
@@ -228,7 +228,7 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             | VClosure _ -> closure
             | _ -> findClosure (curDepth + 1)
 
-        let closure = findClosure 1
+        let closure = findClosure 0
 
         match closure with
         | VClosure({ UpValues = upValues
