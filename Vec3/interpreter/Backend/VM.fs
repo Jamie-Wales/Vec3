@@ -235,9 +235,9 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
                      UpValuesValues = vals },
                    _) ->
             let upValues = List.rev upValues
-            let upValue = upValues[int slot]
+            // let upValue = upValues[int slot]
             let vals = Array.rev vals
-            let upValue = vals[upValue.Index]
+            let upValue = vals[if int slot = 0 then 0 else int slot - 1]
             let vm = push vm upValue
             vm
         | _ -> raise <| InvalidProgramException "Expected closure for GET_UPVALUE"
@@ -381,11 +381,13 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
                 | _ -> []
 
             let prevUpvals = getCurrentFrame vm |> _.Closure.UpValuesValues
-            let prevUv = getCurrentFrame vm |> _.Closure.UpValues
+            // let prevUv = getCurrentFrame vm |> _.Closure.UpValues
+            
             let vm, vals = popUpValues vm (int upValueCount)
-            let vals = List.append vals prevUv
-            let upvalues = Seq.toArray <| getUpvaluesVals vm (int upValueCount)
-            let upvalues = Array.append upvalues prevUpvals
+            // let vals = List.append prevUv vals
+            let upvalues = Seq.toArray <| getUpvaluesVals vm (int upValueCount - Array.length prevUpvals)
+            let upvalues = Array.append prevUpvals upvalues
+            
 
             // how do i set the upvalues ?
             // where do i get the upvalues from ?
@@ -700,7 +702,7 @@ and specialCasedBuiltins () : Map<string, Value> =
 
                       match compiled with
                       | Ok(func, _) ->
-                          let block = createNewVM (func)
+                          let block = createNewVM func
                           let vm' = run block
                           vm'.Stack[vm'.Stack.Count - 1]
                       | Error err -> raise <| InvalidProgramException $"{err}"
@@ -728,7 +730,7 @@ and specialCasedBuiltins () : Map<string, Value> =
 
                   match compiled with
                   | Ok(func, _) ->
-                      let block = createNewVM (func)
+                      let block = createNewVM func
                       let vm' = run block
                       vm'.Stack[vm'.Stack.Count - 1]
                   | Error err -> raise <| InvalidProgramException $"{err}"
@@ -756,7 +758,7 @@ and specialCasedBuiltins () : Map<string, Value> =
 
                   match compiled with
                   | Ok(func, _) ->
-                      let block = createNewVM (func)
+                      let block = createNewVM func
                       let vm' = run block
                       vm'.Stack[vm'.Stack.Count - 1]
                   | Error err -> raise <| InvalidProgramException $"{err}"
@@ -782,7 +784,7 @@ and specialCasedBuiltins () : Map<string, Value> =
 
                   match compiled with
                   | Ok(func, _) ->
-                      let block = createNewVM (func)
+                      let block = createNewVM func
                       let vm' = run block
                       vm'.Stack[vm'.Stack.Count - 1]
                   | Error err -> raise <| InvalidProgramException $"{err}"

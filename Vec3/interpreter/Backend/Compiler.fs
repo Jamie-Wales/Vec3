@@ -351,8 +351,7 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bo
 
         let currentFunction = state.CurrentFunction
 
-        let upvalues = currentFunction.Function.Locals
-        let upvaluesfull = upvalues @ currentFunction.UpValues
+        let upvalues = currentFunction.Function.Locals @ currentFunction.UpValues
 
         let lambdaState =
             { state with
