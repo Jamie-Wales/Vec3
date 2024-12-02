@@ -22,6 +22,11 @@ open Vec3.Interpreter.Backend.Builtins
 open Vec3.Interpreter.Token
 open Grammar
 
+type OpCodeResult =
+    | Return of Value
+    | Call of byte * byte
+    | Continue
+
 let output = ref Seq.empty
 
 let loadFunction (vm: VM) (func: Function) : VM =
@@ -148,199 +153,120 @@ let resetStreams (vm: VM) =
     { vm with
         Streams = createOutputStreams () }
 
-
-let rec runFrameRecursive vm =
-    let frame = getCurrentFrame vm
-
-    if frame.IP >= frame.Closure.Function.Chunk.Code.Count then
-        VNil, vm
-    else
-        let vm, instruction = readByte vm
-        let opcode = byteToOpCode instruction
-
-        match opcode with
-        | CALL ->
-            let vm, argCount = readByte vm
-            let vm, _ = readByte vm
-            let callee = peek vm (int argCount)
-            callee, vm
-        | _ ->
-            let vm = executeOpcode vm opcode
-            runCurrentFrame vm
-
-and runCurrentFrame vm =
-    let frame = getCurrentFrame vm
-
-    if frame.IP >= frame.Closure.Function.Chunk.Code.Count then
-        VNil, vm
-    else
-        let vm, instruction = readByte vm
-        let opcode = byteToOpCode instruction
-
-        match opcode with
-        | RETURN ->
-            let currentFrame = getCurrentFrame vm
-            let argCount = List.length currentFrame.Closure.Function.Locals
-            let vm, shouldPop = readByte vm
-
-            let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
-            // get values
-            List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int argCount) - 1 ]
-
-            if int shouldPop = 1 then
-                let _ = pop vm
-                ()
-
-            vm.Frames.RemoveAt(vm.Frames.Count - 1)
-            result, vm
-        | _ ->
-            let vm = executeOpcode vm opcode
-            runCurrentFrame vm
-
-
-and executeOpcode (vm: VM) (opcode: OP_CODE) =
+let rec executeOpcode (vm: VM) (opcode: OP_CODE) : VM * OpCodeResult =
     let vm = appendOutput vm Execution $"Executing: {opCodeToString opcode}"
-
     match opcode with
-    | CONSTANT ->
-        let constant, vm = readConstant vm
-        let vm = push vm constant
-
-        let _ =
-            appendOutput vm Execution $"Pushed constant onto stack: {valueToString constant}"
-
-        vm
-    | CONSTANT_LONG ->
-        let constant, vm = readConstantLong vm
-        let vm = push vm constant
-
-        let _ =
-            appendOutput vm Execution $"Pushed long constant onto stack: {valueToString constant}"
-
-        vm
-    | GET_UPVALUE ->
-        let vm, slot = readByte vm
-
-        let rec findClosure (curDepth: int) =
-            let closure = peek vm curDepth
-
-            match closure with
-            | VClosure _ -> closure
-            | _ -> findClosure (curDepth + 1)
-
-        let closure = findClosure 0
-
-        match closure with
-        | VClosure({ UpValues = upValues
-                     UpValuesValues = vals },
-                   _) ->
-            let upValues = List.rev upValues
-            // let upValue = upValues[int slot]
-            let vals = Array.rev vals
-            let upValue = vals[if int slot = 0 then 0 else int slot - 1]
-            let vm = push vm upValue
-            vm
-        | _ -> raise <| InvalidProgramException "Expected closure for GET_UPVALUE"
-
-    | GET_LOCAL ->
-        let vm, slot = readByte vm
-        let frame = getCurrentFrame vm
-        let index = frame.StackBase + int slot
-
-        if index >= vm.Stack.Count then
-            raise
-            <| InvalidProgramException
-                $"GET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}"
-
-        let value = vm.Stack[index]
-        let vm = push vm value
-        vm
-    | SET_LOCAL ->
-        let vm, slot = readByte vm
-        let value, vm = pop vm
-        let frame = getCurrentFrame vm
-        let index = frame.StackBase + int slot
-
-        if index >= vm.Stack.Count then
-            raise
-            <| InvalidProgramException
-                $"SET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}"
-
-        vm.Stack[index] <- value
-        vm
-    | TRUE -> push vm (VBoolean true)
-    | FALSE -> push vm (VBoolean false)
-    | NIL -> push vm VNil
-    | POP ->
-        let _, vm = pop vm
-        vm
-    | DEFINE_GLOBAL ->
-        let constant, vm = readConstant vm
-
-        match constant with
-        | VString name ->
-            let value, vm = pop vm
-
-            let vm =
-                appendOutput vm Execution $"Defining global variable: {name} = {valueToString value}"
-
-            defineGlobal vm name value
-        | _ ->
-            raise
-            <| InvalidProgramException "Expected string constant for variable name in DEFINE_GLOBAL"
-    | GET_GLOBAL ->
-        let constant, vm = readConstant vm
-
-        match constant with
-        | VString name ->
-            match getGlobal vm name with
-            | Some value -> push vm value
-            | None -> raise <| InvalidProgramException $"Undefined variable '{name}'"
-        | _ ->
-            raise
-            <| InvalidProgramException "Expected string constant for variable name in GET_GLOBAL"
-    | SET_GLOBAL ->
-        let constant, vm = readConstant vm
-
-        match constant with
-        | VString name ->
-            let value, vm = pop vm
-
-            if vm.Globals.ContainsKey(name) then
-                let vm = defineGlobal vm name value
+    | RETURN -> 
+        let currentFrame = getCurrentFrame vm
+        let argCount = List.length currentFrame.Closure.Function.Locals
+        let vm, shouldPop = readByte vm
+        let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
+        
+        let vm = 
+            List.fold 
+                (fun vm _ -> 
+                    let _, vm = pop vm 
+                    vm
+                ) vm [0..argCount - 1]
+        
+        let vm = 
+            if int shouldPop = 1 then 
+                let _, vm = pop vm
+                vm 
+            else 
                 vm
-            else
-                raise <| InvalidProgramException $"Undefined variable '{name}'"
-        | _ ->
-            raise
-            <| InvalidProgramException "Expected string constant for variable name in SET_GLOBAL"
+                 
+        vm.Frames.RemoveAt(vm.Frames.Count - 1)
+        (vm, Return result)
+        
     | CALL ->
         let vm, argCount = readByte vm
         let vm, recursive = readByte vm
-        callValue vm (int argCount) (int recursive)
-    | RETURN ->
-        let currentFrame = getCurrentFrame vm
-        let argCount = List.length currentFrame.Closure.Function.Locals
-        //  let localCount = currentFrame.Function.Locals.Length
-        let vm, shouldPop = readByte vm
-        let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
+        (vm, Call(argCount, recursive))
+        
+    | _ -> 
+        let vm = executeOpcodeImpl vm opcode
+        (vm, Continue)
 
-        // pop arg count
-        List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int argCount) - 1 ]
-        // List.iter (fun _ -> let _, _ = pop vm in ()) [ 0 .. (int localCount) - 1 ]
-        if int shouldPop = 1 then
-            let _ = pop vm
-            ()
+and executeOpcodeImpl (vm: VM) (opcode: OP_CODE) : VM =
+   match opcode with
+   | CONSTANT ->
+       let constant, vm = readConstant vm
+       let vm = push vm constant
+       appendOutput vm Execution $"Pushed constant onto stack: {valueToString constant}"
+       
+   | CONSTANT_LONG ->
+       let constant, vm = readConstantLong vm
+       let vm = push vm constant
+       appendOutput vm Execution $"Pushed long constant onto stack: {valueToString constant}"
+       
+   | GET_LOCAL ->
+       let vm, slot = readByte vm
+       let frame = getCurrentFrame vm
+       let index = frame.StackBase + int slot
+       printfn $"GET_LOCAL: slot={slot}, stackBase={frame.StackBase}, index={index}, stackSize={vm.Stack.Count}"
+       
+       // Add validation
+       if frame.StackBase < 0 || frame.StackBase >= vm.Stack.Count then
+           raise <| InvalidProgramException(
+               $"Invalid stack base: {frame.StackBase} (stack size: {vm.Stack.Count})")
+               
+       if index < 0 || index >= vm.Stack.Count then
+           raise <| InvalidProgramException(
+               $"GET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}")
+               
+       let value = vm.Stack[index]
+       printfn $"Getting local value: {valueToString value}"
+       push vm value
+           
+   | SET_LOCAL ->
+       let vm, slot = readByte vm
+       let value, vm = pop vm
+       let frame = getCurrentFrame vm
+       let index = frame.StackBase + int slot
+       if index >= vm.Stack.Count then
+           raise <| InvalidProgramException($"SET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}")
+       vm.Stack[index] <- value
+       vm
+       
+   | TRUE -> push vm (VBoolean true)
+   | FALSE -> push vm (VBoolean false)
+   | NIL -> push vm VNil
+   
+   | POP ->
+       let _, vm = pop vm
+       vm
+       
+   | DEFINE_GLOBAL ->
+       let constant, vm = readConstant vm
+       match constant with
+       | VString name ->
+           let value, vm = pop vm
+           let vm = appendOutput vm Execution $"Defining global variable: {name} = {valueToString value}"
+           defineGlobal vm name value
+       | _ -> raise <| InvalidProgramException("Expected string constant for variable name in DEFINE_GLOBAL")
+       
+   | GET_GLOBAL ->
+       let constant, vm = readConstant vm
+       match constant with
+       | VString name ->
+           match getGlobal vm name with
+           | Some value -> push vm value
+           | None -> raise <| InvalidProgramException($"Undefined variable '{name}'")
+       | _ -> raise <| InvalidProgramException("Expected string constant for variable name in GET_GLOBAL")
+       
+   | SET_GLOBAL ->
+       let constant, vm = readConstant vm
+       match constant with
+       | VString name ->
+           let value, vm = pop vm
+           if vm.Globals.ContainsKey(name) then
+               defineGlobal vm name value
+           else
+               raise <| InvalidProgramException($"Undefined variable '{name}'")
+       | o -> 
+               raise <| InvalidProgramException($"Undefined variable '{o}'")
 
-
-        vm.Frames.RemoveAt(vm.Frames.Count - 1)
-
-        if vm.Frames.Count = 0 then
-            let vm = push vm result
-            vm
-        else
-            let vm = push vm result
-            runLoop vm
     | CLOSURE ->
         let constant, vm = readConstant vm
 
@@ -404,256 +330,199 @@ and executeOpcode (vm: VM) (opcode: OP_CODE) =
             let vm = push vm closure
             vm
         | _ -> raise <| InvalidProgramException "Expected function constant for closure"
-    | JUMP ->
-        let vm, byte1 = readByte vm
-        let vm, byte2 = readByte vm
-        let jump = int ((byte1 <<< 8) ||| byte2)
+   
+    | GET_UPVALUE ->
+        let vm, slot = readByte vm
 
+        let rec findClosure (curDepth: int) =
+            let closure = peek vm curDepth
+
+            match closure with
+            | VClosure _ -> closure
+            | _ -> findClosure (curDepth + 1)
+
+        let closure = findClosure 0
+
+        match closure with
+        | VClosure({ UpValues = upValues
+                     UpValuesValues = vals },
+                   _) ->
+            let upValues = List.rev upValues
+            // let upValue = upValues[int slot]
+            let vals = Array.rev vals
+            let upValue = vals[if int slot = 0 then 0 else int slot - 1]
+            let vm = push vm upValue
+            vm
+        | _ -> raise <| InvalidProgramException "Expected closure for GET_UPVALUE"
+           
+   | JUMP ->
+       let vm, byte1 = readByte vm
+       let vm, byte2 = readByte vm
+       let jump = int ((byte1 <<< 8) ||| byte2)
+       let frame = getCurrentFrame vm
+       let frame = { frame with IP = frame.IP + jump }
+       vm.Frames[vm.Frames.Count - 1] <- frame
+       vm
+       
+   | JUMP_IF_FALSE ->
+       let vm, byte1 = readByte vm
+       let vm, byte2 = readByte vm
+       let jump = int ((byte1 <<< 8) ||| byte2)
+       let condition, vm = pop vm
+       if not (isTruthy condition) then
+           let frame = getCurrentFrame vm
+           let frame = { frame with IP = frame.IP + jump }
+           vm.Frames[vm.Frames.Count - 1] <- frame
+           vm
+       else
+           vm
+           
+   | COMPOUND_CREATE ->
+       let structure, vm = pop vm
+       let count, vm = pop vm
+       match (structure, count) with
+       | VList(values, typ), VNumber(VInteger n) when n >= 0 ->
+           let values' = [0 .. n - 1] 
+                        |> List.map (fun _ -> let value, _ = pop vm in value) 
+                        |> List.rev
+           let list = VList(List.append values values', typ)
+           push vm list
+       | _ -> raise <| InvalidProgramException("Expected list and integer for list create")
+       
+   | _ -> raise <| InvalidProgramException($"Unimplemented opcode: {opCodeToString opcode}")
+
+let rec runFrameRecursive (vm: VM) : VM * Value =
+    let rec loop (vm: VM) (acc: Value) =
         let frame = getCurrentFrame vm
-        let frame = { frame with IP = frame.IP + jump }
-        vm.Frames[vm.Frames.Count - 1] <- frame
-        vm
-    | JUMP_IF_FALSE ->
-        let vm, byte1 = readByte vm
-        let vm, byte2 = readByte vm
-        let jump = int ((byte1 <<< 8) ||| byte2)
-        let condition, vm = pop vm
-
-        if not (isTruthy condition) then
-            let frame = getCurrentFrame vm
-            let frame = { frame with IP = frame.IP + jump }
-            vm.Frames[vm.Frames.Count - 1] <- frame
-            vm
-        else
-            vm
-    | COMPOUND_CREATE ->
-        let structure, vm = pop vm
-        let count, vm = pop vm
-
-        match (structure, count) with
-        | VList(values, typ), VNumber(VInteger n) when n >= 0 ->
-            let values' =
-                [ 0 .. n - 1 ] |> List.map (fun _ -> let value, _ = pop vm in value) |> List.rev
-
-            let list = VList(List.append values values', typ)
-            let vm = push vm list
-            vm
-        | _ -> raise <| InvalidProgramException("Expected list and integer for list create")
-
-    | _ ->
-        raise
-        <| InvalidProgramException($"Unimplemented opcode: {opCodeToString opcode}")
-
-and runLoop vm =
-    if vm.Frames.Count = 0 then
-        vm
-    else
-        let frame = getCurrentFrame vm
-
         if frame.IP >= frame.Closure.Function.Chunk.Code.Count then
-            if vm.Frames.Count > 1 then
-                let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
-                vm.Frames.RemoveAt(vm.Frames.Count - 1)
-                let callerFrame = getCurrentFrame vm
-                vm.Stack.RemoveRange(callerFrame.StackBase, vm.Stack.Count - callerFrame.StackBase)
-                let vm = push vm result
-                runLoop vm
-            else
-                vm.Frames.RemoveAt(vm.Frames.Count - 1)
-                let vm = if vm.Stack.Count = 0 then push vm VNil else vm
-                vm
+            vm, acc
         else
-            saveVMState vm
             let vm, instruction = readByte vm
+            let opcode = byteToOpCode instruction
+            let vm, result = executeOpcode vm opcode
+            match result with
+            | Return value -> vm, value
+            | Call(argCount, recursive) ->
+                let vm = callValue vm (int argCount) (int recursive)
+                loop vm acc
+            | Continue -> loop vm acc
+    loop vm VNil
 
-            let vm =
+and runLoop (vm: VM) : VM =
+    let rec loop (vm: VM) =
+        if vm.Frames.Count = 0 then
+            vm
+        else
+            let frame = getCurrentFrame vm
+            if frame.IP >= frame.Closure.Function.Chunk.Code.Count then
+                if vm.Frames.Count > 1 then
+                    let result, vm = if vm.Stack.Count > 0 then pop vm else VNil, vm
+                    vm.Frames.RemoveAt(vm.Frames.Count - 1)
+                    let callerFrame = getCurrentFrame vm
+                    vm.Stack.RemoveRange(callerFrame.StackBase, vm.Stack.Count - callerFrame.StackBase)
+                    let vm = push vm result
+                    loop vm
+                else
+                    vm.Frames.RemoveAt(vm.Frames.Count - 1)
+                    if vm.Stack.Count = 0 then push vm VNil else vm
+            else
+                saveVMState vm
+                let vm, instruction = readByte vm
                 let opcode = byteToOpCode instruction
-                executeOpcode vm opcode
+                let vm, result = executeOpcode vm opcode
+                match result with
+                | Return value -> 
+                    let vm = push vm value
+                    loop vm
+                | Call(argCount, recursive) ->
+                    let vm = callValue vm (int argCount) (int recursive)
+                    loop vm
+                | Continue -> 
+                    loop vm
+    loop vm
 
-            runLoop vm
+and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
+    printfn $"\nCALL: argCount={argCount}, recursive={recursive}, stack size={vm.Stack.Count}"
+    let callee = peek vm argCount
+    printfn $"Callee: {valueToString callee}"
+    
+    match (callee, recursive) with
+    | VBuiltin (func, _), _ ->
+            let args =
+                [ 0 .. argCount - 1 ]
+                |> List.map (fun _ -> let value, _ = pop vm in value)
+                |> List.rev
+
+            let value = func args
+
+            let vm, value =
+                match value with
+                | VShape(_, _, _, _, _, _, id, _) ->
+                    vm.Canvas.Add(value)
+                    vm.Plots.Add(value)
+                    let record = VList([ VList([ VString "id"; VNumber(VInteger id) ], LIST) ], RECORD)
+                    vm, record
+                | VPlotData _ ->
+                    vm.Plots.Add(value)
+                    vm, VNil
+                | VPlotFunction _ ->
+                    vm.Plots.Add(value)
+                    vm, VNil
+                | VPlotFunctions _ ->
+                    vm.Plots.Add(value)
+                    vm, VNil
+                | VShapes(_, id) ->
+                    vm.Canvas.Add(value)
+                    vm.Plots.Add(value)
+                    let record = VList([ VList([ VString "id"; VNumber(VInteger id) ], LIST) ], RECORD)
+                    vm, record
+                | VOutput s -> appendOutput vm StandardOutput s, VNil
+                | VEventListener(id, event, func) ->
+                    vm.EventListeners.Add(id, event, func)
+                    vm, VNil
+                | _ -> vm, value
+
+            let _, vm = pop vm
+            push vm value
+    | VFunction(func, _), 0 
+    | VClosure({ Function = func }, _), 0 ->
+        printfn $"Calling function {func.Name} with arity {func.Arity}"
+        if argCount <> func.Arity then
+            raise <| InvalidProgramException($"Expected {func.Arity} arguments but got {argCount}")
+            
+        // Calculate new stack base
+        let stackBase = vm.Stack.Count - argCount
+        printfn $"New stack base: {stackBase}"
+        
+        // Create new frame
+        let frame = {
+            Closure = 
+                match callee with
+                | VClosure(closure, _) -> 
+                    printfn "Using existing closure with upvalues"
+                    printfn $"Closure upvalue count: {closure.UpValues.Length}"
+                    // Important: Create a new closure with the same upvalues and values
+                    { closure with
+                        UpValuesValues = Array.copy closure.UpValuesValues }
+                | VFunction(f, _) -> 
+                    printfn "Creating new closure from function"
+                    { Function = f
+                      UpValues = []
+                      UpValuesValues = [||] }
+                | _ -> failwith "Impossible"
+            IP = 0
+            StackBase = stackBase
+        }
+        
+        // Add the new frame
+        printfn $"Adding new frame (frame count before: {vm.Frames.Count})"
+        vm.Frames.Add(frame)
+        printfn $"Frame count after: {vm.Frames.Count}"
+        vm
+and run (vm: VM) = runLoop vm
 
 and joinOutput (vm1: VM) (vm2: VM) =
     appendOutput vm1 StandardOutput (vm2.Streams.StandardOutput.ToString())
-
-and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
-    let callee = peek vm argCount
-
-    match recursive with
-    | 0 ->
-        match callee with
-        | VFunction(func, _) ->
-            if argCount <> func.Arity then
-                raise
-                <| InvalidProgramException $"Expected {func.Arity} arguments but got {argCount} for function {func}"
-
-            // remove caller from stack
-            let closure =
-                { Function = func
-                  UpValues = []
-                  UpValuesValues = [||] }
-
-            let frame =
-                { Closure = closure
-                  IP = 0
-                  StackBase = vm.Stack.Count - argCount }
-
-            vm.Frames.Add(frame)
-            vm
-        | VClosure(closure, _) ->
-            if argCount <> closure.Function.Arity then
-                raise
-                <| InvalidProgramException $"Expected {closure.Function.Arity} arguments but got {argCount} for closure"
-
-            let frame =
-                { Closure = closure
-                  IP = 0
-                  StackBase = vm.Stack.Count - argCount }
-
-            vm.Frames.Add(frame)
-            vm
-        | VBuiltin(func, _) ->
-            let args =
-                [ 0 .. argCount - 1 ]
-                |> List.map (fun _ -> let value, _ = pop vm in value)
-                |> List.rev
-
-            let value = func args
-
-            let vm, value =
-                match value with
-                | VShape(_, _, _, _, _, _, id, _) ->
-                    vm.Canvas.Add(value)
-                    vm.Plots.Add(value)
-                    let record = VList([ VList([ VString "id"; VNumber(VInteger id) ], LIST) ], RECORD)
-                    vm, record
-                | VPlotData _ ->
-                    vm.Plots.Add(value)
-                    vm, VNil
-                | VPlotFunction _ ->
-                    vm.Plots.Add(value)
-                    vm, VNil
-                | VPlotFunctions _ ->
-                    vm.Plots.Add(value)
-                    vm, VNil
-                | VShapes(_, id) ->
-                    vm.Canvas.Add(value)
-                    vm.Plots.Add(value)
-                    let record = VList([ VList([ VString "id"; VNumber(VInteger id) ], LIST) ], RECORD)
-                    vm, record
-                | VOutput s -> appendOutput vm StandardOutput s, VNil
-                | VEventListener(id, event, func) ->
-                    vm.EventListeners.Add(id, event, func)
-                    vm, VNil
-                | _ -> vm, value
-
-            let _, vm = pop vm
-            push vm value
-        | VAsyncFunction func ->
-            let runAsyncFunction (func: Function) (args: Value list) : Async<Value> =
-                async {
-                    let res = runFunction vm func args
-                    return res
-                }
-
-            let args =
-                [ 0 .. argCount - 1 ]
-                |> List.map (fun _ -> let value, _ = pop vm in value)
-                |> List.rev
-
-            let res = runAsyncFunction func args
-            push vm (VPromise res)
-        | _ ->
-            raise
-            <| InvalidProgramException $"Can only call functions and closures {callee}"
-    | 1 ->
-        match callee with
-        | VClosure(closure, _) ->
-            if argCount <> closure.Function.Arity then
-                raise
-                <| InvalidProgramException $"Expected {closure.Function.Arity} arguments but got {argCount} for closure"
-
-            let frame =
-                { Closure = closure
-                  IP = 0
-                  StackBase = vm.Stack.Count - argCount }
-
-            vm.Frames.Add(frame)
-
-            match runFrameRecursive vm with
-            | VFunction _, vm ->
-                vm.Frames.RemoveAt(vm.Frames.Count - 1)
-                callValue vm argCount 1
-            | v, vm -> let _ = push vm v in vm
-
-        | VFunction(func, _) ->
-            if argCount <> func.Arity then
-                raise
-                <| InvalidProgramException
-                    $"Expected {func.Arity} arguments but got {argCount} for function {func.Name}"
-
-            let closure =
-                { Function = func
-                  UpValues = []
-                  UpValuesValues = [||] }
-
-            let frame =
-                { Closure = closure
-                  IP = 0
-                  StackBase = vm.Stack.Count - argCount }
-
-            vm.Frames.Add(frame)
-
-            match runFrameRecursive vm with
-            | VFunction _, vm ->
-                vm.Frames.RemoveAt(vm.Frames.Count - 1)
-                callValue vm argCount 1
-            | v, vm -> let _ = push vm v in vm
-        | VBuiltin(func, _) ->
-            let args =
-                [ 0 .. argCount - 1 ]
-                |> List.map (fun _ -> let value, _ = pop vm in value)
-                |> List.rev
-
-            let value = func args
-
-            let vm, value =
-                match value with
-                | VShape(_, _, _, _, _, _, id, _) ->
-                    vm.Plots.Add(value)
-                    vm.Canvas.Add(value)
-                    let record = VList([ VList([ VString "id"; VNumber(VInteger id) ], LIST) ], RECORD)
-                    vm, record
-                | VPlotData _ ->
-                    vm.Plots.Add(value)
-                    vm, VNil
-                | VPlotFunction _ ->
-                    vm.Plots.Add(value)
-                    vm, VNil
-                | VPlotFunctions _ ->
-                    vm.Plots.Add(value)
-                    vm, VNil
-                | VShapes(_, id) ->
-                    vm.Plots.Add(value)
-                    vm.Canvas.Add(value)
-                    let record = VList([ VList([ VString "id"; VNumber(VInteger id) ], LIST) ], RECORD)
-                    vm, record
-                | VOutput s -> appendOutput vm StandardOutput s, VNil
-                | VEventListener(id, event, func) ->
-                    vm.EventListeners.Add(id, event, func)
-                    vm, VNil
-                | _ -> vm, value
-
-            let _, vm = pop vm
-            push vm value
-        | _ ->
-            raise
-            <| InvalidProgramException $"Can only call functions and closures {callee}"
-    | _ -> raise <| InvalidProgramException $"Invalid recursive value {recursive}"
-
-
-
-and run (vm: VM) = runLoop vm
-
 
 and createNewVM (mainFunc: Function) : VM =
     let constantPool =
