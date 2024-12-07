@@ -8,18 +8,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Program.fs"/>
-        <Compile Include="Parser.fs" />
-        <Compile Include="Scanner.fs" />
         <Compile Include="SymbolicExpression.fs" />
-        <Compile Include="Token.fs" />
         <Compile Include="Optimisation\DCE.fs" />
         <Compile Include="Optimisation\ConstantFolding.fs" />
-        <Compile Include="Typing\Inference.fs" />
-        <Folder Include="Typing\Substitution\" />
+        <Compile Include="TypeAnalysis\Inference.fs" />
         <Compile Include="Backend\Compiler.fs" />
         <Compile Include="Backend\VM.fs" />
         <Compile Include="Backend\Value.fs" />
+        <Compile Include="SyntaxAnalysis\Parser.fs" />
+        <Compile Include="SyntaxAnalysis\Scanner.fs" />
+        <Compile Include="SyntaxAnalysis\Token.fs" />
+        <Compile Include="Program.fs"/>
     </ItemGroup>
 
     <ItemGroup>

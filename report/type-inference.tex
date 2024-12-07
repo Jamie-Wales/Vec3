@@ -219,7 +219,6 @@ The way this issue was solved in Vec3 is by introducing the concept of \textit{C
 likened to a slightly less powerful version of type classes in Haskell.
 
 A constraint is a type that is defined by a type variable, and a function of type \textit{Type -> bool}.
-
 During unification, if a type is unified with a constraint type, then the function is called with the type, and if it
 returns true then the unification is successful and the type variable that the constraint holds is unified with the
 type.
@@ -233,9 +232,7 @@ For example, consider the type of the \textit{+} operator:
 Then when the operator is used with say two ints, the first constrain would be unified with the type 
 \textit{int} (as the int type passes the \textit{isArithmetic} function), and the type variable \textit{a} would be 
 replaced with \textit{int}.
-
 The second int would then be unified with the type \textit{int}, and the unification would be successful.
-
 However, if the operator was used with an rational and a float, the first constraint would be unified with the type
 \textit{rational}, replacing the type variable \textit{a} with \textit{rational}, and the second constraint would be 
 unified 
@@ -249,6 +246,14 @@ let double = (x) -> x + x
 
 This function can be called with any type that supports arithmetic, and the type inference algorithm will infer the
 type of the function as \textit{Constraint (a, supportsArithmetic) -> a}.
+
+Something else unique is the concept of a \textit{transformation}, which is a function of the constraint type that
+transforms the type into another type.
+This was necessary due to functions such as \textit{append}, which appends two lists.
+Due to the fact that the length of the list is encoded in the type, without a transformation the arguments could 
+only unify if the lists were of the same length, which is an unnecessary restriction.
+As such, the transformation function is used to transform the dimensions of the first type into a list without 
+dimension restrictions so unity can occur.
 
 A current limitation of this system is that the user cannot define their own constraints, and the only constraints 
 present are those built into the language (such as operators).

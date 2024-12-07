@@ -187,7 +187,8 @@ let Empty =
 /// <returns>The string representation of the number.</returns>
 let numberToString (n: Number) : string =
     match n with
-    | LFloat f -> $"Float({f})"
+    // 1dp
+    | LFloat f -> $"Float({f:f1})"
     | LInteger i -> $"Integer({i})"
     | LRational(n, d) -> $"Rational({n}/{d})"
     | LComplex(r, i) -> $"Complex({r}i{i})"
@@ -284,7 +285,7 @@ let lexemeToString (lex: Lexeme) : string =
     match lex with
     | Number n -> $"Number(%s{numberToString n})"
     | String s -> $"String(\"%s{s}\")"
-    | Keyword k -> $"Keyword({k})"
+    | Keyword k -> $"Keyword({keywordToString k})"
     | Operator(op, fix) ->
         $"""Operator(%s{operatorToString op}){Option.defaultValue "" (Option.map (fun p -> $"({p})") fix)}"""
     | Identifier i -> $"Identifier(%s{i})"

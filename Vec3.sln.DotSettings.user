@@ -4,4 +4,7 @@
   &lt;TestAncestor&gt;
     &lt;TestId&gt;NUnit3x::CC223DAB-0948-4439-83AE-26B033C464EB::net9.0::Tests&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=cc7f1630_002D629d_002D49f2_002D883a_002Df9d7fb7c76d8/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from &amp;lt;Tests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;Project Location="/Users/jacobedwards/dev/ap/Vec3/Tests" Presentation="&amp;lt;Tests&amp;gt;" /&gt;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
