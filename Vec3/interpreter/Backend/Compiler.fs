@@ -194,7 +194,9 @@ let rec compileExpr (expr: Expr) : Compiler<unit> =
         | ETernary(cond, thenB, elseB, _) -> compileIf cond thenB elseB state
         | ETail(ex, _) ->
             match ex with
-            | ECall(name, args, _) -> compileCall name args true state
+            | ECall(name, args, _) ->
+                printf "Compiling tail"
+                compileCall name args true state
             | e -> compileExpr e state
         | EMatch(expr, cases, _) -> compileMatch expr cases state
 
@@ -436,7 +438,7 @@ and compileCall (callee: Expr) (arguments: Expr list) (recursive: bool) : Compil
                 | false -> 0
                 | true -> 1
 
-            emitBytes [| byte (opCodeToByte OP_CODE.CALL); byte (List.length arguments); (byte b) |] state)
+            emitBytes [| byte (opCodeToByte OP_CODE.CALL); (byte (List.length arguments)); (byte b) |] state)
 
 and compileGrouping grouping : Compiler<unit> = fun state -> compileExpr grouping state
 
