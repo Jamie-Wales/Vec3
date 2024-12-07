@@ -155,7 +155,6 @@ let rec scOperator (iStr: char list) (iVal: string) : (char list * Operator * in
         | _ -> Some(iStr, Custom iVal, iVal.Length)
 
 
-// TODO: rationals dont work !!
 /// <summary>
 /// Scan in a number.
 /// </summary>
@@ -172,8 +171,7 @@ let scNumber (nStr: char list) : (char list * Number * int) option =
     let rec scInt (iStr: char list) (iVal: int) (len: int) : char list * int * int =
         match iStr with
         | c :: tail when isDigit c -> scInt tail (10 * iVal + intVal c) (len + 1)
-        // | '-' :: tail -> let iTail, iInt, iLen = scInt tail 0 len in (iTail, -iInt, iLen + 1)
-        // | '+' :: tail -> scInt tail iVal (len + 1)
+        | c :: tail when c = '_' -> scInt tail iVal (len + 1)
         | _ -> (iStr, iVal, len)
 
     /// <summary>
@@ -190,16 +188,14 @@ let scNumber (nStr: char list) : (char list * Number * int) option =
             let newAcc = acc + (float (intVal c)) / div
             scFraction tail newAcc (div * 10.0) (len + 1)
         | _ -> (fStr, acc, len)
-
+    
     match nStr with
     | c :: tail when isDigit c ->
         let iStr, iVal, iLen = scInt tail (intVal c) 1
 
         match iStr with
-        | 'i' :: comTail
-        | 'I' :: comTail ->
-            failwith "todo"
-        
+        | 'I' :: tail | 'i' :: tail ->
+            Some(tail, LComplex(0.0, iVal), iLen + 1)
         | '/' :: ratTail ->
             let fStr, fVal, fLen = scInt ratTail 0 0
             Some(fStr, LRational(iVal, int fVal), iLen + fLen + 1)
@@ -383,6 +379,15 @@ let lexer (input: string) : LexerResult<Token list> =
                     nStr
                     { position with
                         Column = position.Column + nLen }
+        
+        // | 'i' :: tail | 'I' :: tail ->
+        //     Ok
+        //         { Lexeme = Number(LComplex(0.0, 1))
+        //           Position = position }
+        //     :: scan
+        //         tail
+        //         { position with
+        //             Column = position.Column + 1 }
 
         | c :: tail when isSymbol c ->
             let oRes = scOperator tail (string c)

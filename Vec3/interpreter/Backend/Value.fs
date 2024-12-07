@@ -67,6 +67,10 @@ let rec add a b =
         let d = d1 * d2
         VNumber(VRational(n, d)) // Consider simplifying the fraction
     | VNumber(VComplex(r1, i1)), VNumber(VComplex(r2, i2)) -> VNumber(VComplex(r1 + r2, i1 + i2))
+    | VNumber(VInteger x), VNumber(VChar y)
+    | VNumber(VChar y), VNumber(VInteger x) -> VNumber(VChar(char (int x + int y)))
+    | VNumber(VComplex(r, i)), VNumber(VInteger x)
+    | VNumber(VInteger x), VNumber(VComplex(r, i)) -> VNumber(VComplex(r + float x, i))
     | VNumber(VChar x), VNumber(VChar y) -> VNumber(VChar(char (int x + int y)))
     | VNumber x, VNumber y -> VNumber(VFloat(floatValue x + floatValue y))
     | VList(l1, t), VList(l2, _) ->
