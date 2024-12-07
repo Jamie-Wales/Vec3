@@ -204,7 +204,6 @@ and executeOpcodeImpl (vm: VM) (opcode: OP_CODE) : VM =
        let vm, slot = readByte vm
        let frame = getCurrentFrame vm
        let index = frame.StackBase + int slot
-       printfn $"GET_LOCAL: slot={slot}, stackBase={frame.StackBase}, index={index}, stackSize={vm.Stack.Count}"
        
        // Add validation
        if frame.StackBase < 0 || frame.StackBase >= vm.Stack.Count then
@@ -216,7 +215,6 @@ and executeOpcodeImpl (vm: VM) (opcode: OP_CODE) : VM =
                $"GET_LOCAL: Stack index out of range. Index: {index}, Stack size: {vm.Stack.Count}")
                
        let value = vm.Stack[index]
-       printfn $"Getting local value: {valueToString value}"
        push vm value
            
    | SET_LOCAL ->
@@ -442,9 +440,7 @@ and runLoop (vm: VM) : VM =
     loop vm
 
 and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
-    printfn $"\nCALL: argCount={argCount}, recursive={recursive}, stack size={vm.Stack.Count}"
     let callee = peek vm argCount
-    printfn $"Callee: {valueToString callee}"
     
     match (callee, recursive) with
     | VBuiltin (func, _), _ ->
@@ -486,23 +482,18 @@ and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
             
     | VFunction(func, _), 0 
     | VClosure({ Function = func }, _), 0 ->
-        printfn $"Calling function {func.Name} with arity {func.Arity}"
         if argCount <> func.Arity then
             raise <| InvalidProgramException($"Expected {func.Arity} arguments but got {argCount}")
             
         let stackBase = vm.Stack.Count - argCount
-        printfn $"New stack base: {stackBase}"
         
         let frame = {
             Closure = 
                 match callee with
                 | VClosure(closure, _) -> 
-                    printfn "Using existing closure with upvalues"
-                    printfn $"Closure upvalue count: {closure.UpValues.Length}"
                     { closure with
                         UpValuesValues = Array.copy closure.UpValuesValues }
                 | VFunction(f, _) -> 
-                    printfn "Creating new closure from function"
                     { Function = f
                       UpValues = []
                       UpValuesValues = [||] }
@@ -511,18 +502,15 @@ and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
             StackBase = stackBase
         }
         
-        printfn $"Adding new frame (frame count before: {vm.Frames.Count})"
         vm.Frames.Add(frame)
-        printfn $"Frame count after: {vm.Frames.Count}"
         vm
         
     | VFunction(func, _), 1 
     | VClosure({ Function = func }, _), 1 ->
-        printfn $"Tail call for function {func.Name} with arity {func.Arity} recursively"
         if argCount <> func.Arity then
             raise <| InvalidProgramException($"Expected {func.Arity} arguments but got {argCount}")
             
-        let stackBase = vm.Stack.Count - argCount - 1 // -1 for the function value
+        let stackBase = vm.Stack.Count - argCount - 1
         
         let frame = {
             Closure = 

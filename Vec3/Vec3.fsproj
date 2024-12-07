@@ -11,6 +11,7 @@
         <Compile Include="Interpreter\SyntaxAnalysis\Token.fs"/>
         <Compile Include="Interpreter\SyntaxAnalysis\Grammar.fs"/>
         <Compile Include="Interpreter\SyntaxAnalysis\Scanner.fs"/>
+        <Compile Include="Interpreter\SyntaxAnalysis\TailAnalyser.fs" />
         <Compile Include="Interpreter\SyntaxAnalysis\Parser.fs"/>
         <Compile Include="Interpreter\SymbolicExpression.fs"/>
         <Compile Include="Interpreter\TypeAnalysis\Exceptions.fs" />

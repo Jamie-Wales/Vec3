@@ -201,7 +201,6 @@ let scNumber (nStr: char list) : (char list * Number * int) option =
             failwith "todo"
         
         | '/' :: ratTail ->
-            printfn "rat"
             let fStr, fVal, fLen = scInt ratTail 0 0
             Some(fStr, LRational(iVal, int fVal), iLen + fLen + 1)
         | '.' :: d :: fracTail when isDigit d ->

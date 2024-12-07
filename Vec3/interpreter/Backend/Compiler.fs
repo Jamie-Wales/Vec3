@@ -115,7 +115,7 @@ let rec compileLiteral (lit: Literal) : Compiler<unit> =
                 emitOpCode OP_CODE.FALSE state
         | LUnit -> emitConstant VNil state
 
-let compileCodeBlock (expr: Expr) state : CompilerResult<unit> = emitConstant (VBlock(expr)) state
+let compileCodeBlock (expr: Expr) state : CompilerResult<unit> = emitConstant (VBlock expr) state
 
 let rec compileExpr (expr: Expr) (state: CompilerState) : unit CompilerResult =
     match expr with
@@ -185,13 +185,12 @@ let rec compileExpr (expr: Expr) (state: CompilerState) : unit CompilerResult =
 
             compileCall callee [ expr; ELiteral(LString name, TString) ] false state
 
-        | EBlock(stmts, _) -> compileBlock stmts state // scope is fucked up think its global
+        | EBlock(stmts, _) -> compileBlock stmts state
         | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
         | ETernary(cond, thenB, elseB, _) -> compileIf cond thenB elseB state
         | ETail(ex, _) ->
             match ex with
             | ECall(name, args, _) ->
-                printf "Compiling tail"
                 compileCall name args true state
             | e -> compileExpr e state
         | EMatch(expr, cases, _) -> compileMatch expr cases state
@@ -476,6 +475,7 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
 
             compileStmt assign state
         | SRecFunc(name, tup, expr, _) ->
+            printfn $"RecFunc: {name.Lexeme}, {expr}"
             let assign =
                 SVariableDeclaration(name, ELambda(tup, expr, None, false, None, false), None)
 

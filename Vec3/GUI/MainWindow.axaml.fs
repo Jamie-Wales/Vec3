@@ -210,8 +210,6 @@ let x = [1..10] : [float]
                 | _ -> None)
             |> Seq.toList
 
-        printfn $"{shapes}"
-
         if not (List.isEmpty shapes) then
             let drawWindow = DrawWindow()
             drawWindow.Show()

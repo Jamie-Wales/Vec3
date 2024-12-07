@@ -8,6 +8,7 @@ open Microsoft.FSharp.Core
 open Token
 open Grammar
 open Scanner
+open Vec3.Interpreter.SyntaxAnalysis.TailAnalyser
 
 let rec getDefault =
     function
@@ -1136,12 +1137,10 @@ and ifElse (state: ParserState) : ParseResult<Expr> =
         let! state, condition = expression state Precedence.None
         let! state = expect state (Lexeme.Keyword Keyword.Then)
         let! state, thenBranch = expression state Precedence.None
-        let thenBranch = ETail(thenBranch, None)
 
         match nextToken state with
         | Some(state, { Lexeme = Keyword Else }) ->
             let! state, elseBranch = expression state Precedence.None
-            let elseBranch = ETail(elseBranch, None)
             return (state, EIf(condition, thenBranch, elseBranch, None))
         | _ -> return (state, EIf(condition, thenBranch, ELiteral(LUnit, TUnit), Some TUnit))
     }
@@ -1449,18 +1448,7 @@ and block (state: ParserState) : ParseResult<Expr> =
     let rec loop (state: ParserState) (stmts: Stmt list) : ParseResult<Expr> =
         match peek state with
         | Some { Lexeme = Punctuation RightBrace } ->
-            let head = List.tryHead stmts
-
-            match head with
-            | Some e ->
-                match e with
-                | SExpression(e, _) ->
-                    let e = SExpression(ETail(e, None), None)
-                    let stmts = List.skip 1 stmts
-                    let stmts = e :: stmts
-                    Ok(advance state, EBlock(List.rev stmts, None))
-                | _ -> Ok(advance state, EBlock(List.rev stmts, None))
-            | None -> Ok(advance state, EBlock(List.rev stmts, None))
+                  Ok(advance state, EBlock(List.rev stmts, None))
         | None -> Error(UnexpectedEndOfInput, state)
         | _ -> statement state |> Result.bind (fun (state, stmt) -> loop state (stmt :: stmts))
 
@@ -1646,21 +1634,29 @@ and recFunc (state: ParserState) : ParseResult<Stmt> =
         match nextToken state with
         | Some(state, { Lexeme = Operator(Arrow, _) }) ->
             let! state, expr = expression state Precedence.Assignment
-            return (state, SRecFunc(name, parameters, expr, None))
+            let func = SRecFunc(name, parameters, expr, None)
+            let func = analyseStmt func
+            return (state, func)
         | Some(state, { Lexeme = Operator(Colon, _) }) ->
             let! state, returnType = typeHint state
 
             match nextToken state with
             | Some(state, { Lexeme = Operator(Arrow, _) }) ->
                 let! state, expr = expression state Precedence.Assignment
-                return (state, SRecFunc(name, parameters, expr, Some returnType))
+                let func = SRecFunc(name, parameters, expr, Some returnType)
+                let func = analyseStmt func
+                return (state, func)
             | Some(state, { Lexeme = Punctuation LeftBrace }) ->
                 let! state, expr = block state
-                return (state, SRecFunc(name, parameters, expr, Some returnType))
+                let func = SRecFunc(name, parameters, expr, Some returnType)
+                let func = analyseStmt func
+                return (state, func)
             | _ -> return! Error(Expected "function body.", state)
         | Some(state, { Lexeme = Punctuation LeftBrace }) ->
             let! state, expr = block state
-            return (state, SRecFunc(name, parameters, expr, None))
+            let func = SRecFunc(name, parameters, expr, None)
+            let func = analyseStmt func
+            return (state, func)
         | _ -> return! Error(Expected "function body.", state)
     }
 

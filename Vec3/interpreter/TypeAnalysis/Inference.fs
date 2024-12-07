@@ -432,7 +432,9 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             Ok argTypes
 
     match expr with
-    | ETail(e, _) -> infer aliases env e // Simply a wrapper
+    | ETail(e, _) ->
+        infer aliases env e
+        |> Result.map (fun (t, sub, expr) -> (t, sub, ETail(expr, Some t)))
     | ELiteral(lit, _) ->
         // Simple literals have a known type
         let t = checkLiteral lit

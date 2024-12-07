@@ -187,7 +187,6 @@ type DrawWindow() as this =
                 Canvas.SetTop(line, y)
                 line :> Shape
 
-        printfn $"Adding shape with id {id}"
         shapes <- shapes.Add(id, shape)
 
         shapeInfo <-
