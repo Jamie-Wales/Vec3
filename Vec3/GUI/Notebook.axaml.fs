@@ -127,17 +127,14 @@ type NotebookWindow() as this =
         output.FontFamily <- "Cascadia Code,Consolas,Menlo,Monospace"
         output.Foreground <- SolidColorBrush(Colors.Black)
 
-        // Plots panel
         let plotsPanel = StackPanel()
         plotsPanel.Orientation <- Avalonia.Layout.Orientation.Vertical
         plotsPanel.Margin <- Thickness(10.0)
 
-        // Wire up events
         runButton.Click.Add(fun _ ->
             try
-                match parseAndCompileWithTE editor.Text vm typeEnv with
-                | Some(newVM, env) ->
-                    typeEnv <- env
+                match noTcParseAndCompile editor.Text vm with
+                | Some(newVM) ->
                     let oldOutputLength = Seq.length vm.Streams.StandardOutput.Value
                     vm <- run newVM
                     output.Foreground <- SolidColorBrush(Colors.Black)
