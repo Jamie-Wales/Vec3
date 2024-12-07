@@ -1,3 +1,0 @@
-/Users/jamie/Dev/university/year3/F/Vec3/Executable/build/CMakeFiles/Executable.dir
-/Users/jamie/Dev/university/year3/F/Vec3/Executable/build/CMakeFiles/edit_cache.dir
-/Users/jamie/Dev/university/year3/F/Vec3/Executable/build/CMakeFiles/rebuild_cache.dir
