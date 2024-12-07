@@ -547,7 +547,7 @@ let rec fromExpr (expr: Expr) : Expression =
 
     | EGrouping(x, _) -> fromExpr x
 
-    | _ -> raise <| InvalidProgramException("Invalid expression")
+    | _ -> raise (InvalidProgramException("Invalid symbolic expression."))
 
 /// <summary>
 /// Simplify an expression using algebraic simplification rules.

@@ -77,28 +77,6 @@ let startRepl () =
     printfn "Type 'exit' to quit the REPL."
     repl (createNewVM (initFunction "Main"))
 
-(* Note for Jake and Bake
- Repl input doest get type checked, because if variables
- are defined in the code editor they cant be found
- maybe worth being able to turn of variable resolutionr
- OR pass vm to parser to check env
-*)
-let noTcParseAndCompile (code: string) (vm: VM) =
-    let code = Prelude.prelude + code
-
-    match parse code with
-    | Ok(_, program) ->
-        // let program = eliminate program
-        let program = foldConstants program
-
-        match compileProgram program with
-        | Ok(func, _) -> Some(loadFunction vm func)
-        | Error(msg, _) ->
-            printfn $"Compilation error: {msg}"
-            None
-    | Error(e, s) ->
-        printfn $"Parsing error: {formatParserError e s}"
-        None
 
 let parseAndCompile (code: string) (vm: VM) =
     let code = Prelude.prelude + code
@@ -108,7 +86,7 @@ let parseAndCompile (code: string) (vm: VM) =
         match inferProgram Map.empty defaultTypeEnv program with
         | Ok(_, _, _, program) ->
 
-            let program = eliminate program
+            // let program = eliminate program
             let program = foldConstants program
 
             match compileProgram program with
@@ -129,9 +107,9 @@ let parseAndCompileWithTE (code: string) (vm: VM) (env: TypeEnv) =
     match parse code with
     | Ok(_, program) ->
         match inferProgram Map.empty env program with
-        | Ok(env, _, _, program) ->
+        | Ok(env, _, _, _) ->
             // let program = eliminate program
-            // let program = foldConstants program
+            let program = foldConstants program
             match compileProgram program with
             | Ok(func, _) -> Some(loadFunction vm func, env)
             | Error(msg, _) ->
@@ -139,6 +117,29 @@ let parseAndCompileWithTE (code: string) (vm: VM) (env: TypeEnv) =
                 None
         | Error errors ->
             printfn $"Type error: {formatTypeErrors errors}"
+            None
+    | Error(e, s) ->
+        printfn $"Parsing error: {formatParserError e s}"
+        None
+        
+(* Note for Jake and Bake
+ Repl input doest get type checked, because if variables
+ are defined in the code editor they cant be found
+ maybe worth being able to turn of variable resolutionr
+ OR pass vm to parser to check env
+*)
+let noTcParseAndCompile (code: string) (vm: VM) =
+    let code = Prelude.prelude + code
+
+    match parse code with
+    | Ok(_, program) ->
+        // let program = eliminate program
+        let program = foldConstants program
+
+        match compileProgram program with
+        | Ok(func, _) -> Some(loadFunction vm func)
+        | Error(msg, _) ->
+            printfn $"Compilation error: {msg}"
             None
     | Error(e, s) ->
         printfn $"Parsing error: {formatParserError e s}"

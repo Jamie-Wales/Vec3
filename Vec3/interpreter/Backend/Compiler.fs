@@ -122,9 +122,9 @@ let rec compileExpr (expr: Expr) (state: CompilerState) : unit CompilerResult =
     | ELiteral(lit, _) -> compileLiteral lit state
     | EIdentifier(i, _) -> compileIdentifier i state
     | EGrouping(e, _) -> compileGrouping e state
-    | ELambda(parameters, body, _, pr, _, isAsync) ->
+    | ELambda(parameters, body, _, _, _, isAsync) ->
         let parameters = List.map fst parameters
-        compileLambda parameters body pr isAsync state
+        compileLambda parameters body isAsync state
     | ECall(callee, arguments, _) -> compileCall callee arguments false state
     | EList(elements, _) -> compileList elements state
     | EIndex(list, start, _) -> compileIndex list start state
@@ -291,7 +291,7 @@ and compileBlock (stmts: Stmt list) : Compiler<unit> =
                  ScopeDepth = newState.ScopeDepth - 1 }))
 
 
-and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bool) : Compiler<unit> =
+and compileLambda (parameters: Token list) (body: Expr) (isAsync: bool) : Compiler<unit> =
     fun state ->
         let functionName = $"lambda_{state.CurrentFunction.Function.Name}"
         let lambdaFunction = initFunction functionName
@@ -320,11 +320,7 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bo
             upvalues
             |> List.fold (fun state upvalue -> addUpValue upvalue.Name upvalue.Depth state) compiledParamsState
 
-        let builtin =
-            if pur then
-                Some <| compileAsBuiltin parameters body
-            else
-                None
+        let builtin = compileAsBuiltin parameters body
 
         compileExpr body compiledParamsState
         |> Result.bind (fun ((), finalLambdaState) ->
@@ -355,16 +351,19 @@ and compileLambda (parameters: Token list) (body: Expr) (pur: bool) (isAsync: bo
 
                         emitBytes upvalues state))))
 
-and compileAsBuiltin (parameters: Token list) (body: Expr) : Expression =
+and compileAsBuiltin (parameters: Token list) (body: Expr) : Expression option =
     // what we could do is make every unit return its compiled value
     // add to a map of lexeme to builtins on function def
     // then we would be able to use other values and other functions in this (type checker verifies that this is valid)
 
     if parameters.Length <> 1 then
-        raise
-        <| InvalidProgramException("Builtin functions can only have one parameter")
-
-    fromExpr body
+        None
+    else
+        try
+            let expr = fromExpr body
+            Some expr
+        with
+        | _ -> None
 
 and compileCall (callee: Expr) (arguments: Expr list) (recursive: bool) : Compiler<unit> =
     fun state ->

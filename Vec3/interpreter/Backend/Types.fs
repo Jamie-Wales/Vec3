@@ -111,7 +111,7 @@ let rec valueToString =
     | VFunction(f, _) -> $"<fn {f.Name}>"
     | VClosure(c, Some f) -> $"<closure {c.Function.Name} : f(x) = {toString f}>"
     | VClosure(c, _) -> $"<closure {c.Function.Name}>"
-    | VNil -> "nil"
+    | VNil -> "()"
     | VList(l, typ) ->
         match typ with
         | LIST -> $"""[{String.concat ", " (List.map valueToString l)}]"""

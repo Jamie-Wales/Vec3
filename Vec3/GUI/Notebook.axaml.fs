@@ -9,6 +9,7 @@ open Avalonia.Media
 open ScottPlot.Avalonia
 open TextMateSharp.Grammars
 open AvaloniaEdit.TextMate
+open Vec3.Interpreter
 open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Compiler
@@ -39,7 +40,7 @@ type NotebookWindow() as this =
         addTextButton <- this.FindControl<Button>("AddTextButton")
         exportButton <- this.FindControl<Button>("ExportButton")
         importButton <- this.FindControl<Button>("ImportButton")
-
+        
         addCodeButton.Click.AddHandler(fun _ _ -> this.AddCodeCell())
         addTextButton.Click.AddHandler(fun _ _ -> this.AddTextCell())
         exportButton.Click.AddHandler(fun _ _ -> this.ExportNotebook())
@@ -133,9 +134,10 @@ type NotebookWindow() as this =
 
         runButton.Click.Add(fun _ ->
             try
-                match noTcParseAndCompile editor.Text vm with
-                | Some(newVM) ->
+                match parseAndCompileWithTE editor.Text vm typeEnv with
+                | Some(newVM, env) ->
                     let oldOutputLength = Seq.length vm.Streams.StandardOutput.Value
+                    typeEnv <- env
                     vm <- run newVM
                     output.Foreground <- SolidColorBrush(Colors.Black)
 
@@ -143,8 +145,14 @@ type NotebookWindow() as this =
                         vm.Streams.StandardOutput.Value
                         |> Seq.skip oldOutputLength
                         |> String.concat "\n"
+                        
+                    let topOfStack = newVM.Stack[Seq.length newVM.Stack - 1] |> valueToString
 
+                    let newOutput = if newOutput = "" then topOfStack else newOutput
+                    
                     output.Text <- newOutput
+                    
+                    
 
                     // Clear existing plots
                     plotsPanel.Children.Clear()
@@ -224,6 +232,7 @@ type NotebookWindow() as this =
             with ex ->
                 output.Foreground <- SolidColorBrush(Colors.Red)
                 output.Text <- ex.Message
+                printfn $"Error: %s{ex.Message}"
                 plotsPanel.Children.Clear())
 
         deleteButton.Click.Add(fun _ -> cellsContainer.Children.Remove(cellBorder) |> ignore)
