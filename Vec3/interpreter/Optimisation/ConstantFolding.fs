@@ -231,17 +231,14 @@ let simplifyRational (rat: Number) : Number =
 /// <param name="isRange">Whether the index is a range.</param>
 /// <param name="typ">The type of the expression.</param>
 /// <returns>The indexed expression.</returns>
-let performIndex expr start end_ isRange typ =
+let performIndexRange expr start end_ typ =
     match expr, start, end_ with
-    | EList(lst, t), Some(ELiteral(LNumber(LInteger s), _)), Some(ELiteral(LNumber(LInteger e), _)) ->
-        if isRange then
-            if e = 0 then
-                EList(List.skip s lst, t)
-            else
-                EList(List.skip s lst |> List.take (e - s + 1), t)
+    | EList(lst, t), ELiteral(LNumber(LInteger s), _), ELiteral(LNumber(LInteger e), _) ->
+        if e = 0 then
+            EList(List.skip s lst, t)
         else
-            List.item s lst
-    | _ -> EIndex(expr, (start, end_, isRange), typ)
+            EList(List.skip s lst |> List.take (e - s + 1), t)
+    | _ -> EIndexRange(expr, start, end_, typ)
 
 /// <summary>
 /// Fold constants in the program.
@@ -297,11 +294,15 @@ let foldConstants (program: Program) : Program =
                 f args expr
             | _ -> expr
         | EList(elems, typ) -> EList(List.map foldExpr elems, typ)
-        | EIndex(expr, (start, end_, isRange), typ) ->
+        | EIndex(expr, start, typ) ->
             let expr = foldExpr expr
-            let start = Option.map foldExpr start
-            let end_ = Option.map foldExpr end_
-            performIndex expr start end_ isRange typ
+            let start = foldExpr start
+            EIndex(expr, start, typ)
+        | EIndexRange(expr, start, end_, typ) ->
+            let expr = foldExpr expr
+            let start = foldExpr start
+            let end_ = foldExpr end_
+            EIndexRange(expr, start, end_, typ)
 
         | ELambda(args, body, rt, pr, typ, isAsync) -> ELambda(args, foldExpr body, rt, pr, typ, isAsync)
         | EIf(condEx, thenEx, elseEx, typ) ->

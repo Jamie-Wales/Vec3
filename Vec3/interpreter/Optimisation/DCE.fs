@@ -25,7 +25,8 @@ let rec hasSideEffects (expr: Expr) : bool =
     | ECall(callee, args, _) -> hasSideEffects callee || List.exists hasSideEffects args
     | EIf(cond, thenBranch, elseBranch, _) ->
         hasSideEffects cond || hasSideEffects thenBranch || hasSideEffects elseBranch
-    | EIndex(expr, (Some start, Some end_, _), _) -> hasSideEffects expr || hasSideEffects start || hasSideEffects end_
+    | EIndex(expr, start, _) -> hasSideEffects expr || hasSideEffects start
+    | EIndexRange(expr, start, end_, _) -> hasSideEffects expr || hasSideEffects start || hasSideEffects end_
     | EBlock(stmts, _) -> true // todo
     | ELambda(_, body, _, pr, _, _) -> not pr || hasSideEffects body
     | ERecordSelect(expr, _, _) -> hasSideEffects expr
@@ -35,14 +36,6 @@ let rec hasSideEffects (expr: Expr) : bool =
     | ERecordExtend((_, body, _), fields, _) -> hasSideEffects body || hasSideEffects fields
     | ERecordEmpty _ -> false
     | ERange(start, end_, _) -> hasSideEffects start || hasSideEffects end_
-    | EIndex(expr, (start, end_, _), _) ->
-        hasSideEffects expr
-        || (match start with
-            | Some s -> hasSideEffects s
-            | None -> false)
-        || (match end_ with
-            | Some e -> hasSideEffects e
-            | None -> false)
     | EMatch(expr, cases, _) -> hasSideEffects expr || List.exists (fun (_, e) -> hasSideEffects e) cases
     | ERecordRestrict(expr, _, _) -> hasSideEffects expr
     | ETail(expr, _) -> hasSideEffects expr
@@ -110,7 +103,8 @@ and isUsedE (name: Lexeme) (expr: Expr) : bool =
     | ECall(callee, args, _) -> isUsedE name callee || List.exists (isUsedE name) args
     | ETernary(cond, thenBranch, elseBranch, _)
     | EIf(cond, thenBranch, elseBranch, _) -> isUsedE name cond || isUsedE name thenBranch || isUsedE name elseBranch
-    | EIndex(expr, (Some start, Some end_, _), _) -> isUsedE name expr || isUsedE name start || isUsedE name end_
+    | EIndex(expr, start, _) -> isUsedE name expr || isUsedE name start
+    | EIndexRange(expr, start, end_, _) -> isUsedE name expr || isUsedE name start || isUsedE name end_
     | EBlock(stmts, _) -> isUsed name stmts
     | ELambda(_, body, _, _, _, _) -> isUsedE name body
     | ERecordSelect(expr, _, _) -> isUsedE name expr
@@ -118,14 +112,6 @@ and isUsedE (name: Lexeme) (expr: Expr) : bool =
     | ERecordExtend((_, body, _), fields, _) -> isUsedE name body || isUsedE name fields
     | ERecordEmpty _ -> false
     | ERange(start, end_, _) -> isUsedE name start || isUsedE name end_
-    | EIndex(expr, (start, end_, _), _) ->
-        isUsedE name expr
-        || (match start with
-            | Some s -> isUsedE name s
-            | None -> false)
-        || (match end_ with
-            | Some e -> isUsedE name e
-            | None -> false)
     | EMatch(expr, cases, _) -> isUsedE name expr || List.exists (fun (_, e) -> isUsedE name e) cases
     | ERecordRestrict(expr, _, _) -> isUsedE name expr
     | ETail(expr, _) -> isUsedE name expr

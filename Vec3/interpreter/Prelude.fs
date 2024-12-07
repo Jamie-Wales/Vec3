@@ -54,6 +54,7 @@ let head = (x) -> if len(x) == 0 then
 				  else 
 					x[0]
      
+// problem with indexing in recursvie functions ?? maybe due to multiple args or something
 // fold a list with a function
 rec fold(list, acc, func) -> if len(list) == 0 then 
 								acc 
@@ -61,14 +62,14 @@ rec fold(list, acc, func) -> if len(list) == 0 then
 							 	func(head(list), (fold(tail(list), acc, func)))
 
 // map a function over a list
-rec map(list, func) -> if len(list) == 0 then 
+rec map(list, func) -> if list == [] then 
 							[] 
 						else
 							func(head(list)) :: map(tail(list), func)
 
 // filter a list with a predicate
 // currently type checking does not support this fully, can't infer type of func
-rec filter(list, func: (any) -> bool) -> if len(list) == 0 then 
+rec filter(list, func: (any) -> bool) -> if list == [] then 
 												[] 
 									     else if func(head(list)) then 
 												head(list) :: filter(tail(list), func) 

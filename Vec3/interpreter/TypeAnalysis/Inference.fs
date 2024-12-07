@@ -712,157 +712,82 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             return (returnType, sub, ERange(expr2, expr3, Some returnType))
         }
 
-    | EIndex(expr, (start, end_, isRange), _) ->
+    | EIndex(expr, start, _) ->
         let startNum =
             match start with
-            | Some(ELiteral(LNumber(LInteger n), _)) -> Some n
+            | ELiteral(LNumber(LInteger n), _) -> Some n
             | _ -> None
 
+        result {
+            let! t, sub, expr = infer aliases env expr
+            // check its tensor
+            let innerType = TTypeVariable (freshTypeVar())
+            let! startType, sub', expr' = infer aliases env start
+            let sub = combineMaps sub sub'
+            let! sub' = unify aliases startType TInteger
+            let sub = combineMaps sub sub'
+            
+            let t = applySubstitution aliases sub t
+            let startType = applySubstitution aliases sub startType
+            
+            let startNum = Option.defaultValue 0 startNum
+            let unifier = TConstrain(Constrain(freshTypeVar(), fun t -> t.hasMinDims startNum))
+            let! sub' = unify aliases t unifier
+            let sub = combineMaps sub sub'
+            let! sub' = unify aliases startType TInteger
+            let sub = combineMaps sub sub'
+            
+            // return type is the inner type
+            let returnType = innerType
+            return (returnType, sub, EIndex(expr, expr', Some returnType))
+        }
+    | EIndexRange(expr, start, end_, _) ->
+        let startNum =
+            match start with
+            | ELiteral(LNumber(LInteger n), _) -> Some n
+            | _ -> None
+            
         let endNum =
             match end_ with
-            | Some(ELiteral(LNumber(LInteger n), _)) -> Some n
+            | ELiteral(LNumber(LInteger n), _) -> Some n
             | _ -> None
+            
+        let startNum = Option.defaultValue 0 startNum
+        let endNum = Option.defaultValue -1 endNum
+        
+        result {
+            let! t, sub, expr = infer aliases env expr
+            // check its tensor
+            let innerType = TTypeVariable (freshTypeVar())
+            let! startType, sub', expr' = infer aliases env start
+            let sub = combineMaps sub sub'
+            let! sub' = unify aliases startType TInteger
+            let sub = combineMaps sub sub'
+            
+            let! endType, sub', expr'' = infer aliases env end_
+            let sub = combineMaps sub sub'
+            let! sub' = unify aliases endType TInteger
+            let sub = combineMaps sub sub'
+            
+            let t = applySubstitution aliases sub t
+            let startType = applySubstitution aliases sub startType
+            let endType = applySubstitution aliases sub endType
+            
+            let func = if endNum = -1 then fun (t: TType) -> t.hasMinDims startNum else fun t -> t.hasMinDims endNum
+            let unifier = TConstrain(Constrain(freshTypeVar(), func))
+            let! sub' = unify aliases t unifier
+            let sub = combineMaps sub sub'
+            let! sub' = unify aliases startType TInteger
+            let sub = combineMaps sub sub'
+            let! sub' = unify aliases endType TInteger
+            let sub = combineMaps sub sub'
+            
+            // return type is the inner type
+            let returnType = TTensor(innerType, Dims(endNum - startNum))
+            return (returnType, sub, EIndexRange(expr, expr', expr'', Some returnType))
+        }
 
-        // result {
-        //     let! (t, sub, expr) = infer aliases env expr
-        //     // check its tensor
-        //
-        // }
-
-        // TODO:: rewrite this
-
-        // this is a really horrible case, must be rewritten
-        // start and end are optional, but one ust be present
-        // isRange indicates if the index is a range, ie [1:2], or [:8], or [1:], returns a tensor
-        // or if false then it is a single index, ie [1], returns a single element
-
-        let exprResult = infer aliases env expr
-
-        let innerTyp =
-            match exprResult with
-            | Ok(t, _, _) ->
-                match t with
-                | TTensor(typ, _) -> typ
-                | TTuple types -> TTuple types
-                | _ -> TTypeVariable(freshTypeVar ())
-            | _ -> TNever
-
-        let startResult = Option.map (infer aliases env) start
-        let endResult = Option.map (infer aliases env) end_
-
-        let results = [ Some exprResult; startResult; endResult ]
-        let hasErrors = List.exists (Option.exists Result.isError) results
-
-        if hasErrors then
-            let errors =
-                List.collect
-                    (fun result ->
-                        match result with
-                        | Some(Error errors) -> errors
-                        | _ -> [])
-                    results
-
-            Error errors
-        else
-            let exprType =
-                match exprResult with
-                | Ok(t, _, _) -> t
-                | _ -> TNever
-
-            let startType =
-                match startResult with
-                | Some(Ok(t, _, _)) -> t
-                | _ -> TInteger
-
-            let endType =
-                match endResult with
-                | Some(Ok(t, _, _)) -> t
-                | _ -> TInteger
-
-            let startSub =
-                match startResult with
-                | Some(Ok(_, sub, _)) -> sub
-                | _ -> Map.empty
-
-            let endSub =
-                match endResult with
-                | Some(Ok(_, sub, _)) -> sub
-                | _ -> Map.empty
-
-
-            let startType = applySubstitution aliases startSub startType
-            let endType = applySubstitution aliases endSub endType
-
-            let startType = applySubstitution aliases Map.empty startType
-            let endType = applySubstitution aliases Map.empty endType
-
-            let checkStart = unify aliases startType TInteger
-            let checkEnd = unify aliases endType TInteger
-
-            match checkStart, checkEnd with
-            | Ok _, Ok _ ->
-                let returnType =
-                    if isRange then
-                        match startNum, endNum with
-                        | Some start, Some end_ ->
-                            let start = if start < 0 then 0 else start
-                            let end_ = if end_ < 0 then 0 else end_
-                            TTensor(innerTyp, Dims(end_ - start))
-                        | None, Some end_ -> TTensor(innerTyp, Dims end_)
-                        | _, _ -> TTensor(innerTyp, DAny)
-                    else
-                        innerTyp
-
-                let sub = combineMaps startSub endSub
-
-                match exprResult with
-                | Ok(typ, sub', expr) ->
-                    let sub = combineMaps sub sub'
-
-
-                    // must be tensor or tuple. start or end is known, can check length of tuple (constraint)
-                    let toUnify =
-                        match typ with
-                        | TTensor _ ->
-                            if isRange then
-                                match startNum, endNum with
-                                | Some start, Some end_ ->
-                                    let start = if start < 0 then 0 else start
-                                    let end_ = if end_ < 0 then 0 else end_
-                                    TConstrain(Constrain(freshTypeVar (), fun typ -> typ.hasMinDims (end_ - start)))
-                                | None, Some end_ ->
-                                    let end_ = if end_ < 0 then 0 else end_
-                                    TConstrain(Constrain(freshTypeVar (), fun typ -> typ.hasMinDims end_))
-                                | _, _ -> TConstrain(Constrain(freshTypeVar (), fun typ -> typ.hasMinDims 0))
-                            else
-                                match startNum with
-                                | Some start ->
-                                    let start = if start < 0 then 0 else start
-                                    TConstrain(Constrain(freshTypeVar (), fun typ -> typ.hasMinDims start))
-                                | _ -> TConstrain(Constrain(freshTypeVar (), fun typ -> typ.hasMinDims 0))
-                        | TTuple _ ->
-                            match startNum, endNum with
-                            | Some start, Some end_ ->
-                                let start = if start < 0 then 0 else start
-                                let end_ = if end_ < 0 then 0 else end_
-                                TConstrain(Constrain(freshTypeVar (), fun typ -> typ.hasMinDims (end_ - start)))
-                            | None, Some end_ ->
-                                let end_ = if end_ < 0 then 0 else end_
-                                TConstrain(Constrain(freshTypeVar (), fun typ -> typ.hasMinDims end_))
-                            | _, _ -> TConstrain(Constrain(freshTypeVar (), fun typ -> typ.hasMinDims 0))
-                        | _ -> TNever
-
-                    let result = unify aliases exprType toUnify
-
-                    match result with
-                    | Ok sub' ->
-                        let sub = combineMaps sub sub'
-                        Ok(returnType, sub, EIndex(expr, (start, end_, isRange), Some returnType))
-                    | Error errors -> Error errors
-                | _ -> Error [ TypeError.InvalidIndex(expr, exprType) ]
-            | Error errors, _ -> Error errors
-            | _, Error errors -> Error errors
-
+ 
     // lot of this doesnt work,
 
     // fails on the following:

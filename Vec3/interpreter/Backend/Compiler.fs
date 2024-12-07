@@ -117,157 +117,108 @@ let rec compileLiteral (lit: Literal) : Compiler<unit> =
 
 let compileCodeBlock (expr: Expr) state : CompilerResult<unit> = emitConstant (VBlock(expr)) state
 
-let rec compileExpr (expr: Expr) : Compiler<unit> =
+let rec compileExpr (expr: Expr) (state: CompilerState) : unit CompilerResult =
+    match expr with
+    | ELiteral(lit, _) -> compileLiteral lit state
+    | EIdentifier(i, _) -> compileIdentifier i state
+    | EGrouping(e, _) -> compileGrouping e state
+    | ELambda(parameters, body, _, pr, _, isAsync) ->
+        let parameters = List.map fst parameters
+        compileLambda parameters body pr isAsync state
+    | ECall(callee, arguments, _) -> compileCall callee arguments false state
+    | EList(elements, _) -> compileList elements state
+    | EIndex(list, start, _) -> compileIndex list start state
+    | EIndexRange(list, start, end_, _) -> compileIndexRange list start end_ state
+    | ETuple(elements, _) -> compileTuple elements state
+    | ECodeBlock(expr) -> compileCodeBlock expr state
+    | ERange(start, stop, _) ->
+        let expression =
+            ECall(
+                EIdentifier(
+                    { Lexeme = Identifier "range"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                ),
+                [ start; stop ],
+                None
+            )
+
+        compileExpr expression state
+
+    | ERecordEmpty _ ->
+        emitConstant (VNumber(VInteger 0)) state
+        |> Result.bind (fun ((), state) -> emitConstant (VList([], RECORD)) state)
+        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
+
+    | ERecordRestrict(e, _, _) -> compileExpr e state
+    | ERecordExtend((name, value, _), record, _) ->
+        let name =
+            match name with
+            | { Lexeme = Identifier n } -> n
+            | _ -> raise <| System.Exception("Invalid record field name")
+
+        // pretty horrbile, but it works
+        // record is a list of lists, where each list is a pair of a string and a value
+        // might be better to have specific value for pair, but then the compound create would need to be changed
+        // or extra instruction for create pair, otherwise any two eleemnt list would be a pair
+
+        let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString name)
+
+        emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
+        |> Result.bind (fun ((), state) -> compileExpr value state)
+        |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 2)) state)
+        |> Result.bind (fun ((), state) -> emitConstant (VList([], RECORD)) state)
+        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
+        |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 1)) state)
+        |> Result.bind (fun ((), state) -> compileExpr record state)
+        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
+
+
+    | ERecordSelect(expr, token, _) ->
+        let name =
+            match token with
+            | { Lexeme = Identifier n } -> n
+            | _ -> raise <| System.Exception("Invalid record field name")
+
+        // compile as call
+        let callee =
+            EIdentifier(
+                { Lexeme = Identifier "select"
+                  Position = { Line = 0; Column = 0 } },
+                None
+            )
+
+        compileCall callee [ expr; ELiteral(LString name, TString) ] false state
+
+    | EBlock(stmts, _) -> compileBlock stmts state // scope is fucked up think its global
+    | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
+    | ETernary(cond, thenB, elseB, _) -> compileIf cond thenB elseB state
+    | ETail(ex, _) ->
+        match ex with
+        | ECall(name, args, _) -> compileCall name args true state
+        | e -> compileExpr e state
+    | EMatch(expr, cases, _) -> compileMatch expr cases state
+
+and compileIndexRange (list: Expr) (start: Expr) (end_: Expr) (state: CompilerState) : unit CompilerResult =
+    let callee =
+        EIdentifier(
+            { Lexeme = Identifier "index"
+              Position = { Line = 0; Column = 0 } },
+            None
+        )
+
+    compileCall callee [ list; start; end_ ] false state
+
+and compileIndex (list: Expr) (start: Expr) : Compiler<unit> =
     fun state ->
-        match expr with
-        | ELiteral(lit, _) -> compileLiteral lit state
-        | EIdentifier(i, _) -> compileIdentifier i state
-        | EGrouping(e, _) -> compileGrouping e state
-        | ELambda(parameters, body, _, pr, _, isAsync) ->
-            let parameters = List.map fst parameters
-            compileLambda parameters body pr isAsync state
-        | ECall(callee, arguments, _) -> compileCall callee arguments false state
-        | EList(elements, _) -> compileList elements state
-        | EIndex(list, (start, end_, isRange), _) -> compileIndex list start end_ isRange state
-        | ETuple(elements, _) -> compileTuple elements state
-        | ECodeBlock(expr) -> compileCodeBlock expr state
-        | ERange(start, stop, _) ->
-            let expression =
-                ECall(
-                    EIdentifier(
-                        { Lexeme = Identifier "range"
-                          Position = { Line = 0; Column = 0 } },
-                        None
-                    ),
-                    [ start; stop ],
-                    None
-                )
+        let callee =
+            EIdentifier(
+                { Lexeme = Identifier "index"
+                  Position = { Line = 0; Column = 0 } },
+                None
+            )
 
-            compileExpr expression state
-
-        | ERecordEmpty _ ->
-            emitConstant (VNumber(VInteger 0)) state
-            |> Result.bind (fun ((), state) -> emitConstant (VList([], RECORD)) state)
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
-
-        | ERecordExtend((name, value, _), record, _) ->
-            let name =
-                match name with
-                | { Lexeme = Identifier n } -> n
-                | _ -> raise <| System.Exception("Invalid record field name")
-
-            // pretty horrbile, but it works
-            // record is a list of lists, where each list is a pair of a string and a value
-            // might be better to have specific value for pair, but then the compound create would need to be changed
-            // or extra instruction for create pair, otherwise any two eleemnt list would be a pair
-
-            let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString name)
-
-            emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
-            |> Result.bind (fun ((), state) -> compileExpr value state)
-            |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 2)) state)
-            |> Result.bind (fun ((), state) -> emitConstant (VList([], RECORD)) state)
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
-            |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 1)) state)
-            |> Result.bind (fun ((), state) -> compileExpr record state)
-            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
-
-
-        | ERecordSelect(expr, token, _) ->
-            let name =
-                match token with
-                | { Lexeme = Identifier n } -> n
-                | _ -> raise <| System.Exception("Invalid record field name")
-
-            // compile as call
-            let callee =
-                EIdentifier(
-                    { Lexeme = Identifier "select"
-                      Position = { Line = 0; Column = 0 } },
-                    None
-                )
-
-            compileCall callee [ expr; ELiteral(LString name, TString) ] false state
-
-        | EBlock(stmts, _) -> compileBlock stmts state // scope is fucked up think its global
-        | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
-        | ETernary(cond, thenB, elseB, _) -> compileIf cond thenB elseB state
-        | ETail(ex, _) ->
-            match ex with
-            | ECall(name, args, _) -> compileCall name args true state
-            | e -> compileExpr e state
-        | EMatch(expr, cases, _) -> compileMatch expr cases state
-
-and compileIndex (list: Expr) (start: Expr option) (end_: Expr option) (isRange: bool) : Compiler<unit> =
-    fun state ->
-        if isRange && (Option.isNone start && Option.isNone end_) then
-            raise <| InvalidProgramException("Range must have both start and end")
-
-        if not isRange && (Option.isSome start && Option.isSome end_) then
-            raise <| InvalidProgramException("Index must have either start or end")
-
-        if not isRange && (Option.isSome start && Option.isNone end_) then
-            // is index
-            let start = Option.get start
-            // compile as call
-            let callee =
-                EIdentifier(
-                    { Lexeme = Identifier "index"
-                      Position = { Line = 0; Column = 0 } },
-                    None
-                )
-
-            compileCall callee [ list; start ] false state
-
-
-        else if not isRange && (Option.isNone start && Option.isSome end_) then
-            let end_ = Option.get end_
-            // compile as call
-            let callee =
-                EIdentifier(
-                    { Lexeme = Identifier "index"
-                      Position = { Line = 0; Column = 0 } },
-                    None
-                )
-
-            compileCall callee [ list; end_ ] false state
-
-        else if Option.isNone start then
-            // compile as call
-            let callee =
-                EIdentifier(
-                    { Lexeme = Identifier "index"
-                      Position = { Line = 0; Column = 0 } },
-                    None
-                )
-
-            compileCall callee [ list; ELiteral(LNumber(LInteger 0), TInteger); Option.get end_ ] false state
-
-        else if Option.isNone end_ then
-            let start = Option.get start
-
-            // compile as call
-            let callee =
-                EIdentifier(
-                    { Lexeme = Identifier "index"
-                      Position = { Line = 0; Column = 0 } },
-                    None
-                )
-
-            compileCall callee [ list; start; ELiteral(LNumber(LInteger 0), TInteger) ] false state
-        else
-            let start = Option.get start
-            let end_ = Option.get end_
-
-            // compile as call
-            let callee =
-                EIdentifier(
-                    { Lexeme = Identifier "index"
-                      Position = { Line = 0; Column = 0 } },
-                    None
-                )
-
-            compileCall callee [ list; start; end_ ] false state
+        compileCall callee [ list; start ] false state
 
 and compileTuple (elements: Expr list) : Compiler<unit> =
     fun state ->

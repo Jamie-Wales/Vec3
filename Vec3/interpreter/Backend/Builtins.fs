@@ -126,6 +126,24 @@ let builtins =
                   <| InvalidProgramException "plotFuncs expects a title and a list of functions"),
           "PlotFuncs"
       )
+      
+      Identifier "plotEllipse",
+      VBuiltin(
+          (fun args ->
+              match args with
+              | [  ] -> failwith "todo"
+              | _ -> raise <| InvalidProgramException "plotEllipse expects a title and two floats"),
+          "PlotEllipse"
+      )
+      
+      Identifier "plotEllipses",
+      VBuiltin(
+          (fun args ->
+              match args with
+              | [  ] -> failwith "todo"
+              | _ -> raise <| InvalidProgramException "plotEllipse expects a title and two floats"),
+          "PlotEllipse"
+      )
 
       Identifier "read",
       VBuiltin(

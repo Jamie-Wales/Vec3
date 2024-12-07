@@ -1099,26 +1099,26 @@ and index (state: ParserState) (left: Expr) : ParseResult<Expr> =
         result {
             let! state, end_ = expression state Precedence.None
             let! state = expect state (Punctuation RightBracket)
-            return (state, EIndex(left, (None, Some end_, false), None))
+            return (state, EIndexRange(left, ELiteral(LNumber(LInteger 0), TInteger), end_, None))
         }
     | _ ->
         result {
             let! state, start = expression state Precedence.None
-
             match peek state with
             | Some { Lexeme = Operator(DotDot, _) } ->
                 let state = advance state
 
                 match peek state with
                 | Some { Lexeme = Punctuation RightBracket } ->
-                    return (advance state, EIndex(left, (Some start, None, false), None))
+                    let state = advance state
+                    return (state, EIndexRange(left, start, ELiteral(LNumber(LInteger 0), TInteger), None))
                 | _ ->
                     let! state, end_ = expression state Precedence.None
                     let! state = expect state (Punctuation RightBracket)
-                    return (state, EIndex(left, (Some start, Some end_, false), None))
+                    return (state, EIndexRange(left, start, end_, None))
             | _ ->
                 let! state = expect state (Punctuation RightBracket)
-                return (state, EIndex(left, (Some start, None, false), None))
+                return (state, EIndex(left, start, None))
         }
 
 /// <summary>

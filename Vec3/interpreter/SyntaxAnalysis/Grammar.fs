@@ -386,10 +386,18 @@ type Expr =
 
     /// <summary>
     /// Indexing operation on a list or tensor.
-    /// Expr (list or tensor), (start, end, isRange), type
-    /// Allows for indexing in the form l[1] or l[..1] or l[1..2] or l[1..]
+    /// Expr (list or tensor), (index), type
+    /// Allows for indexing in the form l[1]
     /// </summary>
-    | EIndex of Expr * (Expr option * Expr option * bool) * Type option
+    | EIndex of Expr * Expr * Type option
+    
+    
+    /// <summary>
+    /// Indexing with a range operation on a list or tensor.
+    /// Expr (list or tensor), start, end, type
+    /// Allows for indexing in the form l[..1] or l[1..2] or l[1..]
+    /// </summary>
+    | EIndexRange of Expr * Expr * Expr * Type option
 
     /// <summary>
     /// A lambda expression with a list of arguments, a body, a return type, a pure flag, and a type.

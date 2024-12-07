@@ -214,7 +214,7 @@ let drawType =
                           (Identifier "colour", fun t -> t = TString) ]
                     || (t.IsList
                         && match t with
-                           | TTensor(t, _) ->
+                           | TRecord(t) ->
                                t.hasFieldsThat
                                    [ (Identifier "width", fun t -> t = TFloat)
                                      (Identifier "height", fun t -> t = TFloat)
@@ -253,6 +253,44 @@ let onType =
         )
 
     TFunction([ idTyp; eventTyp; TAny ], returnT, false, true)
+
+let PlotEllipseType =
+    let recTyp =
+        TConstrain(
+            Constrain(
+                freshTypeVar (),
+                fun t ->
+                    t.hasFieldsThat
+                        [ (Identifier "x", fun t -> t = TFloat)
+                          (Identifier "y", fun t -> t = TFloat)
+                          (Identifier "rx", fun t -> t = TFloat)
+                          (Identifier "ry", fun t -> t = TFloat)
+                          ]
+            )
+        )
+
+    TFunction([ recTyp ], TUnit, false, true)
+
+let PlotEllipsesType =
+    let recTyp =
+        TConstrain(
+            Constrain(
+                freshTypeVar (),
+                fun t ->
+                    t.IsList && match t with
+                                | TRecord(t) ->
+                                    t.hasFieldsThat
+                                        [ (Identifier "x", fun t -> t = TFloat)
+                                          (Identifier "y", fun t -> t = TFloat)
+                                          (Identifier "rx", fun t -> t = TFloat)
+                                          (Identifier "ry", fun t -> t = TFloat)
+                                          ]
+                                | _ -> false
+                                
+            )
+        )
+        
+    TFunction([ recTyp ], TUnit, false, true)
 
 /// <summary>
 /// Map of built-in functions to their types.
@@ -324,6 +362,9 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       TaylorSeries, taylorSeriesT
 
       Concat, TFunction([ TString; TString ], TString, false, true)
+      
+      PlotEllipse, PlotEllipseType
+      PlotEllipses, PlotEllipsesType
 
       ]
     |> Map.ofList

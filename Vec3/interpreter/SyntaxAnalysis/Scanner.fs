@@ -196,6 +196,10 @@ let scNumber (nStr: char list) : (char list * Number * int) option =
         let iStr, iVal, iLen = scInt tail (intVal c) 1
 
         match iStr with
+        | 'i' :: comTail
+        | 'I' :: comTail ->
+            failwith "todo"
+        
         | '/' :: ratTail ->
             printfn "rat"
             let fStr, fVal, fLen = scInt ratTail 0 0

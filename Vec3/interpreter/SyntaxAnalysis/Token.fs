@@ -330,7 +330,10 @@ type BuiltInFunction =
     | Plot
     | PlotFunction
     | PlotFunctions
-
+    
+    | PlotEllipse
+    | PlotEllipses
+    
     | Draw
 
     | Ceil
@@ -506,3 +509,5 @@ let hasSideEffects =
     | Await -> true
     | TaylorSeries -> true
     | Concat -> false
+    | PlotEllipse -> true
+    | PlotEllipses -> true
