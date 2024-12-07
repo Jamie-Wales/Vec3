@@ -143,7 +143,7 @@ let rec compileExpr (expr: Expr) (state: CompilerState) : unit CompilerResult =
                 None
             )
 
-            compileExpr expression state
+        compileExpr expression state
 
     | ERecordEmpty _ ->
             emitConstant (VNumber(VInteger 0)) state
