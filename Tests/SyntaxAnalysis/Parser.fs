@@ -410,12 +410,167 @@ type ParserTests() =
             | _ -> Assert.Fail $"Expected prefix operator statement, got {statements.Head}."
             
         | Error _ -> Assert.Fail "Expected no errors for valid expression."
-        
     
+    [<Test>]
+    member _.Should_ParseVariableType() =
+        let result = parse "let foo: int = 42"
+
+        match result with
+        | Ok(_, statements) ->
+            Assert.That(statements, Has.Length.EqualTo(1), "Expected one statement for variable type.")
+
+            match statements.Head with
+            | SVariableDeclaration({ Lexeme = Identifier "foo" },
+                                   ECall(EIdentifier({ Lexeme = Identifier "cast" }, _),
+                                         [ ELiteral(LNumber(LInteger 42), _)
+                                           ELiteral(LNumber(LInteger 0), _) ],
+                                         _),
+                                   Some TInteger) -> Assert.Pass()
+                                   
+                                   
+            | _ -> Assert.Fail $"Expected variable type statement, got {statements.Head}."
+        | Error _ -> Assert.Fail "Expected no errors for valid expression."
     
+    [<Test>]
+    member _.Should_ParseFunctionType() =
+        let result = parse "let foo: (int) -> int = (x) -> x"
+
+        match result with
+        | Ok(_, statements) ->
+            Assert.That(statements, Has.Length.EqualTo(1), "Expected one statement for function type.")
+
+            match statements.Head with
+            | SVariableDeclaration({ Lexeme = Identifier "foo" },
+                                   ELambda([ ({ Lexeme = Identifier "x" }, _) ],
+                                                                         EIdentifier({ Lexeme = Identifier "x" }, _),
+                                                                         _, _, _, _),
+                                   Some (TFunction([TInteger], TInteger, _, _))) -> Assert.Pass()
+            | _ -> Assert.Fail $"Expected function type statement, got {statements.Head}."
+        | Error _ -> Assert.Fail "Expected no errors for valid expression."
     
+    [<Test>]
+    member _.Should_ParseListType() =
+        let result = parse "let foo: [int] = [1, 2]"
+
+        match result with
+        | Ok(_, statements) ->
+            Assert.That(statements, Has.Length.EqualTo(1), "Expected one statement for list type.")
+
+            match statements.Head with
+            | SVariableDeclaration({ Lexeme = Identifier "foo" },
+                                   ECall(EIdentifier({ Lexeme = Identifier "cast" }, _),
+                                         [
+                                         EList ([ ELiteral(LNumber(LInteger 1), _); ELiteral(LNumber(LInteger 2), _) ], _)
+                                         EList ([ELiteral(LNumber(LInteger 0), _)], _)
+                                         ],
+                                         _),
+                                   Some (TTensor(TInteger, _))) -> Assert.Pass()
+            | _ -> Assert.Fail $"Expected list type statement, got {statements.Head}."
+        | Error _ -> Assert.Fail "Expected no errors for valid expression."
     
+    [<Test>]
+    member _.Should_ParseTupleType() =
+        let result = parse "let foo: (int, int) = (1, 2)"
+
+        match result with
+        | Ok(_, statements) ->
+            Assert.That(statements, Has.Length.EqualTo(1), "Expected one statement for tuple type.")
+
+            match statements.Head with
+            | SVariableDeclaration({ Lexeme = Identifier "foo" },
+                                   ETuple([ ELiteral(LNumber(LInteger 1), _);
+                                            ELiteral(LNumber(LInteger 2), _) ],
+                                          _),
+                                   Some (TTuple([TInteger; TInteger]))) -> Assert.Pass()
+            | _ -> Assert.Fail $"Expected tuple type statement, got {statements.Head}."
+        | Error e -> Assert.Fail $"Expected no errors for valid expression. Got {e}."
     
+    [<Test>]
+    member _.Should_ParseTypedLambda() =
+        let result = parse "let foo = (x: int) -> x"
+
+        match result with
+        | Ok(_, statements) ->
+            Assert.That(statements, Has.Length.EqualTo(1), "Expected one statement for typed lambda.")
+
+            match statements.Head with
+            | SVariableDeclaration({ Lexeme = Identifier "foo" },
+                                   ELambda([ ({ Lexeme = Identifier "x" }, Some TInteger) ],
+                                           EIdentifier({ Lexeme = Identifier "x" }, _),
+                                           _, _, _, _),
+                                   _) -> Assert.Pass()
+            | _ -> Assert.Fail $"Expected typed lambda statement, got {statements.Head}."
+        | Error _ -> Assert.Fail "Expected no errors for valid expression."
     
+    [<Test>]
+    member _.Should_ParseTypedRetLambda() =
+        let result = parse "let foo = (x): int -> x"
+
+        match result with
+        | Ok(_, statements) ->
+            Assert.That(statements, Has.Length.EqualTo(1), "Expected one statement for typed return lambda.")
+
+            match statements.Head with
+            | SVariableDeclaration({ Lexeme = Identifier "foo" },
+                                   ELambda([ ({ Lexeme = Identifier "x" }, _) ],
+                                           EIdentifier({ Lexeme = Identifier "x" }, _),
+                                            Some TInteger, _, _, _),
+                                   _) -> Assert.Pass()
+            | _ -> Assert.Fail $"Expected typed return lambda statement, got {statements.Head}."
+        | Error _ -> Assert.Fail "Expected no errors for valid expression."
     
+    [<Test>]
+    member _.Should_ParseTypedLambdaWithReturnType() =
+        let result = parse "let foo = (x: int): int -> x"
+
+        match result with
+        | Ok(_, statements) ->
+            Assert.That(statements, Has.Length.EqualTo(1), "Expected one statement for typed lambda with return type.")
+
+            match statements.Head with
+            | SVariableDeclaration({ Lexeme = Identifier "foo" },
+                                   ELambda([ ({ Lexeme = Identifier "x" }, Some TInteger) ],
+                                           EIdentifier({ Lexeme = Identifier "x" }, _),
+                                           Some TInteger, _, _, _),
+                                   _) -> Assert.Pass()
+            | _ -> Assert.Fail $"Expected typed lambda with return type statement, got {statements.Head}."
+        | Error _ -> Assert.Fail "Expected no errors for valid expression."
+    
+    [<Test>]
+    member _.Should_ParseMultiParameterLambda() =
+        let result = parse "let foo = (x, y) -> x + y"
+
+        match result with
+        | Ok(_, statements) ->
+            Assert.That(statements, Has.Length.EqualTo(1), "Expected one statement for multi parameter lambda.")
+
+            match statements.Head with
+            | SVariableDeclaration({ Lexeme = Identifier "foo" },
+                                   ELambda([ ({ Lexeme = Identifier "x" }, _);
+                                             ({ Lexeme = Identifier "y" }, _) ],
+                                           ECall(EIdentifier({ Lexeme = Operator(Plus, _) }, _),
+                                                 [ EIdentifier({ Lexeme = Identifier "x" }, _);
+                                                   EIdentifier({ Lexeme = Identifier "y" }, _) ],
+                                                 _),
+                                           _, _, _, _),
+                                   _) -> Assert.Pass()
+            | _ -> Assert.Fail $"Expected multi parameter lambda statement, got {statements.Head}."
+        | Error _ -> Assert.Fail "Expected no errors for valid expression."
+    
+    [<Test>]
+    member _.Should_ParseBlock() =
+        let result = parse "{ 1 }"
+
+        match result with
+        | Ok(_, statements) ->
+            Assert.That(statements, Has.Length.EqualTo(1), "Expected one statement for block.")
+
+            match statements.Head with
+            | SExpression(EBlock(stmts, _), _) ->
+                Assert.That(stmts, Has.Length.EqualTo(1), "Expected one statement in block.")
+                match stmts.Head with
+                | SExpression(ELiteral(LNumber(LInteger 1), _), _) -> Assert.Pass()
+                | _ -> Assert.Fail $"Expected block statement, got {stmts.Head}."
+            | _ -> Assert.Fail $"Expected block statement, got {statements.Head}."
+        | Error _ -> Assert.Fail "Expected no errors for valid expression."
     

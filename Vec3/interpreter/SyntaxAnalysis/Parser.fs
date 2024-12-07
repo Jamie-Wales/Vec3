@@ -1351,6 +1351,41 @@ and funcType (state: ParserState) : ParseResult<TType> =
     }
 
 /// <summary>
+/// Parses a function type hint or a tuple type hint.
+/// </summary>
+/// <param name="state">The parser state.</param>
+/// <returns>The new state and the parsed type.</returns>
+and funcTypeOrTuple (state: ParserState) : ParseResult<TType> =
+     let state = setLabel state "FunctionOrTupleType"
+     // tuple in form (int, float)
+     // function in form (int, float) -> int
+     let rec parseParams (state: ParserState) (paramList: TType list) : ParseResult<TType list> =
+            match peek state with
+            | Some { Lexeme = Punctuation RightParen } -> Ok(advance state, paramList)
+            | _ ->
+                typeHint state
+                |> Result.bind (fun (state, param) ->
+                    match peek state with
+                    | Some { Lexeme = Operator(Comma, _) } -> parseParams (advance state) (param :: paramList)
+                    | Some { Lexeme = Punctuation RightParen } -> Ok(advance state, (param :: paramList))
+                    | _ -> Error(Expected "',' or ')'.", state))
+                
+     result {
+         let! state, paramList = parseParams state []
+         match peek state with
+         | Some { Lexeme = Operator(Arrow, _) } ->
+            let state = advance state
+            let! state, returnType = typeHint state
+            return (state, TFunction(paramList, returnType, false, false))
+         | _ ->
+             let tupleType = TTuple(paramList)
+             return (state, tupleType)
+        }
+                
+            
+    
+
+/// <summary>
 /// Parses a tensor type hint.
 /// </summary>
 /// <param name="state">The parser state.</param>
@@ -1429,7 +1464,7 @@ and typeHint (state: ParserState) : ParseResult<TType> =
         | "any" -> Ok(state, TAny)
         | "char" -> Ok(state, TChar)
         | _ -> Ok(state, TAlias(tok, None))
-    | Some(state, { Lexeme = Punctuation LeftParen }) -> funcType state
+    | Some(state, { Lexeme = Punctuation LeftParen }) -> funcTypeOrTuple state
     | Some(state, { Lexeme = Punctuation LeftBracket }) -> tensorType state
     | Some(state, { Lexeme = Punctuation LeftBrace }) -> recordType state
     | _ -> Error(ExpectedType "type name", state)
