@@ -1,6 +1,7 @@
 namespace Vec3
 
 open System
+open System.IO
 open Avalonia.Controls
 open Avalonia.Markup.Xaml
 open AvaloniaEdit
@@ -24,6 +25,8 @@ type MainWindow() as this =
     inherit Window()
 
     let mutable textEditor: TextEditor = null
+    
+    let mutable openFileButton: Button = null
     let mutable textMateInstallation: TextMate.Installation = null
     let mutable replInput: TextEditor = null
 
@@ -45,8 +48,6 @@ Type 'help()' in the REPL for more information."""
 
     let initialCode =
         """// Vec3 Editor Example
-// Vec3 Editor Example
-
 rec fact(n) -> if n < 1 then 1 else n * fact(n - 1)
 
 let x = fact(5)
@@ -178,7 +179,8 @@ let x = [1..10] : [float]
         replInput <- this.FindControl<TextEditor>("ReplInput")
         runButton <- this.FindControl<Button>("RunButton")
         openNotebookButton <- this.FindControl<Button>("OpenNotebookButton")
-
+        openFileButton <- this.FindControl<Button>("OpenFileButton")
+        openFileButton.Click.AddHandler(fun _ _ -> this.OpenFileAsync())
         standardOutput.Foreground <- SolidColorBrush(Colors.White)
         standardOutput.Text <- welcomeMessage
 
@@ -201,6 +203,38 @@ let x = [1..10] : [float]
         plotWindow.PlotControl.Plot.Clear()
         plotWindow
 
+    member private this.OpenFileAsync() =
+        task {
+            try
+                let dialog = OpenFileDialog()
+                // Add .vec3 as the primary file type
+                dialog.Filters.Add(FileDialogFilter(Name = "Vec3 Files", Extensions = ResizeArray["vec3"]))
+                // Add other supported file types
+                dialog.Filters.Add(FileDialogFilter(Name = "Text Files", Extensions = ResizeArray["txt"; "fs"; "fsx"]))
+                // Add an "All Files" option
+                dialog.Filters.Add(FileDialogFilter(Name = "All Files", Extensions = ResizeArray["*"]))
+                
+                let! result = dialog.ShowAsync(this)
+                match result with
+                | null -> ()  // User cancelled
+                | files ->
+                    // Use Task.Run for file operations to avoid blocking UI
+                    let! fileContent = 
+                        Task.Run(fun () ->
+                            let filePath = files.[0]  // Take first selected file
+                            File.ReadAllText(filePath))
+                    
+                    // Update UI on the UI thread
+                    do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                        if textEditor <> null then
+                            textEditor.Text <- fileContent
+                            standardOutput.Foreground <- SolidColorBrush(Colors.White)
+                            standardOutput.Text <- "File loaded successfully")
+            with ex ->
+                do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                    standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                    standardOutput.Text <- $"Error loading file: {ex.Message}")
+        } |> ignore
     member private this.HandlePlotOutput(vm: VM) =
         let shapes =
             vm.Canvas
