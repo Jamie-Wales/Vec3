@@ -448,60 +448,57 @@ and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
     
     match (callee, recursive) with
     | VBuiltin (func, _), _ ->
-            let args =
-                [ 0 .. argCount - 1 ]
-                |> List.map (fun _ -> let value, _ = pop vm in value)
-                |> List.rev
+        let args =
+            [ 0 .. argCount - 1 ]
+            |> List.map (fun _ -> let value, _ = pop vm in value)
+            |> List.rev
 
-            let value = func args
+        let value = func args
+        let vm, value =
+            match value with
+            | VShape(_, _, _, _, _, _, id, _) ->
+                vm.Canvas.Add(value)
+                vm.Plots.Add(value)
+                let record = VList([ VList([ VString "id"; VNumber(VInteger id) ], LIST) ], RECORD)
+                vm, record
+            | VPlotData _ ->
+                vm.Plots.Add(value)
+                vm, VNil
+            | VPlotFunction _ ->
+                vm.Plots.Add(value)
+                vm, VNil
+            | VPlotFunctions _ ->
+                vm.Plots.Add(value)
+                vm, VNil
+            | VShapes(_, id) ->
+                vm.Canvas.Add(value)
+                vm.Plots.Add(value)
+                let record = VList([ VList([ VString "id"; VNumber(VInteger id) ], LIST) ], RECORD)
+                vm, record
+            | VOutput s -> appendOutput vm StandardOutput s, VNil
+            | VEventListener(id, event, func) ->
+                vm.EventListeners.Add(id, event, func)
+                vm, VNil
+            | _ -> vm, value
 
-            let vm, value =
-                match value with
-                | VShape(_, _, _, _, _, _, id, _) ->
-                    vm.Canvas.Add(value)
-                    vm.Plots.Add(value)
-                    let record = VList([ VList([ VString "id"; VNumber(VInteger id) ], LIST) ], RECORD)
-                    vm, record
-                | VPlotData _ ->
-                    vm.Plots.Add(value)
-                    vm, VNil
-                | VPlotFunction _ ->
-                    vm.Plots.Add(value)
-                    vm, VNil
-                | VPlotFunctions _ ->
-                    vm.Plots.Add(value)
-                    vm, VNil
-                | VShapes(_, id) ->
-                    vm.Canvas.Add(value)
-                    vm.Plots.Add(value)
-                    let record = VList([ VList([ VString "id"; VNumber(VInteger id) ], LIST) ], RECORD)
-                    vm, record
-                | VOutput s -> appendOutput vm StandardOutput s, VNil
-                | VEventListener(id, event, func) ->
-                    vm.EventListeners.Add(id, event, func)
-                    vm, VNil
-                | _ -> vm, value
-
-            let _, vm = pop vm
-            push vm value
+        let _, vm = pop vm
+        push vm value
+            
     | VFunction(func, _), 0 
     | VClosure({ Function = func }, _), 0 ->
         printfn $"Calling function {func.Name} with arity {func.Arity}"
         if argCount <> func.Arity then
             raise <| InvalidProgramException($"Expected {func.Arity} arguments but got {argCount}")
             
-        // Calculate new stack base
         let stackBase = vm.Stack.Count - argCount
         printfn $"New stack base: {stackBase}"
         
-        // Create new frame
         let frame = {
             Closure = 
                 match callee with
                 | VClosure(closure, _) -> 
                     printfn "Using existing closure with upvalues"
                     printfn $"Closure upvalue count: {closure.UpValues.Length}"
-                    // Important: Create a new closure with the same upvalues and values
                     { closure with
                         UpValuesValues = Array.copy closure.UpValuesValues }
                 | VFunction(f, _) -> 
@@ -514,11 +511,60 @@ and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
             StackBase = stackBase
         }
         
-        // Add the new frame
         printfn $"Adding new frame (frame count before: {vm.Frames.Count})"
         vm.Frames.Add(frame)
         printfn $"Frame count after: {vm.Frames.Count}"
         vm
+        
+    | VFunction(func, _), 1 
+    | VClosure({ Function = func }, _), 1 ->
+        printfn $"Tail call for function {func.Name} with arity {func.Arity} recursively"
+        if argCount <> func.Arity then
+            raise <| InvalidProgramException($"Expected {func.Arity} arguments but got {argCount}")
+            
+        let stackBase = vm.Stack.Count - argCount - 1 // -1 for the function value
+        
+        let frame = {
+            Closure = 
+                match callee with
+                | VClosure(closure, _) -> 
+                    { closure with
+                        UpValuesValues = Array.copy closure.UpValuesValues }
+                | VFunction(f, _) -> 
+                    { Function = f
+                      UpValues = []
+                      UpValuesValues = [||] }
+                | _ -> failwith "Impossible"
+            IP = 0
+            StackBase = stackBase
+        }
+        
+        // Remove old frame and add new one
+        vm.Frames.RemoveAt(vm.Frames.Count - 1)
+        vm.Frames.Add(frame)
+        
+        // Execute the tail call directly here
+        let rec loop (vm: VM) =
+            let frame = getCurrentFrame vm
+            if frame.IP >= frame.Closure.Function.Chunk.Code.Count then
+                vm
+            else
+                saveVMState vm
+                let vm, instruction = readByte vm
+                let opcode = byteToOpCode instruction
+                let vm, result = executeOpcode vm opcode
+                match result with
+                | Return value ->
+                    push vm value
+                | Call(argCount, recursive) ->
+                    let vm = callValue vm (int argCount) (int recursive)
+                    loop vm
+                | Continue ->
+                    loop vm
+        
+        loop vm
+        
+    | _ -> raise <| InvalidProgramException $"Can only call functions and closures {callee}"
 and run (vm: VM) = runLoop vm
 
 and joinOutput (vm1: VM) (vm2: VM) =

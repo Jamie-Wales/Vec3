@@ -1181,7 +1181,6 @@ and call (state: ParserState) (callee: Expr) : ParseResult<Expr> =
             let state = advance state
             Ok(state, ECall(callee, args, None))
         | _ ->
-            // replace with comma separated list
             expression state Precedence.None
             |> Result.bind (fun (state, arg) ->
                 match nextToken state with

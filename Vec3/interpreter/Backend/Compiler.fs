@@ -143,12 +143,12 @@ let rec compileExpr (expr: Expr) (state: CompilerState) : unit CompilerResult =
                 None
             )
 
-        compileExpr expression state
+            compileExpr expression state
 
     | ERecordEmpty _ ->
-        emitConstant (VNumber(VInteger 0)) state
-        |> Result.bind (fun ((), state) -> emitConstant (VList([], RECORD)) state)
-        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
+            emitConstant (VNumber(VInteger 0)) state
+            |> Result.bind (fun ((), state) -> emitConstant (VList([], RECORD)) state)
+            |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
 
     | ERecordRestrict(e, _, _) -> compileExpr e state
     | ERecordExtend((name, value, _), record, _) ->
@@ -156,11 +156,6 @@ let rec compileExpr (expr: Expr) (state: CompilerState) : unit CompilerResult =
             match name with
             | { Lexeme = Identifier n } -> n
             | _ -> raise <| System.Exception("Invalid record field name")
-
-        // pretty horrbile, but it works
-        // record is a list of lists, where each list is a pair of a string and a value
-        // might be better to have specific value for pair, but then the compound create would need to be changed
-        // or extra instruction for create pair, otherwise any two eleemnt list would be a pair
 
         let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString name)
 
@@ -174,30 +169,32 @@ let rec compileExpr (expr: Expr) (state: CompilerState) : unit CompilerResult =
         |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
 
 
-    | ERecordSelect(expr, token, _) ->
-        let name =
-            match token with
-            | { Lexeme = Identifier n } -> n
-            | _ -> raise <| System.Exception("Invalid record field name")
+     | ERecordSelect(expr, token, _) ->
+            let name =
+                match token with
+                | { Lexeme = Identifier n } -> n
+                | _ -> raise <| System.Exception("Invalid record field name")
 
-        // compile as call
-        let callee =
-            EIdentifier(
-                { Lexeme = Identifier "select"
-                  Position = { Line = 0; Column = 0 } },
-                None
-            )
+            // compile as call
+            let callee =
+                EIdentifier(
+                    { Lexeme = Identifier "select"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                )
 
-        compileCall callee [ expr; ELiteral(LString name, TString) ] false state
+            compileCall callee [ expr; ELiteral(LString name, TString) ] false state
 
-    | EBlock(stmts, _) -> compileBlock stmts state // scope is fucked up think its global
-    | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
-    | ETernary(cond, thenB, elseB, _) -> compileIf cond thenB elseB state
-    | ETail(ex, _) ->
-        match ex with
-        | ECall(name, args, _) -> compileCall name args true state
-        | e -> compileExpr e state
-    | EMatch(expr, cases, _) -> compileMatch expr cases state
+        | EBlock(stmts, _) -> compileBlock stmts state // scope is fucked up think its global
+        | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
+        | ETernary(cond, thenB, elseB, _) -> compileIf cond thenB elseB state
+        | ETail(ex, _) ->
+            match ex with
+            | ECall(name, args, _) ->
+                printf "Compiling tail"
+                compileCall name args true state
+            | e -> compileExpr e state
+        | EMatch(expr, cases, _) -> compileMatch expr cases state
 
 and compileIndexRange (list: Expr) (start: Expr) (end_: Expr) (state: CompilerState) : unit CompilerResult =
     let callee =
@@ -219,7 +216,7 @@ and compileIndex (list: Expr) (start: Expr) : Compiler<unit> =
             )
 
         compileCall callee [ list; start ] false state
-
+        
 and compileTuple (elements: Expr list) : Compiler<unit> =
     fun state ->
         let rec compileElements elements state =
