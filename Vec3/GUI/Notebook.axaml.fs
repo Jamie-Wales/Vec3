@@ -134,10 +134,9 @@ type NotebookWindow() as this =
 
         runButton.Click.Add(fun _ ->
             try
-                match parseAndCompileWithTE editor.Text vm typeEnv with
-                | Some(newVM, env) ->
+                match noTcParseAndCompile editor.Text vm with
+                | Some newVM ->
                     let oldOutputLength = Seq.length vm.Streams.StandardOutput.Value
-                    typeEnv <- env
                     vm <- run newVM
                     output.Foreground <- SolidColorBrush(Colors.Black)
 
