@@ -17,6 +17,7 @@ open Vec3.Interpreter.Parser
 open Vec3.Interpreter.Typing
 open System.Threading.Tasks
 open System.Threading
+open Vec3.Transpiler.Transpiler
 
 /// <summary>
 /// The main UI window used for the Vec3 editor.
@@ -26,6 +27,7 @@ type MainWindow() as this =
 
     let mutable textEditor: TextEditor = null
     
+    let mutable transpileButton: Button = null
     let mutable openFileButton: Button = null
     let mutable textMateInstallation: TextMate.Installation = null
     let mutable replInput: TextEditor = null
@@ -183,6 +185,8 @@ let x = [1..10] : [float]
         openFileButton.Click.AddHandler(fun _ _ -> this.OpenFileAsync())
         standardOutput.Foreground <- SolidColorBrush(Colors.White)
         standardOutput.Text <- welcomeMessage
+        transpileButton <- this.FindControl<Button>("TranspileButton")
+        transpileButton.Click.AddHandler(fun _ _ -> this.TranspileCodeAsync())  
 
         let registryOptions = RegistryOptions(ThemeName.QuietLight)
         this.SetupEditor(registryOptions)
@@ -192,6 +196,7 @@ let x = [1..10] : [float]
         textEditor.TextChanged.AddHandler(fun _ _ -> this.TextChanged())
         runButton.Click.AddHandler(fun _ _ -> this.run ())
         openNotebookButton.Click.AddHandler(fun _ _ -> this.OpenNotebook())
+        
 
     member private this.OpenNotebook() =
         let notebookWindow = NotebookWindow()
@@ -377,6 +382,40 @@ let x = [1..10] : [float]
 
         debounceTimer <- Some(new Timer(callback, null, debounceTime, Timeout.Infinite))
 
+    member private this.TranspileCodeAsync() =
+        task {
+            try
+                let dialog = OpenFolderDialog()
+                dialog.Title <- "Select Output Directory"
+                
+                let! result = dialog.ShowAsync(this)
+                match result with
+                | null -> ()  // User cancelled
+                | outputDir ->
+                    let config = createConfig (Some outputDir)
+                    
+                    let tempFile = Path.Combine(Path.GetTempPath(), "temp.vec3")
+                    File.WriteAllText(tempFile, this.GetEditorText())
+                    
+                    match transpile tempFile config with
+                    | Ok exePath ->
+                        let mainCPath = Path.Combine(config.OutputDir, "src", "main.c")
+                        let! mainCContent = Task.Run(fun () -> File.ReadAllText(mainCPath))
+                        do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                            standardOutput.Foreground <- SolidColorBrush(Colors.White)
+                            standardOutput.Text <- $"Transpilation successful!\nExecutable: {exePath}\n\nGenerated C code:\n{mainCContent}")
+                    | Error err ->
+                        do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                            standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                            )
+                    
+                    File.Delete(tempFile)
+                    
+            with ex ->
+                do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                    standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                    standardOutput.Text <- $"Transpilation error: {ex.Message}")
+        } |> ignore
     member private this.ApplyColorScheme() =
         if textMateInstallation <> null then
             let applyColor colorKey (action: IBrush -> unit) =

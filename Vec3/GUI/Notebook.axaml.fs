@@ -366,7 +366,7 @@ type NotebookWindow() as this =
                                 let grid = border.Child :?> Grid
                                 let editor = grid.Children[1] :?> TextEditor
                                 editor.Text <- cell.Content
-                                this.SetupTextMateEditor(editor)  // Reapply syntax highlighting
+                                this.SetupTextMateEditor(editor)  
                                 
                             | CellType.Code ->
                                 this.AddCodeCell()
@@ -375,7 +375,7 @@ type NotebookWindow() as this =
                                 let editor = grid.Children[1] :?> TextEditor
                                 let output = grid.Children[2] :?> TextBlock
                                 editor.Text <- cell.Content
-                                this.SetupTextMateEditor(editor)  // Reapply syntax highlighting
+                                this.SetupTextMateEditor(editor) 
                                 match cell.Output with
                                 | Some text -> output.Text <- text
                                 | None -> ()

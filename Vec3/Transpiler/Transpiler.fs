@@ -66,21 +66,15 @@ let getExecutableExtension () =
 /// Ensures all necessary directories exist and returns proper paths
 /// </summary>
 let ensureDirectories (config: TranspilerConfig) =
-    // Get project root and create absolute paths
     let projectRoot = findProjectRoot ()
-
     let absOutputDir =
         if Path.IsPathRooted(config.OutputDir) then
             config.OutputDir
         else
             Path.GetFullPath(Path.Combine(projectRoot, config.OutputDir))
-
-    // Create build directory structure
     Directory.CreateDirectory(absOutputDir) |> ignore
     Directory.CreateDirectory(Path.Combine(absOutputDir, "src")) |> ignore
     Directory.CreateDirectory(Path.Combine(absOutputDir, "include")) |> ignore
-
-    // Return config with absolute paths
     { OutputDir = absOutputDir
       IncludeDir = Path.GetFullPath(Path.Combine(projectRoot, "Executable", "include"))
       RuntimeDir = Path.GetFullPath(Path.Combine(projectRoot, "Executable", "src"))
@@ -92,15 +86,12 @@ let ensureDirectories (config: TranspilerConfig) =
 let copyRuntimeFiles (config: TranspilerConfig) =
     try
         printfn "Copying runtime files..."
-        // Copy header files
         let headerFiles = Directory.GetFiles(config.IncludeDir, "*.h")
-
         for file in headerFiles do
             let destFile = Path.Combine(config.OutputDir, "include", Path.GetFileName(file))
             printfn $"Copying header: %s{file} -> %s{destFile}"
             File.Copy(file, destFile, true)
 
-        // Copy source files
         let sourceFiles = Directory.GetFiles(config.RuntimeDir, "*.c")
 
         for file in sourceFiles do
@@ -138,8 +129,8 @@ let compileCode (config: TranspilerConfig) (mainFile: string) =
         // Get all source files (excluding main.c) and add our generated main.c
         let sourceFiles =
             Directory.GetFiles(Path.Combine(config.OutputDir, "src"), "*.c")
-            |> Array.filter (fun f -> Path.GetFileName(f) <> "main.c") // Exclude the runtime main.c
-            |> Array.append [| mainFile |] // Add our generated main.c
+            |> Array.filter (fun f -> Path.GetFileName(f) <> "main.c") 
+            |> Array.append [| mainFile |] 
             |> Array.map (fun path -> $"\"%s{path}\"")
             |> String.concat " "
 
@@ -189,14 +180,12 @@ let compileCode (config: TranspilerConfig) (mainFile: string) =
 /// </summary>
 let transpile (inputPath: string) (config: TranspilerConfig) : Result<string, TranspilerError> =
     result {
-        // Ensure directories exist and get absolute paths
         let config = ensureDirectories config
 
         printfn $"Using output directory: %s{config.OutputDir}"
         printfn $"Using include directory: %s{config.IncludeDir}"
         printfn $"Using runtime directory: %s{config.RuntimeDir}"
 
-        // Read and process input file
         let! sourceCode =
             try
                 let absInputPath = Path.GetFullPath(inputPath)
@@ -205,19 +194,16 @@ let transpile (inputPath: string) (config: TranspilerConfig) : Result<string, Tr
             with ex ->
                 Error(IOError $"Failed to read input file: {ex.Message}")
 
-        // Parse the code
         let! _, program =
             match parse sourceCode with
             | Ok result -> Ok result
             | Error(err, state) -> Error(ParseError(formatParserError err state, state))
 
-        // Type check the program
         let! _, _, _, typedProgram =
             match Inference.inferProgram Map.empty Inference.defaultTypeEnv program with
             | Ok result -> Ok result
             | Error errors -> Error(TypeError $"Type error: %A{errors}")
 
-        // Generate C code
         let! cCode =
             try
                 printfn "Generating C code..."
