@@ -190,7 +190,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
         // Check that the type satisfies the constraint
         else if constrain.Constrain t then
-            Ok <| Map.add constrain.TypeVar t Map.empty
+            Ok <| Map.add constrain.TypeVar (constrain.Transformation t) Map.empty
         else
             Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
 

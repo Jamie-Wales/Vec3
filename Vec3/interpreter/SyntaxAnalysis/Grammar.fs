@@ -292,6 +292,11 @@ type Type =
         | TAlias(_, Some t) -> t.hasMinDims n
         | TTuple ts -> List.length ts >= n
         | _ -> false
+    
+    member this.AnyDims =
+        match this with
+        | TTensor(_, DAny) -> true
+        | _ -> false
 
 /// <summary>
 /// Represents the dimensions of a tensor type.
@@ -318,9 +323,10 @@ and Row = Type // Row | RowEmpty | RowExtend
 /// <summary>
 /// Represents a type constraint (a type variable and a predicate).
 /// </summary>
-and Constrain(typeVar: TypeVar, constrain: Type -> bool) =
+and Constrain(typeVar: TypeVar, constrain: Type -> bool, ?transformation: Type -> Type) =
     member this.TypeVar = typeVar
     member this.Constrain = constrain
+    member this.Transformation = defaultArg transformation id
 
     /// <summary>
     /// Equality only based on the type variable.

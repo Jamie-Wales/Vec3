@@ -16,203 +16,7 @@ let isTruthy =
     | VBoolean false -> false
     | VNil -> false
     | _ -> true
-
-let rec valuesEqual (a: Value) (b: Value) =
-    match (a, b) with
-    | VNumber x, VNumber y -> numbersEqual x y
-    | VBoolean x, VBoolean y -> x = y
-    | VString x, VString y -> x = y
-    | VFunction(f1, _), VFunction(f2, _) -> f1.Name = f2.Name && f1.Arity = f2.Arity
-    | VClosure(c1, _), VClosure(c2, _) -> c1.Function = c2.Function
-    | VNil, VNil -> true
-    | VList(l1, typ1), VList(l2, typ2) ->
-        if List.length l1 <> List.length l2 || typ1 <> typ2 then
-            false
-        else
-            List.forall2 valuesEqual l1 l2
-    | _ -> false
-
-and numbersEqual (a: VNumber) (b: VNumber) =
-    match (a, b) with
-    | VInteger x, VInteger y -> x = y
-    | VFloat x, VFloat y -> x = y
-    | VRational(n1, d1), VRational(n2, d2) -> n1 * d2 = n2 * d1
-    | VComplex(r1, i1), VComplex(r2, i2) -> r1 = r2 && i1 = i2
-    | VChar x, VChar y -> x = y
-    | _ ->
-        let f1, f2 = (floatValue a, floatValue b)
-        f1 = f2
-
-and floatValue =
-    function
-    | VInteger n -> float n
-    | VFloat f -> f
-    | VRational(n, d) -> float n / float d
-    | VComplex(r, _) -> r // Note: This loses imaginary part information
-    | VChar c -> float c
-
-let toComplex =
-    function
-    | VInteger n -> VComplex(float n, 0.0)
-    | VFloat f -> VComplex(f, 0.0)
-    | VRational(n, d) -> VComplex(float n / float d, 0.0)
-    | VComplex(r, i) -> VComplex(r, i)
-    | VChar c -> VComplex(float c, 0.0)
-
-let rec add a b =
-    match (a, b) with
-    | VNumber(VInteger x), VNumber(VInteger y) -> VNumber(VInteger(x + y))
-    | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) ->
-        let n = n1 * d2 + n2 * d1
-        let d = d1 * d2
-        VNumber(VRational(n, d)) // Consider simplifying the fraction
-    | VNumber(VComplex(r1, i1)), VNumber(VComplex(r2, i2)) -> VNumber(VComplex(r1 + r2, i1 + i2))
-    | VNumber(VInteger x), VNumber(VChar y)
-    | VNumber(VChar y), VNumber(VInteger x) -> VNumber(VChar(char (int x + int y)))
-    | VNumber(VComplex(r, i)), VNumber(VInteger x)
-    | VNumber(VInteger x), VNumber(VComplex(r, i)) -> VNumber(VComplex(r + float x, i))
-    | VNumber(VChar x), VNumber(VChar y) -> VNumber(VChar(char (int x + int y)))
-    | VNumber x, VNumber y -> VNumber(VFloat(floatValue x + floatValue y))
-    | VList(l1, t), VList(l2, _) ->
-        let zipped = List.zip l1 l2
-        let added = List.map (fun (x, y) -> add x y) zipped
-        VList(added, t)
-    | _ -> raise <| InvalidOperationException("Can only add numbers")
-
-let rec subtract a b =
-    match (a, b) with
-    | VNumber(VInteger x), VNumber(VInteger y) -> VNumber(VInteger(x - y))
-    | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) ->
-        let n = n1 * d2 - n2 * d1
-        let d = d1 * d2
-        VNumber(VRational(n, d))
-    | VNumber(VComplex(r1, i1)), VNumber(VComplex(r2, i2)) -> VNumber(VComplex(r1 - r2, i1 - i2))
-    | VNumber(VChar x), VNumber(VChar y) -> VNumber(VChar(char (int x - int y)))
-    | VNumber x, VNumber y -> VNumber(VFloat(floatValue x - floatValue y))
-    | VList(l1, t), VList(l2, _) ->
-        let zipped = List.zip l1 l2
-        let added = List.map (fun (x, y) -> subtract x y) zipped
-        VList(added, t)
-    | _ -> raise <| InvalidOperationException("Can only subtract numbers")
-
-let rec multiply a b =
-    match (a, b) with
-    | VNumber(VInteger x), VNumber(VInteger y) -> VNumber(VInteger(x * y))
-    | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) -> VNumber(VRational(n1 * n2, d1 * d2))
-    | VNumber(VComplex(a, b)), VNumber(VComplex(c, d)) -> VNumber(VComplex(a * c - b * d, a * d + b * c))
-    | VNumber(VChar x), VNumber(VChar y) -> VNumber(VChar(char (int x * int y)))
-    | VNumber x, VNumber y -> VNumber(VFloat(floatValue x * floatValue y))
-    | VList(l1, t), VList(l2, _) ->
-        let zipped = List.zip l1 l2
-        let added = List.map (fun (x, y) -> multiply x y) zipped
-        VList(added, t)
-    | _ -> raise <| InvalidOperationException("Can only multiply numbers")
-
-let rec divide a b =
-    match (a, b) with
-    | VNumber(VInteger x), VNumber(VInteger y) when y <> 0 ->
-        if x % y = 0 then
-            VNumber(VInteger(x / y))
-        else
-            VNumber(VRational(x, y))
-    | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) when n2 <> 0 -> VNumber(VRational(n1 * d2, d1 * n2))
-    | VNumber(VComplex(a, b)), VNumber(VComplex(c, d)) when c <> 0.0 || d <> 0.0 ->
-        let denominator = c * c + d * d
-        VNumber(VComplex((a * c + b * d) / denominator, (b * c - a * d) / denominator))
-    | VNumber(VChar x), VNumber(VChar y) -> VNumber(VChar(char (int x / int y)))
-    | VNumber x, VNumber y ->
-        let f1, f2 = floatValue x, floatValue y
-
-        if f2 = 0.0 then
-            raise <| InvalidOperationException("Cannot divide by zero")
-
-        VNumber(VFloat(f1 / f2))
-    | VList(l1, t), VList(l2, _) ->
-        let zipped = List.zip l1 l2
-        let added = List.map (fun (x, y) -> divide x y) zipped
-        VList(added, t)
-    | _ -> raise <| InvalidOperationException("Can only divide numbers")
-
-let dotProduct a b =
-    match (a, b) with
-    | VList(l1, _), VList(l2, _) ->
-        let rec dotVectors lhs rhs =
-            match lhs, rhs with
-            | [], [] -> 0
-            | l :: ls, r :: rs ->
-                match l, r with
-                | VNumber(VInteger x), VNumber(VInteger y) -> x * y + dotVectors ls rs
-                | _ ->
-                    raise
-                    <| InvalidOperationException("Dot product can only be taken between vectors of integers")
-            | _ -> raise <| InvalidOperationException("Vectors must be of the same length")
-
-        VNumber(VInteger(dotVectors l1 l2))
-    | _ -> raise <| InvalidOperationException("Can only take dot product of vectors")
-
-let crossProduct a b =
-    match (a, b) with
-    | VList(l1, t), VList(l2, _) ->
-        let rec crossVectors lhs rhs =
-            match lhs, rhs with
-            | [ VNumber(VInteger x); VNumber(VInteger y); VNumber(VInteger z) ],
-              [ VNumber(VInteger a); VNumber(VInteger b); VNumber(VInteger c) ] ->
-                [ VNumber(VInteger(y * c - z * b))
-                  VNumber(VInteger(z * a - x * c))
-                  VNumber(VInteger(x * b - y * a)) ]
-            | _ ->
-                raise
-                <| InvalidOperationException("Cross product can only be taken between vectors of integers")
-
-        VList(crossVectors l1 l2, t)
-    | _ -> raise <| InvalidOperationException("Can only take cross product of vectors")
-
-let negate value =
-    match value with
-    | VNumber(VInteger n) -> VNumber(VInteger(-n))
-    | VNumber(VFloat n) -> VNumber(VFloat(-n))
-    | VNumber(VRational(n, d)) -> VNumber(VRational(-n, d))
-    | VNumber(VComplex(r, i)) -> VNumber(VComplex(-r, -i))
-    | VNumber(VChar c) -> VNumber(VChar(char (-int c)))
-    | _ -> raise <| InvalidOperationException("Can only negate numbers")
-
-let unnegate value =
-    match value with
-    | VNumber(VInteger n) -> VNumber(VInteger(if n < 0 then -n else n))
-    | VNumber(VFloat n) -> VNumber(VFloat(if n < 0.0 then -n else n))
-    | VNumber(VRational(n, d)) -> VNumber(VRational(if n < 0 then -n, d else n, d))
-    // | VNumber(VComplex(r, i)) -> VNumber(VComplex(if r < 0.0 then -r else r, if i < 0.0 then -i else i))
-    | _ -> raise <| InvalidOperationException("Can only unnegate numbers")
-
-let power a b =
-    match (a, b) with
-    | VNumber(VInteger x), VNumber(VInteger y) -> VNumber(VInteger(int (float x ** float y)))
-    | VNumber(VFloat x), VNumber(VFloat y) -> VNumber(VFloat(x ** y))
-    | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) ->
-        VNumber(VRational(int (float n1 ** float n2), int (float d1 ** float d2)))
-    | VNumber(VComplex(a, b)), VNumber(VComplex(c, d)) ->
-        let r = a ** c * Math.Exp(-b * d)
-        let i = a ** d * Math.Exp(b * c)
-        VNumber(VComplex(r, i))
-    | VNumber x, VNumber y -> VNumber(VFloat(floatValue x ** floatValue y))
-    | _ -> raise <| InvalidOperationException("Can only raise numbers to a power")
-
-let compare a b =
-    match (a, b) with
-    | VNumber x, VNumber y ->
-        match (x, y) with
-        | VInteger x, VInteger y -> compare x y
-        | VRational(n1, d1), VRational(n2, d2) -> compare (n1 * d2) (n2 * d1)
-        | VComplex(r1, i1), VComplex(r2, i2) ->
-            let res = compare r1 r2
-
-            match res with
-            | 0 -> compare i1 i2
-            | _ -> res
-        | VChar x, VChar y -> compare x y
-        | _ -> compare (floatValue x) (floatValue y)
-    | _ -> raise <| InvalidOperationException("Can only compare numbers")
-
+    
 let rec cast org castTyp =
     match castTyp with
     | VBoolean _ -> castToBool org
@@ -343,6 +147,236 @@ and castToString a =
             + "]"
         )
     | _ -> VString ""
+
+let rec valuesEqual (a: Value) (b: Value) =
+    match (a, b) with
+    | VNumber x, VNumber y -> numbersEqual x y
+    | VBoolean x, VBoolean y -> x = y
+    | VString x, VString y -> x = y
+    | VFunction(f1, _), VFunction(f2, _) -> f1.Name = f2.Name && f1.Arity = f2.Arity
+    | VClosure(c1, _), VClosure(c2, _) -> c1.Function = c2.Function
+    | VNil, VNil -> true
+    | VList(l1, typ1), VList(l2, typ2) ->
+        if List.length l1 <> List.length l2 || typ1 <> typ2 then
+            false
+        else
+            List.forall2 valuesEqual l1 l2
+    | _ -> false
+
+and numbersEqual (a: VNumber) (b: VNumber) =
+    match (a, b) with
+    | VInteger x, VInteger y -> x = y
+    | VFloat x, VFloat y -> x = y
+    | VRational(n1, d1), VRational(n2, d2) -> n1 * d2 = n2 * d1
+    | VComplex(r1, i1), VComplex(r2, i2) -> r1 = r2 && i1 = i2
+    | VChar x, VChar y -> x = y
+    | _ ->
+        let f1, f2 = (floatValue a, floatValue b)
+        f1 = f2
+
+and floatValue =
+    function
+    | VInteger n -> float n
+    | VFloat f -> f
+    | VRational(n, d) -> float n / float d
+    | VComplex(r, _) -> r // Note: This loses imaginary part information
+    | VChar c -> float c
+
+let toComplex =
+    function
+    | VInteger n -> VComplex(float n, 0.0)
+    | VFloat f -> VComplex(f, 0.0)
+    | VRational(n, d) -> VComplex(float n / float d, 0.0)
+    | VComplex(r, i) -> VComplex(r, i)
+    | VChar c -> VComplex(float c, 0.0)
+
+let rec add a b =
+    match (a, b) with
+    | VNumber(VInteger x), VNumber(VInteger y) -> VNumber(VInteger(x + y))
+    | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) ->
+        let n = n1 * d2 + n2 * d1
+        let d = d1 * d2
+        VNumber(VRational(n, d)) // Consider simplifying the fraction
+    | VNumber(VComplex(r1, i1)), VNumber(VComplex(r2, i2)) -> VNumber(VComplex(r1 + r2, i1 + i2))
+    | VNumber(VChar x), VNumber(VChar y) -> VNumber(VChar(char (int x + int y)))
+    
+    | VNumber _ as x, (VNumber (VInteger _) as y) ->
+        let y = cast y x
+        add x y
+    | VNumber(VInteger _) as y, (VNumber _ as x) ->
+        let y = cast y x
+        add x y
+        
+    | VNumber x, VNumber y -> VNumber(VFloat(floatValue x + floatValue y))
+    | VList(l1, t), VList(l2, _) ->
+        let zipped = List.zip l1 l2
+        let added = List.map (fun (x, y) -> add x y) zipped
+        VList(added, t)
+    | _ -> raise <| InvalidOperationException("Can only add numbers")
+
+let rec subtract a b =
+    match (a, b) with
+    | VNumber(VInteger x), VNumber(VInteger y) -> VNumber(VInteger(x - y))
+    | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) ->
+        let n = n1 * d2 - n2 * d1
+        let d = d1 * d2
+        VNumber(VRational(n, d))
+    | VNumber(VComplex(r1, i1)), VNumber(VComplex(r2, i2)) -> VNumber(VComplex(r1 - r2, i1 - i2))
+    | VNumber(VChar x), VNumber(VChar y) -> VNumber(VChar(char (int x - int y)))
+    
+    | VNumber _ as x, (VNumber (VInteger _) as y) ->
+        let y = cast y x
+        subtract x y
+    | VNumber(VInteger _) as y, (VNumber _ as x) ->
+        let y = cast y x
+        subtract x y
+        
+    | VNumber x, VNumber y -> VNumber(VFloat(floatValue x - floatValue y))
+    | VList(l1, t), VList(l2, _) ->
+        let zipped = List.zip l1 l2
+        let added = List.map (fun (x, y) -> subtract x y) zipped
+        VList(added, t)
+    | _ -> raise <| InvalidOperationException("Can only subtract numbers")
+
+let rec multiply a b =
+    match (a, b) with
+    | VNumber(VInteger x), VNumber(VInteger y) -> VNumber(VInteger(x * y))
+    | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) -> VNumber(VRational(n1 * n2, d1 * d2))
+    | VNumber(VComplex(a, b)), VNumber(VComplex(c, d)) -> VNumber(VComplex(a * c - b * d, a * d + b * c))
+    | VNumber(VChar x), VNumber(VChar y) -> VNumber(VChar(char (int x * int y)))
+    | VNumber _ as x, (VNumber (VInteger _) as y) ->
+        let y = cast y x
+        multiply x y
+    | VNumber(VInteger _) as y, (VNumber _ as x) ->
+        let y = cast y x
+        multiply x y
+    | VNumber x, VNumber y -> VNumber(VFloat(floatValue x * floatValue y))
+    | VList(l1, t), VList(l2, _) ->
+        let zipped = List.zip l1 l2
+        let added = List.map (fun (x, y) -> multiply x y) zipped
+        VList(added, t)
+    | _ -> raise <| InvalidOperationException("Can only multiply numbers")
+
+let rec divide a b =
+    match (a, b) with
+    | VNumber(VInteger x), VNumber(VInteger y) when y <> 0 ->
+        if x % y = 0 then
+            VNumber(VInteger(x / y))
+        else
+            VNumber(VRational(x, y))
+    | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) when n2 <> 0 -> VNumber(VRational(n1 * d2, d1 * n2))
+    | VNumber(VComplex(a, b)), VNumber(VComplex(c, d)) when c <> 0.0 || d <> 0.0 ->
+        let denominator = c * c + d * d
+        VNumber(VComplex((a * c + b * d) / denominator, (b * c - a * d) / denominator))
+    | VNumber(VChar x), VNumber(VChar y) -> VNumber(VChar(char (int x / int y)))
+    | VNumber _ as x, (VNumber (VInteger _) as y) ->
+        let y = cast y x
+        divide x y
+    | VNumber(VInteger _) as y, (VNumber _ as x) ->
+        let y = cast y x
+        divide x y
+    | VNumber x, VNumber y ->
+        let f1, f2 = floatValue x, floatValue y
+
+        if f2 = 0.0 then
+            raise <| InvalidOperationException("Cannot divide by zero")
+
+        VNumber(VFloat(f1 / f2))
+    | VList(l1, t), VList(l2, _) ->
+        let zipped = List.zip l1 l2
+        let added = List.map (fun (x, y) -> divide x y) zipped
+        VList(added, t)
+    | _ -> raise <| InvalidOperationException("Can only divide numbers")
+
+let dotProduct a b =
+    match (a, b) with
+    | VList(l1, _), VList(l2, _) ->
+        let rec dotVectors lhs rhs =
+            match lhs, rhs with
+            | [], [] -> 0
+            | l :: ls, r :: rs ->
+                match l, r with
+                | VNumber(VInteger x), VNumber(VInteger y) -> x * y + dotVectors ls rs
+                | _ ->
+                    raise
+                    <| InvalidOperationException("Dot product can only be taken between vectors of integers")
+            | _ -> raise <| InvalidOperationException("Vectors must be of the same length")
+
+        VNumber(VInteger(dotVectors l1 l2))
+    | _ -> raise <| InvalidOperationException("Can only take dot product of vectors")
+
+let crossProduct a b =
+    match (a, b) with
+    | VList(l1, t), VList(l2, _) ->
+        let rec crossVectors lhs rhs =
+            match lhs, rhs with
+            | [ VNumber(VInteger x); VNumber(VInteger y); VNumber(VInteger z) ],
+              [ VNumber(VInteger a); VNumber(VInteger b); VNumber(VInteger c) ] ->
+                [ VNumber(VInteger(y * c - z * b))
+                  VNumber(VInteger(z * a - x * c))
+                  VNumber(VInteger(x * b - y * a)) ]
+            | _ ->
+                raise
+                <| InvalidOperationException("Cross product can only be taken between vectors of integers")
+
+        VList(crossVectors l1 l2, t)
+    | _ -> raise <| InvalidOperationException("Can only take cross product of vectors")
+
+let negate value =
+    match value with
+    | VNumber(VInteger n) -> VNumber(VInteger(-n))
+    | VNumber(VFloat n) -> VNumber(VFloat(-n))
+    | VNumber(VRational(n, d)) -> VNumber(VRational(-n, d))
+    | VNumber(VComplex(r, i)) -> VNumber(VComplex(-r, -i))
+    | VNumber(VChar c) -> VNumber(VChar(char (-int c)))
+    | _ -> raise <| InvalidOperationException("Can only negate numbers")
+
+let unnegate value =
+    match value with
+    | VNumber(VInteger n) -> VNumber(VInteger(if n < 0 then -n else n))
+    | VNumber(VFloat n) -> VNumber(VFloat(if n < 0.0 then -n else n))
+    | VNumber(VRational(n, d)) -> VNumber(VRational(if n < 0 then -n, d else n, d))
+    | VNumber(VComplex(r, i)) ->
+        let r = if r < 0.0 then -r else r
+        let i = if i < 0.0 then -i else i
+        VNumber(VComplex(r, i))
+    | _ -> raise <| InvalidOperationException("Can only unnegate numbers")
+
+let rec power a b =
+    match (a, b) with
+    | VNumber(VInteger x), VNumber(VInteger y) -> VNumber(VInteger(int (float x ** float y)))
+    | VNumber(VFloat x), VNumber(VFloat y) -> VNumber(VFloat(x ** y))
+    | VNumber(VRational(n1, d1)), VNumber(VRational(n2, d2)) ->
+        VNumber(VRational(int (float n1 ** float n2), int (float d1 ** float d2)))
+    | VNumber(VComplex(a, b)), VNumber(VComplex(c, d)) ->
+        let r = a ** c * Math.Exp(-b * d)
+        let i = a ** d * Math.Exp(b * c)
+        VNumber(VComplex(r, i))
+    | VNumber _ as x, (VNumber (VInteger _) as y) ->
+        let y = cast y x
+        power x y
+    | VNumber(VInteger _) as y, (VNumber _ as x) ->
+        let y = cast y x
+        power x y
+    | VNumber x, VNumber y -> VNumber(VFloat(floatValue x ** floatValue y))
+    | _ -> raise <| InvalidOperationException("Can only raise numbers to a power")
+
+let compare a b =
+    match (a, b) with
+    | VNumber x, VNumber y ->
+        match (x, y) with
+        | VInteger x, VInteger y -> compare x y
+        | VRational(n1, d1), VRational(n2, d2) -> compare (n1 * d2) (n2 * d1)
+        | VComplex(r1, i1), VComplex(r2, i2) ->
+            let res = compare r1 r2
+
+            match res with
+            | 0 -> compare i1 i2
+            | _ -> res
+        | VChar x, VChar y -> compare x y
+        | _ -> compare (floatValue x) (floatValue y)
+    | _ -> raise <| InvalidOperationException("Can only compare numbers")
+
 
 let newtonRaphson
     (f: float -> float)

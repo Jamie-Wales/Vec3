@@ -309,7 +309,8 @@ let builtins =
       VBuiltin(
           (fun args ->
               match args with
-              | [ VList(l1, t1); VList(l2, t2) ] -> VList(l1 @ l2, t1)
+              | [ VList(l1, t1); VList(l2, _) ] -> VList(l1 @ l2, t1)
+              | [ VString s1; VString s2 ] -> VString(s1 + s2)
               | _ -> raise <| InvalidProgramException "append expects two lists"),
           "Append"
       )

@@ -276,7 +276,7 @@ let PlotEllipsesType =
         TConstrain(
             Constrain(
                 freshTypeVar (),
-                fun t ->
+                (fun t ->
                     t.IsList && match t with
                                 | TRecord(t) ->
                                     t.hasFieldsThat
@@ -285,12 +285,22 @@ let PlotEllipsesType =
                                           (Identifier "rx", fun t -> t = TFloat)
                                           (Identifier "ry", fun t -> t = TFloat)
                                           ]
-                                | _ -> false
-                                
+                                | _ -> false)
             )
         )
         
     TFunction([ recTyp ], TUnit, false, true)
+
+let appendType =
+    let typeVar = freshTypeVar ()
+    let constrain = TConstrain(
+        Constrain(typeVar,
+                  (fun t -> t.IsList || t = TString),
+                  (fun t -> match t with | TTensor(t, _) -> TTensor(t, DAny) | _ -> t)
+                  )
+        )
+    
+    TFunction([ constrain; constrain ], constrain, false, true)
 
 /// <summary>
 /// Map of built-in functions to their types.
@@ -365,6 +375,7 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       
       PlotEllipse, PlotEllipseType
       PlotEllipses, PlotEllipsesType
+      Append, appendType
 
       ]
     |> Map.ofList

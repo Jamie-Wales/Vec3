@@ -103,13 +103,6 @@ let Keys = {
 	Down = { event = 3 }
 }
 
-// join two lists
-// doesnt work, issue with calling stack order what ever
-rec append(list1, list2) -> if list1 == [] then 
-								list2 
-							else 
-								head(list1) :: append(tail(list1), list2)
-        
 // wrapper for append
 let (++) = (list1, list2) -> append(list1, list2)
 

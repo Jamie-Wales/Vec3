@@ -357,6 +357,8 @@ type BuiltInFunction =
     | Lte
     | Gt
     | Gte
+    
+    | Append
 
     | CrossProduct
     | DotProduct
@@ -443,6 +445,8 @@ let builtInFunctionMap =
       Identifier "on", BuiltInFunction.On
 
       Identifier "await", BuiltInFunction.Await
+      Identifier "append", BuiltInFunction.Append
+      Identifier "plotEllipse", BuiltInFunction.PlotEllipse
 
       ]
     |> Map.ofList
@@ -511,3 +515,4 @@ let hasSideEffects =
     | Concat -> false
     | PlotEllipse -> true
     | PlotEllipses -> true
+    | Append -> true
