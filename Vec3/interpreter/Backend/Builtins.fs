@@ -150,7 +150,7 @@ let builtins =
           (fun args ->
               match args with
               | [ VString s ] ->
-                  let parsed = Parser.parse s
+                  let parsed = Parser.parse s false
 
                   match parsed with
                   | Ok(_, ast) ->

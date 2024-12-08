@@ -220,7 +220,7 @@ let simplifyRational (rat: Number) : Number =
         let a = a / gcd
         let b = b / gcd
         LRational(a, b)
-    | _ -> failwith "bad"
+    | _ -> failwith "Expected rational number"
 
 /// <summary>
 /// Helper function to perform indexing on lists.
@@ -228,7 +228,6 @@ let simplifyRational (rat: Number) : Number =
 /// <param name="expr">The expression to index.</param>
 /// <param name="start">An optional start</param>
 /// <param name="end_">An optional end</param>
-/// <param name="isRange">Whether the index is a range.</param>
 /// <param name="typ">The type of the expression.</param>
 /// <returns>The indexed expression.</returns>
 let performIndexRange expr start end_ typ =
@@ -266,7 +265,7 @@ let foldConstants (program: Program) : Program =
         | STypeDeclaration(tok, typ, typ2) -> STypeDeclaration(tok, typ, typ2)
         | SRecFunc(token, tuples, expr, typeOption) -> SRecFunc(token, tuples, foldExpr expr, typeOption)
         | SAsync(token, tuples, expr, typeOption) -> SAsync(token, tuples, foldExpr expr, typeOption)
-        | SImport(token, path, typ) -> SImport(token, path, typ) // maybe fold in imports?
+        | SImport(token, path, isStd, typ) -> SImport(token, path, isStd, typ) // maybe fold in imports?
 
     /// <summary>
     /// Fold an expression.

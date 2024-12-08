@@ -1,14 +1,3 @@
-/// <summary>
-/// This module contains the prelude of the Vec3 language.
-/// Definitions of built-in functions and list operations.
-/// </summary>
-module Vec3.Interpreter.Prelude
-
-open Parser
-open Vec3.Interpreter.Typing
-
-let prelude =
-    """
 // wrapper functions for built-in functions
 // to make them first-class
 let cos = (x) -> BUILTIN_COS(x)
@@ -96,12 +85,14 @@ rec range(start, end) -> if start >= end then
 let (...) = (start, end) -> range(start, end)
 let (!!) = (list, index) -> list[index]
 
+/*
 let Keys = {
 	Left = { event = 0 },
 	Right = { event = 1 },
 	Up = { event = 2 },
 	Down = { event = 3 }
 }
+*/
 
 // wrapper for append
 let (++) = (list1, list2) -> append(list1, list2)
@@ -110,21 +101,3 @@ let findIntegral = (f, x, y) {
 	let integral = integrate(f)
 	integral(y) - integral(x)
 }
-
-"""
-
-/// <summary>
-/// Preparsed prelude program.
-/// </summary>
-let preludeParsed =
-    match parse prelude with
-    | Ok(_, program) -> program
-    | _ -> failwith "error parsing"
-
-/// <summary>
-/// Pre-typechecked prelude program.
-/// </summary>
-let preludeChecked =
-    match Inference.inferProgram1 preludeParsed with
-    | Ok(env, aliases, sub, program) -> env, aliases, sub, program
-    | _ -> failwith "error type checking"

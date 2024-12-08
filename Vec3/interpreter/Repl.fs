@@ -41,7 +41,7 @@ let rec exprToString =
 
 let executeInRepl (input: string) (vm: VM) : VM =
     try
-        let parsed = parse input
+        let parsed = parse input true
 
         match parsed with
         | Ok(_, program) ->
@@ -84,9 +84,7 @@ let startRepl () =
  OR pass vm to parser to check env
 *)
 let noTcParseAndCompile (code: string) (vm: VM) =
-    let code = Prelude.prelude + code
-
-    match parse code with
+    match parse code true with
     | Ok(_, program) ->
         // let program = eliminate program
         let program = foldConstants program
@@ -101,9 +99,7 @@ let noTcParseAndCompile (code: string) (vm: VM) =
         None
 
 let parseAndCompile (code: string) (vm: VM) =
-    let code = Prelude.prelude + code
-
-    match parse code with
+    match parse code true with
     | Ok(_, program) ->
         match inferProgram Map.empty defaultTypeEnv program with
         | Ok(_, _, _, program) ->
@@ -124,9 +120,7 @@ let parseAndCompile (code: string) (vm: VM) =
         None
 
 let parseAndCompileWithTE (code: string) (vm: VM) (env: TypeEnv) =
-    let code = Prelude.prelude + code
-
-    match parse code with
+    match parse code true with
     | Ok(_, program) ->
         match inferProgram Map.empty env program with
         | Ok(env, _, _, program) ->

@@ -419,8 +419,8 @@ type NotebookWindow() as this =
             pdfItem.Click.Add(fun _ -> this.ExportNotebook())
             notebookItem.Click.Add(fun _ -> this.SaveNotebookAsync())
             
-            menu.Items.Add(pdfItem)
-            menu.Items.Add(notebookItem)
+            menu.Items.Add(pdfItem) |> ignore
+            menu.Items.Add(notebookItem) |> ignore
             menu.Open(exportButton))
             
         importButton.Click.AddHandler(fun _ _ -> this.LoadNotebookAsync())

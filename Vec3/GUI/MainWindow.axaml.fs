@@ -119,10 +119,10 @@ let data = {
 
 let id = draw(data)
 
-on(id, Keys.Right, (state) -> { x = state.x + 10.0, y = cos(state.x) * 10.0 + 100.0 })
-on(id, Keys.Left, (state) -> { x = state.x - 10.0, y = cos(state.x) * 10.0 + 100.0 })
-on(id, Keys.Down, (state) -> { x = state.x, y = state.y + 20.0 })
-on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
+// on(id, Keys.Right, (state) -> { x = state.x + 10.0, y = cos(state.x) * 10.0 + 100.0 })
+// on(id, Keys.Left, (state) -> { x = state.x - 10.0, y = cos(state.x) * 10.0 + 100.0 })
+// on(id, Keys.Down, (state) -> { x = state.x, y = state.y + 20.0 })
+// on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
 
 // list casting
 let x = [1..10] : [float]
@@ -362,11 +362,9 @@ let x = [1..10] : [float]
                             standardOutput.Foreground <- SolidColorBrush(Colors.White)
                             standardOutput.Text <- ""
                         else
-                            match parse code with
+                            match parse code true with
                             | Ok(_, ast) ->
-                                let env, aliases, _, _ = Prelude.preludeChecked
-
-                                match Inference.inferProgram aliases env ast with
+                                match Inference.inferProgram1 ast with
                                 | Ok _ ->
                                     standardOutput.Foreground <- SolidColorBrush(Colors.White)
                                     standardOutput.Text <- "No errors"
