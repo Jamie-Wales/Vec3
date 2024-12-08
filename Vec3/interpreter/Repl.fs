@@ -87,7 +87,7 @@ let noTcParseAndCompile (code: string) (vm: VM) =
     match parse code true with
     | Ok(_, program) ->
         // let program = eliminate program
-        let program = foldConstants program
+        // let program = foldConstants program
 
         match compileProgram program with
         | Ok(func, _) -> Some(loadFunction vm func)
@@ -105,7 +105,7 @@ let parseAndCompile (code: string) (vm: VM) =
         | Ok(_, _, _, program) ->
 
             let program = eliminate program
-            let program = foldConstants program
+            // let program = foldConstants program
 
             match compileProgram program with
             | Ok(func, _) -> Some(loadFunction vm func)

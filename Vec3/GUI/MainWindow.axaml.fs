@@ -119,8 +119,8 @@ let data = {
 
 let id = draw(data)
 
-// on(id, Keys.Right, (state) -> { x = state.x + 10.0, y = cos(state.x) * 10.0 + 100.0 })
-// on(id, Keys.Left, (state) -> { x = state.x - 10.0, y = cos(state.x) * 10.0 + 100.0 })
+on(id, Keys.Right, (state) -> { x = state.x + 10.0, y = cos(state.x) * 10.0 + 100.0 })
+on(id, Keys.Left, (state) -> { x = state.x - 10.0, y = cos(state.x) * 10.0 + 100.0 })
 // on(id, Keys.Down, (state) -> { x = state.x, y = state.y + 20.0 })
 // on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
 

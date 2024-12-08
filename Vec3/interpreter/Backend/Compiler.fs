@@ -243,7 +243,6 @@ and compileTuple (elements: Expr list) : Compiler<unit> =
                 compileExpr element state
                 |> Result.bind (fun ((), state) -> compileElements rest state)
 
-        // same as list
         compileElements elements state
         |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger elements.Length)) state)
         |> Result.bind (fun ((), state) -> emitConstant (VList([], TUPLE)) state)

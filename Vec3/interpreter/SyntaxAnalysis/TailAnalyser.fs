@@ -65,17 +65,14 @@ and analyseExpr (isTail: bool) (expr: Expr) : Expr =
                     analyseStmts stmts
         EBlock(newStmts, ty)
 
-    // Recursive functions or lambda bodies
-    | ELambda(args, body, ty, pure', retTy, inlineFlag) ->
-        ELambda(args, analyseExpr true body, ty, pure', retTy, inlineFlag)
+    | ELambda(args, body, ty, pure', retTy, asyncFlag) ->
+        ELambda(args, analyseExpr true body, ty, pure', retTy, asyncFlag)
 
-    // Pattern matching: Check each branch for tail expressions
     | EMatch(target, branches, ty) ->
         let newBranches = 
             branches |> List.map (fun (pat, branchExpr) -> (pat, analyseExpr isTail branchExpr))
         EMatch(analyseExpr false target, newBranches, ty)
 
-    // Default handling for other expressions
     | EList(elements, ty) -> EList(List.map (analyseExpr false) elements, ty)
     | ETuple(elements, ty) -> ETuple(List.map (analyseExpr false) elements, ty)
     | EIndex(target, index, ty) -> EIndex(analyseExpr false target, analyseExpr false index, ty)

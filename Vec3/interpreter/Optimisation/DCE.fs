@@ -67,7 +67,10 @@ let rec eliminate (program: Program) : Program =
         | SVariableDeclaration(name, expr, t) :: rest ->
             let rest = pass rest
             SVariableDeclaration(name, expr, t) :: rest
-        | SAsync(name, params', body, t) :: rest
+        | SAsync(name, params', body, t) :: rest ->
+            let rest = pass rest
+            
+            SAsync(name, params', body, t) :: rest
         | SRecFunc(name, params', body, t) :: rest ->
             let rest = pass rest
 

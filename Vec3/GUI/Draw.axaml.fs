@@ -83,12 +83,10 @@ type DrawWindow() as this =
                     | Some vm ->
                         let newVal = runFunction vm func [ args ]
 
-                        printfn $"newVal: %A{newVal}"
                         match newVal with
                         | VList([ VList([ VString "y"; VNumber(VFloat y) ], _)
                                   VList([ VString "x"; VNumber(VFloat x) ], _) ],
                                 _) ->
-                            printfn $"x: %f{x}, y: %f{y}"
                             if shapeInfo.trace then
                                 let trail = Avalonia.Controls.Shapes.Line()
                                 trail.StartPoint <- Point(prevX, prevY)

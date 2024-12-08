@@ -1212,7 +1212,7 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
                     newEnv,
                     aliases,
                     sub,
-                    SAsync(name, paramList, expr, Some(TFunction(paramTypes, bodyType, false, false)))
+                    SRecFunc(name, paramList, expr, Some(TFunction(paramTypes, bodyType, false, false)))
                 )))
     | SImport(name, path, isStd, _) ->
         // todo, binding to name (create record)

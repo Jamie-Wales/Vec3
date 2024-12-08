@@ -242,7 +242,7 @@ and executeOpcodeImpl (vm: VM) (opcode: OP_CODE) : VM =
            let value, vm = pop vm
            let vm = appendOutput vm Execution $"Defining global variable: {name} = {valueToString value}"
            defineGlobal vm name value
-       | _ -> raise <| InvalidProgramException("Expected string constant for variable name in DEFINE_GLOBAL")
+       | _ -> raise <| InvalidProgramException $"Expected string constant for variable name in DEFINE_GLOBAL, got {valueToString constant}"
        
    | GET_GLOBAL ->
        let constant, vm = readConstant vm
@@ -251,7 +251,7 @@ and executeOpcodeImpl (vm: VM) (opcode: OP_CODE) : VM =
            match getGlobal vm name with
            | Some value -> push vm value
            | None -> raise <| InvalidProgramException($"Undefined variable '{name}'")
-       | _ -> raise <| InvalidProgramException("Expected string constant for variable name in GET_GLOBAL")
+       | _ -> raise <| InvalidProgramException $"Expected string constant for variable name in GET_GLOBAL, got {valueToString constant}"
        
    | SET_GLOBAL ->
        let constant, vm = readConstant vm
@@ -327,7 +327,7 @@ and executeOpcodeImpl (vm: VM) (opcode: OP_CODE) : VM =
 
             let vm = push vm closure
             vm
-        | _ -> raise <| InvalidProgramException "Expected function constant for closure"
+        | _ -> raise <| InvalidProgramException $"Expected function constant for closure, got {valueToString constant}"
    
     | GET_UPVALUE ->
         let vm, slot = readByte vm
