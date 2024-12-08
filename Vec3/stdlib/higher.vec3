@@ -12,15 +12,15 @@ let (<|) = (f, x) -> f(x)
 
 let compose2 = (f, g) -> (x, y) -> f(g(x, y))
 
-rec iterate(f, n, x) ->
+let rec iterate = (f, n, x) ->
     if n <= 0 then
         x
     else
         f(iterate(f, n - 1, x))
 
-let on = (f, g) -> (x, y) -> f(g(x), g(y))
+let onn = (f, g) -> (x, y) -> f(g(x), g(y))
 
-rec composeAll(fs) ->
+let rec composeAll = (fs) ->
     if len(fs) == 0 then
         identity
     else if len(fs) == 1 then

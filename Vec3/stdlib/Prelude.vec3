@@ -30,7 +30,7 @@ let tail = (list) -> if list == [] then
                      else 
                         list[1..]
 
-rec len(list) -> if list == [] then 
+let rec len = (list) -> if list == [] then 
                     0 
                  else 
                     1 + len(tail(list))
@@ -40,17 +40,17 @@ let head = (x) -> if len(x) == 0 then
                   else 
                      x[0]
 
-rec fold(list, acc, func) -> if len(list) == 0 then 
+let rec fold = (list, acc, func) -> if len(list) == 0 then 
                                acc 
                             else 
                                func(head(list), fold(tail(list), acc, func))
 
-rec map(list, func) -> if list == [] then 
+let rec map = (list, func) -> if list == [] then 
                           [] 
                        else
                           func(head(list)) :: map(tail(list), func)
 
-rec filter(list, func: (any) -> bool) -> if list == [] then 
+let rec filter = (list, func: (any) -> bool) -> if list == [] then 
                                            [] 
                                         else if func(head(list)) then 
                                            head(list) :: filter(tail(list), func) 
@@ -68,7 +68,7 @@ let anyAre = (list, func) -> any(map(list, func))
 let allAre = (list, func) -> all(map(list, func))
 
 // Range utilities
-rec range(start, end) -> if start >= end then 
+let rec range = (start, end) -> if start >= end then 
                            []
                         else
                            start :: range(start + 1, end)

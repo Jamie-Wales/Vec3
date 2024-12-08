@@ -50,7 +50,7 @@ Type 'help()' in the REPL for more information."""
 
     let initialCode =
         """// Vec3 Editor Example
-rec fact(n) -> if n < 1 then 1 else n * fact(n - 1)
+let rec fact = (n) -> if n < 1 then 1 else n * fact(n - 1)
 
 let x = fact(5)
 print(x)
