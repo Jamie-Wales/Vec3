@@ -9,11 +9,12 @@ open Token
 // also check for unused functions, can be eliminated
 // possibly also inline some calls, maybe not here though
 
-let sideEffectFunctions =
+let sideEffectFunctions: (Lexeme list) ref =
     builtInFunctionMap
     |> Map.filter (fun _ -> hasSideEffects)
     |> Map.keys
     |> List.ofSeq
+    |> ref
 
 let rec hasSideEffects (expr: Expr) : bool =
     match expr with
@@ -21,14 +22,14 @@ let rec hasSideEffects (expr: Expr) : bool =
     | EList(exprs, _) -> List.exists hasSideEffects exprs
     | ETuple(exprs, _) -> List.exists hasSideEffects exprs
     | EGrouping(expr, _) -> hasSideEffects expr
-    | EIdentifier(token, _) -> List.exists (fun x -> x = token.Lexeme) sideEffectFunctions
+    | EIdentifier(token, _) -> List.exists (fun x -> x = token.Lexeme) sideEffectFunctions.Value
     | ECall(callee, args, _) -> hasSideEffects callee || List.exists hasSideEffects args
     | EIf(cond, thenBranch, elseBranch, _) ->
         hasSideEffects cond || hasSideEffects thenBranch || hasSideEffects elseBranch
     | EIndex(expr, start, _) -> hasSideEffects expr || hasSideEffects start
     | EIndexRange(expr, start, end_, _) -> hasSideEffects expr || hasSideEffects start || hasSideEffects end_
     | EBlock(stmts, _) -> true // todo
-    | ELambda(_, body, _, pr, _, _) -> not pr || hasSideEffects body
+    | ELambda(_, body, _, _, _, _) -> hasSideEffects body
     | ERecordSelect(expr, _, _) -> hasSideEffects expr
     | ETernary(cond, thenBranch, elseBranch, _) ->
         hasSideEffects cond || hasSideEffects thenBranch || hasSideEffects elseBranch
@@ -44,7 +45,16 @@ let rec hasSideEffectsStmt (stmt: Stmt) : bool =
     match stmt with
     | SExpression(expr, _) -> hasSideEffects expr
     | SAssertStatement _ -> true
-    | SVariableDeclaration _ -> true
+    | SVariableDeclaration(name, expr, t) ->
+        if hasSideEffects expr then
+            // If a variable declaration has side effects, track it as a potential side-effecting function
+            match expr with
+            | ELambda _ ->
+                sideEffectFunctions.Value <- name.Lexeme :: sideEffectFunctions.Value
+            | _ -> ()
+            
+        true
+        
     | SRecFunc _ -> true
     | SAsync _ -> true
     | STypeDeclaration _ -> true
@@ -115,3 +125,4 @@ and isUsedE (name: Lexeme) (expr: Expr) : bool =
     | EMatch(expr, cases, _) -> isUsedE name expr || List.exists (fun (_, e) -> isUsedE name e) cases
     | ERecordRestrict(expr, _, _) -> isUsedE name expr
     | ETail(expr, _) -> isUsedE name expr
+
