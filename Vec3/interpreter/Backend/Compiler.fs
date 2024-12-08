@@ -116,6 +116,18 @@ let rec compileLiteral (lit: Literal) : Compiler<unit> =
 
 let compileCodeBlock (expr: Expr) state : CompilerResult<unit> = emitConstant (VBlock expr) state
 
+let flattenRecord (record: Expr) : (string * Expr) list =
+    let idToString = function
+                     | Identifier i -> i
+                     | _ -> raise <| System.Exception("Invalid record field name")
+    
+    let rec flattenRecord' (record: Expr) (acc: (string * Expr) list) =
+        match record with
+        | ERecordExtend((name, value, _), rest, _) -> flattenRecord' rest ((idToString name.Lexeme, value) :: acc)
+        | _ -> acc
+
+    flattenRecord' record []
+
 let rec compileExpr (expr: Expr) (state: CompilerState) : unit CompilerResult =
     match expr with
     | ELiteral(lit, _) -> compileLiteral lit state
@@ -151,22 +163,29 @@ let rec compileExpr (expr: Expr) (state: CompilerState) : unit CompilerResult =
 
     | ERecordRestrict(e, _, _) -> compileExpr e state
     | ERecordExtend((name, value, _), record, _) ->
-        let name =
-            match name with
-            | { Lexeme = Identifier n } -> n
-            | _ -> raise <| System.Exception("Invalid record field name")
-
-        let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString name)
-
-        emitBytes [| byte (opCodeToByte OP_CODE.CONSTANT); byte constIndex |] state
-        |> Result.bind (fun ((), state) -> compileExpr value state)
-        |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 2)) state)
-        |> Result.bind (fun ((), state) -> emitConstant (VList([], RECORD)) state)
-        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
-        |> Result.bind (fun ((), state) -> emitConstant (VNumber(VInteger 1)) state)
-        |> Result.bind (fun ((), state) -> compileExpr record state)
-        |> Result.bind (fun ((), state) -> emitOpCode OP_CODE.COMPOUND_CREATE state)
-
+        let idToString = function
+                         | Identifier i -> i
+                         | _ -> raise <| System.Exception("Invalid record field name")
+        
+        let flattend = (idToString name.Lexeme, value) :: flattenRecord record
+        let keys = List.map fst flattend
+        let values = List.map snd flattend
+        
+        let keysList = EList(List.map (fun k -> ELiteral(LString k, TString)) keys, Some TAny)
+        let valuesList = EList(values, Some TAny)
+        
+        let expression =
+            ECall(
+                EIdentifier(
+                    { Lexeme = Identifier "record"
+                      Position = { Line = 0; Column = 0 } },
+                    None
+                ),
+                [ keysList; valuesList ],
+                None
+            )
+            
+        compileExpr expression state
 
      | ERecordSelect(expr, token, _) ->
             let name =

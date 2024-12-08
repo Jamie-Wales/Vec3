@@ -468,7 +468,7 @@ let builtins =
                   let width =
                       match width with
                       | Some(VList([ VString "width"; VNumber(VFloat w) ], _)) -> w
-                      | _ -> raise <| InvalidProgramException "draw expects a width"
+                      | _ -> raise <| InvalidProgramException $"draw expects a width, got {elems}"
 
                   let height =
                       elems
@@ -892,16 +892,34 @@ let builtins =
       VBuiltin(
           (fun args ->
               match args with
-              | [ VList([ VList([ VString "id"; VNumber(VInteger shapeId) ], _) ], RECORD)
-                  VList([ VList([ VString "event"; VNumber(VInteger eventId) ], _) ], RECORD)
+              | [ VNumber(VInteger shapeId)
+                  VNumber(VInteger eventId)
                   VClosure(func, _) ] ->
                   let func = func.Function
-                  VEventListener(shapeId, eventId, func)
+                  let res = VEventListener(shapeId, eventId, func)
+                  printfn $"on: {res}"
+                  res
               | _ ->
                   raise
                   <| InvalidProgramException $"Expected a shape id, an event id, and a function for on {args}"),
           "On"
       )
+      
+      Identifier "record",
+      VBuiltin(
+          (fun args ->
+            match args with
+            | [ VList(keys, _); VList(fields, _) ] ->
+                let rec buildRecord keys fields =
+                    match keys, fields with
+                    | [], [] -> []
+                    | key :: keys, value :: fields -> VList([key; value], LIST) :: buildRecord keys fields
+                    | _ -> raise <| InvalidProgramException "record expects a list of keys and a list of values"
+                    
+                VList(buildRecord keys fields, RECORD)
+            | _ -> raise <| InvalidProgramException "record expects a list of keys and a list of values"),
+            "Record"
+          )
 
       Identifier "await",
       VBuiltin(

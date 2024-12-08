@@ -85,14 +85,12 @@ rec range(start, end) -> if start >= end then
 let (...) = (start, end) -> range(start, end)
 let (!!) = (list, index) -> list[index]
 
-/*
 let Keys = {
-	Left = { event = 0 },
-	Right = { event = 1 },
-	Up = { event = 2 },
-	Down = { event = 3 }
+	Left = 0,
+	Right = 1,
+	Up = 2,
+	Down = 3
 }
-*/
 
 // wrapper for append
 let (++) = (list1, list2) -> append(list1, list2)

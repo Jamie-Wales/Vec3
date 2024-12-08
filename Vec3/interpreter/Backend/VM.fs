@@ -455,7 +455,7 @@ and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
             | VShape(_, _, _, _, _, _, id, _) ->
                 vm.Canvas.Add(value)
                 vm.Plots.Add(value)
-                let record = VList([ VList([ VString "id"; VNumber(VInteger id) ], LIST) ], RECORD)
+                let record = VNumber(VInteger id)
                 vm, record
             | VPlotData _ ->
                 vm.Plots.Add(value)
@@ -469,7 +469,7 @@ and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
             | VShapes(_, id) ->
                 vm.Canvas.Add(value)
                 vm.Plots.Add(value)
-                let record = VList([ VList([ VString "id"; VNumber(VInteger id) ], LIST) ], RECORD)
+                let record = VNumber(VInteger id)
                 vm, record
             | VOutput s -> appendOutput vm StandardOutput s, VNil
             | VEventListener(id, event, func) ->
