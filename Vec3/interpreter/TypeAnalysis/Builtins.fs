@@ -239,8 +239,8 @@ let onType =
     let idTyp =
         TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldOf (Identifier "id") TInteger)))
 
-    let eventTyp =
-        TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldOf (Identifier "event") TInteger)))
+    let eventTyp = TInteger
+        // TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldOf (Identifier "event") TInteger)))
 
     let stateT =
         TConstrain(
