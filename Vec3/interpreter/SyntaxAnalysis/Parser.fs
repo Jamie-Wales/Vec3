@@ -1657,7 +1657,9 @@ and statement (state: ParserState) : ParseResult<Stmt> =
                         | SVariableDeclaration(name, expr, _) ->
                             match expr with
                             | ELambda(parameters, body, returnType, _, _, _) ->
-                                return (state, SRecFunc(name, parameters, body, returnType))
+                                let func = SRecFunc(name, parameters, body, returnType)
+                                let func = analyseStmt func
+                                return (state, func)
                             | _ -> return! Error(Expected "lambda expression.", state)
                         | _ -> return! Error(Expected "variable declaration.", state)
                     }

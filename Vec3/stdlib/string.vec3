@@ -1,0 +1,15 @@
+let split = (str: string, sep: char) {
+    // :: cons
+    let rec inner = (lst: [char], acc: [string]) {
+        if len(lst) == 0 then
+            acc
+        else if head(lst) == sep then
+            inner(tail(lst), acc ++ [""])
+        else
+            let last = len(acc) - 1
+            inner(tail(lst), acc ++ acc[last] ++ [head(lst)]
+    }
+    
+    let chars = str : [char]
+    inner(chars, [])
+}

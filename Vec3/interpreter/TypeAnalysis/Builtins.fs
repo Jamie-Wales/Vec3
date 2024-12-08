@@ -308,38 +308,42 @@ let appendType =
 let BuiltinFunctions: Map<BuiltInFunction, TType> =
     [ Print, TFunction([ TAny ], TUnit, false, true)
       Input, TFunction([], TString, false, true)
+      Exit, TFunction([], TUnit, false, true)
+      
       Cos, TFunction([ TFloat ], TFloat, true, true)
       Sin, TFunction([ TFloat ], TFloat, true, true)
       Tan, TFunction([ TFloat ], TFloat, true, true)
       ACos, TFunction([ TFloat ], TFloat, true, true)
       ASin, TFunction([ TFloat ], TFloat, true, true)
       ATan, TFunction([ TFloat ], TFloat, true, true)
+      
+      Eval, TFunction([ TAny ], TAny, false, true)
+      
       Log, logType
       Exp, expType
-      Root, TFunction([ TFloat; TFloat ], TFloat, true, true)
-
-      Eval, TFunction([ TAny ], TAny, false, true)
-
+      
+      Trunc, TFunction([ TFloat ], TFloat, true, true)
+      
       Read, readTyp
-
+      
       Env, TFunction([], TUnit, false, true)
-      Exit, TFunction([], TUnit, false, true)
+      Root, TFunction([ TFloat; TFloat ], TFloat, true, true)
       Abs, TFunction([ TFloat ], TFloat, true, true)
       Floor, TFunction([ TFloat ], TFloat, true, true)
-      Ceil, TFunction([ TFloat ], TFloat, true, true)
-      Trunc, TFunction([ TFloat ], TFloat, true, true)
+
       Plot, plotType
       PlotFunction, plotFunType
       PlotFunctions, plotFunsType
+
+      PlotEllipse, PlotEllipseType
+      PlotEllipses, PlotEllipsesType
+      
       Draw, drawType
-
-      NewtonRaphson, newtonRaphsonType
-      Bisection, bisectionTyp
-
-      Differentiate, differentiateType
-      Integrate, integrateType
-
-      Cons, consType
+      
+      Ceil, TFunction([ TFloat ], TFloat, true, true)
+      
+      Err, TFunction([ TString ], TAny, false, true)
+      
       Add, plus
       Sub, minus
       Mul, mul
@@ -357,24 +361,38 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       Lte, lte
       Gt, gt
       Gte, gte
-
+      
+      Append, appendType
+      
       CrossProduct, crossProduct
       DotProduct, dotProduct
-
-      Err, TFunction([ TString ], TAny, false, true)
-
+      
       Cast, castType
-
+      
+      NewtonRaphson, newtonRaphsonType
+      Bisection, bisectionTyp
+      Differentiate, differentiateType
+      Integrate, integrateType
+      
+      Cons, consType
+      
       On, onType
-
+      
       Await, TAny
-
+      
       TaylorSeries, taylorSeriesT
-
-      PlotEllipse, PlotEllipseType
-      PlotEllipses, PlotEllipsesType
-      Append, appendType
-
+      
+      
+      Split, TFunction([ TString; TString ], TTensor(TString, DAny), false, true)
+      ToLowerCase, TFunction([ TString ], TString, false, true)
+      ToUpperCase, TFunction([ TString ], TString, false, true)
+      Trim, TFunction([ TString ], TString, false, true)
+      Join, TFunction([ TTensor(TString, DAny); TString ], TString, false, true)
+      RandomI, TFunction([ TInteger ], TInteger, false, true)
+      RandomF, TFunction([ TFloat ], TFloat, false, true)
+      Time, TFunction([], TFloat, false, true)
+      TypeOf, TFunction([ TAny ], TString, false, true)
+        
       ]
     |> Map.ofList
 

@@ -90,3 +90,38 @@ let findIntegral = (f, x, y) -> {
     let integral = integrate(f)
     integral(y) - integral(x)
 }
+
+let findDerivative = (f, x) -> {
+    let derivative = differentiate(f)
+    derivative(x)
+}
+
+/*
+let Types = {
+    Int = "Integer",
+    Float = "Float",
+    Bool = "Boolean",
+    Rational = "Rational",
+    Complex = "Complex",
+    Char = "Char",
+    String = "String",
+    List = "List",
+    Tuple = "Tuple",
+    Record = "Record",
+    Function = "Function",
+    Closure = "Closure",
+    Nil = "Nil",
+    Block = "Block",
+    EventListener = "EventListener",
+    Promise = "Promise",
+    Builtin = "Builtin",
+    PlotData = "PlotData",
+    PlotFunction = "PlotFunction",
+    PlotFunctions = "PlotFunctions",
+    Shape = "Shape",
+    Shapes = "Shapes",
+    Output = "Output",
+    AsyncFunction = "AsyncFunction"
+}
+*/
+
