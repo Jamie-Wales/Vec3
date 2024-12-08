@@ -44,7 +44,6 @@ let builtInFunctionMap =
       Operator(Cross, Some Infix), BuiltInFunction.CrossProduct
       Operator(DotStar, Some Infix), BuiltInFunction.DotProduct
       Operator(ColonColon, Some Infix), BuiltInFunction.Cons
-      Operator(PlusPlus, Some Infix), BuiltInFunction.Concat
     ]
     |> Map.ofList
 

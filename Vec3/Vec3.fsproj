@@ -64,5 +64,6 @@
     </ItemGroup>
     <ItemGroup>
       <Content Include="stdlib\Prelude.vec3" />
+      <Content Include="src\tests.vec3" />
     </ItemGroup>
 </Project>

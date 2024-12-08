@@ -93,7 +93,7 @@ let Keys = {
 }
 
 // wrapper for append
-let (++) = (list1, list2) -> append(list1, list2)
+let (++) = (x, y) -> append(x, y)
 
 let findIntegral = (f, x, y) {
 	let integral = integrate(f)

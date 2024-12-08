@@ -491,7 +491,6 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
 
             compileStmt assign state
         | SRecFunc(name, tup, expr, _) ->
-            printfn $"RecFunc: {name.Lexeme}, {expr}"
             let assign =
                 SVariableDeclaration(name, ELambda(tup, expr, None, false, None, false), None)
 
