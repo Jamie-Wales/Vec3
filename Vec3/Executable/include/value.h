@@ -25,12 +25,19 @@ typedef enum {
     TYPE_NIL
 } ValueType;
 
-typedef struct Vec3Function {
-    int arity;
+typedef struct {
     char* name;
-    struct Vec3Env* env;
+    int arity;
     Vec3Value* (*fn)(Vec3Value** args);
-} Vec3Function;
+    struct Vec3Env* env;
+    struct {
+        Vec3Value** captured;
+        int captured_count;
+    } closure;
+    bool is_user_defined;
+    char** parameter_names;  
+    int param_count;         
+} Vec3Function
 
 typedef struct Vec3Object {
     ValueType type;
@@ -73,12 +80,19 @@ Vec3Value* vec3_new_string(const char* chars);
 Vec3Value* vec3_new_list(size_t count, ...);
 Vec3Value* vec3_new_bool(bool b);
 Vec3Value* vec3_new_nil(void);
+Vec3Value* vec3_new_user_function(
+    const char* name, 
+    int arity,
+    Vec3Value* (*fn)(Vec3Value** args),
+    struct Vec3Env* env);
+
+void vec3_capture_variable(Vec3Function* fn, const char* name, Vec3Value* value);
 Vec3Value* vec3_new_function(const char* name, int arity,
     Vec3Value* (*fn)(Vec3Value** args),
     struct Vec3Env* env);
 
 // Function call handling
-Vec3Value* vec3_call_function(Vec3Value* function, Vec3Value** args, int argCount);
+Vec3Value* vec3_call_function(Vec3Value* function, Vec3Value** args, int argCount) {
 
 // Comparison operations
 Vec3Value* vec3_equal(Vec3Value** args);

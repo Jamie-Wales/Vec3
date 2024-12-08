@@ -93,12 +93,11 @@ Vec3Value* vec3_and(Vec3Value** args);
 Vec3Value* vec3_or(Vec3Value** args);
 Vec3Value* vec3_not(Vec3Value** args);
 
-void vec3_print_internal(const Vec3Value* value, bool nl);
-Vec3Value* vec3_print(Vec3Value** args);
-
+// Utility functions
+void vec3_print(const Vec3Value* value, bool nl);
 bool vec3_is_truthy(const Vec3Value* value);
 Vec3Value* vec3_to_string(Vec3Value** args);
 Vec3Value* vec3_to_number(Vec3Value** args);
 Vec3Value* vec3_to_bool(Vec3Value** args);
-Vec3Value* vec3_input(Vec3Value** args);
+Vec3Value* vec3_input(void);
 Vec3Value* vec3_error(Vec3Value* message);

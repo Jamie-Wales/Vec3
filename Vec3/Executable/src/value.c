@@ -138,12 +138,8 @@ bool vec3_is_truthy(const Vec3Value* value)
 Vec3Value* vec3_print(Vec3Value** args)
 {
     Vec3Value* value = args[0];
-    bool nl = true;
-    if (args[1] != NULL && args[1]->object.type == TYPE_BOOL) {
-        nl = args[1]->as.boolean;
-    }
 
-    vec3_print_internal(value, nl);
+    vec3_print_internal(value, true);
     return vec3_new_nil();  
 }
 
@@ -217,19 +213,56 @@ Vec3Value* vec3_new_function(const char* name, int arity,
     return value;
 }
 
-void vec3_destroy_function(Vec3Object* object)
-{
+void vec3_destroy_function(Vec3Object* object) {
     Vec3Value* value = (Vec3Value*)object;
     Vec3Function* function = value->as.function;
+    for (int i = 0; i < function->closure.captured_count; i++) {
+        vec3_decref(function->closure.captured[i]);
+    }
+    free(function->closure.captured);
     free(function->name);
     if (function->env != NULL) {
         vec3_destroy_environment(function->env);
     }
+    if (function->is_user_defined && function->body != NULL) {
+        vec3_decref(function->body);
+    }
     free(function);
 }
-
-Vec3Value* vec3_call_function(Vec3Value* function, Vec3Value** args, int argCount)
+Vec3Value* vec3_new_user_function(
+    const char* name, 
+    int arity,
+    Vec3Value* (*fn)(Vec3Value** args),
+    struct Vec3Env* env)
 {
+    Vec3Function* function = malloc(sizeof(Vec3Function));
+    function->name = strdup(name);
+    function->arity = arity;
+    function->fn = fn;
+    function->env = env;
+    function->is_user_defined = true;
+    function->closure.captured = NULL;
+    function->closure.captured_count = 0;
+    function->parameter_names = NULL;
+    function->param_count = 0;
+
+    Vec3Value* value = malloc(sizeof(Vec3Value));
+    value->object.type = TYPE_FUNCTION;
+    value->object.ref_count = 1;
+    value->object.destructor = vec3_destroy_function;
+    value->as.function = function;
+
+    return value;
+}
+void vec3_capture_variable(Vec3Function* fn, const char* name, Vec3Value* value) {
+    fn->closure.captured = realloc(fn->closure.captured, 
+                                 (fn->closure.captured_count + 1) * sizeof(Vec3Value*));
+    
+    vec3_incref(value);  
+    fn->closure.captured[fn->closure.captured_count++] = value;
+}
+
+Vec3Value* vec3_call_function(Vec3Value* function, Vec3Value** args, int argCount) {
     if (function->object.type != TYPE_FUNCTION) {
         fprintf(stderr, "Can only call functions\n");
         return vec3_new_nil();
@@ -241,7 +274,26 @@ Vec3Value* vec3_call_function(Vec3Value* function, Vec3Value** args, int argCoun
         return vec3_new_nil();
     }
 
-    return fn->fn(args);
+    if (fn->is_user_defined) {
+        // Create new environment for this call
+        Vec3Env* call_env = vec3_new_environment(fn->env);
+        
+        // Bind arguments to parameters
+        for (int i = 0; i < argCount; i++) {
+            vec3_env_define(call_env, fn->parameter_names[i], args[i]);
+        }
+        
+        // Execute the function body
+        Vec3Value* result = vec3_execute_ast(fn->body, call_env);
+        
+        // Clean up the call environment
+        vec3_destroy_environment(call_env);
+        
+        return result;
+    } else {
+        // Built-in function
+        return fn->fn(args);
+    }
 }
 
 Vec3Value* vec3_equal(Vec3Value** args)

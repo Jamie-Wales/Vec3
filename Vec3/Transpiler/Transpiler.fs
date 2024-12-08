@@ -48,28 +48,30 @@ let defaultConfig =
     let isWindows = Environment.OSVersion.Platform = PlatformID.Win32NT
     let projectRoot = findProjectRoot ()
 
-    { OutputDir = Path.Combine(projectRoot, "build", "vec3_program")  // Updated path
+    { OutputDir = Path.Combine(projectRoot, "build", "vec3_program")  
       RuntimeDir = Path.Combine(projectRoot, "Executable", "src")
       IncludeDir = Path.Combine(projectRoot, "Executable", "include")
       CompilerPath = if isWindows then "gcc.exe" else "gcc" }
 
 let ensureDirectories (config: TranspilerConfig) =
     let projectRoot = findProjectRoot ()
-    let absOutputDir =
-        if Path.IsPathRooted(config.OutputDir) then
-            config.OutputDir
-        else
-            Path.GetFullPath(Path.Combine(projectRoot, config.OutputDir))
     
+    // Force usage of a vec3_program directory within the given output directory
+    let absOutputDir = 
+        if Path.IsPathRooted(config.OutputDir) then
+            Path.Combine(config.OutputDir, "vec3_program")
+        else
+            Path.GetFullPath(Path.Combine(projectRoot, config.OutputDir, "vec3_program"))
+
     // Create vec3_program directory and its subdirectories
     Directory.CreateDirectory(absOutputDir) |> ignore
     Directory.CreateDirectory(Path.Combine(absOutputDir, "src")) |> ignore
     Directory.CreateDirectory(Path.Combine(absOutputDir, "include")) |> ignore
     
-    { OutputDir = absOutputDir
-      IncludeDir = Path.GetFullPath(Path.Combine(projectRoot, "Executable", "include"))
-      RuntimeDir = Path.GetFullPath(Path.Combine(projectRoot, "Executable", "src"))
-      CompilerPath = config.CompilerPath }
+    { config with 
+        OutputDir = absOutputDir
+        IncludeDir = Path.GetFullPath(Path.Combine(projectRoot, "Executable", "include"))
+        RuntimeDir = Path.GetFullPath(Path.Combine(projectRoot, "Executable", "src")) }
 /// <summary>
 /// Gets the appropriate file extension for executables based on platform
 /// </summary>

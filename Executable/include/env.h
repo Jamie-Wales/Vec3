@@ -1,74 +1,19 @@
-#include "env.h"
-#include "hashmap.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "vec3_list.h"
+#pragma once
+#include "value.h"
+#include "vec3_math.h"  // Add this to get math functions and constants
+#include <stdbool.h>
 
-Vec3Env* vec3_new_environment(Vec3Env* enclosing)
-{
-    Vec3Env* env = malloc(sizeof(Vec3Env));
-    if (env == NULL) {
-        fprintf(stderr, "Could not allocate environment\n");
-        exit(1);
-    }
-    env->enclosing = enclosing;
-    env->values = hashmap_new();
-    return env;
-}
+// Environment management functions
+struct Vec3Env* vec3_new_environment(struct Vec3Env* enclosing);
+void vec3_env_define(struct Vec3Env* env, const char* name, Vec3Value* value);
+bool vec3_env_assign(struct Vec3Env* env, const char* name, Vec3Value* value);
+Vec3Value* vec3_env_get(struct Vec3Env* env, const char* name);
+void vec3_destroy_environment(struct Vec3Env* env);
 
-void vec3_env_define(Vec3Env* env, const char* name, Vec3Value* value)
-{
-    if (value == NULL) {
-        fprintf(stderr, "Cannot define NULL value for %s\n", name);
-        return;
-    }
-
-    vec3_incref(value);
-    Vec3Value* existing = hashmap_put(env->values, name, value);
-
-    if (existing != NULL) {
-        vec3_decref(existing);
-    }
-}
-
-bool vec3_env_assign(Vec3Env* env, const char* name, Vec3Value* value)
-{
-    if (hashmap_get(env->values, name) != NULL) {
-        vec3_env_define(env, name, value); // Will handle ref counting
-        return true;
-    }
-
-    if (env->enclosing != NULL) {
-        return vec3_env_assign(env->enclosing, name, value);
-    }
-
-    return false;
-}
-
-Vec3Value* vec3_env_get(Vec3Env* env, const char* name)
-{
-    Vec3Value* value = hashmap_get(env->values, name);
-
-    if (value != NULL) {
-        return value;
-    }
-
-    if (env->enclosing != NULL) {
-        return vec3_env_get(env->enclosing, name);
-    }
-
-    return NULL;
-}
-
-void vec3_destroy_environment(Vec3Env* env)
-{
-    hashmap_destroy(env->values);
-    free(env);
-}
-
+// Builtin registration
 void vec3_register_builtins(struct Vec3Env* env)
 {
+    // Math functions
     vec3_env_define(env, "BUILTIN_ROOT", vec3_new_function("root", 1, vec3_sqrt, NULL));
     vec3_env_define(env, "BUILTIN_ABS", vec3_new_function("abs", 1, vec3_abs, NULL));
     vec3_env_define(env, "BUILTIN_FLOOR", vec3_new_function("floor", 1, vec3_floor, NULL));
@@ -92,15 +37,6 @@ void vec3_register_builtins(struct Vec3Env* env)
     vec3_env_define(env, "<=", vec3_new_function("less_equal", 2, vec3_less_equal, NULL));
     vec3_env_define(env, ">", vec3_new_function("greater", 2, vec3_greater, NULL));
     vec3_env_define(env, ">=", vec3_new_function("greater_equal", 2, vec3_greater_equal, NULL));
-
-    // List operations
-    vec3_env_define(env, "cons", vec3_new_function("cons", 2, vec3_cons, NULL));
-    vec3_env_define(env, "index", vec3_new_function("index", 2, vec3_index, NULL));
-    vec3_env_define(env, "select", vec3_new_function("select", 2, vec3_select, NULL));
-
-    // I/O functions
-    vec3_env_define(env, "input", vec3_new_function("input", 0, vec3_input, NULL));
-    vec3_env_define(env, "print", vec3_new_function("print", 1, vec3_print, NULL));
 
     // Constants
     vec3_env_define(env, "PI", vec3_new_number(number_from_float(VEC3_PI)));

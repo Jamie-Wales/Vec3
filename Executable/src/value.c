@@ -1,11 +1,10 @@
 #include "value.h"
 #include "vec3_list.h"
-#include "env.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>  
+
 void vec3_incref(Vec3Value* value)
 {
     if (value != NULL) {
@@ -134,15 +133,7 @@ bool vec3_is_truthy(const Vec3Value* value)
     }
 }
 
-
-Vec3Value* vec3_print(Vec3Value** args)
-{
-    Vec3Value* value = args[0];
-    vec3_print_internal(value, true);
-    return vec3_new_nil();  
-}
-
-void vec3_print_internal(const Vec3Value* value, bool nl)
+void vec3_print(const Vec3Value* value, bool nl)
 {
     if (value == NULL) {
         printf("null");
@@ -167,7 +158,7 @@ void vec3_print_internal(const Vec3Value* value, bool nl)
                 if (current->value == NULL) {
                     printf("null");
                 } else {
-                    vec3_print_internal(current->value, false);
+                    vec3_print(current->value, false);
                 }
                 first = false;
                 current = current->next;
@@ -422,7 +413,7 @@ Vec3Value* vec3_not(Vec3Value** args)
     return vec3_new_bool(result);
 }
 
-Vec3Value* vec3_input(Vec3Value** args)
+Vec3Value* vec3_input(void)
 {
     char buffer[1024];
     if (fgets(buffer, sizeof(buffer), stdin)) {
@@ -447,11 +438,13 @@ Vec3Value* vec3_error(Vec3Value* message)
 
 Vec3Value* vec3_to_string(Vec3Value** args)
 {
+    // TODO: Implement string conversion
     return vec3_new_nil();
 }
 
 Vec3Value* vec3_to_number(Vec3Value** args)
 {
+    // TODO: Implement number conversion
     return vec3_new_nil();
 }
 
