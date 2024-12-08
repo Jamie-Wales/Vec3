@@ -378,7 +378,6 @@ type BuiltInFunction =
     | Await
 
     | TaylorSeries
-    | Concat
 
 /// <summary>
 /// Map of built-in functions to their respective function type.
@@ -440,7 +439,6 @@ let builtInFunctionMap =
       Operator(Cross, Some Infix), BuiltInFunction.CrossProduct
       Operator(DotStar, Some Infix), BuiltInFunction.DotProduct
       Operator(ColonColon, Some Infix), BuiltInFunction.Cons
-      Operator(PlusPlus, Some Infix), BuiltInFunction.Concat
 
       Identifier "cast", BuiltInFunction.Cast
       Identifier "on", BuiltInFunction.On
@@ -513,7 +511,6 @@ let hasSideEffects =
     | On -> true
     | Await -> true
     | TaylorSeries -> true
-    | Concat -> false
     | PlotEllipse -> true
     | PlotEllipses -> true
     | Append -> true

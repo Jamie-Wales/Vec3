@@ -543,6 +543,8 @@ and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
                 let vm, result = executeOpcode vm opcode
                 match result with
                 | Return value ->
+                    // pop the old frame
+                    let _, vm = pop vm
                     push vm value
                 | Call(argCount, recursive) ->
                     let vm = callValue vm (int argCount) (int recursive)

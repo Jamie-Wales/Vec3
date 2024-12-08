@@ -295,7 +295,7 @@ let appendType =
     let typeVar = freshTypeVar ()
     let constrain = TConstrain(
         Constrain(typeVar,
-                  (fun t -> t.IsList || t = TString),
+                  _.IsList,
                   (fun t -> match t with | TTensor(t, _) -> TTensor(t, DAny) | _ -> t)
                   )
         )
@@ -371,8 +371,6 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
 
       TaylorSeries, taylorSeriesT
 
-      Concat, TFunction([ TString; TString ], TString, false, true)
-      
       PlotEllipse, PlotEllipseType
       PlotEllipses, PlotEllipsesType
       Append, appendType

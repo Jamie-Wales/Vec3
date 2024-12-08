@@ -119,13 +119,12 @@ let data = {
 
 let id = draw(data)
 
+
 on(id, Keys.Right, (state) -> { x = state.x + 10.0, y = cos(state.x) * 10.0 + 100.0 })
 on(id, Keys.Left, (state) -> { x = state.x - 10.0, y = cos(state.x) * 10.0 + 100.0 })
-// on(id, Keys.Down, (state) -> { x = state.x, y = state.y + 20.0 })
-// on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
+on(id, Keys.Down, (state) -> { x = state.x, y = state.y + 20.0 })
+on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
 
-// list casting
-let x = [1..10] : [float]
 """
 
     do
@@ -341,6 +340,7 @@ let x = [1..10] : [float]
                 standardOutput.Text <- $"Vec3 code loaded and executed:\n%s{outputText}"
                 this.HandlePlotOutput(replState)
                 vm.Streams.StandardOutput.Value <- Seq.empty
+                vm.Stack.Clear()
             | None ->
                 standardOutput.Foreground <- SolidColorBrush(Colors.Red)
                 standardOutput.Text <- "Failed to compile code"

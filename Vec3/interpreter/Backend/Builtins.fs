@@ -897,7 +897,6 @@ let builtins =
                   VClosure(func, _) ] ->
                   let func = func.Function
                   let res = VEventListener(shapeId, eventId, func)
-                  printfn $"on: {res}"
                   res
               | _ ->
                   raise
