@@ -203,10 +203,13 @@ Vec3Value* vec3_new_function(const char* name, int arity,
     return value;
 }
 
-void vec3_destroy_function(Vec3Object* object)
-{
+void vec3_destroy_function(Vec3Object* object) {
     Vec3Value* value = (Vec3Value*)object;
     Vec3Function* function = value->as.function;
+    for (int i = 0; i < function->closure.captured_count; i++) {
+        vec3_decref(function->closure.captured[i]);
+    }
+    free(function->closure.captured);
     free(function->name);
     if (function->env != NULL) {
         vec3_destroy_environment(function->env);

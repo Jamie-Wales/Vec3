@@ -93,16 +93,13 @@ void vec3_register_builtins(struct Vec3Env* env)
     vec3_env_define(env, ">", vec3_new_function("greater", 2, vec3_greater, NULL));
     vec3_env_define(env, ">=", vec3_new_function("greater_equal", 2, vec3_greater_equal, NULL));
 
-    // List operations
     vec3_env_define(env, "::", vec3_new_function("cons", 2, vec3_cons, NULL));
     vec3_env_define(env, "index", vec3_new_function("index", 2, vec3_index, NULL));
     vec3_env_define(env, "select", vec3_new_function("select", 2, vec3_select, NULL));
     
-    // I/O functions
     vec3_env_define(env, "input", vec3_new_function("input", 0, vec3_input, NULL));
     vec3_env_define(env, "print", vec3_new_function("print", 1, vec3_print, NULL));
-
-    // Constants
+    vec3_env_define(env, "plot", vec3_new_function("plot", 2, vec3_plot, NULL));
     vec3_env_define(env, "PI", vec3_new_number(number_from_float(VEC3_PI)));
     vec3_env_define(env, "E", vec3_new_number(number_from_float(VEC3_E)));
     vec3_env_define(env, "TAU", vec3_new_number(number_from_float(VEC3_TAU)));
