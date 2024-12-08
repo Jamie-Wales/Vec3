@@ -1214,10 +1214,12 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
                     sub,
                     SAsync(name, paramList, expr, Some(TFunction(paramTypes, bodyType, false, false)))
                 )))
-    | SImport(name, path, _) ->
+    | SImport(name, path, isStd, _) ->
         // todo, binding to name (create record)
         try
-            let parsed = parseFile path
+            let path' = if isStd then $"../../../stdlib/{path}.vec3" else path
+            
+            let parsed = parseFile path' false
 
             let _, parsed =
                 match parsed with
@@ -1230,7 +1232,7 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
             | Ok(env', aliases', sub, _) ->
                 let newEnv = combineMaps env env'
                 let newAliases = combineMaps aliases aliases'
-                Ok(newEnv, newAliases, sub, SImport(name, path, Some TUnit))
+                Ok(newEnv, newAliases, sub, SImport(name, path, isStd, Some TUnit))
             | Error errors -> Error errors
         with ex ->
             Error [ TypeError.ImportError(name, path, ex.Message) ]

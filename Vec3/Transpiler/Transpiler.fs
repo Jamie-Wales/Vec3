@@ -194,7 +194,7 @@ let transpile (inputPath: string) (config: TranspilerConfig) : Result<string, Tr
                 Error(IOError $"Failed to read input file: {ex.Message}")
 
         let! _, program =
-            match parse sourceCode with
+            match parse sourceCode true with
             | Ok result -> Ok result
             | Error(err, state) -> Error(ParseError(formatParserError err state, state))
 

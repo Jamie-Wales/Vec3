@@ -12,7 +12,6 @@ open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Chunk
 open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Grammar
-open Vec3.Interpreter.Prelude
 open Vec3.Interpreter.SymbolicExpression
 open Vec3.Interpreter.Token
 
@@ -495,20 +494,20 @@ and compileStmt (stmt: Stmt) : Compiler<unit> =
 
             compileCall callee args false state
         | STypeDeclaration _ -> Ok((), state)
-        | SImport(_, path, _) ->
-            // handle imports here
+        | SImport(_, path, isStd, _) ->
             try
-                let parsed = Parser.parseFile path
+                let path = if isStd then $"../../../stdlib/{path}.vec3" else path
+                let parsed = Parser.parseFile path false
 
                 match parsed with
                 | Ok(_, program) ->
-                    let _, _, _, p = preludeChecked
-                    let program = p @ program
                     List.iter (fun stmt -> compileStmt stmt state |> ignore) program
                     Ok((), state)
-                | Error e -> Error($"{e}", state)
+                | Error(msg, _) -> Error($"{msg}", state)
+                    
 
             with e ->
+                printfn $"Error compiling: {e.Message}"
                 Error(e.Message, state)
 
 and compileVariableDeclaration (name: Token) (initializer: Expr) : Compiler<unit> =

@@ -19,7 +19,6 @@
         <Compile Include="Interpreter\TypeAnalysis\Substitution.fs" />
         <Compile Include="Interpreter\TypeAnalysis\Builtins.fs" />
         <Compile Include="Interpreter\TypeAnalysis\Inference.fs" />
-        <Compile Include="Interpreter\Prelude.fs"/>
         <Compile Include="Interpreter\Backend\Types.fs"/>
         <Compile Include="Interpreter\Backend\Value.fs"/>
         <Compile Include="Interpreter\Backend\Instructions.fs"/>
@@ -62,5 +61,8 @@
         <PackageReference Include="ScottPlot.Avalonia" Version="5.0.40"/>
         <PackageReference Include="TextMateSharp" Version="1.0.63"/>
         <PackageReference Include="TextMateSharp.Grammars" Version="1.0.63"/>
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="stdlib\Prelude.vec3" />
     </ItemGroup>
 </Project>

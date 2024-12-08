@@ -121,7 +121,7 @@ let rec valueToString =
                 |> List.map (fun v ->
                     match v with
                     | VList([ VString s; v ], _) -> s, v
-                    | _ -> failwith "bad")
+                    | _ -> "Unknown", v)
                 |> List.map (fun (s, v) -> $"""{s}: {valueToString v}""")
 
             $"""{{{String.concat ", " fields}}}"""

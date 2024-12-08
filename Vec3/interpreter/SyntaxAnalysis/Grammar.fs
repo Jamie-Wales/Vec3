@@ -447,7 +447,7 @@ and Stmt =
     | STypeDeclaration of Token * Type * Type option
     | SRecFunc of Token * (Token * Type option) list * Expr * Type option
     | SAsync of Token * (Token * Type option) list * Expr * Type option
-    | SImport of Token option * string * Type option // maybe binding name, module name (path), type
+    | SImport of Token option * string * bool * Type option // maybe binding name, module name (path), isstd, type
 
 /// <summary>
 /// Various patterns for pattern matching.

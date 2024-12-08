@@ -1516,11 +1516,13 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
         match peek state with
         | Some { Lexeme = Keyword Import } ->
             let state = advance state
-            let! state, token = string state
-
-            match token with
-            | ELiteral(LString(value), _) -> return (state, SImport(Some name, value, varType))
-            | _ -> return! Error(Expected "identifier.", state)
+            match nextToken state with
+            | Some (state, { Lexeme = Lexeme.String s }) ->
+                return (state, SImport(Some name, s, false, varType))
+            | Some (state, { Lexeme = Identifier l }) ->
+                return (state, SImport(Some name, l, true, varType))
+            | _ -> return! Error(Expected "string or identifier after import keyword.", state)
+            
         | _ ->
 
             let! state, expr = expression state Precedence.Assignment
@@ -1732,12 +1734,12 @@ and statement (state: ParserState) : ParseResult<Stmt> =
             | Keyword.Import ->
                 result {
                     let state = advance state
-                    let state = advance state
-                    let! state, token = string state
-
-                    match token with
-                    | ELiteral(LString(path), _) -> return (state, SImport(None, path, None))
-                    | _ -> return! Error(Expected "string literal.", state)
+                    match nextToken state with
+                    | Some(state, { Lexeme = Lexeme.String s }) ->
+                        return (state, SImport(None, s, false, None))
+                    | Some(state, { Lexeme = Identifier l }) ->
+                        return (state, SImport(None, l, true, None))
+                    | _ -> return! Error(Expected "string or identifier after import keyword.", state)
                 }
             | _ ->
                 expression state Precedence.None
@@ -1800,31 +1802,42 @@ let parseProgram (state: ParserState) : ParseResult<Program> =
 /// Parses a program from a token list.
 /// </summary>
 /// <param name="tokens">The token list.</param>
+/// <param name="prelude">Whether to import the prelude.</param>
 /// <returns>The parsed program.</returns>
-let parseTokens (tokens: Token list) : Program ParseResult =
+let parseTokens (tokens: Token list) (prelude: bool) : Program ParseResult =
     let initialState = createParserState tokens
-    parseProgram initialState
+    match parseProgram initialState with
+    | Ok(state, stmts) ->
+        if prelude then
+            let importPrelude = SImport(None, "Prelude", true, None)
+            let stmts = importPrelude :: stmts
+            Ok(state, stmts)
+        else
+            Ok(state, stmts)
+    | Error f -> Error f
 
 /// <summary>
 /// Parses a program from a string.
 /// </summary>
 /// <param name="input">The input string.</param>
+/// <param name="prelude">Whether to import the prelude.</param>
 /// <returns>The parsed program result.</returns>
-let parse (input: string) =
+let parse (input: string) (prelude: bool) : Program ParseResult =
     let tokens = tokenize input
 
     match tokens with
-    | Ok tokens -> parseTokens tokens
+    | Ok tokens -> parseTokens tokens prelude
     | Error f -> Error(LexerError f, createParserState [])
 
 /// <summary>
 /// Parses a program from a file.
 /// </summary>
 /// <param name="file">The file path.</param>
+/// <param name="prelude">Whether to import the prelude.</param>
 /// <returns>The parsed program result.</returns>
-let parseFile (file: string) =
+let parseFile (file: string) (prelude: bool) : Program ParseResult=
     let input = System.IO.File.ReadAllText(file)
-    parse input
+    parse input prelude
 
 /// <summary>
 /// Formats a parser error.
