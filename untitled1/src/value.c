@@ -138,7 +138,12 @@ bool vec3_is_truthy(const Vec3Value* value)
 Vec3Value* vec3_print(Vec3Value** args)
 {
     Vec3Value* value = args[0];
-    vec3_print_internal(value, true);
+    bool nl = true;
+    if (args[1] != NULL && args[1]->object.type == TYPE_BOOL) {
+        nl = args[1]->as.boolean;
+    }
+
+    vec3_print_internal(value, nl);
     return vec3_new_nil();  
 }
 

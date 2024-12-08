@@ -94,7 +94,7 @@ void vec3_register_builtins(struct Vec3Env* env)
     vec3_env_define(env, ">=", vec3_new_function("greater_equal", 2, vec3_greater_equal, NULL));
 
     // List operations
-    vec3_env_define(env, "cons", vec3_new_function("cons", 2, vec3_cons, NULL));
+    vec3_env_define(env, "::", vec3_new_function("cons", 2, vec3_cons, NULL));
     vec3_env_define(env, "index", vec3_new_function("index", 2, vec3_index, NULL));
     vec3_env_define(env, "select", vec3_new_function("select", 2, vec3_select, NULL));
     

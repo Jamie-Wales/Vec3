@@ -3,6 +3,57 @@ module Vec3.Transpiler.CodeGenerator
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 
+
+open Vec3.Interpreter.Token
+
+let builtInFunctionMap =
+    [ 
+      Operator(Plus, Some Infix), BuiltInFunction.Add
+      Operator(Minus, Some Infix), BuiltInFunction.Sub
+      Operator(Star, Some Infix), BuiltInFunction.Mul
+      Operator(Slash, Some Infix), BuiltInFunction.Div
+      Operator(Percent, Some Infix), BuiltInFunction.Mod
+      Operator(StarStar, Some Infix), BuiltInFunction.Pow
+      Operator(Caret, Some Infix), BuiltInFunction.Pow
+      Operator(AmpersandAmpersand, Some Infix), BuiltInFunction.And
+      Operator(PipePipe, Some Infix), BuiltInFunction.Or
+      Operator(Bang, Some Prefix), BuiltInFunction.Not
+      Operator(Minus, Some Prefix), BuiltInFunction.Neg
+      Operator(Plus, Some Prefix), BuiltInFunction.Unneg
+      Operator(EqualEqual, Some Infix), BuiltInFunction.Eq
+      Operator(BangEqual, Some Infix), BuiltInFunction.Neq
+      Operator(Less, Some Infix), BuiltInFunction.Lt
+      Operator(LessEqual, Some Infix), BuiltInFunction.Lte
+      Operator(Greater, Some Infix), BuiltInFunction.Gt
+      Operator(GreaterEqual, Some Infix), BuiltInFunction.Gte
+      Operator(Cross, Some Infix), BuiltInFunction.CrossProduct
+      Operator(DotStar, Some Infix), BuiltInFunction.DotProduct
+      Operator(ColonColon, Some Infix), BuiltInFunction.Cons
+      Operator(PlusPlus, Some Infix), BuiltInFunction.Concat
+    ]
+    |> Map.ofList
+let tryGetBuiltInFunction lexeme =
+    if Map.containsKey lexeme builtInFunctionMap then
+        Some(builtInFunctionMap.[lexeme])
+    else
+        None
+type GeneratedFunction = {
+    Name: string
+    Implementation: string
+}
+
+let functionDefinitions : GeneratedFunction list ref = ref []
+let functionNames : Set<string> ref = ref Set.empty 
+
+let generateUniqueName baseName =
+    let rec findUnique i =
+        let name = if i = 0 then baseName else $"%s{baseName}_%d{i}"
+        if Set.contains name !functionNames then
+            findUnique (i + 1)
+        else
+            functionNames := Set.add name !functionNames
+            name
+    findUnique 0
 let headers = """
 #include "number.h"
 #include "value.h"
@@ -48,10 +99,60 @@ let rec generateExpr (expr: Expr) : string =
         | LBool b -> $"vec3_new_bool(%b{b})"
         | LUnit -> "vec3_new_nil()"
     
+     | ELambda(parameters, body, _, _, _, isAsync) ->
+            let paramNames = parameters |> List.map (fun (token, _) -> 
+                match token.Lexeme with 
+                | Identifier name -> name 
+                | _ -> failwith "Expected identifier in parameter list")
+                
+            let funcName = 
+                let baseName = 
+                    match paramNames with
+                    | [] -> "lambda_anonymous"
+                    | [single] -> sprintf "lambda_%s" single
+                    | multiple -> sprintf "lambda_%s_et_al" multiple.Head
+                
+                let rec findUnique i =
+                    let name = if i = 0 then baseName else sprintf "%s_%d" baseName i
+                    if Set.contains name !functionNames then
+                        findUnique (i + 1)
+                    else
+                        functionNames := Set.add name !functionNames
+                        name
+                findUnique 0
+            
+            let funcImpl = $"""
+            Vec3Value* %s{funcName}(Vec3Value** args) {{
+                // Create function environment
+                Vec3Env* func_env = vec3_new_environment(env);
+                
+                // Bind parameters to arguments
+                %s{
+                    paramNames 
+                    |> List.mapi (fun i name -> 
+                        $"vec3_env_define(func_env, \"{name}\", args[{i}]);")
+                    |> String.concat "\n    "
+                }
+                
+                // Execute function body
+                Vec3Value* result = %s{generateExpr body};
+                
+                // Cleanup and return
+                Vec3Value* final_result = result;
+                vec3_incref(final_result);
+                vec3_destroy_environment(func_env);
+                vec3_decref(result);
+                return final_result;
+            }}
+            """
+            
+            functionDefinitions := { Name = funcName; Implementation = funcImpl } :: !functionDefinitions
+            
+            // Create function value
+            $"vec3_new_user_function(\"%s{funcName}\", %d{List.length parameters}, %s{funcName}, env)"
     | EIdentifier(id, _) ->
         match id.Lexeme with
         | Identifier name -> $"vec3_env_get(env, \"{name}\")"
-        | Operator(op, _) -> $"vec3_env_get(env, \"{lexemeToString id.Lexeme}\")"
     
     | EList(exprs, _) ->
         let args = exprs 
@@ -73,13 +174,15 @@ let rec generateExpr (expr: Expr) : string =
     | EGrouping(e, _) -> 
         $"(%s{generateExpr e})"
         
-    | ECall(func, args, _) ->
-        let funcExpr = generateExpr func
-        let argExprs = args
-                       |> List.map generateExpr
-                       |> String.concat ", "
-
-        $"vec3_call_function(%s{funcExpr}, (Vec3Value*[]){{%s{argExprs}}}, %d{List.length args})"
+    | ECall((EIdentifier(id, _)), args, _) ->
+        let argExprs = args |> List.map generateExpr |> String.concat ", "
+        match tryGetBuiltInFunction id.Lexeme with
+        | Some BuiltInFunction.Cons ->
+            // Directly call vec3_cons
+            $"vec3_cons((Vec3Value*[]){{%s{argExprs}}})"
+        | _ ->
+            let funcExpr = generateExpr (EIdentifier(id, None))
+            $"vec3_call_function(%s{funcExpr}, (Vec3Value*[]){{%s{argExprs}}}, %d{List.length args})"
             
     | EBlock(stmts, _) ->
         let stmtCodes = stmts |> List.map generateStmt |> String.concat "\n    "
@@ -116,11 +219,33 @@ and generateStmt (stmt: Stmt) : string =
 
 /// Generate the complete C code from a program
 let generateCCode (program: Program) : string =
+    // Reset state
+    functionDefinitions := []
+    functionNames := Set.empty
+    
     let stmts = program 
                 |> List.map generateStmt 
                 |> String.concat "\n    "
     
+    // Generate forward declarations and implementations
+    let forwardDecls = 
+        !functionDefinitions
+        |> List.map (fun f -> $"Vec3Value* %s{f.Name}(Vec3Value** args);")
+        |> String.concat "\n"
+        
+    let funcImplementations = 
+        !functionDefinitions
+        |> List.rev  // Preserve definition order
+        |> List.map (fun f -> f.Implementation)
+        |> String.concat "\n\n"
+    
     $"""{headers}
+
+// Forward declarations
+%s{forwardDecls}
+
+// Function implementations
+%s{funcImplementations}
 
 int main(void) {{
 {initCode}
@@ -130,4 +255,5 @@ int main(void) {{
     
 {cleanupCode}
 }}
+
 """

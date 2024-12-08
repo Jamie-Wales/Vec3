@@ -22,7 +22,7 @@ int main(void) {
     
     // Program statements
     vec3_env_define(env, "a", vec3_new_number(number_from_int(10)));
-    vec3_call_function(vec3_env_get(env, "print"), (Vec3Value*[]){vec3_env_get(env, "a")}, 1);
+    vec3_call_function(vec3_env_get(env, "print"), (Vec3Value*[]){vec3_new_number(number_from_int(10))}, 1);
     
 
     // Cleanup environment

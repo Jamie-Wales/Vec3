@@ -1,0 +1,44 @@
+[
+{
+  "directory": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/cmake-build-debug",
+  "command": "/Library/Developer/CommandLineTools/usr/bin/cc -I/Users/jamie/Dev/university/year3/F/Vec3/untitled1/include -g -std=gnu17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk -mmacosx-version-min=15.0 -fcolor-diagnostics -o CMakeFiles/proj.dir/src/env.c.o -c /Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/env.c",
+  "file": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/env.c",
+  "output": "CMakeFiles/proj.dir/src/env.c.o"
+},
+{
+  "directory": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/cmake-build-debug",
+  "command": "/Library/Developer/CommandLineTools/usr/bin/cc -I/Users/jamie/Dev/university/year3/F/Vec3/untitled1/include -g -std=gnu17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk -mmacosx-version-min=15.0 -fcolor-diagnostics -o CMakeFiles/proj.dir/src/hashmap.c.o -c /Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/hashmap.c",
+  "file": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/hashmap.c",
+  "output": "CMakeFiles/proj.dir/src/hashmap.c.o"
+},
+{
+  "directory": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/cmake-build-debug",
+  "command": "/Library/Developer/CommandLineTools/usr/bin/cc -I/Users/jamie/Dev/university/year3/F/Vec3/untitled1/include -g -std=gnu17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk -mmacosx-version-min=15.0 -fcolor-diagnostics -o CMakeFiles/proj.dir/src/main.c.o -c /Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/main.c",
+  "file": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/main.c",
+  "output": "CMakeFiles/proj.dir/src/main.c.o"
+},
+{
+  "directory": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/cmake-build-debug",
+  "command": "/Library/Developer/CommandLineTools/usr/bin/cc -I/Users/jamie/Dev/university/year3/F/Vec3/untitled1/include -g -std=gnu17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk -mmacosx-version-min=15.0 -fcolor-diagnostics -o CMakeFiles/proj.dir/src/number.c.o -c /Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/number.c",
+  "file": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/number.c",
+  "output": "CMakeFiles/proj.dir/src/number.c.o"
+},
+{
+  "directory": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/cmake-build-debug",
+  "command": "/Library/Developer/CommandLineTools/usr/bin/cc -I/Users/jamie/Dev/university/year3/F/Vec3/untitled1/include -g -std=gnu17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk -mmacosx-version-min=15.0 -fcolor-diagnostics -o CMakeFiles/proj.dir/src/value.c.o -c /Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/value.c",
+  "file": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/value.c",
+  "output": "CMakeFiles/proj.dir/src/value.c.o"
+},
+{
+  "directory": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/cmake-build-debug",
+  "command": "/Library/Developer/CommandLineTools/usr/bin/cc -I/Users/jamie/Dev/university/year3/F/Vec3/untitled1/include -g -std=gnu17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk -mmacosx-version-min=15.0 -fcolor-diagnostics -o CMakeFiles/proj.dir/src/vec3_list.c.o -c /Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/vec3_list.c",
+  "file": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/vec3_list.c",
+  "output": "CMakeFiles/proj.dir/src/vec3_list.c.o"
+},
+{
+  "directory": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/cmake-build-debug",
+  "command": "/Library/Developer/CommandLineTools/usr/bin/cc -I/Users/jamie/Dev/university/year3/F/Vec3/untitled1/include -g -std=gnu17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk -mmacosx-version-min=15.0 -fcolor-diagnostics -o CMakeFiles/proj.dir/src/vec3_math.c.o -c /Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/vec3_math.c",
+  "file": "/Users/jamie/Dev/university/year3/F/Vec3/untitled1/src/vec3_math.c",
+  "output": "CMakeFiles/proj.dir/src/vec3_math.c.o"
+}
+]

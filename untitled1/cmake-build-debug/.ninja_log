@@ -1,0 +1,18 @@
+# ninja log v6
+1	23	1733649470588255406	CMakeFiles/proj.dir/src/env.c.o	54b434c83d8072fc
+2	29	1733649470588904783	CMakeFiles/proj.dir/src/number.c.o	166901647579dce2
+1	32	1733649470588589324	CMakeFiles/proj.dir/src/hashmap.c.o	73f138619aa435e9
+1	39	1733649470588768574	CMakeFiles/proj.dir/src/main.c.o	fa466d8b33621bb
+2	40	1733649470589522285	CMakeFiles/proj.dir/src/vec3_math.c.o	8b05d5f8e2435072
+2	47	1733649470589164201	CMakeFiles/proj.dir/src/vec3_list.c.o	402d66082cbc597e
+2	47	1733649470589035950	CMakeFiles/proj.dir/src/value.c.o	756c2ffcb0959971
+1	30	1733649487064248169	CMakeFiles/proj.dir/src/env.c.o	54b434c83d8072fc
+30	60	1733649487093877022	proj	43ad2da003cab01d
+6	36	1733655200884874445	CMakeFiles/proj.dir/src/number.c.o	166901647579dce2
+6	38	1733655200884542609	CMakeFiles/proj.dir/src/hashmap.c.o	73f138619aa435e9
+7	38	1733655200885479159	CMakeFiles/proj.dir/src/vec3_list.c.o	402d66082cbc597e
+6	41	1733655200884726069	CMakeFiles/proj.dir/src/main.c.o	fa466d8b33621bb
+5	44	1733655200884066521	CMakeFiles/proj.dir/src/env.c.o	54b434c83d8072fc
+7	45	1733655200885660410	CMakeFiles/proj.dir/src/vec3_math.c.o	8b05d5f8e2435072
+6	46	1733655200885006946	CMakeFiles/proj.dir/src/value.c.o	756c2ffcb0959971
+46	74	1733655200924162416	proj	43ad2da003cab01d
