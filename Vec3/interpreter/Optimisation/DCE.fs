@@ -66,19 +66,12 @@ let rec eliminate (program: Program) : Program =
         | [] -> []
         | SVariableDeclaration(name, expr, t) :: rest ->
             let rest = pass rest
-
-            if isUsed name.Lexeme rest then
-                SVariableDeclaration(name, expr, t) :: rest
-            else
-                rest
+            SVariableDeclaration(name, expr, t) :: rest
         | SAsync(name, params', body, t) :: rest
         | SRecFunc(name, params', body, t) :: rest ->
             let rest = pass rest
 
-            if isUsed name.Lexeme rest then
-                SRecFunc(name, params', body, t) :: rest
-            else
-                rest
+            SRecFunc(name, params', body, t) :: rest
         | SAssertStatement _ as stmt :: rest -> stmt :: pass rest
         | SExpression(expr, _) as stmt :: rest -> if hasSideEffects expr then stmt :: pass rest else pass rest
         | STypeDeclaration _ as stmt :: rest -> stmt :: pass rest
