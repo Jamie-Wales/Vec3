@@ -3,6 +3,7 @@
   <component name="AvaloniaProject">
     <option name="projectPerEditor">
       <map>
+        <entry key="Vec3/GUI/MainWindow.axaml" value="Tests/Tests.fsproj" />
         <entry key="Vec3/GUI/Notebook.axaml" value="Tests/Tests.fsproj" />
         <entry key="Vec3/GUI/Styles.axaml" value="Tests/Tests.fsproj" />
       </map>

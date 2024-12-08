@@ -48,11 +48,28 @@ let defaultConfig =
     let isWindows = Environment.OSVersion.Platform = PlatformID.Win32NT
     let projectRoot = findProjectRoot ()
 
-    { OutputDir = Path.Combine(projectRoot, "build")
+    { OutputDir = Path.Combine(projectRoot, "build", "vec3_program")  // Updated path
       RuntimeDir = Path.Combine(projectRoot, "Executable", "src")
       IncludeDir = Path.Combine(projectRoot, "Executable", "include")
       CompilerPath = if isWindows then "gcc.exe" else "gcc" }
 
+let ensureDirectories (config: TranspilerConfig) =
+    let projectRoot = findProjectRoot ()
+    let absOutputDir =
+        if Path.IsPathRooted(config.OutputDir) then
+            config.OutputDir
+        else
+            Path.GetFullPath(Path.Combine(projectRoot, config.OutputDir))
+    
+    // Create vec3_program directory and its subdirectories
+    Directory.CreateDirectory(absOutputDir) |> ignore
+    Directory.CreateDirectory(Path.Combine(absOutputDir, "src")) |> ignore
+    Directory.CreateDirectory(Path.Combine(absOutputDir, "include")) |> ignore
+    
+    { OutputDir = absOutputDir
+      IncludeDir = Path.GetFullPath(Path.Combine(projectRoot, "Executable", "include"))
+      RuntimeDir = Path.GetFullPath(Path.Combine(projectRoot, "Executable", "src"))
+      CompilerPath = config.CompilerPath }
 /// <summary>
 /// Gets the appropriate file extension for executables based on platform
 /// </summary>
@@ -61,24 +78,6 @@ let getExecutableExtension () =
         ".exe"
     else
         ""
-
-/// <summary>
-/// Ensures all necessary directories exist and returns proper paths
-/// </summary>
-let ensureDirectories (config: TranspilerConfig) =
-    let projectRoot = findProjectRoot ()
-    let absOutputDir =
-        if Path.IsPathRooted(config.OutputDir) then
-            config.OutputDir
-        else
-            Path.GetFullPath(Path.Combine(projectRoot, config.OutputDir))
-    Directory.CreateDirectory(absOutputDir) |> ignore
-    Directory.CreateDirectory(Path.Combine(absOutputDir, "src")) |> ignore
-    Directory.CreateDirectory(Path.Combine(absOutputDir, "include")) |> ignore
-    { OutputDir = absOutputDir
-      IncludeDir = Path.GetFullPath(Path.Combine(projectRoot, "Executable", "include"))
-      RuntimeDir = Path.GetFullPath(Path.Combine(projectRoot, "Executable", "src"))
-      CompilerPath = config.CompilerPath }
 
 /// <summary>
 /// Copies runtime files to the build directory
@@ -122,11 +121,9 @@ let compileCode (config: TranspilerConfig) (mainFile: string) =
         let outputExe =
             Path.Combine(config.OutputDir, "program" + getExecutableExtension ())
 
-        // Create proper include path with quotes to handle spaces
         let includePath = Path.Combine(config.OutputDir, "include")
         let includeFlag = $"-I\"%s{includePath}\""
 
-        // Get all source files (excluding main.c) and add our generated main.c
         let sourceFiles =
             Directory.GetFiles(Path.Combine(config.OutputDir, "src"), "*.c")
             |> Array.filter (fun f -> Path.GetFileName(f) <> "main.c") 
@@ -211,14 +208,11 @@ let transpile (inputPath: string) (config: TranspilerConfig) : Result<string, Tr
             with ex ->
                 Error(CodeGenError $"Code generation failed: {ex.Message}")
 
-        // Copy runtime files
         do! copyRuntimeFiles config
 
-        // Write generated code
         let mainFile = Path.Combine(config.OutputDir, "src", "main.c")
         do! writeGeneratedCode cCode mainFile
 
-        // Compile the code
         printfn "Starting compilation..."
         let! exePath = compileCode config mainFile
 
