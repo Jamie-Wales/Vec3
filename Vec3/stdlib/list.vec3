@@ -1,0 +1,55 @@
+// list.std - Extended list operations
+
+rec take(list, n) -> if n <= 0 || list == [] then
+                      []
+                    else
+                      head(list) :: take(tail(list), n - 1)
+
+rec drop(list, n) -> if n <= 0 || list == [] then
+                      list
+                    else
+                      drop(tail(list), n - 1)
+
+rec zip(list1, list2) -> if list1 == [] || list2 == [] then
+                          []
+                        else
+                          [head(list1), head(list2)] :: zip(tail(list1), tail(list2))
+
+rec flatten(list) -> if list == [] then
+                      []
+                    else if isList(head(list)) then
+                      flatten(head(list)) ++ flatten(tail(list))
+                    else
+                      head(list) :: flatten(tail(list))
+
+rec indexOf(list, elem) -> if list == [] then
+                           -1
+                         else if head(list) == elem then
+                           0
+                         else {
+                           let subIndex = indexOf(tail(list), elem)
+                           if subIndex == -1 then -1 else 1 + subIndex
+                         }
+
+rec reverse(list) -> if list == [] then
+                      []
+                    else
+                      reverse(tail(list)) ++ [head(list)]
+
+rec merge(left, right) -> if left == [] then
+                          right
+                        else if right == [] then
+                          left
+                        else if head(left) <= head(right) then
+                          head(left) :: merge(tail(left), right)
+                        else
+                          head(right) :: merge(left, tail(right))
+
+rec sort(list) -> if len(list) <= 1 then
+                   list
+                 else {
+                   let mid = len(list) / 2
+                   let left = take(list, mid)
+                   let right = drop(list, mid)
+                   merge(sort(left), sort(right))
+                 }

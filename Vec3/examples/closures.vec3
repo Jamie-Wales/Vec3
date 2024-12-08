@@ -1,0 +1,8 @@
+
+
+let accessors = () -> {
+    let x = 42
+    let get = () -> x
+}
+let prop = makeProperty(accessors)
+print(prop.get())   

@@ -64,5 +64,9 @@
     </ItemGroup>
     <ItemGroup>
       <Content Include="stdlib\Prelude.vec3" />
+      <Content Include="stdlib\higher.vec3" />
+      <Content Include="stdlib\list.vec3" />
+      <Content Include="stdlib\math.vec3" />
+        <Content Include="examples\closures.vec3" />
     </ItemGroup>
 </Project>

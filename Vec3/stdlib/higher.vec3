@@ -1,0 +1,14 @@
+
+let compose = (f, g) -> (x) -> f(g(x))
+
+let curry = (f) -> (x) -> (y) -> f(x, y)
+
+let uncurry = (f) -> (x, y) -> f(x)(y)
+
+let flip = (f) -> (x, y) -> f(y, x)
+
+
+let partial = (f, x) -> (y) -> f(x, y)
+
+    
+let (|>) = (x, f) -> f(x)

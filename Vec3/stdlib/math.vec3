@@ -1,0 +1,11 @@
+let degToRad = (deg) -> deg * PI / 180
+let radToDeg = (rad) -> rad * 180 / PI
+
+let clamp = (x, min, max) -> if x < min then 
+                              min 
+                            else if x > max then 
+                              max 
+                            else 
+                              x
+
+let lerp = (start, end, t) -> start + (end - start) * t
