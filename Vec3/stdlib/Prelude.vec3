@@ -1,5 +1,4 @@
-// wrapper functions for built-in functions
-// to make them first-class
+// Wrapper functions for built-in functions
 let cos = (x) -> BUILTIN_COS(x)
 let sin = (x) -> BUILTIN_SIN(x)
 let tan = (x) -> BUILTIN_TAN(x)
@@ -14,88 +13,80 @@ let floor = (x) -> BUILTIN_FLOOR(x)
 let ceil = (x) -> BUILTIN_CEIL(x)
 let trunc = (x) -> BUILTIN_TRUNC(x)
 
-// special cased roots
+// Special cased roots
 let sqrt = (x) -> root(x, 2)
 let cubeRoot = (x) -> root(x, 3)
 
-// list operations
+// List operations
 let max = (x, y) -> if x > y then x else y
 let min = (x, y) -> if x < y then x else y
 
-// standard identity function
+// Standard identity function
 let id = (x) -> x
 
-// find the tail of a list
+// List core functions
 let tail = (list) -> if list == [] then 
-						error("tail of empty list") 
-					  else 
-						list[1..]
+                        error("tail of empty list") 
+                     else 
+                        list[1..]
 
-// find the length of a list
 rec len(list) -> if list == [] then 
-					0 
-				 else 
-					1 + len(tail(list))
+                    0 
+                 else 
+                    1 + len(tail(list))
 
-// find the head of a list (may throw an error)
 let head = (x) -> if len(x) == 0 then 
-					error("head of empty list") 
-				  else 
-					x[0]
-     
-// problem with indexing in recursvie functions ?? maybe due to multiple args or something
-// fold a list with a function
+                     error("head of empty list") 
+                  else 
+                     x[0]
+
 rec fold(list, acc, func) -> if len(list) == 0 then 
-								acc 
-							 else 
-							 	func(head(list), (fold(tail(list), acc, func)))
+                               acc 
+                            else 
+                               func(head(list), fold(tail(list), acc, func))
 
-// map a function over a list
 rec map(list, func) -> if list == [] then 
-							[] 
-						else
-							func(head(list)) :: map(tail(list), func)
+                          [] 
+                       else
+                          func(head(list)) :: map(tail(list), func)
 
-// filter a list with a predicate
-// currently type checking does not support this fully, can't infer type of func
 rec filter(list, func: (any) -> bool) -> if list == [] then 
-												[] 
-									     else if func(head(list)) then 
-												head(list) :: filter(tail(list), func) 
-										  else 
-												filter(tail(list), func)
-											
+                                           [] 
+                                        else if func(head(list)) then 
+                                           head(list) :: filter(tail(list), func) 
+                                        else 
+                                           filter(tail(list), func)
 
-// find the sum, product, any, and all of a list
+// List utility functions
 let sum = (list) -> fold(list, 0, (x, y) -> x + y)
 let product = (list) -> fold(list, 1, (x, y) -> x * y)
 let any = (list) -> fold(list, false, (x, y) -> x || y)
 let all = (list) -> fold(list, true, (x, y) -> x && y)
 
-// check if any or all elements of a list satisfy a predicate
+// List predicate functions
 let anyAre = (list, func) -> any(map(list, func))
 let allAre = (list, func) -> all(map(list, func))
 
-// find the range of numbers from start to end
+// Range utilities
 rec range(start, end) -> if start >= end then 
-								[]
-							else
-								start :: range(start + 1, end)
+                           []
+                        else
+                           start :: range(start + 1, end)
 
+// Operators
 let (...) = (start, end) -> range(start, end)
 let (!!) = (list, index) -> list[index]
-
-let Keys = {
-	Left = 0,
-	Right = 1,
-	Up = 2,
-	Down = 3
-}
-
-// wrapper for append
 let (++) = (x, y) -> append(x, y)
 
-let findIntegral = (f, x, y) {
-	let integral = integrate(f)
-	integral(y) - integral(x)
+// Constants
+let Keys = {
+    Left = 0,
+    Right = 1,
+    Up = 2,
+    Down = 3
+}
+
+let findIntegral = (f, x, y) -> {
+    let integral = integrate(f)
+    integral(y) - integral(x)
 }
