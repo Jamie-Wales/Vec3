@@ -1,4 +1,10 @@
 // Core list operations
+let rec spread = (lists) -> 
+    if len(lists) == 0 then
+        []
+    else
+        head(lists) ++ spread(tail(lists))
+
 let rec take = (list, n) -> 
     if n <= 0 || len(list) == 0 then
         []
@@ -29,22 +35,7 @@ let rec reverse = (list) ->
     else 
         reverse(tail(list)) ++ [head(list)]
 
-// Spread and append operators
-let rec spread = (lists) -> 
-    if len(lists) == 0 then
-        []
-    else
-        head(lists) ++ spread(tail(lists))
 
-let rec append_elem = (list, elem) -> 
-    if len(list) == 0 then
-        [elem]
-    else
-        head(list) :: append_elem(tail(list), elem)
-
-// Operator overloads
-
-// Additional utilities
 let rec last = (list) -> 
     if len(list) == 0 then
         error("last of empty list")
@@ -76,7 +67,6 @@ let rec indexOf = (list, elem) ->
         1 + indexOf(tail(list), elem)
 
 let (@@) = (lists) -> spread(lists)
-let (@) = (list, elem) -> append_elem(list, elem)
 
 let splitAt = (list, n) -> [take(list, n), drop(list, n)]
 
