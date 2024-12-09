@@ -283,6 +283,10 @@ and compileIf (condition: Expr) (thenBranch: Expr) (elseBranch: Expr) : Compiler
 // block is a new scope and an expression, therefore last expression is returned in the block
 and compileBlock (stmts: Stmt list) : Compiler<unit> =
     fun state ->
+        
+        // TODO: finish
+        let func = ELambda([], EBlock(stmts, None), None, false, None, false)
+        
         let state =
             { state with
                 ScopeDepth = state.ScopeDepth + 1 }

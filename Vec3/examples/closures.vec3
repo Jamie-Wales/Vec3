@@ -17,8 +17,8 @@ let createAnimal = (name, speak) {
 	let b = name
 	let c = "Hello, I am " ++ name
 	{
-		getName = a,
-		getSpeak = speak,
+		getName = () ->  name,
+		getSpeak = () -> speak,
 		talk = () -> print(name)
 	}
 }
@@ -26,7 +26,7 @@ let createAnimal = (name, speak) {
 
 let tiger = createAnimal("tiger", "roah")
 
-print(tiger.getName)
+print(tiger.getName())
 
 let x = tiger.talk()
 

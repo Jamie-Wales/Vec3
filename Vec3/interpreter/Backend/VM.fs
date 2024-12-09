@@ -584,7 +584,7 @@ and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
         }
         
         // Remove old frame and add new one
-        vm.Frames.RemoveAt(vm.Frames.Count - 1)
+        // vm.Frames.RemoveAt(vm.Frames.Count - 1)
         vm.Frames.Add(frame)
         
         // Execute the tail call directly here
@@ -600,7 +600,7 @@ and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
                 match result with
                 | Return value ->
                     // pop the old frame
-                    let _, vm = pop vm
+                    // let _, vm = pop vm
                     push vm value
                 | Call(argCount, recursive) ->
                     let vm = callValue vm (int argCount) (int recursive)
