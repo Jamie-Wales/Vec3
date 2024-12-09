@@ -392,21 +392,24 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 | outputDir ->
                     let config = createConfig (Some outputDir)
                     
+                    // Create temporary file for the current editor content
                     let tempFile = Path.Combine(Path.GetTempPath(), "temp.vec3")
                     File.WriteAllText(tempFile, this.GetEditorText())
                     
                     match transpile tempFile config with
-                    | Ok exePath ->
-                        let mainCPath = Path.Combine(config.OutputDir, "src", "main.c")
+                    | Ok exePath -> 
+                        // Use the correct path from the user-selected output directory
+                        let mainCPath = Path.Combine(outputDir, "src", "main.c")
                         let! mainCContent = Task.Run(fun () -> File.ReadAllText(mainCPath))
                         do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
                             standardOutput.Foreground <- SolidColorBrush(Colors.White)
-                            standardOutput.Text <- $"Transpilation successful!\nExecutable: {exePath}\n\nGenerated C code:\n{mainCContent}")
+                            standardOutput.Text <- $"Transpilation successful!\nOutput Directory: {outputDir}\nExecutable: {exePath}\n\nGenerated main.c in {mainCPath}:\n{mainCContent}")
                     | Error err ->
                         do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
                             standardOutput.Foreground <- SolidColorBrush(Colors.Red)
-                            )
+                            standardOutput.Text <- $"Transpilation error: {err}")
                     
+                    // Clean up temporary file
                     File.Delete(tempFile)
                     
             with ex ->

@@ -64,11 +64,13 @@ let headers = """
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+
+Vec3Env* env;
 """
 
 let initCode = """
     // Create global environment
-    Vec3Env* env = vec3_new_environment(NULL);
+    env = vec3_new_environment(NULL);
     
     // Register builtin functions
     vec3_register_builtins(env);
@@ -110,9 +112,10 @@ let rec generateExpr (expr: Expr) : string =
                 
                 let funcImpl = $"""
                 Vec3Value* %s{funcName}(Vec3Value** args) {{
-                    Vec3Env* func_env = vec3_new_environment(NULL);
+                    // Create new environment with captured environment as parent
+                    Vec3Env* func_env = vec3_new_environment(env);
                     
-                    // Bind parameters
+                    // Bind parameters to the new environment
                     %s{
                         paramNames 
                         |> List.mapi (fun i name -> 
@@ -120,18 +123,30 @@ let rec generateExpr (expr: Expr) : string =
                         |> String.concat "\n    "
                     }
                     
-                    // Execute body
+                    // Create temporary environment swap to execute in function's scope
+                    Vec3Env* previous_env = env;
+                    env = func_env;
+                    
+                    // Execute body in function's environment
                     Vec3Value* result = %s{generateExpr body};
                     
-                    vec3_incref(result);
+                    // Restore original environment
+                    env = previous_env;
+                    
+                    // Clean up function environment but keep result
+                    vec3_incref(result);  // Increment before destroying environment
                     vec3_destroy_environment(func_env);
+                    
                     return result;
                 }}
                 """
                 
                 functionDefinitions := { Name = funcName; Implementation = funcImpl } :: !functionDefinitions
                 
+                // Create function value that captures current environment
                 $"vec3_new_function(\"%s{funcName}\", %d{List.length parameters}, %s{funcName}, env)"
+
+        // ... rest of the cases remain the same ...
     
         
         | EIdentifier(id, _) ->
@@ -217,7 +232,7 @@ let rec generateExpr (expr: Expr) : string =
             failwithf "Match expressions not implemented for: %A" expr 
 
         | ERecordEmpty _ -> 
-            "vec3_new_list(0)"
+            "vec3_new_record()"
         
         | ERecordExtend((name, value, _), record, _) ->
             let recordCode = generateExpr record

@@ -1,10 +1,11 @@
-
 #include "vec3_list.h"
 #include "value.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+// Internal helper functions - keep original signatures
 vec3_list* create_new_list(Vec3Value* value)
 {
     vec3_list* list = malloc(sizeof(vec3_list));
@@ -110,11 +111,16 @@ void vec3_list_set(Vec3Value* list_value, size_t index, Vec3Value* value)
     vec3_decref(va);
 }
 
-Vec3Value* vec3_cons(Vec3Value* value, Vec3Value* list_value)
+// Public functions with new Vec3Value** args signature
+Vec3Value* vec3_cons(Vec3Value** args)
 {
+    Vec3Value* value = args[0];
+    Vec3Value* list_value = args[1];
+    
     if (list_value->object.type != TYPE_LIST) {
         return vec3_new_nil();
     }
+    
     Vec3Value* new_list_value = malloc(sizeof(Vec3Value));
     new_list_value->object.type = TYPE_LIST;
     new_list_value->object.ref_count = 1;
@@ -136,10 +142,14 @@ Vec3Value* vec3_cons(Vec3Value* value, Vec3Value* list_value)
     return new_list_value;
 }
 
-// Get element at numeric index
-Vec3Value* vec3_index(Vec3Value* list_value, Vec3Value* index_value)
+Vec3Value* vec3_index(Vec3Value** args)
 {
-    if (list_value->object.type != TYPE_LIST || index_value->object.type != TYPE_NUMBER || index_value->as.number.type != NUMBER_INTEGER) {
+    Vec3Value* list_value = args[0];
+    Vec3Value* index_value = args[1];
+
+    if (list_value->object.type != TYPE_LIST || 
+        index_value->object.type != TYPE_NUMBER || 
+        index_value->as.number.type != NUMBER_INTEGER) {
         return vec3_new_nil();
     }
 
@@ -164,8 +174,11 @@ Vec3Value* vec3_index(Vec3Value* list_value, Vec3Value* index_value)
     return current->value;
 }
 
-Vec3Value* vec3_select(Vec3Value* list_value, Vec3Value* key_value)
+Vec3Value* vec3_select(Vec3Value** args)
 {
+    Vec3Value* list_value = args[0];
+    Vec3Value* key_value = args[1];
+
     if (list_value->object.type != TYPE_LIST) {
         return vec3_new_nil();
     }
@@ -174,19 +187,20 @@ Vec3Value* vec3_select(Vec3Value* list_value, Vec3Value* key_value)
     vec3_list* current = list_value->as.list;
 
     if (key_value->object.type == TYPE_NUMBER) {
-        return vec3_index(list_value, key_value);
+        Vec3Value* args[] = {list_value, key_value};
+        return vec3_index(args);
     } else if (key_value->object.type == TYPE_STRING) {
         while (current != NULL) {
-            if (current->value->object.type == TYPE_STRING && strcmp(current->value->as.string.chars, key_value->as.string.chars) == 0) {
+            if (current->value->object.type == TYPE_STRING && 
+                strcmp(current->value->as.string.chars, key_value->as.string.chars) == 0) {
                 vec3_list_append(result, current->value);
             }
             current = current->next;
         }
-    }
-    // If key is a boolean, select elements matching that boolean
-    else if (key_value->object.type == TYPE_BOOL) {
+    } else if (key_value->object.type == TYPE_BOOL) {
         while (current != NULL) {
-            if (current->value->object.type == TYPE_BOOL && current->value->as.boolean == key_value->as.boolean) {
+            if (current->value->object.type == TYPE_BOOL && 
+                current->value->as.boolean == key_value->as.boolean) {
                 vec3_list_append(result, current->value);
             }
             current = current->next;

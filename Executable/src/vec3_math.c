@@ -52,6 +52,86 @@ Vec3Value* vec3_add(Vec3Value** args)
     return result ? result : vec3_new_nil();
 }
 
+
+Vec3Value* vec3_plot(Vec3Value** args)
+{
+    Vec3Value* config = args[0];
+    vec3_incref(config);
+    if (config->object.type != TYPE_RECORD) {
+        vec3_decref(config);
+        return vec3_error(vec3_new_string("plot: argument must be a record"));
+    }
+    Vec3Value* x_vals = vec3_record_get(config, "x");
+    Vec3Value* y_vals = vec3_record_get(config, "y");
+    Vec3Value* title = vec3_record_get(config, "title");
+    Vec3Value* plot_type = vec3_record_get(config, "ptype");
+    if (x_vals->object.type != TYPE_LIST || y_vals->object.type != TYPE_LIST) {
+        vec3_decref(config);
+        return vec3_error(vec3_new_string("plot: x and y must be lists"));
+    }
+    if (title->object.type != TYPE_STRING) {
+        vec3_decref(config);
+        return vec3_error(vec3_new_string("plot: title must be a string"));
+    }
+    if (plot_type->object.type != TYPE_STRING) {
+        vec3_decref(config);
+        return vec3_error(vec3_new_string("plot: ptype must be a string"));
+    }
+    size_t length = x_vals->as.list->length;
+    if (y_vals->as.list->length != length || length == 0) {
+        vec3_decref(config);
+        return vec3_error(vec3_new_string("plot: x and y lists must have the same non-zero length"));
+    }
+    double* x_data = malloc(length * sizeof(double));
+    double* y_data = malloc(length * sizeof(double));
+    vec3_list* x_node = x_vals->as.list;
+    vec3_list* y_node = y_vals->as.list;
+    for (size_t i = 0; i < length; i++) {
+        if (x_node->value->object.type != TYPE_NUMBER ||
+            y_node->value->object.type != TYPE_NUMBER) {
+            free(x_data);
+            free(y_data);
+            vec3_decref(config);
+            return vec3_error(vec3_new_string("plot: lists must contain only numbers"));
+        }
+        x_data[i] = number_to_double(&x_node->value->as.number);
+        y_data[i] = number_to_double(&y_node->value->as.number);
+        x_node = x_node->next;
+        y_node = y_node->next;
+    }
+    FILE* gnuplotPipe = popen("gnuplot -persist", "w");
+    if (gnuplotPipe == NULL) {
+        free(x_data);
+        free(y_data);
+        vec3_decref(config);
+        return vec3_error(vec3_new_string("Failed to open gnuplot"));
+    }
+    fprintf(gnuplotPipe, "set title '%s'\n", title->as.string.chars);
+    fprintf(gnuplotPipe, "set xlabel 'X'\n");
+    fprintf(gnuplotPipe, "set ylabel 'Y'\n");
+    const char* plot_style;
+    if (strcmp(plot_type->as.string.chars, "bar") == 0) {
+        fprintf(gnuplotPipe, "set style data boxes\n");
+        fprintf(gnuplotPipe, "set style fill solid\n");
+        plot_style = "boxes";
+    } else if (strcmp(plot_type->as.string.chars, "scatter") == 0) {
+        plot_style = "points";
+    } else {
+        plot_style = "lines";
+    }
+
+    fprintf(gnuplotPipe, "plot '-' with %s title 'Data'\n", plot_style);
+    for (size_t i = 0; i < length; i++) {
+        fprintf(gnuplotPipe, "%f %f\n", x_data[i], y_data[i]);
+    }
+    fprintf(gnuplotPipe, "e\n");
+    fflush(gnuplotPipe);
+    pclose(gnuplotPipe);
+    free(x_data);
+    free(y_data);
+    vec3_decref(config);
+    return vec3_new_nil();
+}
 Vec3Value* vec3_multiply(Vec3Value** args)
 {
     Vec3Value* a = args[0];

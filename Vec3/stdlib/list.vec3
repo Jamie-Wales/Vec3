@@ -75,6 +75,9 @@ rec indexOf (list, elem) ->
     else 
         1 + indexOf(tail(list), elem)
 
+let (@@) = (lists) -> spread(lists)
+let (@) = (list, elem) -> append_elem(list, elem)
+
 let splitAt = (list, n) -> [take(list, n), drop(list, n)]
 
 rec chunk (list, n) -> 

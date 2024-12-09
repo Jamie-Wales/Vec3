@@ -33,3 +33,4 @@ Number number_from_int(int64_t value);
 Number number_from_float(double value);
 Number number_from_rational(int64_t num, int64_t denom);
 Number number_from_complex(double real, double imag);
+double number_to_double(const Number* num);

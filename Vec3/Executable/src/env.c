@@ -1,9 +1,9 @@
 #include "env.h"
-#include "hashmap.h"
+#include "value.h"  // Get full definitions
+#include "vec3_list.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "vec3_list.h"
 
 Vec3Env* vec3_new_environment(Vec3Env* enclosing)
 {
@@ -99,7 +99,7 @@ void vec3_register_builtins(struct Vec3Env* env)
     
     vec3_env_define(env, "input", vec3_new_function("input", 0, vec3_input, NULL));
     vec3_env_define(env, "print", vec3_new_function("print", 1, vec3_print, NULL));
-    vec3_env_define(env, "plot", vec3_new_function("plot", 2, vec3_plot, NULL));
+    vec3_env_define(env, "plot", vec3_new_function("plot", 1, vec3_plot, NULL));
     vec3_env_define(env, "PI", vec3_new_number(number_from_float(VEC3_PI)));
     vec3_env_define(env, "E", vec3_new_number(number_from_float(VEC3_E)));
     vec3_env_define(env, "TAU", vec3_new_number(number_from_float(VEC3_TAU)));
