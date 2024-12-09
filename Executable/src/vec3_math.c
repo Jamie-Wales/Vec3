@@ -52,6 +52,84 @@ Vec3Value* vec3_add(Vec3Value** args)
     return result ? result : vec3_new_nil();
 }
 
+
+Vec3Value* vec3_plot(Vec3Value** args)
+{
+    Vec3Value* x_vals = args[0];
+    Vec3Value* y_vals = args[1];
+
+    vec3_incref(x_vals);
+    vec3_incref(y_vals);
+
+    if (x_vals->object.type != TYPE_LIST || y_vals->object.type != TYPE_LIST) {
+        vec3_decref(x_vals);
+        vec3_decref(y_vals);
+        return vec3_error(vec3_new_string("plot: both arguments must be lists"));
+    }
+
+    // Check lengths
+    size_t length = x_vals->as.list->length;
+    if (y_vals->as.list->length != length || length == 0) {
+        vec3_decref(x_vals);
+        vec3_decref(y_vals);
+        return vec3_error(vec3_new_string("plot: lists must have the same non-zero length"));
+    }
+
+    double* x_data = malloc(length * sizeof(double));
+    double* y_data = malloc(length * sizeof(double));
+
+    vec3_list* x_node = x_vals->as.list;
+    vec3_list* y_node = y_vals->as.list;
+
+    // Extract numeric data and check that all elements are numbers
+    for (size_t i = 0; i < length; i++) {
+        if (x_node->value->object.type != TYPE_NUMBER ||
+            y_node->value->object.type != TYPE_NUMBER) {
+            free(x_data);
+            free(y_data);
+            vec3_decref(x_vals);
+            vec3_decref(y_vals);
+            return vec3_error(vec3_new_string("plot: both lists must contain only numbers"));
+        }
+
+        x_data[i] = number_to_double(&x_node->value->as.number);
+        y_data[i] = number_to_double(&y_node->value->as.number);
+
+        x_node = x_node->next;
+        y_node = y_node->next;
+    }
+
+    FILE* gnuplotPipe = popen("gnuplot -persist", "w");
+    if (gnuplotPipe == NULL) {
+        free(x_data);
+        free(y_data);
+        vec3_decref(x_vals);
+        vec3_decref(y_vals);
+        return vec3_error(vec3_new_string("Failed to open gnuplot"));
+    }
+
+    fprintf(gnuplotPipe, "set title 'XY Plot'\n");
+    fprintf(gnuplotPipe, "set xlabel 'X'\n");
+    fprintf(gnuplotPipe, "set ylabel 'Y'\n");
+    fprintf(gnuplotPipe, "plot '-' with lines title 'Data'\n");
+
+    for (size_t i = 0; i < length; i++) {
+        fprintf(gnuplotPipe, "%f %f\n", x_data[i], y_data[i]);
+    }
+
+    fprintf(gnuplotPipe, "e\n");
+    fflush(gnuplotPipe);
+
+    pclose(gnuplotPipe);
+
+    free(x_data);
+    free(y_data);
+
+    vec3_decref(x_vals);
+    vec3_decref(y_vals);
+
+    return vec3_new_nil();
+}
 Vec3Value* vec3_multiply(Vec3Value** args)
 {
     Vec3Value* a = args[0];
@@ -599,11 +677,9 @@ Vec3Value* vec3_cross_product(Vec3Value** args)
     Vec3Value* a = args[0];
     Vec3Value* b = args[1];
 
-    // Check if both arguments are lists of length 3
     if (a->object.type != TYPE_LIST || b->object.type != TYPE_LIST || a->as.list->length != 3 || b->as.list->length != 3) {
         return vec3_new_nil();
     }
 
-    // TODO: Implement 3D cross product
     return vec3_new_nil();
 }

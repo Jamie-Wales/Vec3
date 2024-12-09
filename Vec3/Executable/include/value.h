@@ -3,21 +3,39 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-// Forward declarations
 typedef struct Vec3Value Vec3Value;
 typedef struct Vec3Object Vec3Object;
 typedef struct Vec3Env Vec3Env;
+typedef struct Entry Entry;
 typedef struct HashMap HashMap;
 
-// Structures
+struct Entry {
+    char* key;
+    Vec3Value* value;
+    struct Entry* next;
+};
+
+struct HashMap {
+    Entry** entries;
+    size_t capacity;
+    size_t count;
+};
+
 struct Vec3Env {
     struct Vec3Env* enclosing;
     HashMap* values;
 };
 
+HashMap* hashmap_new(void);
+void hashmap_destroy(HashMap* map);
+Vec3Value* hashmap_get(HashMap* map, const char* key);
+Vec3Value* hashmap_put(HashMap* map, const char* key, Vec3Value* value);
+void hashmap_remove(HashMap* map, const char* key);
+
 typedef enum {
     TYPE_NUMBER,
     TYPE_STRING,
+    TYPE_RECORD,
     TYPE_LIST,
     TYPE_FUNCTION,
     TYPE_CLOSURE,
@@ -62,8 +80,11 @@ typedef struct Vec3Value {
         vec3_list* list;
         bool boolean;
         Vec3Function* function;
+        HashMap* record;
     } as;
 } Vec3Value;
+
+// ... rest of your declarations stay the same ...
 
 // Memory management functions
 void vec3_incref(Vec3Value* value);
@@ -98,6 +119,14 @@ Vec3Value* vec3_greater_equal(Vec3Value** args);
 Vec3Value* vec3_and(Vec3Value** args);
 Vec3Value* vec3_or(Vec3Value** args);
 Vec3Value* vec3_not(Vec3Value** args);
+
+// record
+Vec3Value* vec3_new_record(void);
+void vec3_destroy_record(Vec3Object* object);
+Vec3Value* vec3_record_get(Vec3Value* record, const char* field);
+Vec3Value* vec3_record_extend(Vec3Value* record, const char* field, Vec3Value* value);
+void vec3_record_set(Vec3Value* record, const char* field, Vec3Value* value);
+Vec3Value* vec3_record_restrict(Vec3Value* record, const char* field);
 
 void vec3_print_internal(const Vec3Value* value, bool nl);
 Vec3Value* vec3_print(Vec3Value** args);

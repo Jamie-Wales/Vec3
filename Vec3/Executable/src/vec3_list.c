@@ -111,7 +111,6 @@ void vec3_list_set(Vec3Value* list_value, size_t index, Vec3Value* value)
     vec3_decref(va);
 }
 
-// Public functions with new Vec3Value** args signature
 Vec3Value* vec3_cons(Vec3Value** args)
 {
     Vec3Value* value = args[0];

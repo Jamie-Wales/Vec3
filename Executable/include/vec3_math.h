@@ -18,6 +18,8 @@ Vec3Value* vec3_asin(Vec3Value** args);
 Vec3Value* vec3_atan(Vec3Value** args);
 
 // Exponential and logarithmic
+
+Vec3Value* vec3_plot(Vec3Value** args);
 Vec3Value* vec3_exp(Vec3Value** args);
 Vec3Value* vec3_log(Vec3Value** args);
 Vec3Value* vec3_log10(Vec3Value** args);

@@ -46,3 +46,18 @@ Number number_from_complex(double real, double imag)
     Number num = { .type = NUMBER_COMPLEX, .as.complex = { .real = real, .imag = imag } };
     return num;
 }
+
+double number_to_double(const Number* num) {
+    switch (num->type) {
+        case NUMBER_INTEGER:
+            return (double)num->as.integer;
+        case NUMBER_FLOAT:
+            return num->as.float_val;
+        case NUMBER_RATIONAL:
+            return (double)num->as.rational.num / (double)num->as.rational.denom;
+        case NUMBER_COMPLEX:
+            return num->as.complex.real;
+        default:
+            return 0.0;
+    }
+}
