@@ -110,10 +110,13 @@ and castToFloat a =
 and castToChar a =
     match a with
     | VNumber(VInteger i) -> VNumber(VChar(char i))
+    | VNumber(VFloat i) -> VNumber(VChar(char i))
+    | VNumber(VRational (i, _)) -> VNumber(VChar(char i))
+    | VNumber(VComplex (i, _)) -> VNumber(VChar(char i))
     | VString s ->
         match String.length s with
-        | 1 -> VNumber(VChar s.[0])
-        | _ -> raise <| InvalidOperationException("Invalid string for char conversion")
+        | 1 -> VNumber(VChar s[0])
+        | _ -> raise <| InvalidOperationException $"Invalid string for char conversion, got {s}"
     | _ -> raise <| InvalidOperationException("Cannot cast to char")
 
 

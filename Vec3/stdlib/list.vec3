@@ -88,3 +88,10 @@ let rec unique = (list) ->
         []
     else
         head(list) :: unique(filter(tail(list), (x) -> x != head(list)))
+
+let rec append_elem = (list, elem) -> 
+    if len(list) == 0 then
+        elem :: []
+    else
+        head(list) :: append_elem(tail(list), elem)
+

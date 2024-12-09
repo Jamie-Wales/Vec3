@@ -126,7 +126,7 @@ let rec valueToString =
 
             $"""{{{String.concat ", " fields}}}"""
         | TUPLE -> $"""({String.concat ", " (List.map valueToString l)})"""
-    | VBuiltin _ -> "<builtin>"
+    | VBuiltin (_, name) -> $"<builtin : {name}>"
     | VPlotData _ -> "<plot data>"
     | VPlotFunction _ -> "<plot function>"
     | VPlotFunctions _ -> "<plot functions>"

@@ -295,7 +295,7 @@ let appendType =
     let typeVar = freshTypeVar ()
     let constrain = TConstrain(
         Constrain(typeVar,
-                  _.IsList,
+                  (fun t -> t.IsList || t = TString),
                   (fun t -> match t with | TTensor(t, _) -> TTensor(t, DAny) | _ -> t)
                   )
         )
