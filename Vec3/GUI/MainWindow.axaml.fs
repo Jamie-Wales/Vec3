@@ -398,8 +398,7 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                     
                     match transpile tempFile config with
                     | Ok exePath -> 
-                        // Use the correct path from the user-selected output directory
-                        let mainCPath = Path.Combine(outputDir, "src", "main.c")
+                        let mainCPath = Path.Combine(outputDir, "vec3_program/src", "main.c")
                         let! mainCContent = Task.Run(fun () -> File.ReadAllText(mainCPath))
                         do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
                             standardOutput.Foreground <- SolidColorBrush(Colors.White)

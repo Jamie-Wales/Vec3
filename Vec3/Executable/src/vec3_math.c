@@ -52,7 +52,6 @@ Vec3Value* vec3_add(Vec3Value** args)
     return result ? result : vec3_new_nil();
 }
 
-
 Vec3Value* vec3_plot(Vec3Value** args)
 {
     Vec3Value* x_vals = args[0];
@@ -83,8 +82,7 @@ Vec3Value* vec3_plot(Vec3Value** args)
 
     // Extract numeric data and check that all elements are numbers
     for (size_t i = 0; i < length; i++) {
-        if (x_node->value->object.type != TYPE_NUMBER ||
-            y_node->value->object.type != TYPE_NUMBER) {
+        if (x_node->value->object.type != TYPE_NUMBER || y_node->value->object.type != TYPE_NUMBER) {
             free(x_data);
             free(y_data);
             vec3_decref(x_vals);
