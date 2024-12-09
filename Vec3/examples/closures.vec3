@@ -1,8 +1,32 @@
 
 
-let accessors = () -> {
-    let x = 42
-    let get = () -> x
+let accessors = (x) -> {
+    let y = x
+    let get = () -> y
+    get
 }
-let prop = makeProperty(accessors)
-print(prop.get())   
+let a = accessors(10)
+
+print(a())  
+
+
+// Upvalues indexing error, look into this
+
+let createAnimal = (name, speak) {
+	let a = name
+	let b = name
+	let c = "Hello, I am " ++ name
+	{
+		getName = a,
+		getSpeak = speak,
+		talk = () -> print(name)
+	}
+}
+	
+
+let tiger = createAnimal("tiger", "roah")
+
+print(tiger.getName)
+
+let x = tiger.talk()
+

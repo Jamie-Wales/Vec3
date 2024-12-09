@@ -327,6 +327,52 @@ and executeOpcodeImpl (vm: VM) (opcode: OP_CODE) : VM =
 
             let vm = push vm closure
             vm
+        | VAsyncFunction func ->
+            let vm, upValueCount = readByte vm
+
+            let rec popUpValues (vm: VM) (count: int) : VM * Local list =
+                match count with
+                | n when n > 0 ->
+                    let vm, index = readByte vm
+                    let vm, depth = readByte vm
+                    let name, vm = readConstant vm
+
+                    let name =
+                        match name with
+                        | VString s -> s
+                        | _ -> raise <| InvalidProgramException "Expected string constant for upvalue name"
+
+
+                    let vm, upValues = popUpValues vm (n - 1)
+
+                    let upValue =
+                        { Index = int index
+                          Depth = int depth
+                          Name = name }
+
+                    vm, upValue :: upValues
+
+                | _ -> vm, []
+
+            let rec getUpvaluesVals (vm: VM) (count: int) : Value list =
+                match count with
+                | n when n > 0 && n < vm.Stack.Count ->
+                    let value = peek vm (n - 1)
+                    let values = getUpvaluesVals vm (n - 1)
+                    value :: values
+                | _ -> []
+
+            let vm, _ = popUpValues vm (int upValueCount)
+
+            // how do i set the upvalues ?
+            // where do i get the upvalues from ?
+            // answer: from the stack
+
+            let async = VAsyncFunction func
+
+            let vm = push vm async
+            vm
+            
         | _ -> raise <| InvalidProgramException $"Expected function constant for closure, got {valueToString constant}"
    
     | GET_UPVALUE ->
@@ -504,6 +550,16 @@ and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
         
         vm.Frames.Add(frame)
         vm
+    
+    | VAsyncFunction func, 0 ->
+        let runAsyncFunction (func: Function) (args: Value list) : Async<Value> =
+                async {
+                    let res = runFunction vm func args
+                    return res
+                }
+        let args = [ 0 .. argCount - 1 ] |> List.map (fun _ -> let value, _ = pop vm in value) |> List.rev
+        let res = runAsyncFunction func args
+        push vm (VPromise res)
         
     | VFunction(func, _), 1 
     | VClosure({ Function = func }, _), 1 ->

@@ -927,7 +927,8 @@ let builtins =
           (fun args ->
               match args with
               | [ VPromise(task) ] -> Async.RunSynchronously task
-              | _ -> failwith "not a promise"),
+              | [ other ] -> other
+              | _ -> failwith $"not a promise, got {args}"),
           "Async"
       )
 

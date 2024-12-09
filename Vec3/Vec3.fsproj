@@ -69,6 +69,7 @@
       <Content Include="stdlib\math.vec3" />
       <Content Include="stdlib\string.vec3" />
         <Content Include="examples\closures.vec3" />
+        <Content Include="examples\async.vec3" />
       <Content Include="src\tests.vec3" />
     </ItemGroup>
 </Project>
