@@ -126,21 +126,21 @@ let builtins =
                   <| InvalidProgramException "plotFuncs expects a title and a list of functions"),
           "PlotFuncs"
       )
-      
+
       Identifier "plotEllipse",
       VBuiltin(
           (fun args ->
               match args with
-              | [  ] -> failwith "todo"
+              | [] -> failwith "todo"
               | _ -> raise <| InvalidProgramException "plotEllipse expects a title and two floats"),
           "PlotEllipse"
       )
-      
+
       Identifier "plotEllipses",
       VBuiltin(
           (fun args ->
               match args with
-              | [  ] -> failwith "todo"
+              | [] -> failwith "todo"
               | _ -> raise <| InvalidProgramException "plotEllipse expects a title and two floats"),
           "PlotEllipse"
       )
@@ -892,9 +892,7 @@ let builtins =
       VBuiltin(
           (fun args ->
               match args with
-              | [ VNumber(VInteger shapeId)
-                  VNumber(VInteger eventId)
-                  VClosure(func, _) ] ->
+              | [ VNumber(VInteger shapeId); VNumber(VInteger eventId); VClosure(func, _) ] ->
                   let func = func.Function
                   let res = VEventListener(shapeId, eventId, func)
                   res
@@ -903,22 +901,26 @@ let builtins =
                   <| InvalidProgramException $"Expected a shape id, an event id, and a function for on {args}"),
           "On"
       )
-      
+
       Identifier "record",
       VBuiltin(
           (fun args ->
-            match args with
-            | [ VList(keys, _); VList(fields, _) ] ->
-                let rec buildRecord keys fields =
-                    match keys, fields with
-                    | [], [] -> []
-                    | key :: keys, value :: fields -> VList([key; value], LIST) :: buildRecord keys fields
-                    | _ -> raise <| InvalidProgramException "record expects a list of keys and a list of values"
-                    
-                VList(buildRecord keys fields, RECORD)
-            | _ -> raise <| InvalidProgramException "record expects a list of keys and a list of values"),
-            "Record"
-          )
+              match args with
+              | [ VList(keys, _); VList(fields, _) ] ->
+                  let rec buildRecord keys fields =
+                      match keys, fields with
+                      | [], [] -> []
+                      | key :: keys, value :: fields -> VList([ key; value ], LIST) :: buildRecord keys fields
+                      | _ ->
+                          raise
+                          <| InvalidProgramException "record expects a list of keys and a list of values"
+
+                  VList(buildRecord keys fields, RECORD)
+              | _ ->
+                  raise
+                  <| InvalidProgramException "record expects a list of keys and a list of values"),
+          "Record"
+      )
 
       Identifier "await",
       VBuiltin(
@@ -927,7 +929,84 @@ let builtins =
               | [ VPromise(task) ] -> Async.RunSynchronously task
               | _ -> failwith "not a promise"),
           "Async"
-      ) ]
+      )
+
+      Identifier "randomI",
+      VBuiltin(
+          (fun _ ->
+              let rnd = Random()
+              VNumber(VInteger(rnd.Next()))),
+          "RandomI"
+      )
+      Identifier "randomF",
+      VBuiltin(
+          (fun _ ->
+              let rnd = Random()
+              VNumber(VFloat(rnd.NextDouble()))),
+          "RandomF"
+      )
+
+      Identifier "time", VBuiltin((fun _ -> VNumber(VFloat(DateTime.Now.TimeOfDay.TotalSeconds))), "Time")
+
+      Identifier "split",
+      VBuiltin(
+          (fun args ->
+              match args with
+              | [ VString s; VString sep ] ->
+                  let res =
+                      s.Split([| sep |], StringSplitOptions.None) |> Array.toList |> List.map VString
+
+                  VList(res, LIST)
+              | _ -> raise <| InvalidProgramException "split expects a string and a separator"),
+          "Split"
+      )
+
+      Identifier "join",
+      VBuiltin(
+          (fun args ->
+              match args with
+              | [ VList(l, _); VString sep ] ->
+                  let res = l |> List.map valueToString |> String.concat sep |> VString
+                  res
+              | _ -> raise <| InvalidProgramException "join expects a list and a separator"),
+          "Join"
+      )
+
+      Identifier "toLowerCase",
+      VBuiltin(
+          (fun args ->
+              match args with
+              | [ VString s ] -> VString(s.ToLowerInvariant())
+              | _ -> raise <| InvalidProgramException "toLowerCase expects a string"),
+          "ToLower"
+      )
+
+      Identifier "toUpperCase",
+      VBuiltin(
+          (fun args ->
+              match args with
+              | [ VString s ] -> VString(s.ToUpperInvariant())
+              | _ -> raise <| InvalidProgramException "toUpperCase expects a string"),
+          "ToUpper"
+      )
+
+      Identifier "trim",
+      VBuiltin(
+          (fun args ->
+              match args with
+              | [ VString s ] -> VString(s.Trim())
+              | _ -> raise <| InvalidProgramException "trim expects a string"),
+          "Trim"
+      )
+      Identifier "typeOf",
+        VBuiltin(
+            (fun args ->
+                match args with
+                | [ v ] -> VString(typeOf v)
+                | _ -> raise <| InvalidProgramException "typeOf expects a value"),
+            "TypeOf"
+        )
+      ]
 
 
     |> List.map (fun (key, value) -> lexemeToString key, value)

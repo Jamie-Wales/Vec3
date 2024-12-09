@@ -378,6 +378,17 @@ type BuiltInFunction =
     | Await
 
     | TaylorSeries
+    
+    | Split
+    | ToLowerCase
+    | ToUpperCase
+    | Trim
+    | Join
+    | RandomI
+    | RandomF
+    | Time
+    
+    | TypeOf
 
 /// <summary>
 /// Map of built-in functions to their respective function type.
@@ -446,6 +457,18 @@ let builtInFunctionMap =
       Identifier "await", BuiltInFunction.Await
       Identifier "append", BuiltInFunction.Append
       Identifier "plotEllipse", BuiltInFunction.PlotEllipse
+      
+      Identifier "randomI", BuiltInFunction.RandomI
+      Identifier "randomF", BuiltInFunction.RandomF
+      Identifier "time", BuiltInFunction.Time
+      Identifier "split", BuiltInFunction.Split
+      Identifier "toLowerCase", BuiltInFunction.ToLowerCase
+      Identifier "toUpperCase", BuiltInFunction.ToUpperCase
+      Identifier "trim", BuiltInFunction.Trim
+      Identifier "join", BuiltInFunction.Join
+      
+      Identifier "typeOf", BuiltInFunction.TypeOf
+        
 
       ]
     |> Map.ofList
@@ -514,3 +537,12 @@ let hasSideEffects =
     | PlotEllipse -> true
     | PlotEllipses -> true
     | Append -> true
+    | Split -> true
+    | ToLowerCase -> true
+    | ToUpperCase -> true
+    | Trim -> true
+    | RandomI -> true
+    | RandomF -> true
+    | Time -> true
+    | Join -> true
+    | TypeOf -> true

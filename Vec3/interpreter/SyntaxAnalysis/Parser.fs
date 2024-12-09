@@ -9,6 +9,7 @@ open Token
 open Grammar
 open Scanner
 open Vec3.Interpreter.SyntaxAnalysis.TailAnalyser
+open Vec3.Interpreter.Token
 
 let rec getDefault =
     function
@@ -1630,84 +1631,6 @@ and typeDecl (state: ParserState) : ParseResult<Stmt> =
     }
 
 /// <summary>
-/// Parses a recursive function declaration.
-/// </summary>
-/// <param name="state">The parser state.</param>
-/// <returns>The new state and the parsed statement.</returns>
-/// <example>
-/// <c> rec f(x) -> x + 1 </c>
-/// </example>
-and recFunc (state: ParserState) : ParseResult<Stmt> =
-    let state = setLabel state "Rec Func"
-
-    let rec parseParameters
-        (state: ParserState)
-        (params': (Token * TType option) list)
-        : ParseResult<(Token * TType option) list> =
-        match nextToken state with
-        | Some(state, { Lexeme = Punctuation RightParen }) -> Ok(state, List.rev params')
-        | Some(state, ({ Lexeme = Identifier _ } as token)) ->
-            let paramType, state =
-                match peek state with
-                | Some { Lexeme = Operator(Colon, _) } ->
-                    let state = advance state
-
-                    match typeHint state with
-                    | Ok(state, paramType) -> Some paramType, state
-                    | Error _ -> None, state
-                | _ -> None, state
-
-            match peek state with
-            | Some { Lexeme = Punctuation RightParen } -> Ok(advance state, (List.rev ((token, paramType) :: params')))
-            | Some { Lexeme = Operator(Comma, _) } -> parseParameters (advance state) ((token, paramType) :: params')
-            | _ -> Error(Expected "',' or ')'.", state)
-        | _ -> Error(Expected "parameter name.", state)
-
-    result {
-        let! state, name = expectIdentifier state
-        let! state = expect state (Punctuation LeftParen)
-        let! state, parameters = parseParameters state []
-
-        match nextToken state with
-        | Some(state, { Lexeme = Operator(Arrow, _) }) ->
-            let! state, expr = expression state Precedence.Assignment
-            let func = SRecFunc(name, parameters, expr, None)
-            let func = analyseStmt func
-            return (state, func)
-        | Some(state, { Lexeme = Operator(Colon, _) }) ->
-            let! state, returnType = typeHint state
-
-            match nextToken state with
-            | Some(state, { Lexeme = Operator(Arrow, _) }) ->
-                let! state, expr = expression state Precedence.Assignment
-                let func = SRecFunc(name, parameters, expr, Some returnType)
-                let func = analyseStmt func
-                return (state, func)
-            | Some(state, { Lexeme = Punctuation LeftBrace }) ->
-                let! state, expr = block state
-                let func = SRecFunc(name, parameters, expr, Some returnType)
-                let func = analyseStmt func
-                return (state, func)
-            | _ -> return! Error(Expected "function body.", state)
-        | Some(state, { Lexeme = Punctuation LeftBrace }) ->
-            let! state, expr = block state
-            let func = SRecFunc(name, parameters, expr, None)
-            let func = analyseStmt func
-            return (state, func)
-        | _ -> return! Error(Expected "function body.", state)
-    }
-
-and asyncFunc (state: ParserState) : ParseResult<Stmt> =
-    let state = setLabel state "Async Func"
-
-    result {
-        match! recFunc state with
-        | state, SRecFunc(name, parameters, expr, returnType) ->
-            return (state, SAsync(name, parameters, expr, returnType))
-        | _ -> return! Error(Expected "recursive function.", state)
-    }
-
-/// <summary>
 /// Parses a statement.
 /// </summary>
 /// <param name="state">The parser state.</param>
@@ -1726,11 +1649,36 @@ and statement (state: ParserState) : ParseResult<Stmt> =
                 match peek state with
                 | Some { Lexeme = Identifier _ } -> varDecl state
                 | Some { Lexeme = Punctuation LeftParen } -> operatorDecl state
+                | Some { Lexeme = Keyword Rec } ->
+                    let state = advance state
+                    result {
+                        let! state, var = varDecl state
+                        match var with
+                        | SVariableDeclaration(name, expr, _) ->
+                            match expr with
+                            | ELambda(parameters, body, returnType, _, _, _) ->
+                                let func = SRecFunc(name, parameters, body, returnType)
+                                let func = analyseStmt func
+                                return (state, func)
+                            | _ -> return! Error(Expected "lambda expression.", state)
+                        | _ -> return! Error(Expected "variable declaration.", state)
+                    }
+                | Some { Lexeme = Keyword Async } ->
+                    let state = advance state
+                    result {
+                        let! state, var = varDecl state
+                        match var with
+                        | SVariableDeclaration(name, expr, _) ->
+                            match expr with
+                            | ELambda(parameters, body, returnType, _, _, _) ->
+                                return (state, SAsync(name, parameters, body, returnType))
+                            | _ -> return! Error(Expected "lambda expression.", state)
+                        | _ -> return! Error(Expected "variable declaration.", state)
+                    }
+                    
                 | _ -> Error(Expected "variable name.", state)
             | Keyword.Assert -> assertStatement (advance state)
             | Keyword.Type -> typeDecl (advance state)
-            | Keyword.Rec -> recFunc (advance state)
-            | Keyword.Async -> asyncFunc (advance state)
             | Keyword.Import ->
                 result {
                     let state = advance state

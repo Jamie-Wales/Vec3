@@ -16,6 +16,33 @@ let isTruthy =
     | VBoolean false -> false
     | VNil -> false
     | _ -> true
+
+let typeOf (v: Value) : string =
+    match v with
+    | VBoolean _ -> "Boolean"
+    | VNumber(VInteger _) -> "Integer"
+    | VNumber(VFloat _) -> "Float"
+    | VNumber(VRational _) -> "Rational"
+    | VNumber(VComplex _) -> "Complex"
+    | VNumber(VChar _) -> "Char"
+    | VString _ -> "String"
+    | VList (_, LIST) -> "List"
+    | VList (_, RECORD) -> "Record"
+    | VList (_, TUPLE) -> "Tuple"
+    | VFunction _ -> "Function"
+    | VClosure _ -> "Closure"
+    | VNil -> "Nil"
+    | VBlock _ -> "Block"
+    | VEventListener _ -> "EventListener"
+    | VPromise _ -> "Promise"
+    | VBuiltin _ -> "Builtin"
+    | VPlotData _ -> "PlotData"
+    | VPlotFunction _ -> "PlotFunction"
+    | VPlotFunctions _ -> "PlotFunctions"
+    | VShape _ -> "Shape"
+    | VShapes _ -> "Shapes"
+    | VOutput _ -> "Output"
+    | VAsyncFunction _ -> "AsyncFunction"
     
 let rec cast org castTyp =
     match castTyp with
