@@ -83,17 +83,17 @@ void vec3_register_builtins(struct Vec3Env* env)
     vec3_env_define(env, "BUILTIN_LOG10", vec3_new_function("log10", 1, vec3_log10, NULL));
 
     // Operators
-    vec3_env_define(env, "+", vec3_new_function("add", 2, vec3_add, NULL));
-    vec3_env_define(env, "*", vec3_new_function("multiply", 2, vec3_multiply, NULL));
-    vec3_env_define(env, "**", vec3_new_function("power", 2, vec3_power, NULL));
-    vec3_env_define(env, "==", vec3_new_function("equal", 2, vec3_equal, NULL));
-    vec3_env_define(env, "!=", vec3_new_function("not_equal", 2, vec3_not_equal, NULL));
-    vec3_env_define(env, "<", vec3_new_function("less", 2, vec3_less, NULL));
-    vec3_env_define(env, "<=", vec3_new_function("less_equal", 2, vec3_less_equal, NULL));
-    vec3_env_define(env, ">", vec3_new_function("greater", 2, vec3_greater, NULL));
-    vec3_env_define(env, ">=", vec3_new_function("greater_equal", 2, vec3_greater_equal, NULL));
+    vec3_env_define(env, "add", vec3_new_function("add", 2, vec3_add, NULL));
+    vec3_env_define(env, "mul", vec3_new_function("mul", 2, vec3_multiply, NULL));
+    vec3_env_define(env, "pow", vec3_new_function("power", 2, vec3_power, NULL));
+    vec3_env_define(env, "eq", vec3_new_function("equal", 2, vec3_equal, NULL));
+    vec3_env_define(env, "neq", vec3_new_function("not_equal", 2, vec3_not_equal, NULL));
+    vec3_env_define(env, "lt", vec3_new_function("less", 2, vec3_less, NULL));
+    vec3_env_define(env, "lte", vec3_new_function("less_equal", 2, vec3_less_equal, NULL));
+    vec3_env_define(env, "gt", vec3_new_function("greater", 2, vec3_greater, NULL));
+    vec3_env_define(env, "gte", vec3_new_function("greater_equal", 2, vec3_greater_equal, NULL));
 
-    vec3_env_define(env, "::", vec3_new_function("cons", 2, vec3_cons, NULL));
+    vec3_env_define(env, "cons", vec3_new_function("cons", 2, vec3_cons, NULL));
     vec3_env_define(env, "index", vec3_new_function("index", 2, vec3_index, NULL));
     vec3_env_define(env, "select", vec3_new_function("select", 2, vec3_select, NULL));
     

@@ -79,9 +79,6 @@ typedef struct Vec3Value {
     } as;
 } Vec3Value;
 
-// ... rest of your declarations stay the same ...
-
-// Memory management functions
 void vec3_incref(Vec3Value* value);
 void vec3_decref(Vec3Value* value);
 void vec3_destroy_string(Vec3Object* object);
