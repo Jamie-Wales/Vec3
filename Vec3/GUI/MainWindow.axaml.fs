@@ -50,39 +50,21 @@ Type 'help()' in the REPL for more information."""
 
     let initialCode =
         """// Vec3 Editor Example
-let rec fact = (n) -> if n < 1 then 1 else n * fact(n - 1)
-
-let x = fact(5)
-print(x)
-
-let (?) = (x, y) -> 3 * x + 2 * y
-let (?) = (x) -> 3 * x
-
-print(4 ? 5)
-print(?5)
-
-let x = [1,2,3]
-let y = [3,2,1]
-
-// x[5] // error due to indexing
-
-print(x + y)
-print(x X y)
-print(x .* y)
-
-let casting = (5 * 4^3) : float
-print(casting)
-
 let f = (x) -> x^2.0 - 2.0
 
+// Differentiate the function
 let diff = differentiate(f)
+// Integrate the function
+let integral = integrate(f)
+// Find the tangent at x = -3
 let tang = tangentFunc(f, -3.0)
 
 print(diff)
 
-plotFuncs("Function differential", [f, diff, tang])
+plotFuncs("Function differential", [f, diff, tang, integral])
 
 let areaUnder = findIntegral(f, 0.0, 10.0)
+
 print(areaUnder)
 
 let y = (z) -> cos(z)
@@ -93,22 +75,27 @@ let b = 2.0
 let tolerance = 1e-6
 let max = 100
 
+// Find the root of the function
 let root = bisection(f, a, b, tolerance, max)
 
 print(root)
 
+// Function plotting
 plotFunc("Polynomial", f)
 plotFunc("Cos", cos)
 plotFunc("Tan", r)
 
+// Data plotting
 let data = {
     title="My Plot",
     x=[1, 2, 3, 4],
     y=[1, 4, 9, 16],
     ptype="bar" 
 }
+
 plot(data)
 
+// Drawing shapes
 let data = {
     x = 100.0,
     y = 100.0,
@@ -120,7 +107,7 @@ let data = {
 
 let id = draw(data)
 
-
+// Event handling
 on(id, Keys.Right, (state) -> { x = state.x + 10.0, y = cos(state.x) * 10.0 + 100.0 })
 on(id, Keys.Left, (state) -> { x = state.x - 10.0, y = cos(state.x) * 10.0 + 100.0 })
 on(id, Keys.Down, (state) -> { x = state.x, y = state.y + 20.0 })
@@ -240,6 +227,13 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                     standardOutput.Foreground <- SolidColorBrush(Colors.Red)
                     standardOutput.Text <- $"Error loading file: {ex.Message}")
         } |> ignore
+        
+    member private this.generate (f: (double -> double)) : (double array * double array) =
+        let step = 0.01
+        let x = seq { for i in -20.0 .. step .. 20.0 do yield i } 
+        let y = x |> Seq.map f |> Seq.toArray
+        (x |> Seq.toArray, y)
+        
     member private this.HandlePlotOutput(vm: VM) =
         let shapes =
             vm.Canvas
@@ -297,8 +291,14 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 let plotWindow = PlotWindow()
                 plotWindow.Title <- title
                 plotWindow.SetVM(vm)  
+                //plotControl.Plot.Add.Function(f) |> ignore
                 plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
-                plotWindow.PlotControl.Plot.Title(title)
+                // x axis
+                let yL = plotWindow.PlotControl.Plot.Add.VerticalLine(0.0)
+                yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
+                // y axis
+                let xL = plotWindow.PlotControl.Plot.Add.HorizontalLine(0.0)
+                xL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
                 match start, end_, area with
                 | Some start, Some end_, Some area ->
                     let startHeight = f start

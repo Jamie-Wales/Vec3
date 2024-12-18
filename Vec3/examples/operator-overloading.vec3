@@ -1,0 +1,8 @@
+// infix operator
+let (?) = (x, y) -> 3 * x + 2 * y
+// prefix operator
+let (?) = (x) -> 3 * x
+
+// infix and prefix operators are different, so both can be defined
+print(4 ? 5)
+print(?5)

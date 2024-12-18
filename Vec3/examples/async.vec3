@@ -1,24 +1,28 @@
-let async test = (x, y) -> x + y
+// simple async example
+let async addNums = (x, y) -> x + y
+let res = addNums(5,5)
 
-let res = test(5,5)
-
+// currently either resolved or unresolved (as a promise)
 print(res)
 
+// this will block until the result is ready
 let rs = await(res)
-
 print(rs)
 
+// async example with a more complex function
+let rec addTil = (n) -> if n < 1 then 0 else n + addTil(n - 1)
+let async t = (n) -> addTil(n)
 
-let rec test = (n) -> if n < 1 then 0 else n + test(n - 1)
-
-let async t = (n) -> test(n)
-
+// this will run the function in the background
 let res = t(100000)
 
+// currently either resolved or unresolved (as a promise)
 print(res)
 
+// other code can run while this is happening
 print(2 + 2)
 
+// this will block until the result is ready
 let res = await(res)
 
 print(res)

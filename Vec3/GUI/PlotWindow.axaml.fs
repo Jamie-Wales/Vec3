@@ -2,6 +2,7 @@ namespace Vec3
 open Avalonia
 open Avalonia.Controls
 open Avalonia.Markup.Xaml
+open ScottPlot
 open ScottPlot.Avalonia
 open Avalonia.Input
 open System
@@ -47,11 +48,19 @@ type PlotWindow() as this =
                     inputBox.Text <- ""
             )
     
+    member private this.generate (f: (double -> double)) : double array =
+        let step = 0.01
+        let x = seq { for i in -100.0 .. step .. 100.0 do yield i }
+        let y = x |> Seq.map f |> Seq.toArray
+        y
+    
     member private this.UpdatePlots(vm: VM) =
         for value in vm.Plots do
             match value with
             | VPlotFunction(title, f, start, end_, area) ->
-                plotControl.Plot.Add.Function(f) |> ignore
+                let data = this.generate f
+                //plotControl.Plot.Add.Function(f) |> ignore
+                plotControl.Plot.Add.Signal(data) |> ignore
                 plotControl.Plot.Title(title)
                 match start, end_, area with
                 | Some s, Some e, Some a ->

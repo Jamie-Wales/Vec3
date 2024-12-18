@@ -70,6 +70,10 @@
       <Content Include="stdlib\string.vec3" />
         <Content Include="examples\closures.vec3" />
         <Content Include="examples\async.vec3" />
+        <Content Include="examples\recursion.vec3" />
+        <Content Include="examples\operator-overloading.vec3" />
+        <Content Include="examples\vector-ops.vec3" />
+        <Content Include="examples\casting.vec3" />
       <Content Include="src\tests.vec3" />
     </ItemGroup>
 </Project>

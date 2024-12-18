@@ -1,0 +1,16 @@
+// define vectors
+let x = [1,2,3]
+let y = [3,2,1]
+
+// x[5] // error due to indexing
+
+// vector addition
+print(x + y)
+// vector cross product
+print(x X y)
+// vector dot product
+print(x .* y)
+
+// To note: the length is encoded in the type, so the compiler can catch errors like this:
+// let z = [1,2,3,4] 
+// let err = x + z // error due to length mismatch
