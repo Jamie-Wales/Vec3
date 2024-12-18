@@ -76,10 +76,11 @@ print(casting)
 let f = (x) -> x^2.0 - 2.0
 
 let diff = differentiate(f)
+let tang = tangentFunc(f, -3.0)
 
 print(diff)
 
-plotFuncs("Function differential", [f, diff])
+plotFuncs("Function differential", [f, diff, tang])
 
 let areaUnder = findIntegral(f, 0.0, 10.0)
 print(areaUnder)

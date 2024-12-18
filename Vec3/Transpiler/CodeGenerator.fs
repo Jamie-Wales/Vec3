@@ -205,7 +205,7 @@ let rec generateExpr (expr: Expr) : string =
             | _ -> 
             let funcExpr = generateExpr callee
             $"vec3_call_function(%s{funcExpr}, (Vec3Value*[]){{{argExprs}}}, {List.length args})"        
-        | EBlock(stmts, _) ->
+        | EBlock(stmts, _, _) ->
             let stmtCodes = stmts |> List.map generateStmt |> String.concat "\n    "
             $"{{\n    Vec3Env* block_env = vec3_new_environment(env);\n    %s{stmtCodes}\n    vec3_destroy_environment(block_env);\n}}"
             

@@ -723,6 +723,13 @@ let integrate (expression: Expression) : Expression =
 
     inte expression |> simplify
 
+let tangentAt (expression: Expression) (n: float) : Expression =
+    let derivative = differentiate expression
+    let gradient = evaluate n derivative
+    // y = mx + c
+    let c = evaluate n expression - gradient * n
+    Addition(Multiplication(Const gradient, X), Const c)
+    
 /// <summary>
 /// Convert an expression to a string.
 /// </summary>

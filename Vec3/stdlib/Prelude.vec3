@@ -50,12 +50,14 @@ let rec map = (list, func) -> if list == [] then
                        else
                           func(head(list)) :: map(tail(list), func)
 
-let rec filter = (list, func: (any) -> bool) -> if list == [] then 
+let rec filter = (list, func: (any) -> bool) {
+                                        if len(list) == 0 then 
                                            [] 
                                         else if func(head(list)) then 
                                            head(list) :: filter(tail(list), func) 
                                         else 
                                            filter(tail(list), func)
+                                    }
 
 // List utility functions
 let sum = (list) -> fold(list, 0, (x, y) -> x + y)

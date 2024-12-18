@@ -203,7 +203,7 @@ let rec compileExpr (expr: Expr) (state: CompilerState) : unit CompilerResult =
 
             compileCall callee [ expr; ELiteral(LString name, TString) ] false state
 
-        | EBlock(stmts, _) -> compileBlock stmts state
+        | EBlock(stmts, t, _) -> compileBlock stmts t state
         | EIf(condition, thenBranch, elseBranch, _) -> compileIf condition thenBranch elseBranch state
         | ETernary(cond, thenB, elseB, _) -> compileIf cond thenB elseB state
         | ETail(ex, _) ->
@@ -281,16 +281,20 @@ and compileIf (condition: Expr) (thenBranch: Expr) (elseBranch: Expr) : Compiler
                             Ok((), state))))))
 
 // block is a new scope and an expression, therefore last expression is returned in the block
-and compileBlock (stmts: Stmt list) : Compiler<unit> =
+and compileBlock (stmts: Stmt list) (isFunc: bool) : Compiler<unit> =
     fun state ->
         
-        // TODO: finish
-        let func = ELambda([], EBlock(stmts, None), None, false, None, false)
+        if not isFunc then
+            let func = ELambda([], EBlock(stmts, true, None), None, false, None, false)
+            let call = ECall(func, [], None)
+            
+            compileExpr call state
+        else
         
         let state =
             { state with
                 ScopeDepth = state.ScopeDepth + 1 }
-
+        
         let rec compileStmts stmts state =
             match stmts with
             | [] -> Ok((), state)
@@ -300,11 +304,11 @@ and compileBlock (stmts: Stmt list) : Compiler<unit> =
                 | _ ->
                     compileStmt stmt state
                     |> Result.bind (fun ((), state) -> emitConstant VNil state)
-
+        
             | stmt :: rest ->
                 compileStmt stmt state
                 |> Result.bind (fun ((), state) -> compileStmts rest state)
-
+        
         compileStmts stmts state
         |> Result.map (fun ((), newState) ->
             ((),
@@ -343,6 +347,13 @@ and compileLambda (parameters: Token list) (body: Expr) (isAsync: bool) : Compil
 
         let builtin = compileAsBuiltin parameters body
 
+        let body = match body with
+                    | EBlock(stmts, b, typeOption) -> EBlock(stmts, true, typeOption)
+                    | ETail(e, typeOption) ->  match e with
+                                                | EBlock(stmts, b, typeOption) -> EBlock(stmts, true, typeOption)
+                                                | _ -> ETail(body, typeOption)
+                    | _ -> body
+                    
         compileExpr body compiledParamsState
         |> Result.bind (fun ((), finalLambdaState) ->
             emitOpCode OP_CODE.RETURN finalLambdaState

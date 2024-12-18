@@ -370,6 +370,7 @@ type BuiltInFunction =
     | Bisection
     | Differentiate
     | Integrate
+    | Tangent
 
     | Cons
 
@@ -428,6 +429,7 @@ let builtInFunctionMap =
       Identifier "differentiate", BuiltInFunction.Differentiate
       Identifier "integrate", BuiltInFunction.Integrate
       Identifier "taylorSeries", BuiltInFunction.TaylorSeries
+      Identifier "tangentFunc", BuiltInFunction.Tangent
 
       Operator(Plus, Some Infix), BuiltInFunction.Add
       Operator(Minus, Some Infix), BuiltInFunction.Sub
@@ -529,6 +531,7 @@ let hasSideEffects =
     | NewtonRaphson -> true
     | Bisection -> true
     | Differentiate -> true
+    | Tangent -> true
     | Integrate -> true
     | Cons -> false
     | On -> true

@@ -572,7 +572,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             | _ -> return! Error [ TypeError.InvalidCall(callee, t) ]
         }
 
-    | EBlock(stmts, _) ->
+    | EBlock(stmts, t, _) ->
         // A block is a sequence of statements, the type of the block is the type of the last statement
         // This is due to the expressive nature of the language, where the last statement is the return value
         result {
@@ -597,7 +597,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                 | SAsync _ -> TUnit
                 | SImport _ -> TUnit
 
-            return (lastStmtType, sub, EBlock(stmts, Some lastStmtType))
+            return (lastStmtType, sub, EBlock(stmts, t, Some lastStmtType))
         }
 
     | EGrouping(expr, _) -> infer aliases env expr // Simply a wrapper

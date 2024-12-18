@@ -54,7 +54,7 @@ and analyseExpr (isTail: bool) (expr: Expr) : Expr =
     | ECall(fn, args, ty) -> ECall(fn, List.map (analyseExpr false) args, ty)
 
     // Blocks: Only the last expression in the block can be in tail position
-    | EBlock(stmts, ty) ->
+    | EBlock(stmts, t, ty) ->
         let newStmts = 
             match List.rev stmts with
             | [] -> []
@@ -63,7 +63,7 @@ and analyseExpr (isTail: bool) (expr: Expr) : Expr =
                 | SExpression(expr, _) -> List.rev (analyseStmts (List.rev rest) @ [SExpression(analyseExpr isTail expr, ty)])
                 | _ ->
                     analyseStmts stmts
-        EBlock(newStmts, ty)
+        EBlock(newStmts, t, ty)
 
     | ELambda(args, body, ty, pure', retTy, asyncFlag) ->
         ELambda(args, analyseExpr true body, ty, pure', retTy, asyncFlag)

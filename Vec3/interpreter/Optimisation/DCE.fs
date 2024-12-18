@@ -28,7 +28,7 @@ let rec hasSideEffects (expr: Expr) : bool =
         hasSideEffects cond || hasSideEffects thenBranch || hasSideEffects elseBranch
     | EIndex(expr, start, _) -> hasSideEffects expr || hasSideEffects start
     | EIndexRange(expr, start, end_, _) -> hasSideEffects expr || hasSideEffects start || hasSideEffects end_
-    | EBlock(stmts, _) -> true // todo
+    | EBlock(stmts, _, _) -> true // todo
     | ELambda(_, body, _, _, _, _) -> hasSideEffects body
     | ERecordSelect(expr, _, _) -> hasSideEffects expr
     | ETernary(cond, thenBranch, elseBranch, _) ->
@@ -111,7 +111,7 @@ and isUsedE (name: Lexeme) (expr: Expr) : bool =
     | EIf(cond, thenBranch, elseBranch, _) -> isUsedE name cond || isUsedE name thenBranch || isUsedE name elseBranch
     | EIndex(expr, start, _) -> isUsedE name expr || isUsedE name start
     | EIndexRange(expr, start, end_, _) -> isUsedE name expr || isUsedE name start || isUsedE name end_
-    | EBlock(stmts, _) -> isUsed name stmts
+    | EBlock(stmts, _, _) -> isUsed name stmts
     | ELambda(_, body, _, _, _, _) -> isUsedE name body
     | ERecordSelect(expr, _, _) -> isUsedE name expr
     | ECodeBlock e -> isUsedE name e

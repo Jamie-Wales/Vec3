@@ -2,11 +2,8 @@
 /// The virtual machine for the interpreter.
 /// </summary>
 
-// might do a hacky thing for upvalues, store them in an env or something
-// and then just look them up in the env.
-// but how do i set them ??
-// think current issue is how thte return clears teh stack of info.
-// also maybe affects recursive funcs ??
+// TODO: apply spline !!!!!! give option to plot data
+// TODO: fix asymptotes !!!!!
 
 module Vec3.Interpreter.Backend.VM
 
@@ -19,6 +16,7 @@ open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Value
 open Vec3.Interpreter.Backend.Builtins
 
+open Vec3.Interpreter.SymbolicExpression
 open Vec3.Interpreter.Token
 open Grammar
 
@@ -658,7 +656,7 @@ and specialCasedBuiltins () : Map<string, Value> =
               match args with
               | [ VBlock e ] ->
                   match e with
-                  | EBlock(stmts, _) ->
+                  | EBlock(stmts, _, _) ->
                       let compiled = compileProgram stmts
 
                       match compiled with
@@ -699,6 +697,51 @@ and specialCasedBuiltins () : Map<string, Value> =
               | _ -> raise <| InvalidProgramException "differentiate expects a function"),
           "Differentiate"
       )
+      Identifier "tangentFunc",
+      VBuiltin(
+          (fun args ->
+              match args with
+              | [ VClosure(_, Some f); VNumber(VInteger n) ] -> 
+                  let t = tangentAt f n
+                  let expr = toExpr t
+
+                  let param =
+                      { Lexeme = Identifier "x"
+                        Position = { Line = 0; Column = 0 } }
+
+                  let expr =
+                      SExpression(ELambda([ (param, None) ], expr, None, true, None, false), None)
+
+                  let compiled = compileProgram [ expr ]
+
+                  match compiled with
+                  | Ok(func, _) ->
+                      let block = createNewVM func
+                      let vm' = run block
+                      vm'.Stack[vm'.Stack.Count - 1]
+                  | Error err -> raise <| InvalidProgramException $"{err}"
+              | [ VClosure(_, Some f); VNumber(VFloat n) ] -> 
+                  let t = tangentAt f n
+                  let expr = toExpr t
+
+                  let param =
+                      { Lexeme = Identifier "x"
+                        Position = { Line = 0; Column = 0 } }
+
+                  let expr =
+                      SExpression(ELambda([ (param, None) ], expr, None, true, None, false), None)
+
+                  let compiled = compileProgram [ expr ]
+
+                  match compiled with
+                  | Ok(func, _) ->
+                      let block = createNewVM func
+                      let vm' = run block
+                      vm'.Stack[vm'.Stack.Count - 1]
+                  | Error err -> raise <| InvalidProgramException $"{err}"
+              | _ -> raise <| InvalidProgramException "integrate expects a function"),
+          "Integrate"
+      )
 
       Identifier "integrate",
       VBuiltin(
@@ -706,7 +749,7 @@ and specialCasedBuiltins () : Map<string, Value> =
               match args with
               | [ VClosure(_, Some f) ] ->
                   let integral = SymbolicExpression.integrate f
-                  let expr = SymbolicExpression.toExpr integral
+                  let expr = toExpr integral
 
                   let param =
                       { Lexeme = Identifier "x"

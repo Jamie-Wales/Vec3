@@ -154,7 +154,7 @@ let builtins =
 
                   match parsed with
                   | Ok(_, ast) ->
-                      let ast = EBlock(ast, None)
+                      let ast = EBlock(ast, false, None)
                       VBlock ast
                   | _ -> VNil
               | _ -> raise <| InvalidProgramException "Read accepts a string"),
@@ -688,6 +688,7 @@ let builtins =
       Operator(EqualEqual, Some Infix),
       VBuiltin(
           (fun args ->
+              printfn "args: %A" args
               match args with
               | [ a; b ] -> valuesEqual a b |> VBoolean
               | _ -> raise <| InvalidProgramException "Expected two arguments for =="),

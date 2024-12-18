@@ -279,7 +279,7 @@ let foldConstants (program: Program) : Program =
             match lit with
             // | LNumber(LRational(a, b)) -> ELiteral(LNumber(simplifyRational(LRational(a, b))), typ)
             | _ -> ELiteral(lit, typ)
-        | EBlock(stmts, typ) -> EBlock(foldStatements stmts, typ)
+        | EBlock(stmts, t, typ) -> EBlock(foldStatements stmts, t, typ)
         | EIdentifier(token, typ) -> EIdentifier(token, typ)
         | EGrouping(expr, typ) -> EGrouping(foldExpr expr, typ)
         | ECall(callee, args, typ) ->

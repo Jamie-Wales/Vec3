@@ -164,6 +164,14 @@ let integrateType =
 
     TFunction([ funcT ], retT, false, true)
 
+let tangentType =
+    let funcT =
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+
+    let retT = TFunction([ TFloat ], TFloat, true, false)
+
+    TFunction([ funcT; TFloat ], retT, false, true)
+    
 
 let taylorSeriesT =
     let funcT =
@@ -373,6 +381,7 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       Bisection, bisectionTyp
       Differentiate, differentiateType
       Integrate, integrateType
+      Tangent, tangentType
       
       Cons, consType
       

@@ -409,7 +409,7 @@ type Expr =
     /// A lambda expression with a list of arguments, a body, a return type, a pure flag, and a type.
     /// </summary>
     | ELambda of (Token * Type option) list * Expr * Type option * bool * Type option * bool // bool is pure flag
-    | EBlock of Stmt list * Type option
+    | EBlock of Stmt list * bool * Type option // bool is whether block is part of a function
     | ERange of Expr * Expr * Type option
 
     | ERecordSelect of Expr * Token * Type option

@@ -7,3 +7,18 @@ print(res)
 let rs = await(res)
 
 print(rs)
+
+
+let rec test = (n) -> if n < 1 then 0 else n + test(n - 1)
+
+let async t = (n) -> test(n)
+
+let res = t(100000)
+
+print(res)
+
+print(2 + 2)
+
+let res = await(res)
+
+print(res)

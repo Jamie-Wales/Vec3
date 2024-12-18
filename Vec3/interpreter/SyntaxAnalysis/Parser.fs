@@ -1484,7 +1484,7 @@ and block (state: ParserState) : ParseResult<Expr> =
     let rec loop (state: ParserState) (stmts: Stmt list) : ParseResult<Expr> =
         match peek state with
         | Some { Lexeme = Punctuation RightBrace } ->
-                  Ok(advance state, EBlock(List.rev stmts, None))
+                  Ok(advance state, EBlock(List.rev stmts, false, None))
         | None -> Error(UnexpectedEndOfInput, state)
         | _ -> statement state |> Result.bind (fun (state, stmt) -> loop state (stmt :: stmts))
 
