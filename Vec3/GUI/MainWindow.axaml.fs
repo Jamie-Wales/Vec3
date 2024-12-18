@@ -272,8 +272,8 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 ()
             | VPlotData(title, xs, ys, plotType) ->
                 let plotWindow = PlotWindow()
-                plotWindow.Title <- title
-
+                plotWindow.PlotControl.Plot.Title(title)
+                plotWindow.SetVM(vm)  
                 let extractNumber =
                     function
                     | VNumber(VFloat f) -> f
@@ -293,13 +293,12 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 plotWindow.PlotControl.Plot.Title(title)
                 plotWindow.PlotControl.Refresh()
                 plotWindow.Show()
-
             | VPlotFunction(title, f, start, end_, area) ->
                 let plotWindow = PlotWindow()
                 plotWindow.Title <- title
+                plotWindow.SetVM(vm)  
                 plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
                 plotWindow.PlotControl.Plot.Title(title)
-                // start and end are for integral plots
                 match start, end_, area with
                 | Some start, Some end_, Some area ->
                     let startHeight = f start
