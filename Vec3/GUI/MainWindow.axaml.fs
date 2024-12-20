@@ -294,6 +294,10 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 //plotControl.Plot.Add.Function(f) |> ignore
                 plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
                 // x axis
+                // let data = this.generate f
+                // let x = data |> fst
+                // let y = data |> snd
+                // plotWindow.PlotControl.Plot.Add.ScatterLine(x, y) |> ignore
                 let yL = plotWindow.PlotControl.Plot.Add.VerticalLine(0.0)
                 yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
                 // y axis

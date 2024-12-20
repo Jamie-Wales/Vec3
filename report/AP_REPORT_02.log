@@ -1,61 +1,67 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.10.8)  19 DEC 2024 09:42
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  20 DEC 2024 14:06
 entering extended mode
  restricted \write18 enabled.
- file:line:error style messages enabled.
  %&-line parsing enabled.
 **AP_REPORT_02.tex
-(/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.tex
-LaTeX2e <2023-11-01> patch level 1
-L3 programming layer <2024-02-20>
+(./AP_REPORT_02.tex
+LaTeX2e <2024-11-01>
+L3 programming layer <2024-11-02>
 (/usr/local/texlive/2024/texmf-dist/tex/latex/base/report.cls
-Document Class: report 2023/05/17 v1.4n Standard LaTeX document class
+Document Class: report 2024/06/29 v1.4n Standard LaTeX document class
 (/usr/local/texlive/2024/texmf-dist/tex/latex/base/size11.clo
-File: size11.clo 2023/05/17 v1.4n Standard LaTeX file (size option)
+File: size11.clo 2024/06/29 v1.4n Standard LaTeX file (size option)
 )
-\c@part=\count188
-\c@chapter=\count189
-\c@section=\count190
-\c@subsection=\count191
-\c@subsubsection=\count192
-\c@paragraph=\count193
-\c@subparagraph=\count194
-\c@figure=\count195
-\c@table=\count196
-\abovecaptionskip=\skip48
-\belowcaptionskip=\skip49
-\bibindent=\dimen140
+\c@part=\count196
+\c@chapter=\count197
+\c@section=\count198
+\c@subsection=\count199
+\c@subsubsection=\count266
+\c@paragraph=\count267
+\c@subparagraph=\count268
+\c@figure=\count269
+\c@table=\count270
+\abovecaptionskip=\skip49
+\belowcaptionskip=\skip50
+\bibindent=\dimen141
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/minted/minted.sty
-Package: minted 2023/12/18 v2.9 Yet another Pygments shim for LaTeX
+Package: minted 2024/11/17 v3.4.0 Yet another Pygments shim for LaTeX
+
+(/usr/local/texlive/2024/texmf-dist/tex/generic/catchfile/catchfile.sty
+Package: catchfile 2019/12/09 v1.8 Catch the contents of a file (HO)
+
+(/usr/local/texlive/2024/texmf-dist/tex/generic/infwarerr/infwarerr.sty
+Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
+)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
+Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
+)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/etexcmds/etexcmds.sty
+Package: etexcmds 2019/12/15 v1.7 Avoid name clashes with e-TeX commands (HO)
+
+(/usr/local/texlive/2024/texmf-dist/tex/generic/iftex/iftex.sty
+Package: iftex 2022/02/03 v1.0f TeX engine tests
+)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/etoolbox/etoolbox.sty
+Package: etoolbox 2020/10/05 v2.5k e-TeX tools for LaTeX (JAW)
+\etb@tempcnta=\count271
+)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/fvextra/fvextra.sty
+Package: fvextra 2024/11/17 v1.10.0 fvextra - extensions and patches for fancyv
+rb
+
+(/usr/local/texlive/2024/texmf-dist/tex/latex/fancyvrb/fancyvrb.sty
+Package: fancyvrb 2024/01/20 4.5c verbatim text (tvz,hv)
 
 (/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/keyval.sty
 Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
 \KV@toks@=\toks17
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/kvoptions/kvoptions.sty
-Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
-
-(/usr/local/texlive/2024/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
-Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
-)
-(/usr/local/texlive/2024/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty
-Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
-))
-(/usr/local/texlive/2024/texmf-dist/tex/latex/fvextra/fvextra.sty
-Package: fvextra 2023/11/28 v1.6.1 fvextra - extensions and patches for fancyvr
-b
-
-(/usr/local/texlive/2024/texmf-dist/tex/latex/etoolbox/etoolbox.sty
-Package: etoolbox 2020/10/05 v2.5k e-TeX tools for LaTeX (JAW)
-\etb@tempcnta=\count197
-)
-(/usr/local/texlive/2024/texmf-dist/tex/latex/fancyvrb/fancyvrb.sty
-Package: fancyvrb 2024/01/20 4.5c verbatim text (tvz,hv)
-\FV@CodeLineNo=\count198
+\FV@CodeLineNo=\count272
 \FV@InFile=\read2
-\FV@TabBox=\box51
-\c@FancyVerbLine=\count199
-\FV@StepNumber=\count266
+\FV@TabBox=\box52
+\c@FancyVerbLine=\count273
+\FV@StepNumber=\count274
 \FV@OutFile=\write3
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/upquote/upquote.sty
@@ -64,154 +70,115 @@ tim
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/lineno/lineno.sty
 Package: lineno 2023/05/20 line numbers on paragraphs v5.3
-\linenopenalty=\count267
+
+(/usr/local/texlive/2024/texmf-dist/tex/latex/kvoptions/kvoptions.sty
+Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
+
+(/usr/local/texlive/2024/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty
+Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
+))
+\linenopenalty=\count275
 \output=\toks18
-\linenoprevgraf=\count268
-\linenumbersep=\dimen141
-\linenumberwidth=\dimen142
-\c@linenumber=\count269
-\c@pagewiselinenumber=\count270
-\c@LN@truepage=\count271
-\c@internallinenumber=\count272
-\c@internallinenumbers=\count273
-\quotelinenumbersep=\dimen143
-\bframerule=\dimen144
-\bframesep=\dimen145
-\bframebox=\box52
+\linenoprevgraf=\count276
+\linenumbersep=\dimen142
+\linenumberwidth=\dimen143
+\c@linenumber=\count277
+\c@pagewiselinenumber=\count278
+\c@LN@truepage=\count279
+\c@internallinenumber=\count280
+\c@internallinenumbers=\count281
+\quotelinenumbersep=\dimen144
+\bframerule=\dimen145
+\bframesep=\dimen146
+\bframebox=\box53
 LaTeX Info: Redefining \\ on input line 3180.
 )
-\c@FancyVerbWriteLine=\count274
-\c@FancyVerbBufferIndex=\count275
-\c@FancyVerbBufferLength=\count276
-\c@FancyVerbBufferLine=\count277
-\c@FV@oldbufferlength=\count278
-\c@FV@TrueTabGroupLevel=\count279
-\c@FV@TrueTabCounter=\count280
-\FV@TabBox@Group=\box53
-\FV@TmpLength=\skip50
-\c@FV@HighlightLinesStart=\count281
-\c@FV@HighlightLinesStop=\count282
-\FV@LoopCount=\count283
-\FV@NCharsBox=\box54
-\FV@BreakIndent=\dimen146
-\FV@BreakIndentNChars=\count284
-\FV@BreakSymbolSepLeft=\dimen147
-\FV@BreakSymbolSepLeftNChars=\count285
-\FV@BreakSymbolSepRight=\dimen148
-\FV@BreakSymbolSepRightNChars=\count286
-\FV@BreakSymbolIndentLeft=\dimen149
-\FV@BreakSymbolIndentLeftNChars=\count287
-\FV@BreakSymbolIndentRight=\dimen150
-\FV@BreakSymbolIndentRightNChars=\count288
-\c@FancyVerbLineBreakLast=\count289
-\FV@LineBox=\box55
-\FV@LineIndentBox=\box56
-\c@FV@BreakBufferDepth=\count290
-\FV@LineWidth=\dimen151
+\c@FancyVerbWriteLine=\count282
+\c@FancyVerbBufferLine=\count283
+\c@FV@TrueTabGroupLevel=\count284
+\c@FV@TrueTabCounter=\count285
+\FV@TabBox@Group=\box54
+\FV@TmpLength=\skip51
+\c@FV@HighlightLinesStart=\count286
+\c@FV@HighlightLinesStop=\count287
+\FV@LoopCount=\count288
+\FV@NCharsBox=\box55
+\FV@BreakIndent=\dimen147
+\FV@BreakIndentNChars=\count289
+\FV@BreakSymbolSepLeft=\dimen148
+\FV@BreakSymbolSepLeftNChars=\count290
+\FV@BreakSymbolSepRight=\dimen149
+\FV@BreakSymbolSepRightNChars=\count291
+\FV@BreakSymbolIndentLeft=\dimen150
+\FV@BreakSymbolIndentLeftNChars=\count292
+\FV@BreakSymbolIndentRight=\dimen151
+\FV@BreakSymbolIndentRightNChars=\count293
+\c@FancyVerbLineBreakLast=\count294
+\FV@LineBox=\box56
+\FV@LineIndentBox=\box57
+\c@FV@BreakBufferDepth=\count295
+\FV@LineWidth=\dimen152
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/base/ifthen.sty
-Package: ifthen 2022/04/13 v1.1d Standard LaTeX ifthen package (DPC)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/latex2pydata/latex2pydata.sty
+Package: latex2pydata 2024/11/17 v0.4.0 latex2pydata - write data to file in Py
+thon literal format
+
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
+)
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/utilities/pgfkeys.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfkeys.code.tex
+\pgfkeys@pathtoks=\toks19
+\pgfkeys@temptoks=\toks20
+
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfkeyslibraryfil
+tered.code.tex
+\pgfkeys@tmptoks=\toks21
+)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgfopts/pgfopts.sty
+Package: pgfopts 2014/07/10 v2.1a LaTeX package options with pgfkeys
+\pgfopts@list@add@a@toks=\toks22
+\pgfopts@list@add@b@toks=\toks23
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/tools/shellesc.sty
 Package: shellesc 2023/07/08 v1.0d unified shell escape interface for LaTeX
 Package shellesc Info: Restricted shell escape enabled on input line 77.
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/ifplatform/ifplatform.sty
-Package: ifplatform 2017/10/13 v0.4a Testing for the operating system
-
-(/usr/local/texlive/2024/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
-Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
-)
-
-(/usr/local/texlive/2024/texmf-dist/tex/generic/infwarerr/infwarerr.sty
-Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
-)
-(/usr/local/texlive/2024/texmf-dist/tex/generic/iftex/iftex.sty
-Package: iftex 2022/02/03 v1.0f TeX engine tests
-)
-Package pdftexcmds Info: \pdf@primitive is available.
-Package pdftexcmds Info: \pdf@ifprimitive is available.
-Package pdftexcmds Info: \pdfdraftmode found.
-)
-(/usr/local/texlive/2024/texmf-dist/tex/generic/catchfile/catchfile.sty
-Package: catchfile 2019/12/09 v1.8 Catch the contents of a file (HO)
-
-(/usr/local/texlive/2024/texmf-dist/tex/generic/etexcmds/etexcmds.sty
-Package: etexcmds 2019/12/15 v1.7 Avoid name clashes with e-TeX commands (HO)
-))
-(/usr/local/texlive/2024/texmf-dist/tex/generic/iftex/ifluatex.sty
-Package: ifluatex 2019/10/25 v1.5 ifluatex legacy package. Use iftex instead.
-)
-
-Package ifplatform Warning: 
-    shell escape is disabled, so I can only detect \ifwindows.
-
-) (/usr/local/texlive/2024/texmf-dist/tex/generic/xstring/xstring.sty
-(/usr/local/texlive/2024/texmf-dist/tex/generic/xstring/xstring.tex
-\xs_counta=\count291
-\xs_countb=\count292
-)
-Package: xstring 2023/08/22 v1.86 String manipulations (CT)
-)
-(/usr/local/texlive/2024/texmf-dist/tex/latex/framed/framed.sty
-Package: framed 2011/10/22 v 0.96: framed or shaded text with page breaks
-\OuterFrameSep=\skip51
-\fb@frw=\dimen152
-\fb@frh=\dimen153
-\FrameRule=\dimen154
-\FrameSep=\dimen155
-)
 (/usr/local/texlive/2024/texmf-dist/tex/latex/float/float.sty
 Package: float 2001/11/08 v1.3d Float enhancements (AL)
-\c@float@type=\count293
-\float@exts=\toks19
-\float@box=\box57
-\@float@everytoks=\toks20
-\@floatcapt=\box58
+\c@float@type=\count296
+\float@exts=\toks24
+\float@box=\box58
+\@float@everytoks=\toks25
+\@floatcapt=\box59
 )
-\minted@appexistsfile=\read3
-\minted@bgbox=\box59
-\minted@code=\write4
-\c@minted@FancyVerbLineTemp=\count294
-\c@minted@pygmentizecounter=\count295
-\@float@every@listing=\toks21
-\c@listing=\count296
+\c@minted@FancyVerbLineTemp=\count297
+\@float@every@listing=\toks26
+\c@listing=\count298
 )
-runsystem(mkdir -p _minted-AP_REPORT_02)...disabled (restricted).
-
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.tex:4: Package min
-ted Error: You must invoke LaTeX with the -shell-escape flag.
-
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.4 \usepackage
-               {graphicx}
-Pass the -shell-escape flag to LaTeX. Refer to the minted.sty documentation for
- more information.
-
 (/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphicx.sty
 Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
 
 (/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphics.sty
-Package: graphics 2022/03/10 v1.4e Standard LaTeX Graphics (DPC,SPQR)
+Package: graphics 2024/08/06 v1.4g Standard LaTeX Graphics (DPC,SPQR)
 
 (/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/trig.sty
-Package: trig 2021/08/11 v1.11 sin cos tan (DPC)
+Package: trig 2023/12/02 v1.11 sin cos tan (DPC)
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
 File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
 )
-Package graphics Info: Driver file: pdftex.def on input line 107.
+Package graphics Info: Driver file: pdftex.def on input line 106.
 
 (/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-def/pdftex.def
-File: pdftex.def 2022/09/22 v1.2b Graphics/color driver for pdftex
+File: pdftex.def 2024/04/13 v1.2c Graphics/color driver for pdftex
 ))
-\Gin@req@height=\dimen156
-\Gin@req@width=\dimen157
+\Gin@req@height=\dimen153
+\Gin@req@width=\dimen154
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/subfig/subfig.sty
 Package: subfig 2005/06/28 ver: 1.3 subfig package
@@ -221,38 +188,38 @@ Package: caption 2023/08/05 v3.6o Customizing captions (AR)
 
 (/usr/local/texlive/2024/texmf-dist/tex/latex/caption/caption3.sty
 Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
-\caption@tempdima=\dimen158
-\captionmargin=\dimen159
-\caption@leftmargin=\dimen160
-\caption@rightmargin=\dimen161
-\caption@width=\dimen162
-\caption@indent=\dimen163
-\caption@parindent=\dimen164
-\caption@hangindent=\dimen165
+\caption@tempdima=\dimen155
+\captionmargin=\dimen156
+\caption@leftmargin=\dimen157
+\caption@rightmargin=\dimen158
+\caption@width=\dimen159
+\caption@indent=\dimen160
+\caption@parindent=\dimen161
+\caption@hangindent=\dimen162
 Package caption Info: Standard document class detected.
 )
-\c@caption@flags=\count297
-\c@continuedfloat=\count298
+\c@caption@flags=\count299
+\c@continuedfloat=\count300
 Package caption Info: float package is loaded.
 )
-\c@KVtest=\count299
+\c@KVtest=\count301
 \sf@farskip=\skip52
-\sf@captopadj=\dimen166
+\sf@captopadj=\dimen163
 \sf@capskip=\skip53
 \sf@nearskip=\skip54
-\c@subfigure=\count300
-\c@subfigure@save=\count301
-\c@lofdepth=\count302
-\c@subtable=\count303
-\c@subtable@save=\count304
-\c@lotdepth=\count305
+\c@subfigure=\count302
+\c@subfigure@save=\count303
+\c@lofdepth=\count304
+\c@subtable=\count305
+\c@subtable@save=\count306
+\c@lotdepth=\count307
 \sf@top=\skip55
 \sf@bottom=\skip56
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/epsfig.sty
-Package: epsfig 2017/06/25 v1.7b (e)psfig emulation (SPQR)
-\epsfxsize=\dimen167
-\epsfysize=\dimen168
+Package: epsfig 2024/01/14 v1.7b (e)psfig emulation (SPQR)
+\epsfxsize=\dimen164
+\epsfysize=\dimen165
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/psnfss/pifont.sty
 Package: pifont 2020/03/25 PSNFSS-v9.3 Pi font support (SPQR) 
@@ -269,14 +236,14 @@ LaTeX Font Info:    Trying to load font information for U+psy on input line 64.
 File: upsy.fd 2001/06/04 font definitions for U/psy.
 ))
 (/usr/local/texlive/2024/texmf-dist/tex/latex/multirow/multirow.sty
-Package: multirow 2021/03/15 v2.8 Span multiple rows of a table
+Package: multirow 2024/11/12 v2.9 Span multiple rows of a table
 \multirow@colwidth=\skip57
-\multirow@cntb=\count306
+\multirow@cntb=\count308
 \multirow@dima=\skip58
-\bigstrutjot=\dimen169
+\bigstrutjot=\dimen166
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amsmath.sty
-Package: amsmath 2023/05/13 v2.17o AMS math features
+Package: amsmath 2024/11/05 v2.17t AMS math features
 \@mathmargin=\skip59
 
 For additional information on amsmath, use the `?' option.
@@ -285,65 +252,65 @@ Package: amstext 2021/08/26 v2.01 AMS text
 
 (/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amsgen.sty
 File: amsgen.sty 1999/11/30 v2.0 generic functions
-\@emptytoks=\toks22
-\ex@=\dimen170
+\@emptytoks=\toks27
+\ex@=\dimen167
 ))
 (/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amsbsy.sty
 Package: amsbsy 1999/11/29 v1.2d Bold Symbols
-\pmbraise@=\dimen171
+\pmbraise@=\dimen168
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amsopn.sty
 Package: amsopn 2022/04/08 v2.04 operator names
 )
-\inf@bad=\count307
-LaTeX Info: Redefining \frac on input line 234.
-\uproot@=\count308
-\leftroot@=\count309
-LaTeX Info: Redefining \overline on input line 399.
-LaTeX Info: Redefining \colon on input line 410.
-\classnum@=\count310
-\DOTSCASE@=\count311
-LaTeX Info: Redefining \ldots on input line 496.
-LaTeX Info: Redefining \dots on input line 499.
-LaTeX Info: Redefining \cdots on input line 620.
+\inf@bad=\count309
+LaTeX Info: Redefining \frac on input line 233.
+\uproot@=\count310
+\leftroot@=\count311
+LaTeX Info: Redefining \overline on input line 398.
+LaTeX Info: Redefining \colon on input line 409.
+\classnum@=\count312
+\DOTSCASE@=\count313
+LaTeX Info: Redefining \ldots on input line 495.
+LaTeX Info: Redefining \dots on input line 498.
+LaTeX Info: Redefining \cdots on input line 619.
 \Mathstrutbox@=\box60
 \strutbox@=\box61
-LaTeX Info: Redefining \big on input line 722.
-LaTeX Info: Redefining \Big on input line 723.
-LaTeX Info: Redefining \bigg on input line 724.
-LaTeX Info: Redefining \Bigg on input line 725.
-\big@size=\dimen172
-LaTeX Font Info:    Redeclaring font encoding OML on input line 743.
-LaTeX Font Info:    Redeclaring font encoding OMS on input line 744.
-\macc@depth=\count312
-LaTeX Info: Redefining \bmod on input line 905.
-LaTeX Info: Redefining \pmod on input line 910.
-LaTeX Info: Redefining \smash on input line 940.
-LaTeX Info: Redefining \relbar on input line 970.
-LaTeX Info: Redefining \Relbar on input line 971.
-\c@MaxMatrixCols=\count313
-\dotsspace@=\muskip16
-\c@parentequation=\count314
-\dspbrk@lvl=\count315
-\tag@help=\toks23
-\row@=\count316
-\column@=\count317
-\maxfields@=\count318
-\andhelp@=\toks24
-\eqnshift@=\dimen173
-\alignsep@=\dimen174
-\tagshift@=\dimen175
-\tagwidth@=\dimen176
-\totwidth@=\dimen177
-\lineht@=\dimen178
-\@envbody=\toks25
+LaTeX Info: Redefining \big on input line 721.
+LaTeX Info: Redefining \Big on input line 722.
+LaTeX Info: Redefining \bigg on input line 723.
+LaTeX Info: Redefining \Bigg on input line 724.
+\big@size=\dimen169
+LaTeX Font Info:    Redeclaring font encoding OML on input line 742.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 743.
+\macc@depth=\count314
+LaTeX Info: Redefining \bmod on input line 904.
+LaTeX Info: Redefining \pmod on input line 909.
+LaTeX Info: Redefining \smash on input line 939.
+LaTeX Info: Redefining \relbar on input line 969.
+LaTeX Info: Redefining \Relbar on input line 970.
+\c@MaxMatrixCols=\count315
+\dotsspace@=\muskip17
+\c@parentequation=\count316
+\dspbrk@lvl=\count317
+\tag@help=\toks28
+\row@=\count318
+\column@=\count319
+\maxfields@=\count320
+\andhelp@=\toks29
+\eqnshift@=\dimen170
+\alignsep@=\dimen171
+\tagshift@=\dimen172
+\tagwidth@=\dimen173
+\totwidth@=\dimen174
+\lineht@=\dimen175
+\@envbody=\toks30
 \multlinegap=\skip60
 \multlinetaggap=\skip61
-\mathdisplay@stack=\toks26
+\mathdisplay@stack=\toks31
 LaTeX Info: Redefining \[ on input line 2953.
 LaTeX Info: Redefining \] on input line 2954.
 )
-\linenoamsmath@ams@eqpen=\count319
+\linenoamsmath@ams@eqpen=\count321
 
 (/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/amssymb.sty
 Package: amssymb 2013/01/14 v3.01 AMS font symbols
@@ -359,15 +326,19 @@ LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
 (/usr/local/texlive/2024/texmf-dist/tex/latex/algorithms/algorithm.sty
 Package: algorithm 2009/08/24 v0.1 Document Style `algorithm' - floating enviro
 nment
-\@float@every@algorithm=\toks27
-\c@algorithm=\count320
+
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/ifthen.sty
+Package: ifthen 2024/03/16 v1.1e Standard LaTeX ifthen package (DPC)
+)
+\@float@every@algorithm=\toks32
+\c@algorithm=\count322
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/natbib/natbib.sty
 Package: natbib 2010/09/13 8.31b (PWD, AO)
 \bibhang=\skip62
 \bibsep=\skip63
 LaTeX Info: Redefining \cite on input line 694.
-\c@NAT@ctr=\count321
+\c@NAT@ctr=\count323
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/algorithmicx/algpseudocode.sty
 Package: algpseudocode 
@@ -376,20 +347,20 @@ Package: algpseudocode
 Package: algorithmicx 2005/04/27 v1.2 Algorithmicx
 
 Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
-\c@ALG@line=\count322
-\c@ALG@rem=\count323
-\c@ALG@nested=\count324
+\c@ALG@line=\count324
+\c@ALG@rem=\count325
+\c@ALG@nested=\count326
 \ALG@tlm=\skip64
 \ALG@thistlm=\skip65
-\c@ALG@Lnr=\count325
-\c@ALG@blocknr=\count326
-\c@ALG@storecount=\count327
-\c@ALG@tmpcounter=\count328
+\c@ALG@Lnr=\count327
+\c@ALG@blocknr=\count328
+\c@ALG@storecount=\count329
+\c@ALG@tmpcounter=\count330
 \ALG@tmplength=\skip66
 )
 Document Style - pseudocode environments for use with the `algorithmicx' style
 ) (/usr/local/texlive/2024/texmf-dist/tex/latex/xcolor/xcolor.sty
-Package: xcolor 2023/11/15 v3.01 LaTeX color extensions (UK)
+Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
 
 (/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/color.cfg
 File: color.cfg 2016/01/02 v1.6 sample color configuration
@@ -397,39 +368,22 @@ File: color.cfg 2016/01/02 v1.6 sample color configuration
 Package xcolor Info: Driver file: pdftex.def on input line 274.
 
 (/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/mathcolor.ltx)
-Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1350.
-Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1354.
-Package xcolor Info: Model `RGB' extended on input line 1366.
-Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1368.
-Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1369.
-Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1370.
-Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1371.
-Package xcolor Info: Model `Gray' substituted by `gray' on input line 1372.
-Package xcolor Info: Model `wave' substituted by `hsb' on input line 1373.
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1349.
+Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1353.
+Package xcolor Info: Model `RGB' extended on input line 1365.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1367.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1368.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1369.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1370.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1371.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
 )
-runsystem(command -v pygmentize && touch AP_REPORT_02.aex)...disabled (restrict
-ed).
-
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.tex:23: Package mi
-nted Error: You must have `pygmentize' installed to use this package.
-
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.23 \begin{document}
-                     
-Refer to the installation instructions in the minted documentation for more inf
-ormation.
-
 (/usr/local/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
-File: l3backend-pdftex.def 2024-02-20 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count329
+File: l3backend-pdftex.def 2024-05-08 L3 backend support: PDF output (pdfTeX)
+\l__color_backend_stack_int=\count331
 \l__pdf_internal_box=\box62
 )
-(/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.aux)
+(./AP_REPORT_02.aux)
 \openout1 = `AP_REPORT_02.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 23.
@@ -449,17 +403,17 @@ LaTeX Font Info:    ... okay on input line 23.
 
 (/usr/local/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count330
-\scratchdimen=\dimen179
+\scratchcounter=\count332
+\scratchdimen=\dimen176
 \scratchbox=\box63
-\nofMPsegments=\count331
-\nofMParguments=\count332
-\everyMPshowfont=\toks28
-\MPscratchCnt=\count333
-\MPscratchDim=\dimen180
-\MPnumerator=\count334
-\makeMPintoPDFobject=\count335
-\everyMPtoPDFconversion=\toks29
+\nofMPsegments=\count333
+\nofMParguments=\count334
+\everyMPshowfont=\toks33
+\MPscratchCnt=\count335
+\MPscratchDim=\dimen177
+\MPnumerator=\count336
+\makeMPintoPDFobject=\count337
+\everyMPtoPDFconversion=\toks34
 ) (/usr/local/texlive/2024/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
@@ -473,6 +427,7 @@ Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: subfig package v1.3 is loaded.
 Package caption Info: End \AtBeginDocument code.
 
+
 [1
 
 {/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
@@ -484,17 +439,23 @@ Package natbib Warning: Citation `avalonia' on page 1 undefined on input line 5
 Package natbib Warning: Citation `scottPlot' on page 1 undefined on input line 
 53.
 
+
+
 [1]
 Chapter 1.
+
+
 [1
 
 ]
 Chapter 2.
+
+
 [2
 
 ]
 Chapter 3.
-(/Users/jamie/Dev/university/year3/F/Vec3/report/development-history.tex
+(./development-history.tex
 Overfull \hbox (63.63846pt too wide) in paragraph at lines 40--40
 []\OT1/cmtt/m/n/10.95 <term> ::= <factor> | <factor> "*" <term> | <factor> "/" 
 <term> | <factor> "%" <term>[] 
@@ -512,6 +473,8 @@ Overfull \hbox (529.28217pt too wide) in paragraph at lines 40--40
 " | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u"
  | "v" | "w" | "x" | "y" | "z"[] 
  []
+
+
 
 [3
 
@@ -534,139 +497,84 @@ Overfull \hbox (529.28217pt too wide) in paragraph at lines 82--82
  | "v" | "w" | "x" | "y" | "z"[] 
  []
 
+
+
 [4]
 
 Package natbib Warning: Citation `scottPlot' on page 5 undefined on input line 
 120.
 
-) [5]
+)
+
+[5]
 Chapter 4.
-(/Users/jamie/Dev/university/year3/F/Vec3/report/final-deliverable.tex
+(./final-deliverable.tex
+\pydata@fh@_E017103BDF0CAED79F13B8F548EAF24E.data.minted=\write4
+\openout4 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
 
-Package natbib Warning: Citation `pratt1973top' on page 6 undefined on input li
-ne 38.
+runsystem(latexminted config  --timestamp 20241220140657Z E017103BDF0CAED79F13B
+8F548EAF24E)...executed safely (allowed).
 
-LaTeX Font Info:    Trying to load font information for U+msa on input line 44.
+ (./_E017103BDF0CAED79F13B8F548EAF24E.config.minted)
+runsystem(latexminted cleanconfig  --timestamp 20241220140657Z E017103BDF0CAED7
+9F13B8F548EAF24E)...executed safely (allowed).
 
+
+(./_minted/default.style.minted)
+\openout4 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
+
+runsystem(latexminted highlight  --timestamp 20241220140657Z E017103BDF0CAED79F
+13B8F548EAF24E)...executed safely (allowed).
+
+
+(./_minted/FEE9FD0FEF1AB8A79F56366A7F0CB3DC.highlight.minted
+LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <10.95> not available
+(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 2.
+)
+\openout4 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
+
+runsystem(latexminted highlight  --timestamp 20241220140657Z E017103BDF0CAED79F
+13B8F548EAF24E)...executed safely (allowed).
+
+
+(./_minted/D91BA78A855A7E5C4EB47119D3E1BEF7.highlight.minted
+
+[6
+
+])
+
+[7]
+
+Package natbib Warning: Citation `pratt1973top' on page 8 undefined on input li
+ne 135.
+
+LaTeX Font Info:    Trying to load font information for U+msa on input line 141
+.
 (/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 44.
-
+LaTeX Font Info:    Trying to load font information for U+msb on input line 141
+.
 
 (/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-) [6
+)
 
-]
-/Users/jamie/Dev/university/year3/F/Vec3/report/final-deliverable.tex:82: Undef
-ined control sequence.
-l.82 definition, a tuple or a \texit
-                                    {unit} type when encountered in the pref...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
+[8]
+! Undefined control sequence.
+l.179 definition, a tuple or a \texit
+                                     {unit} type when encountered in the pre...
 
-(/Users/jamie/Dev/university/year3/F/Vec3/report/type-inference.tex [7]
-[8] [9]
-\openout3 = `AP_REPORT_02.pyg'.
+? 
+(./type-inference.tex
 
-runsystem(pygmentize -S default -f latex -P commandprefix=PYG > _minted-AP_REPO
-RT_02/default.pygstyle)...disabled (restricted).
+[9] (./_minted/F40D6D54477465BCEECC8B6E7E04BEDD.highlight.minted)
 
+[10]
 
+[11] (./_minted/076F0DA663A8573A8B256E046112D377.highlight.minted)
 
-/Users/jamie/Dev/university/year3/F/Vec3/report/type-inference.tex:134: Package
- catchfile Error: File `_minted-AP_REPORT_02/default.pygstyle' not found.
-
-See the catchfile package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.134 \end{minted}
-                  
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-runsystem(pygmentize -S default -f latex -P commandprefix=PYG > _minted-AP_REPO
-RT_02/default.pygstyle)...disabled (restricted).
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/type-inference.tex:134: Package
- catchfile Error: File `_minted-AP_REPORT_02/default.pygstyle' not found.
-
-See the catchfile package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.134 \end{minted}
-                  
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/type-inference.tex:134: Package
- minted Error: Cannot find Pygments style default.
-
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.134 \end{minted}
-                  
-Cannot find Pygments style default
-
-runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
- stripnl='False' -o _minted-AP_REPORT_02/AE45DD491D9B35D6FCE5DCC71A49A601FD688A
-B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/type-inference.tex:134: Package
- minted Error: Missing Pygments output; \inputminted was
-probably given a file that does not exist--otherwise, you may need 
-the outputdir package option, or may be using an incompatible build tool,
-or may be using frozencache with a missing file.
-
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.134 \end{minted}
-                  
-This could be caused by using -output-directory or -aux-directory 
-without setting minted's outputdir, or by using a build tool that 
-changes paths in ways minted cannot detect, 
-or using frozencache with a missing file.
-
-\openout3 = `AP_REPORT_02.pyg'.
-
-runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
- stripnl='False' -o _minted-AP_REPORT_02/EA4621B9CA9B207E7A706AC57426CC1FFD688A
-B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/type-inference.tex:142: Package
- minted Error: Missing Pygments output; \inputminted was
-probably given a file that does not exist--otherwise, you may need 
-the outputdir package option, or may be using an incompatible build tool,
-or may be using frozencache with a missing file.
-
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.142 \end{minted}
-                  
-This could be caused by using -output-directory or -aux-directory 
-without setting minted's outputdir, or by using a build tool that 
-changes paths in ways minted cannot detect, 
-or using frozencache with a missing file.
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/type-inference.tex:163: LaTeX E
-rror: Something's wrong--perhaps a missing \item.
+! LaTeX Error: Something's wrong--perhaps a missing \item.
 
 See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
@@ -674,330 +582,121 @@ Type  H <return>  for immediate help.
                                                   
 l.163     \end{algorithmic}
                            
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
+? 
+(./_minted/AC0986121432020082BA3A06BCD36FF6.highlight.minted)
+(./_minted/AC94E63AF40D12F1A6580BD8F2133C69.highlight.minted)
 
-\openout3 = `AP_REPORT_02.pyg'.
+[12] (./_minted/34D0082645AAFF1AED91CC877C506064.highlight.minted)
+(./_minted/10150E2A538D7F776F7D32D6B708C9CC.highlight.minted)
 
-runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
- stripnl='False' -o _minted-AP_REPORT_02/AA8FE8C156F1B306823328FCA85DF69CFD688A
-B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
+[13] (./_minted/993C00FACF51BCA98D2B5063B1CC21F6.highlight.minted))
 
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/type-inference.tex:172: Package
- minted Error: Missing Pygments output; \inputminted was
-probably given a file that does not exist--otherwise, you may need 
-the outputdir package option, or may be using an incompatible build tool,
-or may be using frozencache with a missing file.
-
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.172 \end{minted}
-                  
-This could be caused by using -output-directory or -aux-directory 
-without setting minted's outputdir, or by using a build tool that 
-changes paths in ways minted cannot detect, 
-or using frozencache with a missing file.
-
-\openout3 = `AP_REPORT_02.pyg'.
-
-runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
- stripnl='False' -o _minted-AP_REPORT_02/2B4131701F984C915CF5501A920975BFFD688A
-B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/type-inference.tex:181: Package
- minted Error: Missing Pygments output; \inputminted was
-probably given a file that does not exist--otherwise, you may need 
-the outputdir package option, or may be using an incompatible build tool,
-or may be using frozencache with a missing file.
-
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.181 \end{minted}
-                  
-This could be caused by using -output-directory or -aux-directory 
-without setting minted's outputdir, or by using a build tool that 
-changes paths in ways minted cannot detect, 
-or using frozencache with a missing file.
-
-[10]
-\openout3 = `AP_REPORT_02.pyg'.
-
-runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
- stripnl='False' -o _minted-AP_REPORT_02/8F270872F02B89D55E9E1A35B726AE9FFD688A
-B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
-
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/type-inference.tex:230: Package
- minted Error: Missing Pygments output; \inputminted was
-probably given a file that does not exist--otherwise, you may need 
-the outputdir package option, or may be using an incompatible build tool,
-or may be using frozencache with a missing file.
-
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.230 \end{minted}
-                  
-This could be caused by using -output-directory or -aux-directory 
-without setting minted's outputdir, or by using a build tool that 
-changes paths in ways minted cannot detect, 
-or using frozencache with a missing file.
-
-\openout3 = `AP_REPORT_02.pyg'.
-
-runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
- stripnl='False' -o _minted-AP_REPORT_02/4193D5E759C4280E07839577E02E76B0FD688A
-B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/type-inference.tex:245: Package
- minted Error: Missing Pygments output; \inputminted was
-probably given a file that does not exist--otherwise, you may need 
-the outputdir package option, or may be using an incompatible build tool,
-or may be using frozencache with a missing file.
-
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.245 \end{minted}
-                  
-This could be caused by using -output-directory or -aux-directory 
-without setting minted's outputdir, or by using a build tool that 
-changes paths in ways minted cannot detect, 
-or using frozencache with a missing file.
-
-[11]
-\openout3 = `AP_REPORT_02.pyg'.
-
-runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
- stripnl='False' -o _minted-AP_REPORT_02/1603E9021032D4CA4FE8ADAF98AFBD08FD688A
-B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
-
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/type-inference.tex:289: Package
- minted Error: Missing Pygments output; \inputminted was
-probably given a file that does not exist--otherwise, you may need 
-the outputdir package option, or may be using an incompatible build tool,
-or may be using frozencache with a missing file.
-
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.289 \end{minted}
-                  
-This could be caused by using -output-directory or -aux-directory 
-without setting minted's outputdir, or by using a build tool that 
-changes paths in ways minted cannot detect, 
-or using frozencache with a missing file.
-
-) [12]
-Overfull \hbox (57.94174pt too wide) in paragraph at lines 157--158
+[14]
+Overfull \hbox (57.94174pt too wide) in paragraph at lines 256--257
 []\OT1/cmr/m/n/10.95 To fa-cil-i-tate de-bug-ging, a dis-as-sem-bler was im-ple
 -mented. Func-tions like \OT1/cmtt/m/n/10.95 disassembleInstruction
  []
 
-[13]
-\openout3 = `AP_REPORT_02.pyg'.
-
-runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
- stripnl='False' -o _minted-AP_REPORT_02/96989B9267CE39D4BC866CAAFBF42D47FD688A
-B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
 
 
+[15]
+\openout4 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
 
-/Users/jamie/Dev/university/year3/F/Vec3/report/final-deliverable.tex:170: Pack
-age minted Error: Missing Pygments output; \inputminted was
-probably given a file that does not exist--otherwise, you may need 
-the outputdir package option, or may be using an incompatible build tool,
-or may be using frozencache with a missing file.
+runsystem(latexminted highlight  --timestamp 20241220140657Z E017103BDF0CAED79F
+13B8F548EAF24E)...executed safely (allowed).
 
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.170 \end{minted}
-                  
-This could be caused by using -output-directory or -aux-directory 
-without setting minted's outputdir, or by using a build tool that 
-changes paths in ways minted cannot detect, 
-or using frozencache with a missing file.
+ (./_minted/F66DA172101949CB7B6861F72C7D121C.highlight.minted)
 
+[16]
 
-Package natbib Warning: Citation `scottPlot' on page 14 undefined on input line
- 219.
+Package natbib Warning: Citation `scottPlot' on page 17 undefined on input line
+ 318.
 
-[14{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.en
-c}]
-\openout3 = `AP_REPORT_02.pyg'.
+(./_minted/E0FD7F009609B04AE18EBAFCE9FF1106.highlight.minted)
+(./_minted/70A4CD14AF527713E80EBD0CC991C3F6.highlight.minted)
 
-runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
- stripnl='False' -o _minted-AP_REPORT_02/E81990C68A3038EA1150793AF0DE1FDEFD688A
-B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
-
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/final-deliverable.tex:233: Pack
-age minted Error: Missing Pygments output; \inputminted was
-probably given a file that does not exist--otherwise, you may need 
-the outputdir package option, or may be using an incompatible build tool,
-or may be using frozencache with a missing file.
-
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.233 \end{minted}
-                  
-This could be caused by using -output-directory or -aux-directory 
-without setting minted's outputdir, or by using a build tool that 
-changes paths in ways minted cannot detect, 
-or using frozencache with a missing file.
-
-\openout3 = `AP_REPORT_02.pyg'.
-
-runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
- stripnl='False' -o _minted-AP_REPORT_02/78FBC94CD0462D2360A9E70F3A0AD66DFD688A
-B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/final-deliverable.tex:271: Pack
-age minted Error: Missing Pygments output; \inputminted was
-probably given a file that does not exist--otherwise, you may need 
-the outputdir package option, or may be using an incompatible build tool,
-or may be using frozencache with a missing file.
-
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.271 \end{minted}
-                  
-This could be caused by using -output-directory or -aux-directory 
-without setting minted's outputdir, or by using a build tool that 
-changes paths in ways minted cannot detect, 
-or using frozencache with a missing file.
-
-\openout3 = `AP_REPORT_02.pyg'.
-
-runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
- stripnl='False' -o _minted-AP_REPORT_02/A4B8DA74E1C2C456C54D9FEE46127BFAFD688A
-B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
-
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/final-deliverable.tex:283: Pack
-age minted Error: Missing Pygments output; \inputminted was
-probably given a file that does not exist--otherwise, you may need 
-the outputdir package option, or may be using an incompatible build tool,
-or may be using frozencache with a missing file.
-
-See the minted package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.283 \end{minted}
-                  
-This could be caused by using -output-directory or -aux-directory 
-without setting minted's outputdir, or by using a build tool that 
-changes paths in ways minted cannot detect, 
-or using frozencache with a missing file.
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/final-deliverable.tex:285: Unde
-fined control sequence.
-l.285 ...the prelude of the language (see~\autoref
+[17{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.en
+c}] (./_minted/E6C392DADA90F89F225476F1CE2866E4.highlight.minted)
+! Undefined control sequence.
+l.384 ...the prelude of the language (see~\autoref
                                                   {sec:prelude}).
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
+? 
+)
 
-) [15]
+[18]
 Chapter 5.
-(/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.bbl [16
+(./AP_REPORT_02.bbl
 
-]
-/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.bbl:24: Undefined 
-control sequence.
-l.24 \newblock \url
-                   {https://www.haskell.org/documentation/}.
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.bbl:29: Undefined 
-control sequence.
-l.29 \newblock \url
-                   {https://docs.microsoft.com/en-us/dotnet/fsharp/}.
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.bbl:44: Undefined 
-control sequence.
-l.44 \newblock \url
-                   {https://ocaml.org/docs/}.
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-) [17
-
-]
-Appendix A.
-[18
-
-]
-Appendix B.
 [19
 
 ]
-Appendix C.
+! Undefined control sequence.
+l.24 \newblock \url
+                   {https://www.haskell.org/documentation/}.
+? 
+! Undefined control sequence.
+l.29 \newblock \url
+                   {https://docs.microsoft.com/en-us/dotnet/fsharp/}.
+? 
+! Undefined control sequence.
+l.44 \newblock \url
+                   {https://ocaml.org/docs/}.
+? 
+)
+
 [20
+
+]
+Appendix A.
+
+
+[21
+
+]
+Appendix B.
+
+
+[22
+
+]
+Appendix C.
+
+
+[23
 
 ]
 Appendix D.
 
 Package natbib Warning: There were undefined citations.
 
-[21
 
-] (/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.aux)
+
+[24
+
+]
+\openout4 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
+
+runsystem(latexminted clean  --timestamp 20241220140657Z E017103BDF0CAED79F13B8
+F548EAF24E)...executed safely (allowed).
+
+ (./AP_REPORT_02.aux)
  ***********
-LaTeX2e <2023-11-01> patch level 1
-L3 programming layer <2024-02-20>
+LaTeX2e <2024-11-01>
+L3 programming layer <2024-11-02>
  ***********
 
 
 LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
-runsystem(rm AP_REPORT_02.pyg)...disabled (restricted).
-
  ) 
 Here is how much of TeX's memory you used:
- 9609 strings out of 474116
- 175586 string characters out of 5743682
- 1945187 words of memory out of 5000000
- 31813 multiletter control sequences out of 15000+600000
+ 11262 strings out of 473362
+ 237074 string characters out of 5720983
+ 736166 words of memory out of 5000000
+ 34165 multiletter control sequences out of 15000+600000
  568680 words of font info for 74 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 77i,6n,79p,1274b,420s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 85i,6n,93p,1274b,646s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 ></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmitt10.pfb>
@@ -1011,11 +710,10 @@ exlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/te
 xlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/tex
 live/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texl
 ive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on /Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.
-pdf (23 pages, 226337 bytes).
+Output written on AP_REPORT_02.pdf (26 pages, 236192 bytes).
 PDF statistics:
- 144 PDF objects out of 1000 (max. 8388607)
- 92 compressed objects within 1 object stream
+ 154 PDF objects out of 1000 (max. 8388607)
+ 99 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

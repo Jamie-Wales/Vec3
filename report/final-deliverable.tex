@@ -1,4 +1,5 @@
 \section{Final BNF}\label{sec:final-bnf}
+\input{final-bnf}
 
 \section{Final GUI}\label{sec:final-gui}
 
@@ -26,12 +27,12 @@ Something of note is that the lexer parses numbers itself, rather than passing t
 
 Additionally, due to the permittance of user defined operators, the lexer makes special considerations when lexing 
 special characters, as the distinction between a built-in operator (with precedence) and a user defined operator (
-currently without precedence) is made during lexing.
+currently without taking precedence into account) is made during lexing.
 
 Furthermore, both block comments (\textit{/* */}) and line comments (\textit{//}) are handled by the lexer by ignoring
 the contents of the comment.
 In future, it may be interesting represent comments as a token in the AST, allowing for systems such as documentation
-generation or formatting to be implemented.
+generation or automatic formatting to be implemented.
 
 \section{Parser}\label{sec:parser}
 
@@ -79,28 +80,30 @@ Using Pratt parsing has improved the extensibility of the parser, as adding new 
 is as simple as adding a new case to the parser.
 
 A slight limitation is during ambiguity, such as the \textit{(} symbol, which can be used for a grouping, a lambda 
-definition, a tuple or a \texit{unit} type when encountered in the prefix position.
-
-This is resolved by using a state machine approach, where the parser can move around the state at will, allowing 
+definition, a tuple or a \textit{unit} type when encountered in the prefix position.
+This is resolved through a state machine approach, where the parser can move around the state at will, allowing 
 lookahead and backtracking in order to reach a point where the ambiguity is resolved.
 
 In order to simplify the Virtual Machine\ref{sec:virtual-machine}, the parser parses all binary and unary operations 
 as function calls, with the operator as the function name.
 
 In order to make type inference simpler for operators that are overloaded for both unary and binary operations (such 
-as the \textit{-} operator), the operator keeps track of the manner in which it is called (unary or binary) and
-returns the appropriate AST node, allowing for easier type inference (as the names of the otherwise overloaded 
-functions are different), and simplifies the bytecode generation process.
+as the \textit{-} operator), the operator itself keeps track of the manner in which it is called (unary or binary) and
+returns the appropriate AST node. 
+This allows for easier type inference (as the names of the overloaded functions are different), 
+and simplifies the bytecode generation process by removing ambiguity in the AST\@.
 
-This idea could possibly be extended to allow other overloaded function names (with varying numbers of arguments).
+This idea could possibly be extended to allow other overloaded function names (with varying numbers of arguments or 
+arguments of different types).
 
 \section{AST}\label{sec:expression}
 
 The AST of the language is represented as a list of statements, where a statement is either expression, a
 variable assignment or an other statement type.
-
-The AST is typed (after type inference\ref{sec:type-inference}) in order to allow for easier optimisation and
+It is typed (after type inference\ref{sec:type-inference}) in order to allow for easier optimisation and
 bytecode generation.
+
+The AST representation is given in section~\ref{sec:final-bnf}.
 
 \section{Type Inference}\label{sec:type-inference}
 \input{type-inference}
@@ -112,53 +115,90 @@ Before compilation, the AST is optimised by removing dead code and constant fold
 \subsection{Dead code elimination}\label{subsec:dead-code-elimination}
 
 Dead code elimination is performed on the AST by removing any statements that are not used.
-
 For example, if a variable is declared but never used, the variable declaration is removed or if an expression is
-calculated but never used, the expression is removed.
+written but never used, the expression is removed.
 
-This is accomplished by checking every statement in the AST\@.
-If it's an expression node with no side effects, it is removed if it is not used.
+This is accomplished by through static analysis of the AST, where the following process is repeated until no more dead
+code can be removed:
 
-If it's a binding node, the rest of the AST is checked for uses of the variable.
+\begin{algorithmic}
+    \While{Dead code can be removed}
+        \For{Each node in the AST}
+            \If{Node is a statement}
+                \If{Statement is not used}
+                    \State Remove statement
+                \EndIf
+            \ElsIf{Node is an expression}
+                \If{Expression is not used}
+                    \State Remove expression
+                \EndIf
+            \ElsIf{Node is a binding}
+                \If{Variable is not used}
+                    \State Remove binding
+                \EndIf
+            \EndIf
+        \EndFor
+    \EndWhile
+\end{algorithmic}
 
-If the variable is not used, the binding is removed.
-
-This process is repeated until no more dead code can be removed, allowing for long chains of dead code to be 
+The process is repeated until no more dead code can be removed, allowing for long chains of dead code to be 
 removed (for example if a variable is used in a function that is never called, the function would first be removed
 and then the variable).
+It is to be noted that variable assignments are never removed during DCE when running the code editor due to the 
+attached REPL, as the user may wish to use the variable in the REPL\@, or when running code blocks in the notebook 
+view\ref{sec:notebook-view} as the variable may be used in a later code block.
+However, DCE can be aggressively performed when transpiling to C\ref{sec:transpiler}, as the user is not expected to 
+interact with the generated C code.
 
 \subsection{Constant folding}\label{subsec:constant-folding}
 
 Constant folding is performed on the AST by evaluating constant expressions at compile time, such as $2 + 2 \ra 4$.
-
 This is accomplished using the initial interpreter implementation, which recursively evaluates the AST and replaces
 constant expressions with their evaluated value.
-
 Only constants are evaluated, and thus no variable resolution is performed due to the cost of this operation.
 
-\section{Initial Design of the Bytecode Virtual Machine and Compiler}
+\section{Initial Design of the Bytecode Virtual Machine and Compiler}\label{sec:initial-design-of-the-bytecode-virtual-machine-and-compiler}
 
-The core of the Vec3 interpreter was a transition from a tree-walk interpreter to a more efficient stack-based virtual machine. This involved two primary components: a compiler to translate Vec3 source code into bytecode, and a virtual machine to execute that bytecode. The fundamental goal was to achieve faster execution speeds by working with a compact and streamlined instruction set.
+The core of the Vec3 interpreter was a transition from a tree-walk interpreter to a more efficient stack-based virtual machine. 
+This involved two primary components: a compiler to translate Vec3 source code into bytecode, and a virtual machine to execute that bytecode. 
+The fundamental goal was to achieve faster execution speeds by working with a compact and streamlined instruction set.
 
-The bytecode itself was a sequence of instructions, each represented by an operation code (opcode) and, potentially, operands that the opcode would act upon. These opcodes, defined in the \texttt{OP\_CODE} type, covered a range of operations necessary for a fully functional language. This included instructions for pushing constants onto the stack (\texttt{CONSTANT}, \texttt{CONSTANT\_LONG}), performing arithmetic (\texttt{ADD}, \texttt{SUBTRACT}, \texttt{MULTIPLY}, \texttt{DIVIDE}, \texttt{NEGATE}), managing control flow (\texttt{RETURN}, \texttt{JUMP}, \texttt{JUMP\_IF\_FALSE}, \texttt{LOOP}), handling boolean logic (\texttt{NIL}, \texttt{TRUE}, \texttt{FALSE}, \texttt{NOT}, \texttt{EQUAL}, \texttt{GREATER}, \texttt{LESS}), manipulating the stack (\texttt{POP}), working with global and local variables (\texttt{DEFINE\_GLOBAL}, \texttt{GET\_GLOBAL}, \texttt{SET\_GLOBAL}, \texttt{GET\_LOCAL}, \texttt{SET\_LOCAL}), outputting values (\texttt{PRINT}), and calling functions (\texttt{CALL}). Two functions, \texttt{opCodeToByte} and \texttt{byteToOpCode}, handled the conversion between these symbolic opcodes and their corresponding byte representations, ensuring a compact bytecode format.
+The bytecode itself was a sequence of instructions, each represented by an operation code (opcode) and, potentially, operands that the opcode would act upon. 
+These opcodes, defined in the \texttt{OP\_CODE} type, covered a range of operations necessary for a fully functional language. 
+This included instructions for pushing constants onto the stack (\texttt{CONSTANT}, \texttt{CONSTANT\_LONG}), performing arithmetic (\texttt{ADD}, \texttt{SUBTRACT}, \texttt{MULTIPLY}, \texttt{DIVIDE}, \texttt{NEGATE}), managing control flow (\texttt{RETURN}, \texttt{JUMP}, \texttt{JUMP\_IF\_FALSE}, \texttt{LOOP}), handling boolean logic (\texttt{NIL}, \texttt{TRUE}, \texttt{FALSE}, \texttt{NOT}, \texttt{EQUAL}, \texttt{GREATER}, \texttt{LESS}), manipulating the stack (\texttt{POP}), working with global and local variables (\texttt{DEFINE\_GLOBAL}, \texttt{GET\_GLOBAL}, \texttt{SET\_GLOBAL}, \texttt{GET\_LOCAL}, \texttt{SET\_LOCAL}), outputting values (\texttt{PRINT}), and calling functions (\texttt{CALL}). Two functions, \texttt{opCodeToByte} and \texttt{byteToOpCode}, handled the conversion between these symbolic opcodes and their corresponding byte representations, ensuring a compact bytecode format.
 
-Compiled code, along with associated data, was organized into \texttt{Chunk} structures. Each chunk contained a \texttt{Code} array, holding the bytecode instructions as a sequence of bytes. A \texttt{ConstantPool} array stored constant values referenced by the instructions, enabling efficient reuse of values like numbers and strings. To aid in debugging, a \texttt{Lines} array mapped bytecode offsets to their corresponding line numbers in the original source code. Functions like \texttt{emptyChunk}, \texttt{writeChunk}, \texttt{addConstant}, \texttt{writeConstant}, and \texttt{getLineNumber} provided an interface for creating and manipulating chunks.
+Compiled code, along with associated data, was organized into \texttt{Chunk} structures. 
+Each chunk contained a \texttt{Code} array, holding the bytecode instructions as a sequence of bytes. 
+A \texttt{ConstantPool} array stored constant values referenced by the instructions, enabling efficient reuse of values like numbers and strings. 
+To aid in debugging, a \texttt{Lines} array mapped bytecode offsets to their corresponding line numbers in the original source code. 
+Functions like \texttt{emptyChunk}, \texttt{writeChunk}, \texttt{addConstant}, \texttt{writeConstant}, and \texttt{getLineNumber} provided an interface for creating and manipulating chunks.
 
-The compiler's role was to transform the abstract syntax tree (AST) representation of Vec3 code into this bytecode format. It maintained a \texttt{CompilerState} to track the chunk being generated, local variables within the current scope, the current scope's nesting depth, and the line number being processed. The compilation process involved a recursive descent through the AST. Functions like \texttt{compileStmt} and \texttt{compileExpr} recursively processed statements and expressions, respectively. For each AST node encountered, the compiler emitted corresponding bytecode instructions using helper functions like \texttt{emitByte}, \texttt{emitBytes}, \texttt{emitConstant}, and \texttt{emitOpCode}.
+The compiler's role was to transform the abstract syntax tree (AST) representation of Vec3 code into this bytecode format. 
+It maintained a \texttt{CompilerState} to track the chunk being generated, local variables within the current scope, the current scope's nesting depth, and the line number being processed. 
+The compilation process involved a recursive descent through the AST. Functions like \texttt{compileStmt} and \texttt{compileExpr} recursively processed statements and expressions, respectively. 
+For each AST node encountered, the compiler emitted corresponding bytecode instructions using helper functions like \texttt{emitByte}, \texttt{emitBytes}, \texttt{emitConstant}, and \texttt{emitOpCode}.
 
-Variable declarations were handled by \texttt{compileVariableDeclaration}, which added the variable to the \texttt{Locals} map in the \texttt{CompilerState}. This map stored local variables and their corresponding slot indices on the virtual machine's stack. Control flow instructions, like jumps and loops, were initially emitted with placeholder offsets. These placeholders were later patched with the correct offsets once the target locations were determined.
+Variable declarations were handled by \texttt{compileVariableDeclaration}, which added the variable to the \texttt{Locals} map in the \texttt{CompilerState}. 
+This map stored local variables and their corresponding slot indices on the virtual machine's stack. 
+Control flow instructions, like jumps and loops, were initially emitted with placeholder offsets. 
+These placeholders were later patched with the correct offsets once the target locations were determined.
 
 \textbf{Error Handling}
 
-Error handling during compilation was managed using the \texttt{CompilerResult} type. This allowed the compiler to either return a successful result along with an updated \texttt{CompilerState} or an error along with a descriptive message and the state at the point of the error.
+Error handling during compilation was managed using the \texttt{CompilerResult} type. 
+This allowed the compiler to either return a successful result along with an updated \texttt{CompilerState} or an error along with a descriptive message and the state at the point of the error.
 
 \textbf{Debugging}
 
-To facilitate debugging, a disassembler was implemented. Functions like \texttt{disassembleInstruction} and \texttt{disassembleChunk} took the compiled bytecode and produced a human-readable representation, showing the instructions, their operands, and their associated source code line numbers. This was invaluable for understanding the generated bytecode and identifying potential issues.
+To facilitate debugging, a disassembler was implemented. 
+Functions like \texttt{disassembleInstruction} and \texttt{disassembleChunk} took the compiled bytecode and produced a human-readable representation, showing the instructions, their operands, and their associated source code line numbers. 
+This was invaluable for understanding the generated bytecode and identifying potential issues.
 
-\section{Virtual Machine}
+\section{Virtual Machine}\label{sec:virtual-machine2}
 
-The Virtual Machine (VM) was responsible for executing the compiled bytecode. It was designed as a stack-based machine, meaning that it used a stack to store intermediate values during computation. The VM's state was represented by the \texttt{VM} type, defined as follows:
+The Virtual Machine (VM) was responsible for executing the compiled bytecode. 
+It was designed as a stack-based machine, meaning that it used a stack to store intermediate values during computation. 
+The VM's state was represented by the \texttt{VM} type, defined as follows:
 
 \begin{minted}{fsharp}
 type VM = {
@@ -234,21 +274,22 @@ The functionality is exposed to the user through 3 built-in functions: \textit{p
 
 The resulting plot is then displayed in a separate window based on these configuration options.
 
-TODO: IMAGES OF PLOTS
+\todo{Add images of plots}
 
 The \textit{plotFunc} function takes in a string title and a pure function of type \textit{float -> float}.
-
 The function is then plotted on the graph with an infinite range of x values.
-
 Optionally, the user can also specify two more float values, \textit{start} and \textit{end}, in which case the 
 integral of the function is calculated and displayed on the graph.
 
-TODO: IMAGES OF PLOTS
+\todo{Add images of plots}
 
 The \textit{plotFuncs} function takes in a string title and a list of pure functions of type \textit{float -> float}.
-
 This allows for multiple plots to be placed on the same window, which we felt was valuable for comparing functions 
 or plotting derivatives.
+
+The plot windows also have an input at the bottom, which allows for the user to input a function and have it plotted
+on command.
+This is useful for quick visualisation of functions, and allows for a more interactive experience.
 
 \section{Drawing}\label{sec:drawing}
 
@@ -287,8 +328,17 @@ Where keys is a record defined in the prelude of the language (see~\autoref{sec:
 Additionally, the \textit{trace} option allows for the shape to leave a trail behind it, which can be useful for
 animations or visualising movement.
 
-TODO: IMAGES OF DRAWING
+\todo{Add images of drawings}
 
 \section{Notebook View}\label{sec:notebook-view}
+
+The notebook view is a feature that allows the user to write code in a more interactive way, similar to Jupyter
+notebooks\citep{Jupyter}.
+
+\section{Transpiler}\label{sec:transpiler}
+
+The user also has the option of transpiling their code to C, which can then be compiled and run as a standalone
+executable, allowing for faster execution of the code which is important for larger or more computationally
+intensive programs.
 
 \section{Code architecture}\label{sec:code-architecture}

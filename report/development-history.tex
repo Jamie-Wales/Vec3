@@ -6,7 +6,7 @@ operators, parsed with Pratt parsing.
 \subsection{Grammar in BNF}\label{subsec:grammar-in-bnf1}
 
 \begin{verbatim}
-<expr> ::= <term> | <term> "+" <expr> | <term> "-" <expr>
+<expr> ::= <term> | <term> '+' <expr> | <term> "-" <expr>
 <term> ::= <factor> | <factor> "*" <term> | <factor> "/" <term>
 <factor> ::= <number> | "(" <expr> ")"
 <number> ::= <int> | <float>
@@ -17,66 +17,114 @@ operators, parsed with Pratt parsing.
 
 \section{Sprint 2: Variable assignment}\label{sec:variable-assignment}
 
-In this sprint we added variable assignment to the language, with the ability to bind an expression to a variable name.
+In this sprint we added variable assignment to the parser, with the ability to bind an expression to a variable 
+name, as well as a few new operators such as \texttt{\%} for modulo and \texttt{^} for exponentiation and unary operators.
 
 \subsection{Grammar in BNF}\label{subsec:grammar-in-bnf2}
 
 \begin{verbatim}
-<stmtlist> ::= <stmt> | <stmt> <stmtlist>
-<stmt> ::= <expr> | "let" <identifier> "=" <expr>
+<stmtlist> ::=  <stmt> 
+              | <stmt> <stmtlist>
+<stmt> ::=  <expr> 
+          | "let" <identifier> "=" <expr>
 
-<expr> ::= <term> | <term> "+" <expr> | <term> "-" <expr>
-<term> ::= <factor> | <factor> "*" <term> | <factor> "/" <term> | <factor> "%" <term>
-<factor> ::= <number> | <identifier> | "(" <expr> ")" | <factor> "^" <factor>
+<expr> ::=  <term> 
+          | <term> "+" <expr> 
+          | <term> "-" <expr>
+          | <term> "==" <expr>
+          | <term> "!=" <expr>
+          | <term> "<" <expr>
+          | <term> ">" <expr>
+          | <term> "<=" <expr>
+          | <term> ">=" <expr>
+          | <term> "&&" <expr>
+          | <term> "||" <expr>
+<term> ::=  <factor> 
+          | <factor> "*" <term> 
+          | <factor> "/" <term> 
+          | <factor> "%" <term> 
+<factor> ::=  <number> 
+            | <identifier> 
+            | <unaryop> <factor>
+            | "(" <expr> ")" 
+            | <factor> "^" <factor>
+
+<unaryop> ::= "-" | "!" | "+" | <userop>
 
 <number> ::= <int> | <float>
-
 <int> ::= <digit> | <digit> <int>
 <float> ::= <int> "." <int>
 <digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
 <identifier> ::= <letter> | <letter> <identifier>
-<letter> ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+<letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" 
+            | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
 \end{verbatim}
 
 \section{Sprint 3: Interpreter}\label{sec:interpreter}
 
 In this sprint a basic interpreter was implemented, with the ability to evaluate expressions and variable bindings.
-
-We used a simple environment to store variable bindings, and a recursive evaluation function to evaluate expressions.
-
-It was a REPL style interpreter, where the last expression of a statement list was evaluated and printed.
-
-\subsection{Grammar in BNF}\label{subsec:grammar-in-bnf3}
-
-\begin{verbatim}
-
-\end{verbatim}
+We used a simple environment to store variable bindings (a map of \textit{string} name to \textit{expr}), and a 
+recursive evaluation function to evaluate expressions.
+It was a REPL style interpreter, where the last expression of a statement list was evaluated and printed, and ran through
+the command line.
+We did not change the grammar in this sprint.
 
 \section{Sprint 4: Functions}\label{sec:functions}
 
 In this sprint we added the ability to define and call functions, with a simple lambda syntax of the form 
 \texttt{(\textit{args}) -> \textit{expr}} and function calls of the form \texttt{\textit{funcName / lambda}(\textit{args})}.
 
-Call by value semantics were used, with a new environment created for each function call.
+Call by value semantics were used, with a new environment created for each function call, consisting of the arguments
+bound to the parameter names and the parent environment.
+
+We also added an \textit{assert} statement, allowing for simple tests to be written in the language and support for 
+rational numbers.
 
 \subsection{Grammar in BNF}\label{subsec:grammar-in-bnf4}
 
 \begin{verbatim}
-<stmtlist> ::= <stmt> | <stmt> <stmtlist>
-<stmt> ::= <expr> | "let" <identifier> "=" <expr>
-<expr> ::= <term> | <term> "+" <expr> | <term> "-" <expr>
-<term> ::= <factor> | <factor> "*" <term> | <factor> "/" <term> | <factor> "%" <term>
-<factor> ::= <number> | <identifier> | "(" <expr> ")" | <factor> "^" <factor> | <identifier> "(" <exprlist> ")" | <lambda>
-<lambda> ::= "(" <exprlist> ")" "->" <expr> 
+<stmtlist> ::=  <stmt> 
+              | <stmt> <stmtlist>
+<stmt> ::=  <expr> 
+          | "let" <identifier> "=" <expr>
 
-<number> ::= <int> | <float>
+<expr> ::=  <term> 
+          | <term> "+" <expr> 
+          | <term> "-" <expr>
+          | <term> "==" <expr>
+          | <term> "!=" <expr>
+          | <term> "<" <expr>
+          | <term> ">" <expr>
+          | <term> "<=" <expr>
+          | <term> ">=" <expr>
+          | <term> "&&" <expr>
+          | <term> "||" <expr>
+<term> ::=  <factor> 
+          | <factor> "*" <term> 
+          | <factor> "/" <term> 
+          | <factor> "%" <term> 
+<factor> ::=  <number> 
+            | <unaryop> <factor>
+            | <identifier> 
+            | "(" <expr> ")" 
+            | <factor> "^" <factor>
+            | <factor> "(" <exprlist> ")"
+            | <lambda>
+<lambda> ::= "(" <exprlist> ")" "->" <expr>
+
+<unaryop> ::= "-" | "!" | "+" | <userop>
+            
+<number> ::= <int> | <float> | <rational>
 <int> ::= <digit> | <digit> <int>
 <float> ::= <int> "." <int>
-
+<rational> ::= <int> "/" <int>
 <digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+
 <identifier> ::= <letter> | <letter> <identifier>
-<letter> ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+<letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" 
+            | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+            
 <exprlist> ::= <expr> | <expr> "," <exprlist>
 
 \end{verbatim}
@@ -92,36 +140,166 @@ The concept of types was introduced, with the types \texttt{Int}, \texttt{Float}
 \subsection{Grammar in BNF}\label{subsec:grammar-in-bnf5}
 
 \begin{verbatim}
+<stmtlist> ::=  <stmt> 
+              | <stmt> <stmtlist>
+<stmt> ::=  <expr> 
+          | "let" <identifier> "=" <expr>
+          | "let" <identifier> ":" <type> "=" <expr>
+
+<expr> ::=  <term> 
+          | <term> "+" <expr> 
+          | <term> "-" <expr>
+          | <term> "==" <expr>
+          | <term> "!=" <expr>
+          | <term> "<" <expr>
+          | <term> ">" <expr>
+          | <term> "<=" <expr>
+          | <term> ">=" <expr>
+          | <term> "&&" <expr>
+          | <term> "||" <expr>
+<term> ::=  <factor> 
+          | <factor> "*" <term> 
+          | <factor> "/" <term> 
+          | <factor> "%" <term> 
+<factor> ::=  <number> 
+            | <identifier> 
+            | <unaryop> <factor>
+            | "(" <expr> ")" 
+            | <factor> "^" <factor>
+            | <factor> "(" <exprlist> ")"
+            | <bool>
+            | <lambda>
+<lambda> ::=  "(" <typedexprlist> ")" "->" <expr>
+            | "(" <typedexprlist> ")" ":" <type> "->" <expr>
+
+
+<unaryop> ::= "-" | "!" | "+" | <userop>
+
+<bool> ::= "true" | "false"
+            
+<number> ::= <int> | <float> | <rational>
+<int> ::= <digit> | <digit> <int>
+<float> ::= <int> "." <int>
+<rational> ::= <int> "/" <int>
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+
+<identifier> ::= <letter> | <letter> <identifier>
+<letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" 
+            | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+            
+<exprlist> ::= <expr> | <expr> "," <exprlist>
+<typedexprlist> ::=  <expr> ":" <type> 
+                   | <expr> ":" <type> "," <typedexprlist>
+                   | <expr> "," <typedexprlist>
+    
+<type> ::= "int" | "float" | "bool" | "(" <typelist> ")" "->" <type>
+
+<typelist> ::= <type> | <type> "," <typelist>
 \end{verbatim}
 
 \section{Sprint 6: Bytecode}\label{sec:bytecode}
 
 In this sprint the interpreter was rewritten to use a bytecode interpreter, with a stack based virtual machine as 
 well as a simple bytecode compiler, allowing for more efficient evaluation of expressions.
-
-\subsection{Grammar in BNF}\label{subsec:grammar-in-bnf6}
-
-\begin{verbatim}
-\end{verbatim}
+The grammar was not changed in this sprint.
 
 \section{Sprint 7: GUI}\label{sec:gui}
 
 A simple GUI was developed in order to allow easier testing of the language, with a text box for input and output and a 
 decompiler output for debugging.
-
-\subsection{Grammar in BNF}\label{subsec:grammar-in-bnf7}
-
-\begin{verbatim}
-\end{verbatim}
+The GUI was written in F\# using Avalonia\citep{avalonia}.
+We did not change the grammar in this sprint.
 
 \section{Sprint 8: Plotting}\label{sec:plotting1}
 
 In this sprint we added the ability to plot lists of points, with a simple plotting function that took a list of
 \textit{x} coordinates and a list of \textit{y} coordinates and plotted them on a graph using \citet{scottPlot}.
+Naturally, we had to add a new type, \texttt{List}, to the language, and as an extension of this, we added the ability to
+define lists using the syntax \texttt{[1, 2, 3, 4]}.
+Other compound data types such as tuples and records were also added.
 
 \subsection{Grammar in BNF}\label{subsec:grammar-in-bnf8}
 
 \begin{verbatim}
+<stmtlist> ::=  <stmt> 
+              | <stmt> <stmtlist>
+<stmt> ::=  <expr> 
+          | <vardecl>
+          | <assertion>
+          
+<vardecl> ::= "let" <identifier> "=" <expr>
+            | "let" <identifier> ":" <type> "=" <expr>
+            
+<assertion> ::= "assert" <expr> | "assert" <expr> <string>
+                
+
+<expr> ::=  <term> 
+          | <term> "+" <expr> 
+          | <term> "-" <expr>
+          | <term> "==" <expr>
+          | <term> "!=" <expr>
+          | <term> "<" <expr>
+          | <term> ">" <expr>
+          | <term> "<=" <expr>
+          | <term> ">=" <expr>
+          | <term> "&&" <expr>
+          | <term> "||" <expr>
+<term> ::=  <factor> 
+          | <factor> "*" <term> 
+          | <factor> "/" <term> 
+          | <factor> "%" <term> 
+<factor> ::=  <literal> 
+            | "(" <expr> ")" 
+            | <factor> "^" <factor>
+            | <unaryop> <factor>
+            | <factor> "(" <exprlist> ")"
+            | <factor> "." <identifier>
+            | <factor> "[" <expr> "]"
+            | <factor> "[" <expr> ":" <expr> "]"
+            | <factor> "[" <expr> ":" "]"
+            | <factor> "[" ":" <expr> "]"
+
+<unaryop> ::= "-" | "!" | "+" | <userop>
+
+<literal> ::= <number> | <identifier> | <bool> | <list> | <lambda> | <string> | "()" | <tuple> | <record>
+<string> ::= '"' <charlist> '"' | '""'
+<charlist> ::= <char> | <char> <charlist>
+<list> ::= "[" <exprlist> "]"
+<tuple> ::= "(" <exprlist> ")"
+<record> ::= "{" <recordlist> "}"
+<recordlist> ::=  <identifier> "=" <expr> 
+                | <identifier> "=" <expr> "," <recordlist>
+                | <identifer> ":" <type> "=" <expr> 
+                | <identifier> ":" <type> "=" <expr> "," <recordlist>
+            
+<lambda> ::=  "(" <typedexprlist> ")" "->" <expr>
+            | "(" <typedexprlist> ")" ":" <type> "->" <expr>
+
+<bool> ::= "true" | "false"
+            
+<number> ::= <int> | <float> | <rational>
+<int> ::= <digit> | <digit> <int>
+<float> ::= <int> "." <int>
+<rational> ::= <int> "/" <int>
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+
+<identifier> ::= <letter> | <letter> <identifier>
+<letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" 
+            | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+
+<exprlist> ::= <expr> | <expr> "," <exprlist>
+<typedexprlist> ::=  <expr> ":" <type> 
+                   | <expr> ":" <type> "," <typedexprlist>
+                   | <expr> "," <typedexprlist>
+    
+<type> ::=  "int" | "float" | "bool" 
+          | "(" <typelist> ")" "->" <type> 
+          | "[" <type> "]" | "(" <typelist> ")"
+          | "{" <recordtypelist> "}"
+          
+<recordtypelist> ::= <identifier> ":" <type> | <identifier> ":" <type> "," <recordtypelist>
+
+<typelist> ::= <type> | <type> "," <typelist>
 \end{verbatim}
 
 \section{Sprint 9: Maths Functions}\label{sec:maths-funcs}
@@ -134,12 +312,108 @@ In this sprint we added a number of maths functions to the language, including \
 \begin{verbatim}
 \end{verbatim}
 
-\section{Sprint 9: Optimisation}\label{sec:optimisation1}
+\section{Sprint 10: Control flow}\label{sec:control-flow}
 
-In this sprint we added a simple optimisation pass to the bytecode compiler, which removed unnecessary stack operations
-and combined constant expressions.
+In this sprint we added control flow to the language, with \texttt{if} expressions and recursive bindings.
 
 \subsection{Grammar in BNF}\label{subsec:grammar-in-bnf10}
 
 \begin{verbatim}
+<stmtlist> ::=  <stmt> 
+              | <stmt> <stmtlist>
+<stmt> ::=  <expr> 
+          | <vardecl>
+          | <assertion>
+          
+<vardecl> ::= "let" <identifier> "=" <expr>
+            | "let" <identifier> ":" <type> "=" <expr>
+            | "let rec" <identifier> "=" <lambda>
+            
+<assertion> ::= "assert" <expr> | "assert" <expr> <string>
+
+<expr> ::=  <term> 
+          | <term> "+" <expr> 
+          | <term> "-" <expr>
+          | <term> "==" <expr>
+          | <term> "!=" <expr>
+          | <term> "<" <expr>
+          | <term> ">" <expr>
+          | <term> "<=" <expr>
+          | <term> ">=" <expr>
+          | <term> "&&" <expr>
+          | <term> "||" <expr>
+<term> ::=  <factor> 
+          | <factor> "*" <term> 
+          | <factor> "/" <term> 
+          | <factor> "%" <term> 
+<factor> ::=  <literal> 
+            | "(" <expr> ")" 
+            | <factor> "^" <factor>
+            | <factor> "(" <exprlist> ")"
+            | <factor> "." <identifier>
+            | <unaryop> <factor>
+            | <factor> "[" <expr> "]"
+            | <factor> "[" <expr> ":" <expr> "]"
+            | <factor> "[" <expr> ":" "]"
+            | <factor> "[" ":" <expr> "]"
+            | <if>
+            | "{" <stmtlist> "}"
+
+<unaryop> ::= "-" | "!" | "+" | <userop>
+
+<if> ::=  "if" <expr> "then" <expr> "else" <expr>
+        | "if" <expr> "then" <expr>
+
+<literal> ::= <number> | <identifier> | <bool> | <list> | <lambda> | <string> | "()" | <tuple> | <record>
+<string> ::= '"' <charlist> '"' | '""'
+<charlist> ::= <char> | <char> <charlist>
+<list> ::= "[" <exprlist> "]"
+<tuple> ::= "(" <exprlist> ")"
+<record> ::= "{" <recordlist> "}"
+<recordlist> ::=  <identifier> "=" <expr> 
+                | <identifier> "=" <expr> "," <recordlist>
+                | <identifer> ":" <type> "=" <expr> 
+                | <identifier> ":" <type> "=" <expr> "," <recordlist>
+            
+<lambda> ::=  "(" <typedexprlist> ")" "->" <expr>
+            | "(" <typedexprlist> ")" ":" <type> "->" <expr>
+
+<bool> ::= "true" | "false"
+            
+<number> ::= <int> | <float> | <rational>
+<int> ::= <digit> | <digit> <int>
+<float> ::= <int> "." <int>
+<rational> ::= <int> "/" <int>
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+
+<identifier> ::= <letter> | <letter> <identifier>
+<letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" 
+            | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+
+<exprlist> ::= <expr> | <expr> "," <exprlist>
+<typedexprlist> ::=  <expr> ":" <type> 
+                   | <expr> ":" <type> "," <typedexprlist>
+                   | <expr> "," <typedexprlist>
+    
+<type> ::=  "int" | "float" | "bool" 
+          | "(" <typelist> ")" "->" <type> 
+          | "[" <type> "]" | "(" <typelist> ")"
+          | "{" <recordtypelist> "}"
+          
+<recordtypelist> ::= <identifier> ":" <type> | <identifier> ":" <type> "," <recordtypelist>
+
+<typelist> ::= <type> | <type> "," <typelist>
 \end{verbatim}
+
+\section{Sprint 11: Optimisation}\label{sec:optimisation1}
+
+In this sprint we added a simple optimisation pass to the bytecode compiler, which removed unnecessary stack operations
+and combined constant expressions.
+The grammar was not changed in this sprint.
+
+\section{Sprint 12: Transpiler}\label{sec:transpiler1}
+
+In this sprint we added the ability to transpile the bytecode to C, which could then be compiled and run as a standalone
+executable.
+The grammar was not changed in this sprint.
+

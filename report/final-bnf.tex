@@ -1,0 +1,170 @@
+\begin{verbatim}
+<stmtlist> ::=  <stmt> 
+              | <stmt> <stmtlist>
+<stmt> ::=  <expr> 
+          | <vardecl>
+          | <assertion>
+
+<vardecl> ::= "let" <identifier> "=" <expr>
+            | "let" <identifier> ":" <type> "=" <expr>
+            | "let rec" <identifier> "=" <lambda>
+            | "let rec" <identifier> ":" <type> "=" <lambda>
+            | "let async" <identifier> "=" <lambda>
+            | "let async" <identifier> ":" <type> "=" <lambda>
+
+<assertion> ::= "assert" <expr> | "assert" <expr> <string>
+
+<expr> ::=  <term> 
+          | <term> "+" <expr> 
+          | <term> "-" <expr>
+          | <term> "==" <expr>
+          | <term> "!=" <expr>
+          | <term> "<" <expr>
+          | <term> ">" <expr>
+          | <term> "<=" <expr>
+          | <term> ">=" <expr>
+          | <term> "&&" <expr>
+          | <term> "||" <expr>
+            
+<term> ::=  <factor> 
+          | <factor> "*" <term> 
+          | <factor> "/" <term> 
+          | <factor> "%" <term> 
+<factor> ::=  <literal> 
+            | "(" <expr> ")" 
+            | <factor> "^" <factor>
+            | <factor> <userop> <factor>
+            | <unaryop> <factor>
+            | <factor> "(" <exprlist> ")"
+            | <factor> "." <identifier>
+            | <factor> "[" <expr> "]"
+            | <factor> "[" <expr> ":" <expr> "]"
+            | <factor> "[" <expr> ":" "]"
+            | <factor> "[" ":" <expr> "]"
+            | <range>
+            | <if>
+            | "${" <expr> "}"
+            | "{" <stmtlist> "}"
+
+<unaryop> ::= "-" | "!" | "+" | <userop>
+<userop> ::= <opchar> | <opchar> <userop>
+<opchar> ::=  "!" | "@" | "#" | "$" | "%" | "^" | "&" | "*" | "-" | "+" | "=" | "<" | ">" | "?" | ":" | "|" | "~"
+
+<range> ::= "[" <expr> ".." <expr> "]"
+
+<if> ::=  "if" <expr> "then" <expr> "else" <expr>
+        | "if" <expr> "then" <expr>
+        | <expr> "if" <expr> "else" <expr>
+
+<literal> ::= <number> | <identifier> | <bool> | <list> | <lambda> | <string> | "()" | <tuple> | <record>
+<string> ::= '"' <charlist> '"' | '""'
+<charlist> ::= <char> | <char> <charlist>
+<list> ::= "[" <exprlist> "]"
+<tuple> ::= "(" <exprlist> ")"
+<record> ::= "{" <recordlist> "}"
+<recordlist> ::=  <identifier> "=" <expr> 
+                | <identifier> "=" <expr> "," <recordlist>
+                | <identifer> ":" <type> "=" <expr> 
+                | <identifier> ":" <type> "=" <expr> "," <recordlist>
+
+<lambda> ::=  "(" <typedexprlist> ")" "->" <expr>
+            | "(" <typedexprlist> ")" ":" <type> "->" <expr>
+
+<bool> ::= "true" | "false"
+
+<number> ::= <int> | <float> | <rational>
+<int> ::= <digit> | <digit> <int>
+<float> ::= <int> "." <int>
+<rational> ::= <int> "/" <int>
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+
+<identifier> ::= <letter> | <letter> <identifier>
+<letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" 
+            | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+
+<exprlist> ::= <expr> | <expr> "," <exprlist>
+<typedexprlist> ::=  <expr> ":" <type> 
+                   | <expr> ":" <type> "," <typedexprlist>
+                   | <expr> "," <typedexprlist>
+
+<type> ::=  "int" | "float" | "bool" 
+          | "(" <typelist> ")" "->" <type> 
+          | "[" <type> "]" | "(" <typelist> ")"
+          | "{" <recordtypelist> "}"
+
+<recordtypelist> ::= <identifier> ":" <type> | <identifier> ":" <type> "," <recordtypelist>
+
+<typelist> ::= <type> | <type> "," <typelist>
+\end{verbatim}
+
+This BNF is represented in the F\# codebase as an AST, represented by the following type:
+
+\begin{minted}{fsharp}
+/// <summary>
+/// The AST of the language.
+/// </summary>
+type Expr =
+    | ELiteral of Literal * Type
+    | EIdentifier of Token * Type option
+    | EGrouping of Expr * Type option
+
+    | EIf of Expr * Expr * Expr * Type option
+    | ETernary of Expr * Expr * Expr * Type option
+
+    | EList of Expr list * Type option
+    | ETuple of Expr list * Type option
+
+    | ECall of Expr * Expr list * Type option
+
+    /// <summary>
+    /// Indexing operation on a list or tensor.
+    /// Expr (list or tensor), (index), type
+    /// Allows for indexing in the form l[1]
+    /// </summary>
+    | EIndex of Expr * Expr * Type option
+
+    /// <summary>
+    /// Indexing with a range operation on a list or tensor.
+    /// Expr (list or tensor), start, end, type
+    /// Allows for indexing in the form l[..1] or l[1..2] or l[1..]
+    /// </summary>
+    | EIndexRange of Expr * Expr * Expr * Type option
+
+    /// <summary>
+    /// A lambda expression with a list of arguments, a body, a return type, a pure flag, and a type.
+    /// </summary>
+    | ELambda of (Token * Type option) list * Expr * Type option * bool * Type option * bool // bool is pure flag
+    | EBlock of Stmt list * bool * Type option // bool is whether block is part of a function
+    | ERange of Expr * Expr * Type option
+
+    | ERecordSelect of Expr * Token * Type option
+
+    /// <summary>
+    /// Records represented recursively as a row type.
+    /// </summary>
+    | ERecordExtend of (Token * Expr * Type option) * Expr * Type option
+    | ERecordRestrict of Expr * Token * Type option
+    | ERecordEmpty of Type
+
+    /// <summary>
+    /// Unevaluated code block.
+    /// </summary>
+    | ECodeBlock of Expr
+
+    /// <summary>
+    /// A tail call (for tail recursion).
+    /// </summary>
+    | ETail of Expr * Type option
+
+/// <summary>
+/// A statement in the language (something that does not return a value).
+/// </summary>
+and Stmt =
+    | SExpression of Expr * Type option
+    | SVariableDeclaration of Token * Expr * Type option
+    | SAssertStatement of Expr * Expr option * Type option
+    | STypeDeclaration of Token * Type * Type option
+    | SRecFunc of Token * (Token * Type option) list * Expr * Type option
+    | SAsync of Token * (Token * Type option) list * Expr * Type option
+    | SImport of Token option * string * bool * Type option // maybe binding name, module name (path), isstd, type
+\end{minted}
