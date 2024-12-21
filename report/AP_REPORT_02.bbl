@@ -1,5 +1,10 @@
 \begin{thebibliography}{}
 
+\bibitem[{Avalonia}, 2024]{avalonia}
+{Avalonia} (2024).
+\newblock Avalonia website.
+\newblock \url{https://avaloniaui.net/}.
+
 \bibitem[Bierman et~al., 2014]{bierman2014understanding}
 Bierman, G., Abadi, M., and Torgersen, M. (2014).
 \newblock Understanding typescript.
@@ -42,6 +47,22 @@ Morris, J.~G. and McKinna, J. (2019).
 {OCaml} (2024).
 \newblock Ocaml documentation.
 \newblock \url{https://ocaml.org/docs/}.
+
+\bibitem[Pratt, 1973]{pratt1973top}
+Pratt, V.~R. (1973).
+\newblock Top down operator precedence.
+\newblock In {\em Proceedings of the 1st annual ACM SIGACT-SIGPLAN symposium on
+  Principles of programming languages}, pages 41--51.
+
+\bibitem[{Project Jupyter}, 2023]{Jupyter}
+{Project Jupyter} (2023).
+\newblock Jupyter website.
+\newblock \url{https://jupyter.org/}.
+
+\bibitem[{ScottPlot}, 2024]{scottPlot}
+{ScottPlot} (2024).
+\newblock Scottplot website.
+\newblock \url{https://scottplot.net/}.
 
 \bibitem[Sulzmann, 2000]{sulzmann2000general}
 Sulzmann, M.~F. (2000).

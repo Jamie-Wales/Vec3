@@ -13,7 +13,6 @@ have as the user is less likely to make trivial mistakes.
 
 Another thing to note is that in order to make the language more intuitive to use, the \textbf{integer} type will 
 coerce into any other number type (\textbf{float, rational, complex}). 
-
 This allows for expressions such as $5.0 ^ 5$ type checking successfully, with the result being a float.
 
 \subsection{Type Inference Algorithm}\label{subsec:type-inference-algorithm}
@@ -33,7 +32,6 @@ can be assigned to both.
 Contrasting this, unifying \text{int} and a type variable \textit{a}, would result in \textit{int}, and then the type
 variable \textit{a} would have to be substituted with \textit{int} throughout the program (because \textit{int} is the
 most general type that can be assigned to \textit{a}).
-
 It works bottom-up as only a few types are known at the start, such as the types of literals and the types of
 built-in functions.
 
@@ -109,13 +107,11 @@ generalisation is not necessary.
 Gradual typing is a type system that allows for the gradual transition from dynamic typing to static typing.
 This is useful in a language like Vec3 as it allows for the user to write code without having to worry about types
 allowing for quick prototyping, but then add types later to ensure correctness.
-
 Users have the option of adding types to their code in the form $let\ x: int = 5$, and the type inference algorithm
 will check that the type of the expression matches the type given.
 
 The type $any$ can also be used, which represents a dynamic type that can be unified with any other type.
 This disables the safety guarantees of the type system, but can be useful as mentioned above for quick prototyping.
-
 One thing to note however is that the $any$ type is infectious, meaning that if a type is inferred to be $any$ then
 the type of the parent node will also be $any$.
 
@@ -123,7 +119,6 @@ the type of the parent node will also be $any$.
 
 Row polymorphism is a form of polymorphism that allows for the definition of functions that operate on records with
 a certain set of fields, but can also operate on records with additional fields.
-
 It can be considered both a form of structural typing like that of TypeScript\citep{bierman2014understanding}, and a
 form of subtyping.
 
@@ -143,23 +138,34 @@ let r = {a = 5, b: int = 6}
 
 The function \textit{f} can be called with \textit{r} as an argument as \textit{r} has a field \textit{a}, and the
 function will return 5.
-
 This is a powerful feature as it allows for the definition of functions that operate on a wide range of records.
-
 The reference algorithm given by \citet{morris2019abstracting} was used as a basis for the implementation of row
 polymorphism in Vec3, however without record restriction as it was not necessary for the language.
 
 The algorithm works by assigning a \textit{row variable} to each record type, which is a type variable that represents
 the fields of the record, where a record is represented in the type system as an extension of another record, or the empty record.
-
 The algorithm then unifies the row variables of the record types, and if the unification is successful then the
-function can be called with the record.
+records are considered to be the same type.
 
 A reference implementation of the algorithm is given in Algorithm~\ref{alg:row-polymorphism}.
 
 \begin{algorithm}
     \caption{Row Polymorphism Algorithm}
     \begin{algorithmic}
+        \Function{$unify$}{$type1,\ type2$}
+            \If{$type1\ \textbf{is}\ row\ variable$}
+                \State $type1 \gets type2$
+            \EndIf
+            \If{$type2\ \textbf{is}\ row\ variable$}
+                \State $type2 \gets type1$
+            \EndIf
+            \If{$type1\ \textbf{is}\ record\ type\ and\ type2\ \textbf{is}\ record\ type$}
+                \State $unify\ row\ variables$
+            \EndIf
+            \If{$type1$\ \textbf{is}\ not\ equal\ to\ $type2$}
+                \State \textbf{error}
+            \EndIf
+        \EndFunction
     \end{algorithmic}
     \label{alg:row-polymorphism}
 \end{algorithm}
@@ -181,7 +187,6 @@ let on = (shape, key: { 43hr4h54j3: int }, func) -> ...
 \end{minted}
 
 This has pretty good type safety, as the function will only accept keys with said field, which is hidden from the user.
-
 This doesn't have quite as good safety guarantees as a true algebraic data type, i.e.\ in the form 
 $data bool = True | False$, but is certainly safer than say C enums, preventing mistakes such as using incorrect 
 argument order.
@@ -190,14 +195,12 @@ argument order.
 
 Due to the fact that everything is immutable in Vec3, the simplest way to ensure Turing completeness is to allow for 
 recursive bindings (i.e.\ functions that call themselves).
-
 This is a powerful feature as it allows for the definition of functions that operate on recursive data structures, such
 as trees and lists.
 
 The type inference algorithm was modified to support recursive bindings, as the standard algorithm would not be able to
 infer the type of a recursive due to the fact that the binding would not be in the environment when the type of the
 function was inferred (all functions are lambdas, and therefore are not assigned to a binding until after declaration).
-
 Hence, recursive functions were introduced as a separate statement in the grammar of the language, and the type
 inference algorithm was modified to support them by adding the binding to the environment before inferring the type of
 the function.
@@ -206,17 +209,14 @@ the function.
 
 Due to the restrictiveness of the standard Hindley-Milner type inference algorithm, it is not possible to support ad-hoc
 polymorphism (i.e.\ overloading) without some modification.
-
 For example, OCaml\citep{ocamlDocs} does not support ad-hoc polymorphism and instead uses, for example, the \textit{+}
 operator for integer addition and the \textit{+.} operator for float addition, which is not ideal for this language 
 as it would be unintuitive for a mathematician.
 
 Examples of ML style languages that do support ad-hoc polymorphism are F\#, which uses static member functions on 
 types to achieve operator overloading\citep{fsharpdocs}, and Haskell, which uses type classes\citep{haskellDocs} (constructs that define behaviour for a type, similarly to interfaces in object-oriented languages).
-
 The way this issue was solved in Vec3 is by introducing the concept of \textit{Constraint types}, which could be 
 likened to a slightly less powerful version of type classes in Haskell.
-
 A constraint is a type that is defined by a type variable, and a function of type \textit{Type -> bool}.
 During unification, if a type is unified with a constraint type, then the function is called with the type, and if it
 returns true then the unification is successful and the type variable that the constraint holds is unified with the
@@ -256,7 +256,6 @@ dimension restrictions so unity can occur.
 
 A current limitation of this system is that the user cannot define their own constraints, and the only constraints 
 present are those built into the language (such as operators).
-
 This is a feature that could be added in the future, but was not necessary for the current implementation of the
 language.
 
@@ -312,10 +311,8 @@ type system much more complex (likely requiring a theorem prover and types as va
 
 The purity of a function is also determined during type inference, with the type of a function being inferred as
 pure if it is made up of only pure functions, with the base pure functions being built in.
-
 This allows for, for example, the \textit{plotFunc} (\ref{sec:plotting}) ensuring that only pure functions can be 
 passed to it, preventing a user from passing a function that has side effects (which would likely cause a runtime 
 error otherwise).
-
 It also allows for easy dead code elimination, as a call to a function that has no side effects can be removed if the
 result is not used.

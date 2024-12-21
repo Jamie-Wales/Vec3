@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  21 DEC 2024 13:56
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  21 DEC 2024 17:30
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -447,22 +447,31 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 85.
 )
 \Hy@SectionHShift=\skip68
-) (/usr/local/texlive/2024/texmf-dist/tex/latex/algorithms/algorithm.sty
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/enumitem/enumitem.sty
+Package: enumitem 2019/06/20 v3.9 Customized lists
+\labelindent=\skip69
+\enit@outerparindent=\dimen184
+\enit@toks=\toks32
+\enit@inbox=\box62
+\enit@count@id=\count333
+\enitdp@description=\count334
+)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/algorithms/algorithm.sty
 Package: algorithm 2009/08/24 v0.1 Document Style `algorithm' - floating enviro
 nment
 
 (/usr/local/texlive/2024/texmf-dist/tex/latex/base/ifthen.sty
 Package: ifthen 2024/03/16 v1.1e Standard LaTeX ifthen package (DPC)
 )
-\@float@every@algorithm=\toks32
-\c@algorithm=\count333
+\@float@every@algorithm=\toks33
+\c@algorithm=\count335
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/natbib/natbib.sty
 Package: natbib 2010/09/13 8.31b (PWD, AO)
-\bibhang=\skip69
-\bibsep=\skip70
+\bibhang=\skip70
+\bibsep=\skip71
 LaTeX Info: Redefining \cite on input line 694.
-\c@NAT@ctr=\count334
+\c@NAT@ctr=\count336
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/algorithmicx/algpseudocode.sty
 Package: algpseudocode 
@@ -471,16 +480,16 @@ Package: algpseudocode
 Package: algorithmicx 2005/04/27 v1.2 Algorithmicx
 
 Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
-\c@ALG@line=\count335
-\c@ALG@rem=\count336
-\c@ALG@nested=\count337
-\ALG@tlm=\skip71
-\ALG@thistlm=\skip72
-\c@ALG@Lnr=\count338
-\c@ALG@blocknr=\count339
-\c@ALG@storecount=\count340
-\c@ALG@tmpcounter=\count341
-\ALG@tmplength=\skip73
+\c@ALG@line=\count337
+\c@ALG@rem=\count338
+\c@ALG@nested=\count339
+\ALG@tlm=\skip72
+\ALG@thistlm=\skip73
+\c@ALG@Lnr=\count340
+\c@ALG@blocknr=\count341
+\c@ALG@storecount=\count342
+\c@ALG@tmpcounter=\count343
+\ALG@tmplength=\skip74
 )
 Document Style - pseudocode environments for use with the `algorithmicx' style
 ) (/usr/local/texlive/2024/texmf-dist/tex/latex/xcolor/xcolor.sty
@@ -504,44 +513,44 @@ Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
 )
 (/usr/local/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2024-05-08 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count342
-\l__pdf_internal_box=\box62
+\l__color_backend_stack_int=\count344
+\l__pdf_internal_box=\box63
 )
 (./AP_REPORT_02.aux)
 \openout1 = `AP_REPORT_02.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 28.
+LaTeX Font Info:    ... okay on input line 28.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 28.
+LaTeX Font Info:    ... okay on input line 28.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 28.
+LaTeX Font Info:    ... okay on input line 28.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 28.
+LaTeX Font Info:    ... okay on input line 28.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 28.
+LaTeX Font Info:    ... okay on input line 28.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 28.
+LaTeX Font Info:    ... okay on input line 28.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 28.
+LaTeX Font Info:    ... okay on input line 28.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 28.
+LaTeX Font Info:    ... okay on input line 28.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 28.
+LaTeX Font Info:    ... okay on input line 28.
 
 (/usr/local/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count343
-\scratchdimen=\dimen184
-\scratchbox=\box63
-\nofMPsegments=\count344
-\nofMParguments=\count345
-\everyMPshowfont=\toks33
-\MPscratchCnt=\count346
-\MPscratchDim=\dimen185
-\MPnumerator=\count347
-\makeMPintoPDFobject=\count348
-\everyMPtoPDFconversion=\toks34
+\scratchcounter=\count345
+\scratchdimen=\dimen185
+\scratchbox=\box64
+\nofMPsegments=\count346
+\nofMParguments=\count347
+\everyMPshowfont=\toks34
+\MPscratchCnt=\count348
+\MPscratchDim=\dimen186
+\MPnumerator=\count349
+\makeMPintoPDFobject=\count350
+\everyMPtoPDFconversion=\toks35
 ) (/usr/local/texlive/2024/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
@@ -555,7 +564,7 @@ Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: subfig package v1.3 is loaded.
 Package caption Info: hyperref package is loaded.
 Package caption Info: End \AtBeginDocument code.
-Package hyperref Info: Link coloring OFF on input line 24.
+Package hyperref Info: Link coloring OFF on input line 28.
 
 (./AP_REPORT_02.out) (./AP_REPORT_02.out)
 \@outlinefile=\write4
@@ -567,40 +576,23 @@ Package hyperref Info: Link coloring OFF on input line 24.
 
 {/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 
-Package natbib Warning: Citation `avalonia' on page 1 undefined on input line 5
-4.
-
-
-Package natbib Warning: Citation `scottPlot' on page 1 undefined on input line 
-54.
-
-
-
 
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.77 \end{abstract}
+l.79 \end{abstract}
                     [1{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-su
 per/cm-super-ts1.enc}]
 Chapter 1.
 
-Package natbib Warning: Citation `avalonia' on page 1 undefined on input line 8
-7.
-
-
-Package natbib Warning: Citation `scottPlot' on page 1 undefined on input line 
-87.
-
-
 
 
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.100 \chapter
+l.102 \chapter
               {Background}\label{ch:background} [1
 
 ]
@@ -654,14 +646,6 @@ Overfull \hbox (86.63321pt too wide) in paragraph at lines 198--198
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
-
-
-Package natbib Warning: Citation `avalonia' on page 6 undefined on input line 2
-10.
-
-
-Package natbib Warning: Citation `scottPlot' on page 6 undefined on input line 
-216.
 
 
 
@@ -728,25 +712,25 @@ Chapter 4.
 [11
 
 ]
-Overfull \hbox (178.61221pt too wide) in paragraph at lines 106--106
+Overfull \hbox (178.61221pt too wide) in paragraph at lines 108--108
 []\OT1/cmtt/m/n/10.95 <literal> ::= <number> | <identifier> | <bool> | <list> |
  <lambda> | <string> | "()" | <tuple> | <record>[] 
  []
 
 
-Overfull \hbox (17.64896pt too wide) in paragraph at lines 106--106
+Overfull \hbox (17.64896pt too wide) in paragraph at lines 108--108
 []\OT1/cmtt/m/n/10.95 <complex> ::= <float> "+" <float> "i" | <float> "-" <floa
 t> "i" | <float> "i"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 106--106
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 108--108
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 106--106
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 108--108
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
@@ -754,7 +738,7 @@ u" | "v" | "w" | "x" | "y" | "z"[]
 
 
 [12]
-Overfull \hbox (98.13058pt too wide) in paragraph at lines 106--106
+Overfull \hbox (98.13058pt too wide) in paragraph at lines 108--108
 []\OT1/cmtt/m/n/10.95 <recordtypelist> ::= <identifier> ":" <type> | <identifie
 r> ":" <type> "," <recordtypelist>[] 
  []
@@ -762,11 +746,11 @@ r> ":" <type> "," <recordtypelist>[]
 \pydata@fh@_E017103BDF0CAED79F13B8F548EAF24E.data.minted=\write5
 \openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
 
-runsystem(latexminted config  --timestamp 20241221135620Z E017103BDF0CAED79F13B
+runsystem(latexminted config  --timestamp 20241221173028Z E017103BDF0CAED79F13B
 8F548EAF24E)...executed safely (allowed).
 
 (./_E017103BDF0CAED79F13B8F548EAF24E.config.minted)
-runsystem(latexminted cleanconfig  --timestamp 20241221135620Z E017103BDF0CAED7
+runsystem(latexminted cleanconfig  --timestamp 20241221173028Z E017103BDF0CAED7
 9F13B8F548EAF24E)...executed safely (allowed).
 
 
@@ -776,170 +760,121 @@ LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <10.95> not available
 (Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 5.
 
 
-[13]))
+[13])) (./_minted/F7CB97C4481211FE7B7A2BECBCC454DA.highlight.minted)
+(./_minted/36EF230F4C7E8CBDBE836838F0CAEC87.highlight.minted
 
-[14]
+[14]) (./_minted/7B293B2FFC7057B786CBB1CC553B17FF.highlight.minted)
+(./_minted/E2D3A820EB4CA488CD41D50F3B850039.highlight.minted)
+(./_minted/EAB81081B9AA1ED6965DC7DAEE03FD8E.highlight.minted)
+(./_minted/635305B7C7508668CB9996B23449E3FC.highlight.minted)
+(./_minted/26A858ACD3E5527240FEAE15EA4BE4CA.highlight.minted)
+(./_minted/AE5E64C937F5E8B4F080AB36E0BA22D7.highlight.minted
 
-Package natbib Warning: Citation `pratt1973top' on page 15 undefined on input l
-ine 40.
-
-LaTeX Font Info:    Trying to load font information for U+msa on input line 46.
-
-(/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd
+[15])
+LaTeX Font Info:    Trying to load font information for U+msa on input line 151
+.
+ (/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 46.
-
+LaTeX Font Info:    Trying to load font information for U+msb on input line 151
+.
 
 (/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 
-[15] (./type-inference.tex
+[16] (./type-inference.tex
+
+[17]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 44.
+put line 42.
 
 
-[16]
+[18]
 
-[17] (./_minted/F40D6D54477465BCEECC8B6E7E04BEDD.highlight.minted)
+[19] (./_minted/F40D6D54477465BCEECC8B6E7E04BEDD.highlight.minted)
 (./_minted/076F0DA663A8573A8B256E046112D377.highlight.minted)
-
-! LaTeX Error: Something's wrong--perhaps a missing \item.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.163     \end{algorithmic}
-                           
-? 
 (./_minted/AC0986121432020082BA3A06BCD36FF6.highlight.minted)
-(./_minted/AC94E63AF40D12F1A6580BD8F2133C69.highlight.minted
+(./_minted/AC94E63AF40D12F1A6580BD8F2133C69.highlight.minted)
 
-[18]) (./_minted/34D0082645AAFF1AED91CC877C506064.highlight.minted)
-(./_minted/10150E2A538D7F776F7D32D6B708C9CC.highlight.minted
+[20] (./_minted/34D0082645AAFF1AED91CC877C506064.highlight.minted)
+(./_minted/10150E2A538D7F776F7D32D6B708C9CC.highlight.minted)
 
-[19]) (./_minted/993C00FACF51BCA98D2B5063B1CC21F6.highlight.minted)
-\openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
-
-runsystem(latexminted highlight  --timestamp 20241221135620Z E017103BDF0CAED79F
-13B8F548EAF24E)...executed safely (allowed).
-
-
+[21] (./_minted/993C00FACF51BCA98D2B5063B1CC21F6.highlight.minted)
 (./_minted/1104360283957BF0578D4E7C2DA67863.highlight.minted)
-\openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
+(./_minted/E807680B3EE48BD6D50D0194B49FDD9B.highlight.minted))
 
-runsystem(latexminted highlight  --timestamp 20241221135620Z E017103BDF0CAED79F
-13B8F548EAF24E)...executed safely (allowed).
+[22]
 
-
-(./_minted/E807680B3EE48BD6D50D0194B49FDD9B.highlight.minted)
-
-[20])
-
-[21]
-Overfull \hbox (57.94174pt too wide) in paragraph at lines 194--197
+[23]
+Overfull \hbox (57.94174pt too wide) in paragraph at lines 299--302
 []\OT1/cmr/m/n/10.95 To fa-cil-i-tate de-bug-ging, a dis-as-sem-bler was im-ple
 -mented. Func-tions like \OT1/cmtt/m/n/10.95 disassembleInstruction
  []
 
 
 
-[22] (./_minted/F66DA172101949CB7B6861F72C7D121C.highlight.minted)
+[24] (./_minted/F66DA172101949CB7B6861F72C7D121C.highlight.minted)
 
-[23]
-
-Package natbib Warning: Citation `scottPlot' on page 24 undefined on input line
- 260.
-
-(./_minted/E0FD7F009609B04AE18EBAFCE9FF1106.highlight.minted)
+[25] (./_minted/E0FD7F009609B04AE18EBAFCE9FF1106.highlight.minted)
 ! Undefined control sequence.
-l.278 \todo
+l.383 \todo
            {Add images of plots}
 ? 
 ! Undefined control sequence.
-l.285 \todo
+l.390 \todo
            {Add images of plots}
 ? 
-\openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
+(./_minted/CB3B4529D532F8DD9E96112D36DB8CB4.highlight.minted)
 
-runsystem(latexminted highlight  --timestamp 20241221135620Z E017103BDF0CAED79F
-13B8F548EAF24E)...executed safely (allowed).
-
-(./_minted/CB3B4529D532F8DD9E96112D36DB8CB4.highlight.minted
-
-[24]) (./_minted/E6C392DADA90F89F225476F1CE2866E4.highlight.minted)
+[26] (./_minted/E6C392DADA90F89F225476F1CE2866E4.highlight.minted)
 ! Undefined control sequence.
-l.332 \todo
+l.437 \todo
            {Add images of drawings}
 ? 
-
-Package natbib Warning: Citation `Jupyter' on page 25 undefined on input line 3
-37.
-
 )
 
-[25]
+[27]
 Chapter 5.
 (./AP_REPORT_02.bbl
 
-[26
+[28
 
 ])
 
-[27
+[29
 
 ]
 Appendix A.
 
 
-[28
+[30
 
 ]
 Appendix B.
 
 
-[29
+[31
 
 ]
 Appendix C.
 
 
-[30
+[32
 
-]
-Appendix D.
-
-Package natbib Warning: There were undefined citations.
-
-
-
-[31
-
-]
-\openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
-
-runsystem(latexminted clean  --timestamp 20241221135620Z E017103BDF0CAED79F13B8
-F548EAF24E)...executed safely (allowed).
-
- (./AP_REPORT_02.aux)
+] (./AP_REPORT_02.aux)
  ***********
 LaTeX2e <2024-11-01>
 L3 programming layer <2024-11-02>
  ***********
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
 Package rerunfilecheck Info: File `AP_REPORT_02.out' has not changed.
-(rerunfilecheck)             Checksum: 2F58AB8B92E4227E9F83673854F5BB54;8963.
+(rerunfilecheck)             Checksum: 5234B577AC57243178D71AAA88EF3A09;9390.
  ) 
 Here is how much of TeX's memory you used:
- 17824 strings out of 473362
- 337722 string characters out of 5720983
- 840323 words of memory out of 5000000
- 40532 multiletter control sequences out of 15000+600000
+ 18246 strings out of 473362
+ 346923 string characters out of 5720983
+ 848250 words of memory out of 5000000
+ 40908 multiletter control sequences out of 15000+600000
  568680 words of font info for 74 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  85i,6n,93p,989b,932s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -956,10 +891,10 @@ exlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/te
 xlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/tex
 live/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texl
 ive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on AP_REPORT_02.pdf (33 pages, 258345 bytes).
+Output written on AP_REPORT_02.pdf (34 pages, 268413 bytes).
 PDF statistics:
- 549 PDF objects out of 1000 (max. 8388607)
- 483 compressed objects within 5 object streams
- 110 named destinations out of 1000 (max. 500000)
- 505 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 606 PDF objects out of 1000 (max. 8388607)
+ 538 compressed objects within 6 object streams
+ 128 named destinations out of 1000 (max. 500000)
+ 537 words of extra memory for PDF output out of 10000 (max. 10000000)
 

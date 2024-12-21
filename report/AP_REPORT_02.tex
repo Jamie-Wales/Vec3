@@ -6,6 +6,10 @@
 \usepackage{syntax}
 \usepackage{epsfig,pifont,float,multirow,amsmath,amssymb}
 \usepackage{hyperref}
+\usepackage{enumitem}
+
+\setlist{nolistsep}
+
 \newcommand{\mc}{\multicolumn{1}{c|}}
 \newcommand{\mb}{\mathbf}
 \newcommand{\mi}{\mathit}
@@ -47,10 +51,8 @@
 \begin{abstract}
 Vec3 is a bytecode interpreted maths language complete with a GUI, plotting, full static type inference and various 
 maths functions.
-
 The language is designed to be simple to use and understand, with a focus on strict mathematical expressions and 
 plotting, but with more powerful constructs such as recursive bindings, first class functions and static type inference.
-
 The language and GUI are written in F\#, using Avalonia\citep{avalonia} for the GUI and ScottPlot\citep{scottPlot} for plotting.
     
 The language is compiled to a custom bytecode, which is then interpreted by a virtual machine. 
@@ -92,7 +94,7 @@ faster execution of the code.
 \section{Aims and objectives}\label{sec:aims-and-objectives}
 
 % todo: moscow
-The aim of the project is to create a simple, easy to use maths language with a focus on plotting and mathematical
+The aim of the project is to create an easy to use maths language with a focus on plotting and mathematical
 expressions, but with more powerful constructs such as recursive bindings, first class functions and static type 
 inference, and ensuring as many features, both optional and mandatory, are implemented as possible and to a high 
 standard.
@@ -139,7 +141,6 @@ standard.
     \item Parser
     \item Compiler
     \item Lexer
-    \item Documentation
 \end{itemize}
 
 \chapter{Testing}\label{ch:test}
