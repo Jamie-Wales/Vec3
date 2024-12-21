@@ -36,10 +36,6 @@ and analyseExpr (isTail: bool) (expr: Expr) : Expr =
 
     // Conditional expressions
     | EIf(cond, thenBranch, elseBranch, ty) ->
-        // let newThen = analyseExpr isTail thenBranch
-        // let newElse = analyseExpr isTail elseBranch
-        //
-        // EIf(analyseExpr false cond, newThen, newElse, ty)
         let newThen = ETail(thenBranch, ty)
         let newElse = ETail(elseBranch, ty)
         EIf(analyseExpr false cond, newThen, newElse, ty)

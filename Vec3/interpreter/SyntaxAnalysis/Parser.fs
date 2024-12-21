@@ -1551,6 +1551,11 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
             | None -> return (state, SVariableDeclaration(name, expr, varType))
     }
 
+/// <summary>
+/// Parses an operator declaration.
+/// </summary>
+/// <param name="state">The parser state.</param>
+/// <returns>The new state and the parsed statement.</returns>
 and operatorDecl (state: ParserState) : ParseResult<Stmt> =
     let state = setLabel state "Operator"
 

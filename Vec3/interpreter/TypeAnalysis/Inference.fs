@@ -491,10 +491,8 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                | EGrouping(expr, _) -> isPure expr // Simple Wrapper
                | _ -> false // We can then assume any other expression is not pure.
 
-        // Infer the body of the lambda
-        infer aliases newEnv body
-        |> Result.bind (fun (bodyType, sub, expr) ->
-            // Substitute the new types into the lambda type
+        result {
+            let! bodyType, sub, expr = infer aliases newEnv body
             let paramTypes = List.map (applySubstitution aliases sub) paramTypes
             let paramList = List.zip paramList paramTypes // F# doesn't have zip with unfortunately
             let paramList = List.map (fun (id, typ) -> (id, Some typ)) paramList
@@ -502,25 +500,22 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
 
             // Return type either must be unified with the body type, or immediately substituted with the body type
             let returnT = Option.defaultValue (TTypeVariable(freshTypeVar ())) returnT
+            let! sub' = unify aliases bodyType returnT
+            let sub = combineMaps sub sub'
+            let returnT = applySubstitution aliases sub returnT
 
-            unify aliases bodyType returnT
-            |> Result.bind (fun sub' ->
-                let sub = combineMaps sub sub'
-                let returnT = applySubstitution aliases sub returnT
-
-                Ok(
-                    TFunction(paramTypes, returnT, isPure, false),
-                    sub,
-                    ELambda(
-                        paramList,
-                        expr,
-                        Some returnT,
-                        isPure,
-                        Some(TFunction(paramTypes, returnT, isPure, false)),
-                        false
-                    )
-                )))
-
+            return
+                TFunction(paramTypes, returnT, isPure, false),
+                sub,
+                ELambda(
+                    paramList,
+                    expr,
+                    Some returnT,
+                    isPure,
+                    Some(TFunction(paramTypes, returnT, isPure, false)),
+                    false
+                )
+        }
     | ECall(callee, args, _) ->
         result {
             // Infer the type of the callee
@@ -664,8 +659,8 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                 Ok(returnType, combinedSubs, ETuple(exprs, Some returnType)))
     | EList(exprs, _) ->
         // Infer the types of the expressions in the list
-        inferArgs aliases env exprs
-        |> Result.bind (fun results ->
+        result {
+            let! results = inferArgs aliases env exprs
             let types = List.map (fun (t, _, _) -> t) results
             let subs = List.map (fun (_, sub, _) -> sub) results
             let exprs = List.map (fun (_, _, expr) -> expr) results
@@ -675,23 +670,25 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
 
             // Unify each type against each other (through a type variable)
             // Ensures that all types are the same
-            unifyWithSubstitution aliases types (List.replicate (List.length types) (TTypeVariable typeVar)) Map.empty
-            |> Result.bind (fun sub' ->
-                let combinedSubs = List.fold combineMaps Map.empty subs
-                let combinedSubs = combineMaps combinedSubs sub'
+            let! sub =
+                unifyWithSubstitution
+                    aliases
+                    types
+                    (List.replicate (List.length types) (TTypeVariable typeVar))
+                    Map.empty
 
-                // Default list type of an empty list is a type variable
-                let head =
-                    if List.length types > 0 then
-                        List.head types
-                    else
-                        TTypeVariable(freshTypeVar ())
+            let combinedSubs = List.fold combineMaps Map.empty subs
+            let sub = combineMaps combinedSubs sub
 
-                // Calculate the dims based on the number of elements in the list
-                let returnType =
-                    TTensor(applySubstitution aliases combinedSubs head, Dims(List.length types))
+            let head =
+                types |> List.tryHead |> Option.defaultValue (TTypeVariable(freshTypeVar ()))
 
-                Ok(returnType, combinedSubs, EList(exprs, Some returnType))))
+            let returnType =
+                TTensor(applySubstitution aliases sub head, Dims(List.length types))
+
+            return (returnType, sub, EList(exprs, Some returnType))
+
+        }
     | ERange(start, end_, _) ->
         result {
             let! typ1, sub2, expr2 = infer aliases env start
@@ -723,22 +720,22 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         result {
             let! t, sub, expr = infer aliases env expr
             // check its tensor
-            let innerType = TTypeVariable (freshTypeVar())
+            let innerType = TTypeVariable(freshTypeVar ())
             let! startType, sub', expr' = infer aliases env start
             let sub = combineMaps sub sub'
             let! sub' = unify aliases startType TInteger
             let sub = combineMaps sub sub'
-            
+
             let t = applySubstitution aliases sub t
             let startType = applySubstitution aliases sub startType
-            
+
             let startNum = Option.defaultValue 0 startNum
-            let unifier = TConstrain(Constrain(freshTypeVar(), fun t -> t.hasMinDims startNum))
+            let unifier = TConstrain(Constrain(freshTypeVar (), fun t -> t.hasMinDims startNum))
             let! sub' = unify aliases t unifier
             let sub = combineMaps sub sub'
             let! sub' = unify aliases startType TInteger
             let sub = combineMaps sub sub'
-            
+
             // return type is the inner type
             let returnType = innerType
             return (returnType, sub, EIndex(expr, expr', Some returnType))
@@ -748,48 +745,53 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             match start with
             | ELiteral(LNumber(LInteger n), _) -> Some n
             | _ -> None
-            
+
         let endNum =
             match end_ with
             | ELiteral(LNumber(LInteger n), _) -> Some n
             | _ -> None
-            
+
         let startNum = Option.defaultValue 0 startNum
         let endNum = Option.defaultValue -1 endNum
-        
+
         result {
             let! t, sub, expr = infer aliases env expr
             // check its tensor
-            let innerType = TTypeVariable (freshTypeVar())
+            let innerType = TTypeVariable(freshTypeVar ())
             let! startType, sub', expr' = infer aliases env start
             let sub = combineMaps sub sub'
             let! sub' = unify aliases startType TInteger
             let sub = combineMaps sub sub'
-            
+
             let! endType, sub', expr'' = infer aliases env end_
             let sub = combineMaps sub sub'
             let! sub' = unify aliases endType TInteger
             let sub = combineMaps sub sub'
-            
+
             let t = applySubstitution aliases sub t
             let startType = applySubstitution aliases sub startType
             let endType = applySubstitution aliases sub endType
-            
-            let func = if endNum = -1 then fun (t: TType) -> t.hasMinDims startNum else fun t -> t.hasMinDims endNum
-            let unifier = TConstrain(Constrain(freshTypeVar(), func))
+
+            let func =
+                if endNum = -1 then
+                    fun (t: TType) -> t.hasMinDims startNum
+                else
+                    fun t -> t.hasMinDims endNum
+
+            let unifier = TConstrain(Constrain(freshTypeVar (), func))
             let! sub' = unify aliases t unifier
             let sub = combineMaps sub sub'
             let! sub' = unify aliases startType TInteger
             let sub = combineMaps sub sub'
             let! sub' = unify aliases endType TInteger
             let sub = combineMaps sub sub'
-            
+
             // return type is the inner type
             let returnType = TTensor(innerType, Dims(endNum - startNum))
             return (returnType, sub, EIndexRange(expr, expr', expr'', Some returnType))
         }
 
- 
+
     // lot of this doesnt work,
 
     // fails on the following:
@@ -1218,7 +1220,7 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
         // todo, binding to name (create record)
         try
             let path' = if isStd then $"../../../stdlib/{path}.vec3" else path
-            
+
             let parsed = parseFile path' false
 
             let _, parsed =

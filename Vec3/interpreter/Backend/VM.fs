@@ -609,6 +609,7 @@ and callValue (vm: VM) (argCount: int) (recursive: int) : VM =
         loop vm
         
     | _ -> raise <| InvalidProgramException $"Can only call functions and closures {callee}"
+    
 and run (vm: VM) = runLoop vm
 
 and joinOutput (vm1: VM) (vm2: VM) =

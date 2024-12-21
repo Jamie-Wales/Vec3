@@ -83,10 +83,10 @@ let startRepl () =
  maybe worth being able to turn of variable resolutionr
  OR pass vm to parser to check env
 *)
-let noTcParseAndCompile (code: string) (vm: VM) =
-    match parse code true with
+let noTcParseAndCompile (code: string) (vm: VM) t =
+    match parse code t with
     | Ok(_, program) ->
-        let program = eliminate program
+        // let program = eliminate program
         let program = foldConstants program
 
         match compileProgram program with

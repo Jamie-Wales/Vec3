@@ -144,7 +144,7 @@ type NotebookWindow() as this =
 
         runButton.Click.Add(fun _ ->
             try
-                match noTcParseAndCompile editor.Text vm with
+                match noTcParseAndCompile editor.Text vm true with
                 | Some newVM ->
                     let oldOutputLength = Seq.length vm.Streams.StandardOutput.Value
                     vm <- run newVM

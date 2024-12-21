@@ -48,19 +48,11 @@ type PlotWindow() as this =
                     inputBox.Text <- ""
             )
     
-    member private this.generate (f: (double -> double)) : double array =
-        let step = 0.01
-        let x = seq { for i in -100.0 .. step .. 100.0 do yield i }
-        let y = x |> Seq.map f |> Seq.toArray
-        y
-    
     member private this.UpdatePlots(vm: VM) =
         for value in vm.Plots do
             match value with
             | VPlotFunction(title, f, start, end_, area) ->
-                let data = this.generate f
-                //plotControl.Plot.Add.Function(f) |> ignore
-                plotControl.Plot.Add.Signal(data) |> ignore
+                plotControl.Plot.Add.Function(f) |> ignore
                 plotControl.Plot.Title(title)
                 match start, end_, area with
                 | Some s, Some e, Some a ->
@@ -99,14 +91,24 @@ type PlotWindow() as this =
         try
             match currentVM with
             | Some vm ->
-                match noTcParseAndCompile input vm with
+                match noTcParseAndCompile input vm false with
                 | Some compiledVM ->
                     currentVM <- Some (run compiledVM)
+                    let topOfStack = compiledVM.Stack[Seq.length vm.Stack - 1]
+                    
+                    printfn $"Top of stack: {topOfStack}"
+                    match topOfStack with
+                    | VClosure(_, Some f)
+                    | VFunction(_, Some f) ->
+                        let builtin = SymbolicExpression.toBuiltin f
+                        let plotData = VPlotFunction ("", builtin, None, None, None)
+                        compiledVM.Plots.Add(plotData)
+                    | _ -> ()
                     this.UpdatePlots(compiledVM)
                 | None -> ()
             | None -> ()
         with ex ->
-            printfn "Error: %s" ex.Message
+            printfn $"Error: %s{ex.Message}"
             
     member this.PlotControl = plotControl
     

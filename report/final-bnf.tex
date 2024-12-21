@@ -75,6 +75,8 @@
 
 <lambda> ::=  "(" <typedexprlist> ")" "->" <expr>
             | "(" <typedexprlist> ")" ":" <type> "->" <expr>
+            | "(" <typedexprlist> ")" "{" <stmtlist> "}"
+            | "(" <typedexprlist> ")" ":" <type> "{" <stmtlist> "}"
 
 <bool> ::= "true" | "false"
 

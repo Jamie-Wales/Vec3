@@ -723,6 +723,12 @@ let integrate (expression: Expression) : Expression =
 
     inte expression |> simplify
 
+/// <summary>
+/// Find the tangent line of an expression at a given point.
+/// </summary>
+/// <param name="expression">The expression to find the tangent line of.</param>
+/// <param name="n">The point to find the tangent line at.</param>
+/// <returns>The tangent line of the expression at the given point.</returns>
 let tangentAt (expression: Expression) (n: float) : Expression =
     let derivative = differentiate expression
     let gradient = evaluate n derivative

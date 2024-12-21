@@ -448,7 +448,7 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 replInput.Text <- ""
             else
                 try
-                    match noTcParseAndCompile code replState with
+                    match noTcParseAndCompile code replState false with
                     | Some vm ->
                         let previousOutput = standardOutput.Text
                         let oldOutputLength = Seq.length replState.Streams.StandardOutput.Value

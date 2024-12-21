@@ -380,15 +380,6 @@ let lexer (input: string) : LexerResult<Token list> =
                     { position with
                         Column = position.Column + nLen }
         
-        // | 'i' :: tail | 'I' :: tail ->
-        //     Ok
-        //         { Lexeme = Number(LComplex(0.0, 1))
-        //           Position = position }
-        //     :: scan
-        //         tail
-        //         { position with
-        //             Column = position.Column + 1 }
-
         | c :: tail when isSymbol c ->
             let oRes = scOperator tail (string c)
 
