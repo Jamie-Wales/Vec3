@@ -8,6 +8,12 @@ open Microsoft.FSharp.Core
 open Vec3.Interpreter.Backend.Types
 open System
 
+let filteri (f: int -> 'T -> bool) (l: 'T list) =
+    l
+    |> List.indexed
+    |> List.filter (fun (i, x) -> f i x)
+    |> List.map snd
+
 let printValue value =
     printfn $"Printed value: {valueToString value}"
 
@@ -448,3 +454,98 @@ let bisection (f: float -> float) (a: float) (b: float) (tolerance: float) (maxI
         <| InvalidOperationException("Root not bracketed by the initial interval.")
     else
         iterate a b 0
+
+
+let rec calcDeterminant (matrix: Value) : Value =
+    match matrix with
+    | VList(rows, _) ->
+        let rows = List.map (function VList(row, _) -> row | _ -> []) rows
+        let size = List.length rows
+        if size <> List.length (List.head rows) then
+            raise <| InvalidOperationException("Matrix must be square")
+        elif size = 1 then
+            List.head (List.head rows)
+        elif size = 2 then
+            match rows with
+            | [[a; b]; [c; d]] -> subtract (multiply a d) (multiply b c)
+            | _ -> raise <| InvalidOperationException("Invalid matrix")
+        else
+            // Use first row for cofactor expansion
+            let firstRow = List.head rows
+            let rec cofactorExpansion acc index =
+                if index >= List.length firstRow then
+                    acc
+                else
+                    let element = List.item index firstRow
+                    let minorMatrix =
+                        let newRows = 
+                            rows 
+                            |> List.tail  // Skip first row
+                            |> List.map (fun r -> 
+                                r 
+                                |> filteri (fun i _ -> i <> index))  // Remove column
+                        VList(newRows |> List.map (fun r -> VList(r, LIST)), LIST)
+                    
+                    let sign = if index % 2 = 0 then 1.0 else -1.0
+                    let determinantContrib = 
+                        multiply 
+                            (multiply (VNumber(VFloat sign)) element) 
+                            (calcDeterminant minorMatrix)
+                    
+                    cofactorExpansion (add acc determinantContrib) (index + 1)
+                
+            cofactorExpansion (VNumber(VFloat 0.0)) 0
+    | _ -> raise <| InvalidOperationException("Can only calculate determinant of a matrix")
+
+let rec transposeMatrix (matrix: Value) : Value =
+    match matrix with
+    | VList(rows, _) ->
+        let rows = List.map (function VList(row, _) -> row | _ -> []) rows
+        let columns = List.init (List.length (List.head rows)) (fun i -> List.map (List.item i) rows)
+        VList(columns |> List.map (fun c -> VList(c, LIST)), LIST)
+    | _ -> raise <| InvalidOperationException("Can only transpose a matrix")
+
+let rec inverseMatrix (matrix: Value) : Value =
+    match matrix with
+    | VList(rows, _) ->
+        let det = calcDeterminant matrix
+        let _ = match castToFloat det with
+                | VNumber(VFloat 0.0) -> raise <| InvalidOperationException("Matrix is singular")
+                | _ -> ()
+        let rows = List.map (function VList(row, _) -> row | _ -> []) rows
+        let cofactorMatrix =
+            rows
+            |> List.mapi (fun i row ->
+                row
+                |> List.mapi (fun j _ ->
+                    let minorMatrix =
+                        let newRows = 
+                            rows
+                            |> filteri (fun x _ -> x <> i)
+                            |> List.map (fun r ->
+                                r
+                                |> filteri (fun y _ -> y <> j)
+                            )
+                        VList(newRows |> List.map (fun r -> VList(r, LIST)), LIST)
+                        
+                    let sign = if (i + j) % 2 = 0 then 1.0 else -1.0
+                    multiply (VNumber(VFloat sign)) (calcDeterminant minorMatrix)
+                    )
+                )
+            
+        let adjugateMatrix = transposeMatrix (VList(cofactorMatrix |> List.map (fun c -> VList(c, LIST)), LIST))
+        let inverseMatrix =
+            match adjugateMatrix with
+            | VList(rows, _) ->
+                let newRows =
+                    rows
+                    |> List.map(function
+                        | VList(row, _) -> VList(List.map (fun el -> divide el det) row, LIST)
+                        | _ -> VList([], LIST)
+                        )
+                VList(newRows, LIST)
+            | _ -> VList([], LIST)
+            
+        inverseMatrix
+    | _ -> raise <| InvalidOperationException("Can only invert a matrix")
+        

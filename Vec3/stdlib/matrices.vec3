@@ -1,0 +1,23 @@
+
+let matrix = [
+    [1, 5, 3],
+    [11, 5, 6],
+    [7, 2, 9]
+]
+
+let det = determinate(matrix)
+let inv = inverse(matrix)
+let trans = transpose(matrix)
+
+print("Matrix:")
+print(matrix)
+
+print("Determinate:")
+print(det)
+
+print("Inverse:")
+print(inv)
+
+print("Transpose:")
+print(trans)
+

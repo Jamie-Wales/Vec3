@@ -4,15 +4,16 @@
 <stmt> ::=  <expr> 
           | <vardecl>
           | <assertion>
+          | <typealias>
 
 <vardecl> ::= "let" <identifier> "=" <expr>
             | "let" <identifier> ":" <type> "=" <expr>
             | "let rec" <identifier> "=" <lambda>
-            | "let rec" <identifier> ":" <type> "=" <lambda>
             | "let async" <identifier> "=" <lambda>
-            | "let async" <identifier> ":" <type> "=" <lambda>
 
 <assertion> ::= "assert" <expr> | "assert" <expr> <string>
+
+<typealias> ::= "type" <identifier> "=" <type>
 
 <expr> ::=  <term> 
           | <term> "+" <expr> 
@@ -41,14 +42,19 @@
             | <factor> "[" <expr> ":" <expr> "]"
             | <factor> "[" <expr> ":" "]"
             | <factor> "[" ":" <expr> "]"
+            | <factor> "." <identifier>
             | <range>
             | <if>
             | "${" <expr> "}"
             | "{" <stmtlist> "}"
+            | <cast>
+
+<cast> ::= <expr> ":" <type>
 
 <unaryop> ::= "-" | "!" | "+" | <userop>
 <userop> ::= <opchar> | <opchar> <userop>
-<opchar> ::=  "!" | "@" | "#" | "$" | "%" | "^" | "&" | "*" | "-" | "+" | "=" | "<" | ">" | "?" | ":" | "|" | "~"
+<opchar> ::=  "!" | "@" | "#" | "$" | "%" | "^" | "&" 
+            | "*" | "-" | "+" | "=" | "<" | ">" | "?" | ":" | "|" | "~"
 
 <range> ::= "[" <expr> ".." <expr> "]"
 
@@ -76,6 +82,7 @@
 <int> ::= <digit> | <digit> <int>
 <float> ::= <int> "." <int>
 <rational> ::= <int> "/" <int>
+<complex> ::= <float> "+" <float> "i" | <float> "-" <float> "i" | <float> "i"
 <digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
 <identifier> ::= <letter> | <letter> <identifier>
@@ -91,6 +98,7 @@
           | "(" <typelist> ")" "->" <type> 
           | "[" <type> "]" | "(" <typelist> ")"
           | "{" <recordtypelist> "}"
+          | <identifier>
 
 <recordtypelist> ::= <identifier> ":" <type> | <identifier> ":" <type> "," <recordtypelist>
 

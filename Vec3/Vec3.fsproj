@@ -68,6 +68,7 @@
       <Content Include="stdlib\list.vec3" />
       <Content Include="stdlib\math.vec3" />
       <Content Include="stdlib\string.vec3" />
+      <Content Include="stdlib\matrices.vec3" />
         <Content Include="examples\closures.vec3" />
         <Content Include="examples\async.vec3" />
         <Content Include="examples\recursion.vec3" />

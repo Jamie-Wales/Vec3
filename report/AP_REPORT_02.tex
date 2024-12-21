@@ -52,6 +52,28 @@ The language is designed to be simple to use and understand, with a focus on str
 plotting, but with more powerful constructs such as recursive bindings, first class functions and static type inference.
 
 The language and GUI are written in F\#, using Avalonia\citep{avalonia} for the GUI and ScottPlot\citep{scottPlot} for plotting.
+    
+The language is compiled to a custom bytecode, which is then interpreted by a virtual machine. 
+The language also has the
+ability to transpile to C, which can then be compiled and run as a standalone executable, allowing for faster execution of
+the code.
+    
+It is a functional-style language, with a focus on immutability, recursion, expressions and correctness.
+
+Some of the features of the language include:
+
+\begin{itemize}
+    \item Plotting of functions and data
+    \item Recursive bindings
+    \item First class functions
+    \item Static type inference
+    \item Strongly typed vector and matrix types
+    \item Transpilation to C
+    \item Async functions
+    \item A GUI
+    \item Lots of maths utilities, many of which are implemented in the language itself
+\end{itemize}
+    
 \end{abstract}
 
 \chapter{Introduction}\label{ch:intro}
@@ -60,11 +82,20 @@ The language and GUI are written in F\#, using Avalonia\citep{avalonia} for the 
 
 Vec3 is a bytecode interpreted maths language complete with a GUI, plotting, full static type inference and various
 maths functions.
+The language is designed to be simple to use and understand, with a focus on strict mathematical expressions and plotting,
+but with more powerful constructs such as recursive bindings, first class functions and static type inference.
+The language and GUI are written in F\#, using Avalonia\citep{avalonia} for the GUI and ScottPlot\citep{scottPlot} for plotting.
 
 It also has the ability to transpile to C, which can then be compiled and run as a standalone executable, allowing for
 faster execution of the code.
 
 \section{Aims and objectives}\label{sec:aims-and-objectives}
+
+% todo: moscow
+The aim of the project is to create a simple, easy to use maths language with a focus on plotting and mathematical
+expressions, but with more powerful constructs such as recursive bindings, first class functions and static type 
+inference, and ensuring as many features, both optional and mandatory, are implemented as possible and to a high 
+standard.
 
 \chapter{Background}\label{ch:background}
 
@@ -89,6 +120,11 @@ faster execution of the code.
 \chapter{Bytecode Virtual Machine}\label{ch:compiler}
 
 \chapter{Testing}\label{ch:test}
+
+The language has been tested thoroughly using .Net's built in unit testing framework, NUnit.
+Unit tests have been written for the lexer, parser, compiler, type inference, compiler and transpiler.
+
+Additionally, tests have been written in the language itself to test the language's features.
 
 \section{Lexer testing}\label{sec:lexer-testing}
 

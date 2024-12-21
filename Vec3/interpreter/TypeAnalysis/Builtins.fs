@@ -310,6 +310,36 @@ let appendType =
     
     TFunction([ constrain; constrain ], constrain, false, true)
 
+let determType =
+    let typeVar = freshTypeVar ()
+    let dimsVar = DVar(freshTypeVar ())
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    
+    let innerTensor = TTensor(constrain, dimsVar)
+    let outerTensor = TTensor(innerTensor, dimsVar)
+
+    TFunction([ outerTensor ], constrain, false, true)
+
+let transpoteType =
+    let typeVar = freshTypeVar ()
+    let dimsVar = DVar(freshTypeVar ())
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    
+    let innerTensor = TTensor(constrain, dimsVar)
+    let outerTensor = TTensor(innerTensor, dimsVar)
+
+    TFunction([ outerTensor ], outerTensor, false, true)
+    
+let inverseType =
+    let typeVar = freshTypeVar ()
+    let dimsVar = DVar(freshTypeVar ())
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    
+    let innerTensor = TTensor(constrain, dimsVar)
+    let outerTensor = TTensor(innerTensor, dimsVar)
+    
+    TFunction([ outerTensor ], outerTensor, false, true)
+
 /// <summary>
 /// Map of built-in functions to their types.
 /// </summary>
@@ -374,6 +404,10 @@ let BuiltinFunctions: Map<BuiltInFunction, TType> =
       
       CrossProduct, crossProduct
       DotProduct, dotProduct
+      
+      Determinate, determType
+      Transpose, transpoteType
+      Inverse, inverseType
       
       Cast, castType
       

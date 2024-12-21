@@ -1008,6 +1008,37 @@ let builtins =
                 | _ -> raise <| InvalidProgramException "typeOf expects a value"),
             "TypeOf"
         )
+      
+      Identifier "determinate",
+        VBuiltin(
+            (fun args ->
+                match args with
+                | [ matrix ] ->
+                    calcDeterminant matrix
+                | _ -> raise <| InvalidProgramException "determinant expects a 2x2 matrix"),
+            "Determinant"
+        )
+      
+      Identifier "transpose",
+        VBuiltin(
+            (fun args ->
+                match args with
+                | [ matrix ] ->
+                    transposeMatrix matrix
+                | _ -> raise <| InvalidProgramException "transpose expects a matrix"),
+            "Transpose"
+        )
+        
+      Identifier "inverse",
+        VBuiltin(
+            (fun args ->
+                match args with
+                | [ matrix ] ->
+                    inverseMatrix matrix
+                | _ -> raise <| InvalidProgramException "inverse expects a matrix"),
+            "Inverse"
+        )
+        
       ]
 
 

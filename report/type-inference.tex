@@ -212,8 +212,7 @@ operator for integer addition and the \textit{+.} operator for float addition, w
 as it would be unintuitive for a mathematician.
 
 Examples of ML style languages that do support ad-hoc polymorphism are F\#, which uses static member functions on 
-types to achieve operator overloading\citep{fsharpdocs}, and Haskell, which uses type classes
-\citep{haskellDocs} (constructs that define behaviour for a type, similarly to interfaces in object-oriented languages).
+types to achieve operator overloading\citep{fsharpdocs}, and Haskell, which uses type classes\citep{haskellDocs} (constructs that define behaviour for a type, similarly to interfaces in object-oriented languages).
 
 The way this issue was solved in Vec3 is by introducing the concept of \textit{Constraint types}, which could be 
 likened to a slightly less powerful version of type classes in Haskell.
@@ -229,11 +228,11 @@ For example, consider the type of the \textit{+} operator:
 (+) :: Constraint (a, supportsArithmetic) -> Constraint (a, supportsArithmetic) -> a
 \end{minted}
 
-Then when the operator is used with say two ints, the first constrain would be unified with the type 
+Then, when the operator is used with say two ints, the first constrain would be unified with the type 
 \textit{int} (as the int type passes the \textit{isArithmetic} function), and the type variable \textit{a} would be 
 replaced with \textit{int}.
 The second int would then be unified with the type \textit{int}, and the unification would be successful.
-However, if the operator was used with an rational and a float, the first constraint would be unified with the type
+However, if the operator was used with a rational and a float, the first constraint would be unified with the type
 \textit{rational}, replacing the type variable \textit{a} with \textit{rational}, and the second constraint would be 
 unified 
 with the type rational, which does not unify with float, and so the unification would fail.
@@ -266,15 +265,12 @@ language.
 Another key feature present in the type system is the encoding of vector lengths.
 
 The type of a vector looks like \textit{Vector of Type * Dims}, where \textit{Type} is the type of the elements, and \textit{Dims} is an integer representing the number of dimensions.
-
 This means that a vector \textit{[1,2,3]} is inferred to be of type \textit{Vector of int * 3}.
-
 This allows for the type system to catch errors such as adding two vectors of different lengths, or only allowing the \textit{cross product} 
 function to be called on vectors of length 3.
 
 This is a powerful feature as it allows for the type system to catch errors that would otherwise only be caught at 
 runtime with standard type inference.
-
 In its current state, it also allows for slight \textit{refinement types}\citep{freeman1991refinement}, which are types that are dependent on values, such as the length of a vector.
 
 Examples of this catching an otherwise runtime error is shown in the following code:
@@ -288,9 +284,24 @@ let d = [1,2,3]
 let e = d[4] // Error: Index out of bounds
 \end{minted}
 
-The latter example is currently very simple, and only catches out of bound errors during indexing with constant 
+The latter example is currently very simple, and only catches out of bound errors during indexing with constant
 values, but could be extended to catch more complex errors in the future.
-    
+
+Another use case for this is during matrix operations, where the type system can ensure that the dimensions of the
+matrices are correct, preventing errors such as finding the transpose of a non-square matrix:
+
+\begin{minted}{fsharp}
+let a = [[1,2,3], [4,5,6]]
+let b = transpose(a) // Error: Matrix must be square
+\end{minted}
+
+Furthermore, the inner tensors of a matrix are also encoded with their dimensions, allowing for the type system to catch
+errors such as accidentally creating a matrix with rows of different lengths:
+
+\begin{minted}{fsharp}
+let a = [[1,2,3], [4,5]] // Error: Rows must be of the same length
+\end{minted}
+
 One thing to note however is that the dimensions of a vector are lost fairly easily, for example during 
 \textit{cons}, as it is not powerful enough to infer the length of the resulting vector.
 
@@ -303,7 +314,8 @@ The purity of a function is also determined during type inference, with the type
 pure if it is made up of only pure functions, with the base pure functions being built in.
 
 This allows for, for example, the \textit{plotFunc} (\ref{sec:plotting}) ensuring that only pure functions can be 
-passed to it, preventing a user from passing a function that has side effects (which would likely cause a runtime error).
+passed to it, preventing a user from passing a function that has side effects (which would likely cause a runtime 
+error otherwise).
 
 It also allows for easy dead code elimination, as a call to a function that has no side effects can be removed if the
 result is not used.

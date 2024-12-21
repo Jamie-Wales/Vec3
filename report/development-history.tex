@@ -18,7 +18,8 @@ operators, parsed with Pratt parsing.
 \section{Sprint 2: Variable assignment}\label{sec:variable-assignment}
 
 In this sprint we added variable assignment to the parser, with the ability to bind an expression to a variable 
-name, as well as a few new operators such as \texttt{\%} for modulo and \texttt{^} for exponentiation and unary operators.
+name, as well as a few new operators such as \textit{==} for equality and \textit{\%} for modulo, as well as 
+unary operators.
 
 \subsection{Grammar in BNF}\label{subsec:grammar-in-bnf2}
 
@@ -74,7 +75,6 @@ We did not change the grammar in this sprint.
 
 In this sprint we added the ability to define and call functions, with a simple lambda syntax of the form 
 \texttt{(\textit{args}) -> \textit{expr}} and function calls of the form \texttt{\textit{funcName / lambda}(\textit{args})}.
-
 Call by value semantics were used, with a new environment created for each function call, consisting of the arguments
 bound to the parameter names and the parent environment.
 
@@ -255,6 +255,7 @@ Other compound data types such as tuples and records were also added.
             | <factor> "(" <exprlist> ")"
             | <factor> "." <identifier>
             | <factor> "[" <expr> "]"
+            | <factor> "." <identifier>
             | <factor> "[" <expr> ":" <expr> "]"
             | <factor> "[" <expr> ":" "]"
             | <factor> "[" ":" <expr> "]"
@@ -305,7 +306,8 @@ Other compound data types such as tuples and records were also added.
 \section{Sprint 9: Maths Functions}\label{sec:maths-funcs}
 
 In this sprint we added a number of maths functions to the language, including \texttt{sin}, \texttt{cos}, \texttt{tan},
-\texttt{asin}, \texttt{acos} and others, and added the ability to plot functions, both built in and user defined.
+\texttt{asin}, \texttt{acos} and other, including vector operations, and added the ability to plot functions, both 
+built in and user defined.
 
 \subsection{Grammar in BNF}\label{subsec:grammar-in-bnf9}
 

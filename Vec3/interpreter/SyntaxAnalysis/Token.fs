@@ -363,6 +363,9 @@ type BuiltInFunction =
 
     | CrossProduct
     | DotProduct
+    | Determinate
+    | Inverse
+    | Transpose
 
     | Cast
 
@@ -423,6 +426,10 @@ let builtInFunctionMap =
       Identifier "BUILTIN_TRUNC", BuiltInFunction.Trunc
 
       Identifier "draw", BuiltInFunction.Draw
+      
+      Identifier "determinate", BuiltInFunction.Determinate
+      Identifier "inverse", BuiltInFunction.Inverse
+      Identifier "transpose", BuiltInFunction.Transpose
 
       Identifier "newtonRaphson", BuiltInFunction.NewtonRaphson
       Identifier "bisection", BuiltInFunction.Bisection
@@ -549,3 +556,6 @@ let hasSideEffects =
     | Time -> true
     | Join -> true
     | TypeOf -> true
+    | Determinate -> false
+    | Inverse -> false
+    | Transpose -> false
