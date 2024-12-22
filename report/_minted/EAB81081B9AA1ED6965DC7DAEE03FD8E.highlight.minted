@@ -1,0 +1,6 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{findIntegral}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{f}\PYG{o}{,}\PYG{+w}{ }\PYG{n}{a}\PYG{o}{,}\PYG{+w}{ }\PYG{n}{b}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{\PYGZob{}}
+\PYG{+w}{    }\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{integral}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{integrate}\PYG{o}{(}\PYG{n}{f}\PYG{o}{)}
+\PYG{+w}{    }\PYG{n}{integral}\PYG{o}{(}\PYG{n}{b}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{n}{integral}\PYG{o}{(}\PYG{n}{a}\PYG{o}{)}
+\PYG{o}{\PYGZcb{}}
+\end{MintedVerbatim}

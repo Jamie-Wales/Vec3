@@ -76,6 +76,8 @@ Some of the features of the language include:
     \item Lots of maths utilities, many of which are implemented in the language itself
 \end{itemize}
     
+We used an agile approach during development, where we would work on features in small iterations, with regular meetings
+and discussions to ensure we were on track.
 \end{abstract}
 
 \chapter{Introduction}\label{ch:intro}
@@ -98,6 +100,42 @@ The aim of the project is to create an easy to use maths language with a focus o
 expressions, but with more powerful constructs such as recursive bindings, first class functions and static type 
 inference, and ensuring as many features, both optional and mandatory, are implemented as possible and to a high 
 standard.
+
+\begin{table}[h]
+    \caption{MoSCoW}
+    \begin{center}
+        \begin{tabular}{|p{1in}|p{2in}|p{2.5in}|} \hline
+        Priority & Task & Comments \\ \hline \hline
+        \multirow{3}{1in}{Must}
+        & Arithmetic operations & +, -, /, *, \%, ^ \\ \cline{2-3}
+        & Plotting & Plotting of functions and data \\ \cline{2-3}
+        & Functions & User defined functions \\ \cline{2-3}
+        & GUI & A GUI for the language with a text editor \\ \cline{2-3}
+        & Maths tools & Lots of maths utilities (cos, etc) \\ \cline{2-3}
+        \multirow{3}{1in}{Should}
+        & Static typing & Static typing and analysis \\ \cline{2-3}
+        & First class functions & First class functions \\ \cline{2-3}
+        & Control flow & If statements, loops \\ \cline{2-3}
+        & Compound data types & Vectors, matrices, records \\ \cline{2-3}
+        \multirow{3}{1in}{Could}
+        & Compilation & ByteCode compilation and interpretation \\ \cline{2-3}
+        & Transpilation & Transpilation to C \\ \cline{2-3}
+        & Async & Async functions \\ \cline{2-3}
+        & Static type inference & Hindler-Miller type inference \\ \cline{2-3}
+        & Error handling & Error handling \\ \cline{2-3}
+        & Recursion & Recursive bindings \\ \cline{2-3}
+        & Drawing & Drawing on the GUI \\ \cline{2-3}
+        & Importing & Importing of external libraries \\ \cline{2-3}
+        \multirow{3}{1in}{Should not}
+        & Compilation & Compilation directly to ASM \\ \cline{2-3}
+        & Transpilation & Transpilation to other languages \\ \cline{2-3}
+        & GUI & A web-based GUI \\ \cline{2-3}
+        & FFI & Foreign function interface \\ \cline{2-3}
+        \end{tabular}
+        \label{Table1}
+    \end{center}
+\end{table}
+
 
 \chapter{Background}\label{ch:background}
 

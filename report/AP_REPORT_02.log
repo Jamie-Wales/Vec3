@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  21 DEC 2024 17:30
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  22 DEC 2024 16:24
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -581,10 +581,41 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.79 \end{abstract}
+l.81 \end{abstract}
                     [1{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-su
 per/cm-super-ts1.enc}]
 Chapter 1.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 107
+.
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 107
+.
+
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
+! Missing $ inserted.
+<inserted text> 
+                $
+l.110 ...Arithmetic operations & +, -, /, *, \%, ^
+                                                   \\ \cline{2-3}
+? 
+! Missing $ inserted.
+<inserted text> 
+                $
+l.110 ... operations & +, -, /, *, \%, ^ \\ \cline
+                                                  {2-3}
+? 
+
+Overfull \hbox (8.48497pt too wide) in paragraph at lines 107--136
+ [] 
+ []
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
 
 
 
@@ -592,20 +623,22 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.102 \chapter
+l.140 \chapter
               {Background}\label{ch:background} [1
 
 ]
+
+[2]
 Chapter 2.
 
 
-[2
+[3
 
 ]
 Chapter 3.
 (./development-history.tex
 
-[3
+[4
 
 ]
 Overfull \hbox (86.63321pt too wide) in paragraph at lines 63--63
@@ -615,20 +648,6 @@ h" | "i" | "j" | "k" | "l" | "m"[]
 
 
 Overfull \hbox (86.63321pt too wide) in paragraph at lines 63--63
-[]            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
-u" | "v" | "w" | "x" | "y" | "z"[] 
- []
-
-
-
-[4]
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 130--130
-[]\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
-h" | "i" | "j" | "k" | "l" | "m"[] 
- []
-
-
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 130--130
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
@@ -636,6 +655,20 @@ u" | "v" | "w" | "x" | "y" | "z"[]
 
 
 [5]
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 130--130
+[]\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
+h" | "i" | "j" | "k" | "l" | "m"[] 
+ []
+
+
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 130--130
+[]            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
+u" | "v" | "w" | "x" | "y" | "z"[] 
+ []
+
+
+
+[6]
 Overfull \hbox (86.63321pt too wide) in paragraph at lines 198--198
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
@@ -649,7 +682,7 @@ u" | "v" | "w" | "x" | "y" | "z"[]
 
 
 
-[6]
+[7]
 Overfull \hbox (178.61221pt too wide) in paragraph at lines 304--304
 []\OT1/cmtt/m/n/10.95 <literal> ::= <number> | <identifier> | <bool> | <list> |
  <lambda> | <string> | "()" | <tuple> | <record>[] 
@@ -657,7 +690,7 @@ Overfull \hbox (178.61221pt too wide) in paragraph at lines 304--304
 
 
 
-[7]
+[8]
 Overfull \hbox (86.63321pt too wide) in paragraph at lines 304--304
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
@@ -677,7 +710,7 @@ r> ":" <type> "," <recordtypelist>[]
 
 
 
-[8]
+[9]
 Overfull \hbox (178.61221pt too wide) in paragraph at lines 408--408
 []\OT1/cmtt/m/n/10.95 <literal> ::= <number> | <identifier> | <bool> | <list> |
  <lambda> | <string> | "()" | <tuple> | <record>[] 
@@ -685,7 +718,7 @@ Overfull \hbox (178.61221pt too wide) in paragraph at lines 408--408
 
 
 
-[9]
+[10]
 Overfull \hbox (86.63321pt too wide) in paragraph at lines 408--408
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
@@ -705,11 +738,11 @@ r> ":" <type> "," <recordtypelist>[]
 
 )
 
-[10]
+[11]
 Chapter 4.
 (./final-deliverable.tex (./final-bnf.tex
 
-[11
+[12
 
 ]
 Overfull \hbox (178.61221pt too wide) in paragraph at lines 108--108
@@ -737,7 +770,7 @@ u" | "v" | "w" | "x" | "y" | "z"[]
 
 
 
-[12]
+[13]
 Overfull \hbox (98.13058pt too wide) in paragraph at lines 108--108
 []\OT1/cmtt/m/n/10.95 <recordtypelist> ::= <identifier> ":" <type> | <identifie
 r> ":" <type> "," <recordtypelist>[] 
@@ -746,11 +779,11 @@ r> ":" <type> "," <recordtypelist>[]
 \pydata@fh@_E017103BDF0CAED79F13B8F548EAF24E.data.minted=\write5
 \openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
 
-runsystem(latexminted config  --timestamp 20241221173028Z E017103BDF0CAED79F13B
+runsystem(latexminted config  --timestamp 20241222162409Z E017103BDF0CAED79F13B
 8F548EAF24E)...executed safely (allowed).
 
 (./_E017103BDF0CAED79F13B8F548EAF24E.config.minted)
-runsystem(latexminted cleanconfig  --timestamp 20241221173028Z E017103BDF0CAED7
+runsystem(latexminted cleanconfig  --timestamp 20241222162409Z E017103BDF0CAED7
 9F13B8F548EAF24E)...executed safely (allowed).
 
 
@@ -760,107 +793,127 @@ LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <10.95> not available
 (Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 5.
 
 
-[13])) (./_minted/F7CB97C4481211FE7B7A2BECBCC454DA.highlight.minted)
+[14])) (./_minted/F7CB97C4481211FE7B7A2BECBCC454DA.highlight.minted)
 (./_minted/36EF230F4C7E8CBDBE836838F0CAEC87.highlight.minted
 
-[14]) (./_minted/7B293B2FFC7057B786CBB1CC553B17FF.highlight.minted)
+[15]) (./_minted/7B293B2FFC7057B786CBB1CC553B17FF.highlight.minted)
+(./_minted/5A9951D97F313ED4504AC2BB26B29E0F.highlight.minted)
 (./_minted/E2D3A820EB4CA488CD41D50F3B850039.highlight.minted)
 (./_minted/EAB81081B9AA1ED6965DC7DAEE03FD8E.highlight.minted)
 (./_minted/635305B7C7508668CB9996B23449E3FC.highlight.minted)
-(./_minted/26A858ACD3E5527240FEAE15EA4BE4CA.highlight.minted)
-(./_minted/AE5E64C937F5E8B4F080AB36E0BA22D7.highlight.minted
 
-[15])
-LaTeX Font Info:    Trying to load font information for U+msa on input line 151
-.
- (/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd
-File: umsa.fd 2013/01/14 v3.01 AMS symbols A
-)
-LaTeX Font Info:    Trying to load font information for U+msb on input line 151
-.
+[16] (./_minted/26A858ACD3E5527240FEAE15EA4BE4CA.highlight.minted)
+(./_minted/AE5E64C937F5E8B4F080AB36E0BA22D7.highlight.minted)
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd
-File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
+[17] (./type-inference.tex
 
-[16] (./type-inference.tex
-
-[17]
+[18]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 42.
 
 
-[18]
+[19]
 
-[19] (./_minted/F40D6D54477465BCEECC8B6E7E04BEDD.highlight.minted)
+[20] (./_minted/F40D6D54477465BCEECC8B6E7E04BEDD.highlight.minted)
 (./_minted/076F0DA663A8573A8B256E046112D377.highlight.minted)
 (./_minted/AC0986121432020082BA3A06BCD36FF6.highlight.minted)
 (./_minted/AC94E63AF40D12F1A6580BD8F2133C69.highlight.minted)
 
-[20] (./_minted/34D0082645AAFF1AED91CC877C506064.highlight.minted)
+[21] (./_minted/34D0082645AAFF1AED91CC877C506064.highlight.minted)
 (./_minted/10150E2A538D7F776F7D32D6B708C9CC.highlight.minted)
 
-[21] (./_minted/993C00FACF51BCA98D2B5063B1CC21F6.highlight.minted)
+[22] (./_minted/993C00FACF51BCA98D2B5063B1CC21F6.highlight.minted)
 (./_minted/1104360283957BF0578D4E7C2DA67863.highlight.minted)
 (./_minted/E807680B3EE48BD6D50D0194B49FDD9B.highlight.minted))
 
-[22]
-
 [23]
-Overfull \hbox (57.94174pt too wide) in paragraph at lines 299--302
+
+[24]
+Overfull \hbox (57.94174pt too wide) in paragraph at lines 303--306
 []\OT1/cmr/m/n/10.95 To fa-cil-i-tate de-bug-ging, a dis-as-sem-bler was im-ple
 -mented. Func-tions like \OT1/cmtt/m/n/10.95 disassembleInstruction
  []
 
 
 
-[24] (./_minted/F66DA172101949CB7B6861F72C7D121C.highlight.minted)
+[25] (./_minted/F66DA172101949CB7B6861F72C7D121C.highlight.minted)
 
-[25] (./_minted/E0FD7F009609B04AE18EBAFCE9FF1106.highlight.minted)
-! Undefined control sequence.
-l.383 \todo
-           {Add images of plots}
-? 
-! Undefined control sequence.
-l.390 \todo
-           {Add images of plots}
-? 
+[26] (./_minted/F660FE74DC6363BFEC4729AEFBC55AF5.highlight.minted)
+(./_minted/163044B25EB141E7E7BE98D0B1ADC320.highlight.minted)
+<scatterPlot.png, id=485, 794.97pt x 597.23125pt>
+File: scatterPlot.png Graphic file (type png)
+<use scatterPlot.png>
+Package pdftex.def Info: scatterPlot.png  used on input line 412.
+(pdftex.def)             Requested size: 340.0013pt x 255.43747pt.
+
+
+[27]
+<barChart.png, id=495, 797.98125pt x 598.235pt>
+File: barChart.png Graphic file (type png)
+<use barChart.png>
+Package pdftex.def Info: barChart.png  used on input line 425.
+(pdftex.def)             Requested size: 340.0013pt x 254.89006pt.
+ (./_minted/496284844B6A45E1BB99A6B6443B29E7.highlight.minted
+
+[28 <./scatterPlot.png> <./barChart.png>])
+<polynomialPlot.png, id=505, 799.98875pt x 598.235pt>
+File: polynomialPlot.png Graphic file (type png)
+<use polynomialPlot.png>
+Package pdftex.def Info: polynomialPlot.png  used on input line 445.
+(pdftex.def)             Requested size: 340.0013pt x 254.25107pt.
+
+(./_minted/FCBAB69BF9AD898EBBAAEEACFDFE8786.highlight.minted)
+<multiplePlots.png, id=507, 793.96625pt x 600.2425pt>
+File: multiplePlots.png Graphic file (type png)
+<use multiplePlots.png>
+Package pdftex.def Info: multiplePlots.png  used on input line 469.
+(pdftex.def)             Requested size: 340.0013pt x 257.04596pt.
+
+
+[29 <./polynomialPlot.png>]
+<plotInput.png, id=518, 787.94376pt x 43.16125pt>
+File: plotInput.png Graphic file (type png)
+<use plotInput.png>
+Package pdftex.def Info: plotInput.png  used on input line 482.
+(pdftex.def)             Requested size: 340.0013pt x 18.62416pt.
+
 (./_minted/CB3B4529D532F8DD9E96112D36DB8CB4.highlight.minted)
+(./_minted/E6C392DADA90F89F225476F1CE2866E4.highlight.minted
 
-[26] (./_minted/E6C392DADA90F89F225476F1CE2866E4.highlight.minted)
+[30 <./multiplePlots.png> <./plotInput.png>])
 ! Undefined control sequence.
-l.437 \todo
+l.523 \todo
            {Add images of drawings}
 ? 
 )
 
-[27]
+[31]
 Chapter 5.
 (./AP_REPORT_02.bbl
 
-[28
+[32
 
 ])
 
-[29
+[33
 
 ]
 Appendix A.
 
 
-[30
+[34
 
 ]
 Appendix B.
 
 
-[31
+[35
 
 ]
 Appendix C.
 
 
-[32
+[36
 
 ] (./AP_REPORT_02.aux)
  ***********
@@ -871,30 +924,31 @@ Package rerunfilecheck Info: File `AP_REPORT_02.out' has not changed.
 (rerunfilecheck)             Checksum: 5234B577AC57243178D71AAA88EF3A09;9390.
  ) 
 Here is how much of TeX's memory you used:
- 18246 strings out of 473362
- 346923 string characters out of 5720983
- 848250 words of memory out of 5000000
- 40908 multiletter control sequences out of 15000+600000
- 568680 words of font info for 74 fonts, out of 8000000 for 9000
+ 18362 strings out of 473362
+ 350103 string characters out of 5720983
+ 851516 words of memory out of 5000000
+ 40997 multiletter control sequences out of 15000+600000
+ 569039 words of font info for 75 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 85i,6n,93p,989b,932s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 85i,12n,93p,989b,932s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 ></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
-</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmitt10.pfb>
-</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><
-/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></u
-sr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr
-/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/l
-ocal/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/loca
-l/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/t
-exlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/te
-xlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/tex
-live/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texl
-ive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on AP_REPORT_02.pdf (34 pages, 268413 bytes).
+</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb
+></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmitt10.pfb
+></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb>
+</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></
+usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></us
+r/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/
+local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/loc
+al/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/
+texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/t
+exlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/te
+xlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/tex
+live/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
+Output written on AP_REPORT_02.pdf (38 pages, 655997 bytes).
 PDF statistics:
- 606 PDF objects out of 1000 (max. 8388607)
- 538 compressed objects within 6 object streams
- 128 named destinations out of 1000 (max. 500000)
- 537 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 658 PDF objects out of 1000 (max. 8388607)
+ 574 compressed objects within 6 object streams
+ 142 named destinations out of 1000 (max. 500000)
+ 562 words of extra memory for PDF output out of 10000 (max. 10000000)
 

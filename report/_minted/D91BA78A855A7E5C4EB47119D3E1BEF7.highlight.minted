@@ -1,0 +1,69 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{l+s+sd}{/// \PYGZlt{}summary\PYGZgt{}}
+\PYG{l+s+sd}{/// The AST of the language.}
+\PYG{l+s+sd}{/// \PYGZlt{}/summary\PYGZgt{}}
+\PYG{k}{type}\PYG{+w}{ }\PYG{n+nc}{Expr}\PYG{+w}{ }\PYG{o}{=}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{ELiteral}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Literal}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{EIdentifier}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Token}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{EGrouping}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{EIf}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{ETernary}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{EList}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{k+kt}{list}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{ETuple}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{k+kt}{list}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{ECall}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{k+kt}{list}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+
+\PYG{+w}{    }\PYG{l+s+sd}{/// \PYGZlt{}summary\PYGZgt{}}
+\PYG{+w}{    }\PYG{l+s+sd}{/// Indexing operation on a list or tensor.}
+\PYG{+w}{    }\PYG{l+s+sd}{/// Expr (list or tensor), (index), type}
+\PYG{+w}{    }\PYG{l+s+sd}{/// Allows for indexing in the form l[1]}
+\PYG{+w}{    }\PYG{l+s+sd}{/// \PYGZlt{}/summary\PYGZgt{}}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{EIndex}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+
+\PYG{+w}{    }\PYG{l+s+sd}{/// \PYGZlt{}summary\PYGZgt{}}
+\PYG{+w}{    }\PYG{l+s+sd}{/// Indexing with a range operation on a list or tensor.}
+\PYG{+w}{    }\PYG{l+s+sd}{/// Expr (list or tensor), start, end, type}
+\PYG{+w}{    }\PYG{l+s+sd}{/// Allows for indexing in the form l[..1] or l[1..2] or l[1..]}
+\PYG{+w}{    }\PYG{l+s+sd}{/// \PYGZlt{}/summary\PYGZgt{}}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{EIndexRange}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+
+\PYG{+w}{    }\PYG{l+s+sd}{/// \PYGZlt{}summary\PYGZgt{}}
+\PYG{+w}{    }\PYG{l+s+sd}{/// A lambda expression with a list of arguments, a body, a return type, a pure flag, and a type.}
+\PYG{+w}{    }\PYG{l+s+sd}{/// \PYGZlt{}/summary\PYGZgt{}}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{ELambda}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{Token}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}\PYG{o}{)}\PYG{+w}{ }\PYG{k+kt}{list}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{k+kt}{bool}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{k+kt}{bool}\PYG{+w}{ }\PYG{c+c1}{// bool is pure flag}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{EBlock}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Stmt}\PYG{+w}{ }\PYG{k+kt}{list}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{k+kt}{bool}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}\PYG{+w}{ }\PYG{c+c1}{// bool is whether block is part of a function}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{ERange}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{ERecordSelect}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Token}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+
+\PYG{+w}{    }\PYG{l+s+sd}{/// \PYGZlt{}summary\PYGZgt{}}
+\PYG{+w}{    }\PYG{l+s+sd}{/// Records represented recursively as a row type.}
+\PYG{+w}{    }\PYG{l+s+sd}{/// \PYGZlt{}/summary\PYGZgt{}}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{ERecordExtend}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{Token}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{ERecordRestrict}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Token}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{ERecordEmpty}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Type}
+
+\PYG{+w}{    }\PYG{l+s+sd}{/// \PYGZlt{}summary\PYGZgt{}}
+\PYG{+w}{    }\PYG{l+s+sd}{/// Unevaluated code block.}
+\PYG{+w}{    }\PYG{l+s+sd}{/// \PYGZlt{}/summary\PYGZgt{}}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{ECodeBlock}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}
+
+\PYG{+w}{    }\PYG{l+s+sd}{/// \PYGZlt{}summary\PYGZgt{}}
+\PYG{+w}{    }\PYG{l+s+sd}{/// A tail call (for tail recursion).}
+\PYG{+w}{    }\PYG{l+s+sd}{/// \PYGZlt{}/summary\PYGZgt{}}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{ETail}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+
+\PYG{l+s+sd}{/// \PYGZlt{}summary\PYGZgt{}}
+\PYG{l+s+sd}{/// A statement in the language (something that does not return a value).}
+\PYG{l+s+sd}{/// \PYGZlt{}/summary\PYGZgt{}}
+\PYG{o+ow}{and}\PYG{+w}{ }\PYG{n}{Stmt}\PYG{+w}{ }\PYG{o}{=}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{SExpression}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{SVariableDeclaration}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Token}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{SAssertStatement}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{n}{option}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{STypeDeclaration}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Token}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{SRecFunc}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Token}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{Token}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}\PYG{o}{)}\PYG{+w}{ }\PYG{k+kt}{list}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{SAsync}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Token}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{Token}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}\PYG{o}{)}\PYG{+w}{ }\PYG{k+kt}{list}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Expr}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}
+\PYG{+w}{    }\PYG{o}{|}\PYG{+w}{ }\PYG{n}{SImport}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n}{Token}\PYG{+w}{ }\PYG{n}{option}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{k+kt}{string}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{k+kt}{bool}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{Type}\PYG{+w}{ }\PYG{n}{option}\PYG{+w}{ }\PYG{c+c1}{// maybe binding name, module name (path), isstd, type}
+\end{MintedVerbatim}

@@ -1,0 +1,11 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{+w}{    }\PYG{k}{type}\PYG{+w}{ }\PYG{n+nc}{DrawConfig}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{\PYGZob{}}
+\PYG{+w}{        }\PYG{n}{x}\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{float}\PYG{o}{,}
+\PYG{+w}{        }\PYG{n}{y}\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{float}\PYG{o}{,}
+\PYG{+w}{        }\PYG{n}{width}\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{float}\PYG{o}{,}
+\PYG{+w}{        }\PYG{n}{height}\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{float}\PYG{o}{,}
+\PYG{+w}{        }\PYG{n}{color}\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{string}\PYG{o}{,}
+\PYG{+w}{        }\PYG{n}{shape}\PYG{o}{:}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{rectangle}\PYG{l+s}{\PYGZdq{}}\PYG{+w}{ }\PYG{o}{|}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{circle}\PYG{l+s}{\PYGZdq{}}\PYG{o}{,}
+\PYG{+w}{        }\PYG{n}{trace}\PYG{o}{?}\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{bool}\PYG{o}{,}
+\PYG{+w}{    }\PYG{o}{\PYGZcb{}}
+\end{MintedVerbatim}

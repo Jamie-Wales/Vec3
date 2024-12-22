@@ -1,0 +1,9 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{l}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{[}\PYG{l+m+mi}{1}\PYG{o}{,}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{o}{,}\PYG{+w}{ }\PYG{l+m+mi}{3}\PYG{o}{]}
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{l1}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{l}\PYG{o}{[}\PYG{l+m+mi}{0}\PYG{o}{]}
+
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{t}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{(}\PYG{l+m+mi}{1}\PYG{o}{,}\PYG{+w}{ }\PYG{k}{true}\PYG{o}{,}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{this is a tuple}\PYG{l+s}{\PYGZdq{}}\PYG{o}{)}
+
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{r}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{\PYGZob{}}\PYG{+w}{ }\PYG{n}{x}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{o}{,}\PYG{+w}{ }\PYG{n}{y}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{+w}{ }\PYG{o}{\PYGZcb{}}
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{r1}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{r}\PYG{o}{.}\PYG{n}{x}
+\end{MintedVerbatim}

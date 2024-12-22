@@ -1,0 +1,8 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{polynomial}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{x}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{n}{x}\PYG{o}{\PYGZca{}}\PYG{l+m+mi}{2}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{o}{.}\PYG{l+m+mi}{0}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{x}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{o}{.}\PYG{l+m+mi}{0}
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{derivate}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{differentiate}\PYG{o}{(}\PYG{n}{polynomial}\PYG{o}{)}\PYG{+w}{ }\PYG{c+c1}{// find the derivative of the polynomial}
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{integrand}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{integrate}\PYG{o}{(}\PYG{n}{polynomial}\PYG{o}{)}\PYG{+w}{ }\PYG{c+c1}{// find the integral of the polynomial}
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{tangentFunc}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{tangentFunc}\PYG{o}{(}\PYG{n}{polynomial}\PYG{o}{,}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{o}{.}\PYG{l+m+mi}{0}\PYG{o}{)}\PYG{+w}{ }\PYG{c+c1}{// find the tangent function at x = 2.0}
+
+\PYG{n}{plotFuncs}\PYG{o}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{Polynomial}\PYG{l+s}{\PYGZdq{}}\PYG{o}{,}\PYG{+w}{ }\PYG{o}{[}\PYG{n}{polynomial}\PYG{o}{,}\PYG{+w}{ }\PYG{n}{derivate}\PYG{o}{,}\PYG{+w}{ }\PYG{n}{integrand}\PYG{o}{,}\PYG{+w}{ }\PYG{n}{tangentFunc}\PYG{o}{]}\PYG{o}{)}
+\end{MintedVerbatim}

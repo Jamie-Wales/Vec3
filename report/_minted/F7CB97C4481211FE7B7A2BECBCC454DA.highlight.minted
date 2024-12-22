@@ -1,0 +1,7 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{// Define a binary operator}
+\PYG{k}{let}\PYG{+w}{ }\PYG{o}{(}\PYG{o}{|}\PYG{o}{+}\PYG{o}{|}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{a}\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{float}\PYG{o}{,}\PYG{+w}{ }\PYG{n}{b}\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{float}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{n}{a}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{b}
+
+\PYG{c+c1}{// Define a unary operator}
+\PYG{k}{let}\PYG{+w}{ }\PYG{o}{(}\PYG{o}{|}\PYG{o}{!|}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{a}\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{bool}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{o+ow}{not}\PYG{+w}{ }\PYG{n}{a}
+\end{MintedVerbatim}

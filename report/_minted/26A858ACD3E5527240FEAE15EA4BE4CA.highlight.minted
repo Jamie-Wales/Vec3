@@ -1,0 +1,5 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{async}\PYG{+w}{ }\PYG{n}{longCalc}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{sum}\PYG{o}{(}\PYG{o}{[}\PYG{l+m+mi}{1}\PYG{o}{..}\PYG{l+m+mi}{1000000}\PYG{o}{]}\PYG{o}{)}
+
+\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{result}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{await}\PYG{o}{(}\PYG{n}{longCalc}\PYG{o}{)}
+\end{MintedVerbatim}
