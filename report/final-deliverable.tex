@@ -11,118 +11,7 @@
 \subsection{Plot View}\label{subsec:plot-view}
 
 \section{Notable Features}\label{sec:notable-features}
-
-Alongside standard arithmetic operations, variable assignment, function definitions, and plotting the language also 
-supports the following interesting features:
-
-\paragraph{User defined operators} The user can define their own operators, both unary and binary, with the 
-following syntax:
-
-\begin{minted}{fsharp}
-// Define a binary operator
-let (|+|) = (a: float, b: float) -> a + b
-
-// Define a unary operator
-let (|!|) = (a: bool) -> not a
-\end{minted}
-
-This is a powerful feature allowing for the language to be extended in a way that is meaningful to the user.
-
-\paragraph{Static type inference} The language uses Hindley-Milner type inference to infer the types of
-expressions while giving the user the option of specifying types explicitly, improving the correctness of the
-code and reducing the cognitive load on the user.
-
-\begin{minted}{fsharp}
-let f = (x: float) -> x + 1.0
-let f: (float) -> float = (x) -> x + 1.0
-let f = (x: float) : float -> x + 1.0
-\end{minted}
-
-\paragraph{Compound data types} The language supports compound data types such as lists, tuples and records,
-allowing for more complex data structures to be represented.
-
-\begin{minted}{fsharp}
-let l = [1, 2, 3]
-let l1 = l[0]
-
-let t = (1, true, "this is a tuple")
-
-let r = { x = 1, y = 2 }
-let r1 = r.x
-\end{minted}
-
-\paragraph{Imports} The language supports importing other files, allowing for code to be split across multiple
-files, improving code organisation and reusability.
-As well as this, a small standard library has been written that can be imported as desired.
-
-\begin{minted}{fsharp}
-import "file.vec3"
-import "list"
-
-let f = (x) -> func(x) // func defined in file.vec3
-let l = [1, 2, 3]
-let l1 = head(l) // head defined in list
-\end{minted}
-
-\paragraph{Turing Completeness} The language is Turing complete, allowing for the implementation of any
-algorithm that can be implemented in a Turing complete language.
-As the language is immutable, this is done through recursion and higher order functions, with control flow
-managed through if expressions.
-
-\begin{minted}{fsharp}
-let rec map = (list, f) -> if len(list) == 0 then [] else f (head(list)) :: map (tail(list), f)
-\end{minted}
-
-\paragraph{Calculus} The language has built-in functions for finding the integral function, derivative function
-and tangent function at a given point of a function.
-As such, a few useful math operations are built around these, such as finding the integral:
-
-\begin{minted}{fsharp}
-let findIntegral = (f, a, b) {
-    let integral = integrate(f)
-    integral(b) - integral(a)
-}
-\end{minted}
-
-\paragraph{Vector and Matrix operations} The language represents vectors and matrices as lists of numeral types, with
-operations such as addition, subtraction, multiplication and division defined for them, and functions such as \textit{transpose} and \textit{determinant} defined for matrices.
-
-\begin{minted}{fsharp}
-let v1 = [1.0, 2.0, 3.0]
-let v2 = [4.0, 5.0, 6.0]
-let v3 = v1 + v2
-
-let m1 = [[1.0, 2.0], [3.0, 4.0]]
-let trans = transpose(m1)
-let det = determinant(m1)
-let inv = inverse(m1)
-\end{minted}
-
-
-\paragraph{Async functions} The language supports asynchronous functions, allowing for non-blocking operations
-to be performed.
-This is useful is a long calculation is to be performed, as the function will run in the background until awaited.
-
-\begin{minted}{fsharp}
-let async longCalc = sum([1..1000000])
-
-let result = await(longCalc)
-\end{minted}
-
-\paragraph{Range Expressions} The language supports range expressions, allowing for a list of numbers to be
-generated easily.
-In addition to this, list indexing also supports ranges, allowing for a sublist to be extracted from a list.
-
-\begin{minted}{fsharp}
-let l = [1..10]
-let l1 = l[1..5] // Extracts the sublist [2, 3, 4, 5, 6]
-let l2 = l[1..] // Extracts the sublist [2, 3, 4, 5, 6, 7, 8, 9]
-let l3 = l[..5] // Extracts the sublist [1, 2, 3, 4, 5]
-\end{minted}
-
-\paragraph{Function Plotting} The language has built-in functions for plotting functions, allowing for easy
-visualisation of functions.
-This is done through the \textit{plotFunc} function, which takes in a function and plots it on a graph.
+\input{notable-features}
 
 \section{Lexer}\label{sec:lexer}
 
@@ -454,7 +343,6 @@ This is useful for quick visualisation of functions, and allows for a more inter
 
 As well as plotting, the user also has the option of drawing arbitrary shapes on a canvas, and attaching event 
 listeners to them.
-
 This is done by means of the \textit{draw} function, which takes in a record of configuration options of the following
 type:
 
