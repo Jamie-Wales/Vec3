@@ -292,7 +292,7 @@ type Type =
         | TAlias(_, Some t) -> t.hasMinDims n
         | TTuple ts -> List.length ts >= n
         | _ -> false
-    
+
     member this.AnyDims =
         match this with
         | TTensor(_, DAny) -> true
@@ -396,8 +396,8 @@ type Expr =
     /// Allows for indexing in the form l[1]
     /// </summary>
     | EIndex of Expr * Expr * Type option
-    
-    
+
+
     /// <summary>
     /// Indexing with a range operation on a list or tensor.
     /// Expr (list or tensor), start, end, type

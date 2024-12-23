@@ -1,14 +1,20 @@
+/// <summary>
+/// Dead code elimination.
+/// simple dead code elimination, type system stores purity, can eliminate calls to pure functions if result is not used for example,
+/// can also eliminate unused variables with ease (also can be done with a liveness analysis)
+/// also check standard expressions, if not uses for anything with side effects, can be eliminated
+/// also check for unused functions, can be eliminated
+/// possibly also inline some calls, maybe not here though
+/// </summary>
 module Vec3.Interpreter.DCE
 
 open Grammar
 open Token
 
-// simple dead code elimination, type system stores purity, can eliminate calls to pure functions if result is not used for example,
-// can also eliminate unused variables with ease (also can be done with a liveness analysis)
-// also check standard expressions, if not uses for anything with side effects, can be eliminated
-// also check for unused functions, can be eliminated
-// possibly also inline some calls, maybe not here though
 
+/// <summary>
+/// Functions that have side effects.
+/// </summary>
 let sideEffectFunctions: (Lexeme list) ref =
     builtInFunctionMap
     |> Map.filter (fun _ -> hasSideEffects)
@@ -16,6 +22,11 @@ let sideEffectFunctions: (Lexeme list) ref =
     |> List.ofSeq
     |> ref
 
+/// <summary>
+/// True if the expression has side effects.
+/// </summary>
+/// <param name="expr">The expression.</param>
+/// <returns>True if the expression has side effects.</returns>
 let rec hasSideEffects (expr: Expr) : bool =
     match expr with
     | ELiteral _ -> false
@@ -41,6 +52,11 @@ let rec hasSideEffects (expr: Expr) : bool =
     | ERecordRestrict(expr, _, _) -> hasSideEffects expr
     | ETail(expr, _) -> hasSideEffects expr
 
+/// <summary>
+/// True if the statement has side effects.
+/// </summary>
+/// <param name="stmt">The statement.</param>
+/// <returns>True if the statement has side effects.</returns>
 let rec hasSideEffectsStmt (stmt: Stmt) : bool =
     match stmt with
     | SExpression(expr, _) -> hasSideEffects expr
@@ -49,17 +65,21 @@ let rec hasSideEffectsStmt (stmt: Stmt) : bool =
         if hasSideEffects expr then
             // If a variable declaration has side effects, track it as a potential side-effecting function
             match expr with
-            | ELambda _ ->
-                sideEffectFunctions.Value <- name.Lexeme :: sideEffectFunctions.Value
+            | ELambda _ -> sideEffectFunctions.Value <- name.Lexeme :: sideEffectFunctions.Value
             | _ -> ()
-            
+
         true
-        
+
     | SRecFunc _ -> true
     | SAsync _ -> true
     | STypeDeclaration _ -> true
     | SImport _ -> true
 
+/// <summary>
+/// Eliminates dead code.
+/// </summary>
+/// <param name="program">The program.</param>
+/// <returns>The program with dead code eliminated.</returns>
 let rec eliminate (program: Program) : Program =
     let rec pass (stmts: Stmt list) : Stmt list =
         match stmts with
@@ -69,7 +89,7 @@ let rec eliminate (program: Program) : Program =
             SVariableDeclaration(name, expr, t) :: rest
         | SAsync(name, params', body, t) :: rest ->
             let rest = pass rest
-            
+
             SAsync(name, params', body, t) :: rest
         | SRecFunc(name, params', body, t) :: rest ->
             let rest = pass rest
@@ -80,15 +100,32 @@ let rec eliminate (program: Program) : Program =
         | STypeDeclaration _ as stmt :: rest -> stmt :: pass rest
         | SImport _ as stmt :: rest -> stmt :: pass rest
 
+    /// <summary>
+    /// Multiple passes of dead code elimination.
+    /// </summary>
+    /// <param name="stmts">The statements.</param>
+    /// <returns>The statements with dead code eliminated.</returns>
     let rec refine stmts =
         let refined = pass stmts
         if refined = stmts then refined else refine refined
 
     program |> List.filter hasSideEffectsStmt |> refine
 
+/// <summary>
+/// Checks if a variable is used in a list of statements.
+/// </summary>
+/// <param name="name">The name of the variable.</param>
+/// <param name="stmts">The statements.</param>
+/// <returns>True if the variable is used.</returns>
 and isUsed (name: Lexeme) (stmts: Stmt list) : bool =
     stmts |> List.exists (isUsedInStmt name)
 
+/// <summary>
+/// Checks if a variable is used in a statement.
+/// </summary>
+/// <param name="name">The name of the variable.</param>
+/// <param name="stmt">The statement.</param>
+/// <returns>True if the variable is used.</returns>
 and isUsedInStmt (name: Lexeme) (stmt: Stmt) : bool =
     match stmt with
     | SExpression(expr, _) -> isUsedE name expr
@@ -99,6 +136,12 @@ and isUsedInStmt (name: Lexeme) (stmt: Stmt) : bool =
     | SImport _ -> false
     | STypeDeclaration _ -> false
 
+/// <summary>
+/// Checks if a variable is used in an expression.
+/// </summary>
+/// <param name="name">The name of the variable.</param>
+/// <param name="expr">The expression.</param>
+/// <returns>True if the variable is used.</returns>
 and isUsedE (name: Lexeme) (expr: Expr) : bool =
     match expr with
     | ELiteral _ -> false
@@ -121,4 +164,3 @@ and isUsedE (name: Lexeme) (expr: Expr) : bool =
     | EMatch(expr, cases, _) -> isUsedE name expr || List.exists (fun (_, e) -> isUsedE name e) cases
     | ERecordRestrict(expr, _, _) -> isUsedE name expr
     | ETail(expr, _) -> isUsedE name expr
-

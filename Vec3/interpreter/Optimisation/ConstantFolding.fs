@@ -174,7 +174,7 @@ let builtins: Map<Lexeme, Expr list -> Expr -> Expr> =
       Operator(Plus, Some Prefix), (fun lst -> performUnary Plus lst[0])
       Operator(Minus, Some Prefix), (fun lst -> performUnary Minus lst[0])
       Operator(Bang, Some Prefix), (fun lst -> performUnary Bang lst[0])
-      Operator(EqualEqual, Some Infix), (fun lst -> performEquality lst[0] lst[1])
+      // Operator(EqualEqual, Some Infix), (fun lst -> performEquality lst[0] lst[1])
       Operator(BangEqual, Some Infix),
       (fun lst expr ->
           match performEquality lst[0] lst[1] expr with

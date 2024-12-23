@@ -11,8 +11,7 @@ open Vec3.Interpreter.Grammar
 /// <summary>
 /// Find any tail expressions in a given list of statements.
 /// </summary>
-let rec analyseStmts (stmt: Stmt list) : Stmt list =
-    List.map analyseStmt stmt
+let rec analyseStmts (stmt: Stmt list) : Stmt list = List.map analyseStmt stmt
 
 /// <summary>
 /// Analyse a single statement to find tail expressions.
@@ -23,7 +22,7 @@ and analyseStmt (stmt: Stmt) : Stmt =
         let newBody = analyseExpr true body
         SRecFunc(a, b, newBody, c)
     | _ -> stmt
-    
+
 
 /// <summary>
 /// Find the tail expression in a given expression.
@@ -51,22 +50,25 @@ and analyseExpr (isTail: bool) (expr: Expr) : Expr =
 
     // Blocks: Only the last expression in the block can be in tail position
     | EBlock(stmts, t, ty) ->
-        let newStmts = 
+        let newStmts =
             match List.rev stmts with
             | [] -> []
             | last :: rest ->
                 match last with
-                | SExpression(expr, _) -> List.rev (analyseStmts (List.rev rest) @ [SExpression(analyseExpr isTail expr, ty)])
-                | _ ->
-                    analyseStmts stmts
+                | SExpression(expr, _) ->
+                    List.rev (analyseStmts (List.rev rest) @ [ SExpression(analyseExpr isTail expr, ty) ])
+                | _ -> analyseStmts stmts
+
         EBlock(newStmts, t, ty)
 
     | ELambda(args, body, ty, pure', retTy, asyncFlag) ->
         ELambda(args, analyseExpr true body, ty, pure', retTy, asyncFlag)
 
     | EMatch(target, branches, ty) ->
-        let newBranches = 
-            branches |> List.map (fun (pat, branchExpr) -> (pat, analyseExpr isTail branchExpr))
+        let newBranches =
+            branches
+            |> List.map (fun (pat, branchExpr) -> (pat, analyseExpr isTail branchExpr))
+
         EMatch(analyseExpr false target, newBranches, ty)
 
     | EList(elements, ty) -> EList(List.map (analyseExpr false) elements, ty)

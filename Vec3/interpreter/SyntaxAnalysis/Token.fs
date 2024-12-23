@@ -331,10 +331,10 @@ type BuiltInFunction =
     | Plot
     | PlotFunction
     | PlotFunctions
-    
+
     | PlotEllipse
     | PlotEllipses
-    
+
     | Draw
 
     | Ceil
@@ -358,7 +358,7 @@ type BuiltInFunction =
     | Lte
     | Gt
     | Gte
-    
+
     | Append
 
     | CrossProduct
@@ -382,7 +382,7 @@ type BuiltInFunction =
     | Await
 
     | TaylorSeries
-    
+
     | Split
     | ToLowerCase
     | ToUpperCase
@@ -391,7 +391,7 @@ type BuiltInFunction =
     | RandomI
     | RandomF
     | Time
-    
+
     | TypeOf
 
 /// <summary>
@@ -426,7 +426,7 @@ let builtInFunctionMap =
       Identifier "BUILTIN_TRUNC", BuiltInFunction.Trunc
 
       Identifier "draw", BuiltInFunction.Draw
-      
+
       Identifier "determinate", BuiltInFunction.Determinate
       Identifier "inverse", BuiltInFunction.Inverse
       Identifier "transpose", BuiltInFunction.Transpose
@@ -466,7 +466,7 @@ let builtInFunctionMap =
       Identifier "await", BuiltInFunction.Await
       Identifier "append", BuiltInFunction.Append
       Identifier "plotEllipse", BuiltInFunction.PlotEllipse
-      
+
       Identifier "randomI", BuiltInFunction.RandomI
       Identifier "randomF", BuiltInFunction.RandomF
       Identifier "time", BuiltInFunction.Time
@@ -475,9 +475,9 @@ let builtInFunctionMap =
       Identifier "toUpperCase", BuiltInFunction.ToUpperCase
       Identifier "trim", BuiltInFunction.Trim
       Identifier "join", BuiltInFunction.Join
-      
+
       Identifier "typeOf", BuiltInFunction.TypeOf
-        
+
 
       ]
     |> Map.ofList

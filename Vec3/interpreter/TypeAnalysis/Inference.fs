@@ -4,9 +4,6 @@
 
 module Vec3.Interpreter.Typing.Inference
 
-// TODO: more on the drawing (trails as rudy said to do them)
-// TODO: CLOSURES!!
-
 open System
 open Microsoft.FSharp.Collections
 open Microsoft.FSharp.Core

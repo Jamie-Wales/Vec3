@@ -3,6 +3,9 @@
 /// </summary>
 module Vec3.Interpreter.Backend.Instructions
 
+/// <summary>
+/// Defines the opcodes for the virtual machine.
+/// </summary>
 type OP_CODE =
     | CONSTANT
     | CONSTANT_LONG
@@ -26,6 +29,9 @@ type OP_CODE =
     | COMPOUND_CREATE
     | GET_UPVALUE
 
+/// <summary>
+/// Converts an opcode to a byte.
+/// </summary>
 let opCodeToByte =
     function
     | CONSTANT -> 0uy
@@ -51,9 +57,11 @@ let opCodeToByte =
 
     | Exception -> 255uy
 
-
-let byteToOpCode byte =
-    match byte with
+/// <summary>
+/// Converts a byte to an opcode.
+/// </summary>
+let byteToOpCode =
+    function
     | 0uy -> CONSTANT
     | 1uy -> CONSTANT_LONG
     | 7uy -> RETURN
@@ -76,6 +84,9 @@ let byteToOpCode byte =
     | 255uy -> Exception
     | _ -> raise (System.Exception("Unknown OpCode"))
 
+/// <summary>
+/// Converts an opcode to a string.
+/// </summary>
 let opCodeToString =
     function
     | CONSTANT -> "CONSTANT"

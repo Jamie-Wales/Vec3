@@ -6,8 +6,14 @@ module Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.SymbolicExpression
 
+/// <summary>
+/// Debug information for a line.
+/// </summary>
 type LineInfo = { Offset: int; LineNumber: int }
 
+/// <summary>
+/// Different types of streams.
+/// </summary>
 type StreamType =
     | ConstantPool
     | Disassembly
@@ -15,6 +21,9 @@ type StreamType =
     | StandardOutput
     | Globals
 
+/// <summary>
+/// Output streams of the virtual machine.
+/// </summary>
 type OutputStreams =
     { ConstantPool: seq<string>
       Disassembly: seq<string>
@@ -22,6 +31,9 @@ type OutputStreams =
       StandardOutput: Ref<seq<string>>
       Globals: seq<string> }
 
+/// <summary>
+/// Different types of plots.
+/// </summary>
 type PlotType =
     | Scatter
     | Line
@@ -29,17 +41,25 @@ type PlotType =
     | Histogram
     | Signal
 
+/// <summary>
+/// Different types of compound values.
+/// </summary>
 type CompoundType =
     | LIST
     | RECORD
     | TUPLE
 
-and Local = {
-    Name: string
-    Depth: int
-    Index: int
-}
+/// <summary>
+/// Local variable.
+/// </summary>
+and Local =
+    { Name: string // Name of the variable
+      Depth: int // Scope depth
+      Index: int } // Where it is stored in the stack
 
+/// <summary>
+/// Possible number types.
+/// </summary>
 and VNumber =
     | VInteger of int
     | VFloat of float
@@ -47,22 +67,34 @@ and VNumber =
     | VComplex of float * float
     | VChar of char
 
+/// <summary>
+/// A chunk of code.
+/// </summary>
 and Chunk =
     { Code: ResizeArray<byte>
       Lines: ResizeArray<LineInfo>
       ConstantPool: ResizeArray<Value> }
 
+/// <summary>
+/// A function.
+/// </summary>
 and Function =
-    { Arity: int
+    { Arity: int // Number of arguments
       Chunk: Chunk
       Name: string
       Locals: Local list }
 
+/// <summary>
+/// A closure.
+/// </summary>
 and Closure =
     { Function: Function
-      UpValues: Local list 
+      UpValues: Local list
       UpValuesValues: Value array }
 
+/// <summary>
+/// A value.
+/// </summary>
 and Value =
     | VNumber of VNumber
     | VString of string
@@ -83,11 +115,17 @@ and Value =
     | VEventListener of int * int * Function
     | VPromise of Async<Value>
 
+/// <summary>
+/// Represents a call frame.
+/// </summary>
 and CallFrame =
-    { Closure: Closure
-      IP: int
+    { Closure: Closure // Current closure
+      IP: int // Instruction Pointer
       StackBase: int }
 
+/// <summary>
+/// Represents the virtual machine.
+/// </summary>
 and VM =
     { Frames: ResizeArray<CallFrame>
       Stack: ResizeArray<Value>
@@ -98,11 +136,26 @@ and VM =
       Plots: ResizeArray<Value>
       Canvas: ResizeArray<Value>
       EventListeners: ResizeArray<int * int * Function> }
+
+/// <summary>
+/// Simplifies a rational number.
+/// </summary>
+let simplifyRat n d =
+    let rec gcd a b = if b = 0 then a else gcd b (a % b)
+
+    let g = gcd n d
+    n / g, d / g
+
+/// <summary>
+/// Converts a value to a string.
+/// </summary>
 let rec valueToString =
     function
     | VNumber(VInteger n) -> string n
     | VNumber(VFloat f) -> $"%f{f}"
-    | VNumber(VRational(n, d)) -> $"%d{n}/%d{d}"
+    | VNumber(VRational(n, d)) ->
+        let n, d = simplifyRat n d
+        $"%d{n}/%d{d}"
     | VNumber(VComplex(r, i)) -> $"%f{r} + %f{i}i"
     | VNumber(VChar c) -> $"'{c}'"
     | VBoolean b -> string b
@@ -126,7 +179,7 @@ let rec valueToString =
 
             $"""{{{String.concat ", " fields}}}"""
         | TUPLE -> $"""({String.concat ", " (List.map valueToString l)})"""
-    | VBuiltin (_, name) -> $"<builtin : {name}>"
+    | VBuiltin(_, name) -> $"<builtin : {name}>"
     | VPlotData _ -> "<plot data>"
     | VPlotFunction _ -> "<plot function>"
     | VPlotFunctions _ -> "<plot functions>"

@@ -9,7 +9,6 @@ open Token
 open Grammar
 open Scanner
 open Vec3.Interpreter.SyntaxAnalysis.TailAnalyser
-open Vec3.Interpreter.Token
 
 let rec getDefault =
     function
@@ -1106,6 +1105,7 @@ and index (state: ParserState) (left: Expr) : ParseResult<Expr> =
     | _ ->
         result {
             let! state, start = expression state Precedence.None
+
             match peek state with
             | Some { Lexeme = Operator(DotDot, _) } ->
                 let state = advance state
@@ -1357,34 +1357,35 @@ and funcType (state: ParserState) : ParseResult<TType> =
 /// <param name="state">The parser state.</param>
 /// <returns>The new state and the parsed type.</returns>
 and funcTypeOrTuple (state: ParserState) : ParseResult<TType> =
-     let state = setLabel state "FunctionOrTupleType"
-     // tuple in form (int, float)
-     // function in form (int, float) -> int
-     let rec parseParams (state: ParserState) (paramList: TType list) : ParseResult<TType list> =
-            match peek state with
-            | Some { Lexeme = Punctuation RightParen } -> Ok(advance state, paramList)
-            | _ ->
-                typeHint state
-                |> Result.bind (fun (state, param) ->
-                    match peek state with
-                    | Some { Lexeme = Operator(Comma, _) } -> parseParams (advance state) (param :: paramList)
-                    | Some { Lexeme = Punctuation RightParen } -> Ok(advance state, (param :: paramList))
-                    | _ -> Error(Expected "',' or ')'.", state))
-                
-     result {
-         let! state, paramList = parseParams state []
-         match peek state with
-         | Some { Lexeme = Operator(Arrow, _) } ->
+    let state = setLabel state "FunctionOrTupleType"
+    // tuple in form (int, float)
+    // function in form (int, float) -> int
+    let rec parseParams (state: ParserState) (paramList: TType list) : ParseResult<TType list> =
+        match peek state with
+        | Some { Lexeme = Punctuation RightParen } -> Ok(advance state, paramList)
+        | _ ->
+            typeHint state
+            |> Result.bind (fun (state, param) ->
+                match peek state with
+                | Some { Lexeme = Operator(Comma, _) } -> parseParams (advance state) (param :: paramList)
+                | Some { Lexeme = Punctuation RightParen } -> Ok(advance state, (param :: paramList))
+                | _ -> Error(Expected "',' or ')'.", state))
+
+    result {
+        let! state, paramList = parseParams state []
+
+        match peek state with
+        | Some { Lexeme = Operator(Arrow, _) } ->
             let state = advance state
             let! state, returnType = typeHint state
             return (state, TFunction(paramList, returnType, false, false))
-         | _ ->
-             let tupleType = TTuple(paramList)
-             return (state, tupleType)
-        }
-                
-            
-    
+        | _ ->
+            let tupleType = TTuple(paramList)
+            return (state, tupleType)
+    }
+
+
+
 
 /// <summary>
 /// Parses a tensor type hint.
@@ -1483,8 +1484,7 @@ and block (state: ParserState) : ParseResult<Expr> =
 
     let rec loop (state: ParserState) (stmts: Stmt list) : ParseResult<Expr> =
         match peek state with
-        | Some { Lexeme = Punctuation RightBrace } ->
-                  Ok(advance state, EBlock(List.rev stmts, false, None))
+        | Some { Lexeme = Punctuation RightBrace } -> Ok(advance state, EBlock(List.rev stmts, false, None))
         | None -> Error(UnexpectedEndOfInput, state)
         | _ -> statement state |> Result.bind (fun (state, stmt) -> loop state (stmt :: stmts))
 
@@ -1517,13 +1517,12 @@ and varDecl (state: ParserState) : ParseResult<Stmt> =
         match peek state with
         | Some { Lexeme = Keyword Import } ->
             let state = advance state
+
             match nextToken state with
-            | Some (state, { Lexeme = Lexeme.String s }) ->
-                return (state, SImport(Some name, s, false, varType))
-            | Some (state, { Lexeme = Identifier l }) ->
-                return (state, SImport(Some name, l, true, varType))
+            | Some(state, { Lexeme = Lexeme.String s }) -> return (state, SImport(Some name, s, false, varType))
+            | Some(state, { Lexeme = Identifier l }) -> return (state, SImport(Some name, l, true, varType))
             | _ -> return! Error(Expected "string or identifier after import keyword.", state)
-            
+
         | _ ->
 
             let! state, expr = expression state Precedence.Assignment
@@ -1656,8 +1655,10 @@ and statement (state: ParserState) : ParseResult<Stmt> =
                 | Some { Lexeme = Punctuation LeftParen } -> operatorDecl state
                 | Some { Lexeme = Keyword Rec } ->
                     let state = advance state
+
                     result {
                         let! state, var = varDecl state
+
                         match var with
                         | SVariableDeclaration(name, expr, _) ->
                             match expr with
@@ -1670,8 +1671,10 @@ and statement (state: ParserState) : ParseResult<Stmt> =
                     }
                 | Some { Lexeme = Keyword Async } ->
                     let state = advance state
+
                     result {
                         let! state, var = varDecl state
+
                         match var with
                         | SVariableDeclaration(name, expr, _) ->
                             match expr with
@@ -1680,18 +1683,17 @@ and statement (state: ParserState) : ParseResult<Stmt> =
                             | _ -> return! Error(Expected "lambda expression.", state)
                         | _ -> return! Error(Expected "variable declaration.", state)
                     }
-                    
+
                 | _ -> Error(Expected "variable name.", state)
             | Keyword.Assert -> assertStatement (advance state)
             | Keyword.Type -> typeDecl (advance state)
             | Keyword.Import ->
                 result {
                     let state = advance state
+
                     match nextToken state with
-                    | Some(state, { Lexeme = Lexeme.String s }) ->
-                        return (state, SImport(None, s, false, None))
-                    | Some(state, { Lexeme = Identifier l }) ->
-                        return (state, SImport(None, l, true, None))
+                    | Some(state, { Lexeme = Lexeme.String s }) -> return (state, SImport(None, s, false, None))
+                    | Some(state, { Lexeme = Identifier l }) -> return (state, SImport(None, l, true, None))
                     | _ -> return! Error(Expected "string or identifier after import keyword.", state)
                 }
             | _ ->
@@ -1759,6 +1761,7 @@ let parseProgram (state: ParserState) : ParseResult<Program> =
 /// <returns>The parsed program.</returns>
 let parseTokens (tokens: Token list) (prelude: bool) : Program ParseResult =
     let initialState = createParserState tokens
+
     match parseProgram initialState with
     | Ok(state, stmts) ->
         if prelude then
@@ -1788,7 +1791,7 @@ let parse (input: string) (prelude: bool) : Program ParseResult =
 /// <param name="file">The file path.</param>
 /// <param name="prelude">Whether to import the prelude.</param>
 /// <returns>The parsed program result.</returns>
-let parseFile (file: string) (prelude: bool) : Program ParseResult=
+let parseFile (file: string) (prelude: bool) : Program ParseResult =
     let input = System.IO.File.ReadAllText(file)
     parse input prelude
 

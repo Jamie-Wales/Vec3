@@ -8,16 +8,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="SymbolicExpression.fs" />
-        <Compile Include="Optimisation\DCE.fs" />
-        <Compile Include="Optimisation\ConstantFolding.fs" />
-        <Compile Include="TypeAnalysis\Inference.fs" />
-        <Compile Include="Backend\Compiler.fs" />
-        <Compile Include="Backend\VM.fs" />
-        <Compile Include="Backend\Value.fs" />
-        <Compile Include="SyntaxAnalysis\Parser.fs" />
-        <Compile Include="SyntaxAnalysis\Scanner.fs" />
-        <Compile Include="SyntaxAnalysis\Token.fs" />
+        <Compile Include="SymbolicExpression.fs"/>
+        <Compile Include="Optimisation\DCE.fs"/>
+        <Compile Include="Optimisation\ConstantFolding.fs"/>
+        <Compile Include="TypeAnalysis\Inference.fs"/>
+        <Compile Include="Backend\Compiler.fs"/>
+        <Compile Include="Backend\VM.fs"/>
+        <Compile Include="Backend\Value.fs"/>
+        <Compile Include="SyntaxAnalysis\Parser.fs"/>
+        <Compile Include="SyntaxAnalysis\Scanner.fs"/>
+        <Compile Include="SyntaxAnalysis\Token.fs"/>
         <Compile Include="Program.fs"/>
     </ItemGroup>
 
@@ -30,7 +30,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Vec3\Vec3.fsproj" />
+        <ProjectReference Include="..\Vec3\Vec3.fsproj"/>
     </ItemGroup>
 
 </Project>

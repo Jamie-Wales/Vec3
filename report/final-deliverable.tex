@@ -360,6 +360,36 @@ type:
 
 Or a list of the above record type, allowing for multiple shapes to be drawn on the same canvas.
 
+For example, the following will draw a few circles on the canvas:
+
+\begin{minted}{fsharp}
+let circle1 = {
+    x = 100.0,
+    y = 100.0,
+    width = 50.0,
+    height = 50.0,
+    colour = "red",
+    trace = true
+}
+let circle2 = {
+    x = 200.0,
+    y = 200.0,
+    width = 50.0,
+    height = 50.0,
+    colour = "blue",
+    trace = true
+}
+draw([circle1, circle2])
+\end{minted}
+
+The result of the above code is shown in image~\ref{fig:draw-circles}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{drawImage}
+    \caption{Draw circles}\label{fig:draw-circles}
+\end{figure}
+
 The \textit{draw} function then returns a unique identifier for the shape, which can be used to attach event 
 listeners, allowing for movement of the shape through key presses.
 
@@ -374,8 +404,6 @@ Where keys is a record defined in the prelude of the language (see~\autoref{sec:
 
 Additionally, the \textit{trace} option allows for the shape to leave a trail behind it, which can be useful for
 animations or visualising movement.
-
-\todo{Add images of drawings}
 
 \section{Notebook View}\label{sec:notebook-view}
 

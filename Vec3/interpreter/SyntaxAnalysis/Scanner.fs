@@ -117,6 +117,12 @@ let rec scIdentifier (iStr: char list) (iVal: string) : (char list * string) opt
     | c :: tail when isLetter c || isDigit c || c = '_' -> scIdentifier tail (iVal + string c)
     | _ -> Some(iStr, iVal)
 
+/// <summary>
+/// Scans in an operator.
+/// </summary>
+/// <param name="iStr">The operator to scan.</param>
+/// <param name="iVal">The value of the operator.</param>
+/// <returns><c>Some</c>the rest of the input, the scanned operator and the length of the operator literal (<c>None</c> if the operator is invalid).</returns>
 let rec scOperator (iStr: char list) (iVal: string) : (char list * Operator * int) option =
     match iStr with
     | c :: tail when isSymbol c -> scOperator tail (iVal + string c)
@@ -188,14 +194,14 @@ let scNumber (nStr: char list) : (char list * Number * int) option =
             let newAcc = acc + (float (intVal c)) / div
             scFraction tail newAcc (div * 10.0) (len + 1)
         | _ -> (fStr, acc, len)
-    
+
     match nStr with
     | c :: tail when isDigit c ->
         let iStr, iVal, iLen = scInt tail (intVal c) 1
 
         match iStr with
-        | 'I' :: tail | 'i' :: tail ->
-            Some(tail, LComplex(0.0, iVal), iLen + 1)
+        | 'I' :: tail
+        | 'i' :: tail -> Some(tail, LComplex(0.0, iVal), iLen + 1)
         | '/' :: ratTail ->
             let fStr, fVal, fLen = scInt ratTail 0 0
             Some(fStr, LRational(iVal, int fVal), iLen + fLen + 1)
@@ -379,7 +385,7 @@ let lexer (input: string) : LexerResult<Token list> =
                     nStr
                     { position with
                         Column = position.Column + nLen }
-        
+
         | c :: tail when isSymbol c ->
             let oRes = scOperator tail (string c)
 

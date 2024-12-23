@@ -8,21 +8,44 @@ open Vec3.Interpreter.Backend.Instructions
 open Vec3.Interpreter.Backend.Types
 
 
+/// <summary>
+/// Function to create an empty chunk.
+/// </summary>
 let emptyChunk () =
     { Code = ResizeArray<byte>()
       ConstantPool = ResizeArray<Value>()
       Lines = ResizeArray<LineInfo>() }
 
+/// <summary>
+/// Writes a byte to the chunk.
+/// </summary>
+/// <param name="chunk">The chunk to write to.</param>
+/// <param name="byte">The byte to write.</param>
+/// <param name="line">The line number.</param>
+/// <returns>Unit.</returns>
 let writeChunk (chunk: Chunk) (byte: byte) (line: int) =
     let offset = chunk.Code.Count
     chunk.Code.Add(byte)
     chunk.Lines.Add({ Offset = offset; LineNumber = line })
 
+/// <summary>
+/// Adds a constant to the chunk.
+/// </summary>
+/// <param name="chunk">The chunk to add to.</param>
+/// <param name="value">The value to add.</param>
+/// <returns>The index of the constant.</returns>
 let addConstant (chunk: Chunk) (value: Value) =
     chunk.ConstantPool.Add(value)
     let index = chunk.ConstantPool.Count
     index - 1
 
+/// <summary>
+/// Writes a constant to the chunk.
+/// </summary>
+/// <param name="chunk">The chunk to write to.</param>
+/// <param name="value">The value to write.</param>
+/// <param name="line">The line number.</param>
+/// <returns>Unit.</returns>
 let writeConstant (chunk: Chunk) (value: Value) (line: int) =
     let index = addConstant chunk value
 
@@ -35,6 +58,12 @@ let writeConstant (chunk: Chunk) (value: Value) (line: int) =
         writeChunk chunk (byte ((index >>> 8) &&& 0xff)) line
         writeChunk chunk (byte ((index >>> 16) &&& 0xff)) line
 
+/// <summary>
+/// Gets the line number for a given offset.
+/// </summary>
+/// <param name="chunk">The chunk to get the line number from.</param>
+/// <param name="offset">The offset to get the line number for.</param>
+/// <returns>The line number.</returns>
 let getLineNumber (chunk: Chunk) (offset: int) =
     chunk.Lines
     |> Seq.tryFind (fun li -> li.Offset = offset)

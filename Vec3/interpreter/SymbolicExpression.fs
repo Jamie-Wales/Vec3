@@ -735,7 +735,7 @@ let tangentAt (expression: Expression) (n: float) : Expression =
     // y = mx + c
     let c = evaluate n expression - gradient * n
     Addition(Multiplication(Const gradient, X), Const c)
-    
+
 /// <summary>
 /// Convert an expression to a string.
 /// </summary>
@@ -781,6 +781,12 @@ let rec taylorSeries (expression: Expression) (n: int) : Expression =
     let rec factorial (n: int) =
         if n < 2 then 1 else n * factorial (n - 1)
 
+    /// <summary>
+    /// Find the Taylor series of an expression.
+    /// </summary>
+    /// <param name="expression">The expression to find the Taylor series of.</param>
+    /// <param name="n">The number of terms in the Taylor series.</param>
+    /// <returns>The Taylor series of the expression.</returns>
     let rec taylor (expression: Expression) (n: int) : Expression =
         match expression with
         | X ->
@@ -851,6 +857,12 @@ let rec taylorSeries (expression: Expression) (n: int) : Expression =
             let powerTerm = Power(e, Const(0.5 * float n))
             Multiplication(coefficient, powerTerm)
 
+    /// <summary>
+    /// Secondary helper function for the Taylor series.
+    /// </summary>
+    /// <param name="exp">The expression to find the Taylor series of.</param>
+    /// <param name="n">The number of terms in the Taylor series.</param>
+    /// <returns>The Taylor series of the expression.</returns>
     let rec helper exp n =
         if n = 0 then
             Const 0.0
