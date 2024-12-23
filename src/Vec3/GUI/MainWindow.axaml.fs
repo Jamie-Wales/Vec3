@@ -8,7 +8,6 @@ open AvaloniaEdit
 open Avalonia.Media
 open TextMateSharp.Grammars
 open AvaloniaEdit.TextMate
-open Vec3.Interpreter
 open Vec3.Interpreter.Repl
 open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Types
@@ -36,11 +35,14 @@ type MainWindow() as this =
     let mutable loadButton: Button = null
     let mutable runButton: Button = null
     let mutable standardOutput: TextBlock = null
-    let mutable replState: VM = createNewVM (initFunction ("Main"))
+    let mutable replState: VM = createNewVM (initFunction "Main")
 
     let debounceTime = 500
     let mutable debounceTimer = None: Timer option
 
+    /// <summary>
+    /// First message displayed to the user.
+    /// </summary>
     let welcomeMessage =
         """Welcome to Vec3 Editor!
 Use the editor on the left to write your Vec3 code.
@@ -48,6 +50,9 @@ Click 'Load' or 'Shift+L' to execute the code.
 REPL for quick commands click 'Play' or Shift+Enter.
 Type 'help()' in the REPL for more information."""
 
+    /// <summary>
+    /// Initial editor code
+    /// </summary>
     let initialCode =
         """// Vec3 Editor Example
 let f = (x) -> x^2.0 - 2.0
@@ -119,6 +124,11 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
         AvaloniaXamlLoader.Load(this)
         this.InitializeComponent()
 
+    /// <summary>
+    /// Sets up the editor with the given registry options.
+    /// </summary>
+    /// <param name="registryOptions">The registry options</param>
+    /// <returns>Unit</returns>
     member private this.SetupEditor(registryOptions: RegistryOptions) =
         if textEditor <> null then
             textEditor.ShowLineNumbers <- true
@@ -135,6 +145,11 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
             textEditor.Text <- initialCode
             this.ApplyColorScheme()
 
+    /// <summary>
+    /// Sets up the REPL input with the given registry options.
+    /// </summary>
+    /// <param name="registryOptions">The registry options</param>
+    /// <returns>Unit</returns>
     member private this.SetupReplInput(registryOptions: RegistryOptions) =
         if replInput <> null then
             replInput.ShowLineNumbers <- false
@@ -161,6 +176,9 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 | true, color -> replInput.Foreground <- SolidColorBrush(color)
                 | _ -> ()
 
+    /// <summary>
+    /// Initializes the components of the window.
+    /// </summary>
     member private this.InitializeComponent() =
         textEditor <- this.FindControl<TextEditor>("Editor")
         loadButton <- this.FindControl<Button>("LoadButton")
@@ -185,16 +203,25 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
         openNotebookButton.Click.AddHandler(fun _ _ -> this.OpenNotebook())
         
 
+    /// <summary>
+    /// Open the notebook window
+    /// </summary>
     member private this.OpenNotebook() =
         let notebookWindow = NotebookWindow()
         notebookWindow.Show()
 
+    /// <summary>
+    /// Initializes the plot window with the given title.
+    /// </summary>
     member private this.CreatePlotWindow(title: string) =
         let plotWindow = PlotWindow()
         plotWindow.Title <- title
         plotWindow.PlotControl.Plot.Clear()
         plotWindow
 
+    /// <summary>
+    /// Open a file in the editor asynchronously.
+    /// </summary>
     member private this.OpenFileAsync() =
         task {
             try
@@ -213,7 +240,7 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                     // Use Task.Run for file operations to avoid blocking UI
                     let! fileContent = 
                         Task.Run(fun () ->
-                            let filePath = files.[0]  // Take first selected file
+                            let filePath = files[0]  // Take first selected file
                             File.ReadAllText(filePath))
                     
                     // Update UI on the UI thread
@@ -228,12 +255,12 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                     standardOutput.Text <- $"Error loading file: {ex.Message}")
         } |> ignore
         
-    member private this.generate (f: (double -> double)) : (double array * double array) =
-        let step = 0.01
-        let x = seq { for i in -20.0 .. step .. 20.0 do yield i } 
-        let y = x |> Seq.map f |> Seq.toArray
-        (x |> Seq.toArray, y)
-        
+    
+    /// <summary>
+    /// Plot the given data currently in the VM.
+    /// </summary>
+    /// <param name="vm">The current vm</param>
+    /// <returns>Unit</returns>
     member private this.HandlePlotOutput(vm: VM) =
         let shapes =
             vm.Canvas
@@ -291,16 +318,10 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 let plotWindow = PlotWindow()
                 plotWindow.Title <- title
                 plotWindow.SetVM(vm)  
-                //plotControl.Plot.Add.Function(f) |> ignore
                 plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
-                // x axis
-                // let data = this.generate f
-                // let x = data |> fst
-                // let y = data |> snd
-                // plotWindow.PlotControl.Plot.Add.ScatterLine(x, y) |> ignore
+                // draw x and y axis
                 let yL = plotWindow.PlotControl.Plot.Add.VerticalLine(0.0)
                 yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
-                // y axis
                 let xL = plotWindow.PlotControl.Plot.Add.HorizontalLine(0.0)
                 xL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
                 match start, end_, area with
@@ -331,6 +352,9 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
 
         vm.Plots.Clear()
 
+    /// <summary>
+    /// Run the code currently in the editor.
+    /// </summary>
     member private this.LoadCode() =
         replState <- createNewVM (initFunction "Main")
         let code = this.GetEditorText()
@@ -353,8 +377,12 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
             standardOutput.Foreground <- SolidColorBrush(Colors.Red)
             standardOutput.Text <- $"Error: %s{ex.Message}"
 
+    /// <summary>
+    /// Feedback for the user when the text changes.
+    /// </summary>
     member private this.TextChanged() =
-        debounceTimer |> Option.iter (_.Dispose())
+        // Dispose of the previous timer
+        debounceTimer |> Option.iter _.Dispose()
 
         let callback =
             fun _ ->
@@ -382,8 +410,12 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                     |> ignore)
                 |> ignore
 
+        // Timer runs the callback after the debounce time
         debounceTimer <- Some(new Timer(callback, null, debounceTime, Timeout.Infinite))
 
+    /// <summary>
+    /// Transpile the code in the editor to C.
+    /// </summary>
     member private this.TranspileCodeAsync() =
         task {
             try
@@ -420,6 +452,10 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                     standardOutput.Foreground <- SolidColorBrush(Colors.Red)
                     standardOutput.Text <- $"Transpilation error: {ex.Message}")
         } |> ignore
+    
+    /// <summary>
+    /// Initializes the color scheme of the editor.
+    /// </summary>
     member private this.ApplyColorScheme() =
         if textMateInstallation <> null then
             let applyColor colorKey (action: IBrush -> unit) =
@@ -429,13 +465,16 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                     match Color.TryParse(colorString) with
                     | true, color ->
                         let brush = SolidColorBrush(color)
-                        action (brush)
+                        action brush
                     | _ -> ()
 
             applyColor "editor.background" (fun brush -> textEditor.Background <- brush)
             applyColor "editor.foreground" (fun brush -> textEditor.Foreground <- brush)
             applyColor "editorLineNumber.foreground" (fun brush -> textEditor.LineNumbersForeground <- brush)
 
+    /// <summary>
+    /// Runs the repl input.
+    /// </summary>
     member this.run() =
         if replInput <> null then
             let code = replInput.Text.Trim()
@@ -477,9 +516,15 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                     standardOutput.Text <- $"%s{standardOutput.Text}\nError: %s{ex.Message}"
                     replInput.Text <- ""
 
+    /// <summary>
+    /// Helper function to get the text from the editor.
+    /// </summary>
     member private this.GetEditorText() : string =
         if textEditor <> null then textEditor.Text else ""
 
+    /// <summary>
+    /// Sets the text of the editor.
+    /// </summary>
     member this.SetEditorText(text: string) =
         if textEditor <> null then
             textEditor.Text <- text

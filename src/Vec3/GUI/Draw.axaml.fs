@@ -10,6 +10,9 @@ open Avalonia.Controls.Shapes
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.VM
 
+/// <summary>
+/// Information about a shape to be drawn.
+/// </summary>
 type ShapeInfo =
     { x: float
       y: float
@@ -18,7 +21,8 @@ type ShapeInfo =
       color: string
       typ: string
       id: int
-      trace: bool }
+      trace: bool // Whether to draw a trail behind the shape when it moves
+       }
 
 /// <summary>
 /// The window used for drawing shapes.
@@ -53,6 +57,11 @@ type DrawWindow() as this =
         this.Height <- 600.0
         this.Focusable <- true
 
+    /// <summary>
+    /// Event listeners
+    /// </summary>
+    /// <param name="listenerId">The id of the listener</param>
+    /// <returns>Unit</returns>
     member private this.handleEvent listenerId =
         let listeners = eventListeners.TryFind(listenerId)
 
@@ -110,6 +119,11 @@ type DrawWindow() as this =
                     | _ -> ())
         | None -> ()
 
+    /// <summary>
+    /// Convert key to int
+    /// </summary>
+    /// <param name="key">The key</param>
+    /// <returns>Int</returns>
     member private this.keyToInt key =
         match key with
         | Key.Left -> 0
@@ -118,10 +132,19 @@ type DrawWindow() as this =
         | Key.Down -> 3
         | _ -> -1
 
+    /// <summary>
+    /// Initialize the component
+    /// </summary>
+    /// <returns>Unit</returns>
     member private this.InitializeComponent() =
         canvasControl <- this.FindControl<Canvas>("Canvas")
         canvasControl.Background <- SolidColorBrush(Colors.White)
 
+    /// <summary>
+    /// Parse color string
+    /// </summary>
+    /// <param name="colorStr">The color string</param>
+    /// <returns>Color</returns>
     member private this.ParseColor(colorStr: string) =
         try
             match colorStr.ToLowerInvariant() with
@@ -138,6 +161,14 @@ type DrawWindow() as this =
         with _ ->
             Colors.Black
 
+    /// <summary>
+    /// Add event listener
+    /// </summary>
+    /// <param name="vm">The VM</param>
+    /// <param name="shapeId">The shape id</param>
+    /// <param name="listenerId">The listener id</param>
+    /// <param name="func">The function</param>
+    /// <returns>Unit</returns>
     member this.AddEventListener(vm: VM, shapeId: int, listenerId: int, func: Function) =
         currentVm <- Some vm
         let listeners = eventListeners.TryFind(listenerId)
@@ -149,6 +180,12 @@ type DrawWindow() as this =
 
         eventListeners <- eventListeners.Add(listenerId, (shapeId, func) :: listeners)
 
+    /// <summary>
+    /// Draw a shape
+    /// </summary>
+    /// <param name="vm">The VM</param>
+    /// <param name="shape">The shape</param>
+    /// <returns>Unit</returns>
     member this.DrawShape(vm: VM, shape: Value) =
         currentVm <- Some vm
 
@@ -189,6 +226,7 @@ type DrawWindow() as this =
 
         shapes <- shapes.Add(id, shape)
 
+        // Save shape information for later use
         shapeInfo <-
             shapeInfo.Add(
                 id,
@@ -204,10 +242,21 @@ type DrawWindow() as this =
 
         canvasControl.Children.Add(shape)
 
+    /// <summary>
+    /// Remove all shapes from the canvas
+    /// </summary>
     member this.Clear() = canvasControl.Children.Clear()
 
+    /// <summary>
+    /// The canvas control instance
+    /// </summary>
     member this.Canvas = canvasControl
 
+    /// <summary>
+    /// When the window is closed
+    /// </summary>
+    /// <param name="e">The event args</param>
+    /// <returns>Unit</returns>
     override this.OnClosed(e) =
         windowCount <- windowCount - 1
 

@@ -11,6 +11,9 @@ open ScottPlot.Avalonia
 open Avalonia.Media.Imaging
 open System.IO
 
+/// <summary>
+/// Represents the data of a cell in a notebook.
+/// </summary>
 type CellData =
     | TextCell of string
     | CodeCell of
@@ -18,7 +21,15 @@ type CellData =
            Output: string
            Plots: byte[] list |}
 
+/// <summary>
+/// Exports a notebook to a PDF file.
+/// </summary>
 module NotebookPdfExport =
+    /// <summary>
+    /// Saves the plots in a plot panel to image files.
+    /// </summary>
+    /// <param name="plot">The plot panel to capture.</param>
+    /// <returns>The image data of the plot panel.</returns>
     let private capturePlotImage (plot: AvaPlot) =
         let pixelSize = PixelSize(int plot.Width, int plot.Height)
         let bitmap = new RenderTargetBitmap(pixelSize)
@@ -31,6 +42,11 @@ module NotebookPdfExport =
         bitmap.Save(stream)
         stream.ToArray()
 
+    /// <summary>
+    /// Extracts the data of all cells in a notebook.
+    /// </summary>
+    /// <param name="cellsContainer">The container of the cells.</param>
+    /// <returns>The data of all cells in the notebook.</returns>
     let extractCellsData (cellsContainer: StackPanel) =
         if cellsContainer = null then
             []
@@ -69,6 +85,12 @@ module NotebookPdfExport =
                     || not (List.isEmpty data.Plots))
             |> Seq.toList
 
+    /// <summary>
+    /// Exports the cells of a notebook to a PDF file.
+    /// </summary>
+    /// <param name="cells">The data of the cells in the notebook.</param>
+    /// <param name="path">The path of the PDF file to save.</param>
+    /// <returns>Unit</returns>
     let exportToPdf (cells: CellData list) (path: string) =
         Document
             .Create(fun container ->

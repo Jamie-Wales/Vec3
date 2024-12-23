@@ -1,6 +1,5 @@
 namespace Vec3
 
-open System
 open System.IO
 open System.Text.Json
 open System.Text.Json.Serialization
@@ -13,18 +12,22 @@ open Avalonia.Media
 open ScottPlot.Avalonia
 open TextMateSharp.Grammars
 open AvaloniaEdit.TextMate
-open Vec3.Interpreter
 open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Compiler
-open Vec3.Interpreter.Typing
 open Vec3.Interpreter.Repl
 open QuestPDF.Infrastructure
 
+/// <summary>
+/// The type of a cell in the notebook.
+/// </summary>
 type CellType = 
     | Code = 0
     | Text = 1
 
+/// <summary>
+/// Information about a cell in the notebook.
+/// </summary>
 type NotebookCell = {
     Type: CellType
     Content: string
@@ -33,6 +36,9 @@ type NotebookCell = {
     Plots: byte[] list // We don't serialize plots in .vec3nb format
 }
 
+/// <summary>
+/// Information about a notebook.
+/// </summary>
 type NotebookData = {
     Version: string
     Cells: NotebookCell list
@@ -49,13 +55,16 @@ type NotebookWindow() as this =
     let mutable addTextButton: Button = null
     let mutable exportButton: Button = null
     let mutable importButton: Button = null
-    let mutable vm: VM = createNewVM (initFunction ("Main"))
-    let mutable typeEnv: Types.TypeEnv = Inference.defaultTypeEnv
+    let mutable vm: VM = createNewVM (initFunction "Main")
 
     do
         AvaloniaXamlLoader.Load(this)
         this.InitializeComponent()
 
+    /// <summary>
+    /// Set up the text editor with the TextMate grammar.
+    /// </summary>
+    /// <param name="editor">The text editor to set up.</param>
     member private this.SetupTextMateEditor(editor: TextEditor) =
         let registryOptions = RegistryOptions(ThemeName.QuietLight)
         editor.ShowLineNumbers <- true
@@ -82,6 +91,9 @@ type NotebookWindow() as this =
             | true, color -> editor.Foreground <- SolidColorBrush(color)
             | _ -> ()
 
+    /// <summary>
+    /// Initialise the run button.
+    /// </summary>
     member private this.CreateRunButton() =
         let runButton = Button()
         runButton.Classes.Add("cell-button")
@@ -95,6 +107,9 @@ type NotebookWindow() as this =
         runButton.Content <- icon
         runButton
 
+    /// <summary>
+    /// Initialise the delete button.
+    /// </summary>
     member private this.CreateDeleteButton() =
         let deleteButton = Button()
         deleteButton.Classes.Add("cell-button")
@@ -107,12 +122,15 @@ type NotebookWindow() as this =
         deleteButton.Content <- icon
         deleteButton
 
+    /// <summary>
+    /// Add a code cell to the notebook.
+    /// </summary>
     member private this.AddCodeCell() =
         let cellBorder = Border()
         cellBorder.Classes.Add("cell")
 
         let grid = Grid()
-        grid.RowDefinitions <- RowDefinitions("Auto,*,Auto,Auto") // Added row for plots
+        grid.RowDefinitions <- RowDefinitions("Auto,*,Auto,Auto")
 
         // Buttons panel
         let buttonsPanel = StackPanel()
@@ -259,6 +277,9 @@ type NotebookWindow() as this =
         cellBorder.Child <- grid
         cellsContainer.Children.Add(cellBorder)
 
+    /// <summary>
+    /// Add a text cell to the notebook.
+    /// </summary>
     member private this.AddTextCell() =
         let cellBorder = Border()
         cellBorder.Classes.Add("cell")
@@ -291,6 +312,9 @@ type NotebookWindow() as this =
         cellBorder.Child <- grid
         cellsContainer.Children.Add(cellBorder)
 
+    /// <summary>
+    /// Save the notebook to a file.
+    /// </summary>
     member private this.SaveNotebookAsync() =
         task {
             try
@@ -341,6 +365,9 @@ type NotebookWindow() as this =
                 eprintfn $"Failed to save notebook: %s{ex.Message}"
         } |> ignore
 
+    /// <summary>
+    /// Import a notebook from a file.
+    /// </summary>
     member private this.LoadNotebookAsync() =
             task {
                 try
@@ -351,7 +378,7 @@ type NotebookWindow() as this =
                     match result with
                     | null -> ()  // User cancelled
                     | files ->
-                        let! content = File.ReadAllTextAsync(files.[0])
+                        let! content = File.ReadAllTextAsync(files[0])
                         let notebook = JsonSerializer.Deserialize<NotebookData>(content)
                         
                         cellsContainer.Children.Clear()
@@ -383,10 +410,14 @@ type NotebookWindow() as this =
                 with ex ->
                     eprintfn $"Failed to load notebook: %s{ex.Message}"
             } |> ignore
+    
+    /// <summary>
+    /// Export the notebook to a PDF file.
+    /// </summary>
     member private this.ExportNotebook() =
         task {
             try
-                QuestPDF.Settings.License <- QuestPDF.Infrastructure.LicenseType.Community
+                QuestPDF.Settings.License <- LicenseType.Community
                 let dialog = SaveFileDialog()
                 let extensions = ResizeArray<string>([ "pdf" ])
                 dialog.Filters.Add(FileDialogFilter(Name = "PDF Document", Extensions = extensions))
@@ -401,6 +432,10 @@ type NotebookWindow() as this =
                 eprintfn $"Failed to export PDF: %s{ex.Message}"
         }
         |> ignore
+    
+    /// <summary>
+    /// Initialise the notebook window.
+    /// </summary>
     member private this.InitializeComponent() =
         cellsContainer <- this.FindControl<StackPanel>("CellsContainer")
         addCodeButton <- this.FindControl<Button>("AddCodeButton")

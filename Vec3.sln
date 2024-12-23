@@ -1,8 +1,10 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vec3", "Vec3/Vec3.fsproj", "{610CAC0C-456B-434B-A4A6-175FB0833160}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vec3", "src\Vec3\Vec3.fsproj", "{610CAC0C-456B-434B-A4A6-175FB0833160}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "Tests\Tests.fsproj", "{CC223DAB-0948-4439-83AE-26B033C464EB}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "src\Tests\Tests.fsproj", "{CC223DAB-0948-4439-83AE-26B033C464EB}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "GUI", "src\GUI\GUI.fsproj", "{544E46C4-6FE0-4F4C-9DC8-884022C2A509}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,5 +20,9 @@ Global
 		{CC223DAB-0948-4439-83AE-26B033C464EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC223DAB-0948-4439-83AE-26B033C464EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC223DAB-0948-4439-83AE-26B033C464EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{544E46C4-6FE0-4F4C-9DC8-884022C2A509}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{544E46C4-6FE0-4F4C-9DC8-884022C2A509}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{544E46C4-6FE0-4F4C-9DC8-884022C2A509}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{544E46C4-6FE0-4F4C-9DC8-884022C2A509}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

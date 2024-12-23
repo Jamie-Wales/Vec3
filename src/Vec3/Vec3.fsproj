@@ -1,11 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <OutputType>library</OutputType>
+        <OutputType>Exe</OutputType>
         <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <ApplicationManifest>GUI/app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <GenerateProgramFile>false</GenerateProgramFile>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <DocumentationFile>bin\Debug\net9.0\Vec3.xml</DocumentationFile>
@@ -79,6 +81,7 @@
         <Content Include="examples\operator-overloading.vec3" />
         <Content Include="examples\vector-ops.vec3" />
         <Content Include="examples\casting.vec3" />
-        <Content Include="src\tests.vec3" />
+        <Content Include="examples\test.vec3" />
+        <Content Include="examples\tests.vec3" />
     </ItemGroup>
 </Project>

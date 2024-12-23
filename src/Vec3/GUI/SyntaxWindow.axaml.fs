@@ -49,7 +49,7 @@ rec factorial (n: int) {
 
 // 4. Control Flow
 // If expression
-let abs = (x: float) -> if x < 0.0 then -x else x
+let abs = (x) -> if x < 0 then -x else x
 
 // Ternary expression
 let sign = (x) -> 1 if x > 0 else -1 if x < 0 else 0
