@@ -104,7 +104,7 @@ let copyRuntimeFiles (config: TranspilerConfig) =
 
         Ok()
     with ex ->
-        Error(IOError $"Failed to copy runtime files: {ex.Message}")
+        Error <| IOError $"Failed to copy runtime files: {ex.Message}"
 
 /// <summary>
 /// Writes the generated C code to a file

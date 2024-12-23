@@ -1,5 +1,6 @@
 module Vec3.Transpiler.CodeGenerator
 
+open System
 open Vec3.Interpreter.Grammar
 open Vec3.Interpreter.Token
 
@@ -13,10 +14,10 @@ let generateUniqueName baseName =
     let rec findUnique i =
         let name = if i = 0 then baseName else $"%s{baseName}_%d{i}"
 
-        if Set.contains name !functionNames then
+        if Set.contains name functionNames.Value then
             findUnique (i + 1)
         else
-            functionNames := Set.add name !functionNames
+            functionNames.Value <- Set.add name functionNames.Value
             name
 
     findUnique 0
@@ -47,7 +48,7 @@ let builtInFunctionMap =
 
 let tryGetBuiltInFunction lexeme =
     if Map.containsKey lexeme builtInFunctionMap then
-        Some(builtInFunctionMap.[lexeme])
+        Some builtInFunctionMap[lexeme]
     else
         None
 
@@ -104,7 +105,7 @@ let rec generateExpr (expr: Expr) : string =
             | LBool b -> $"vec3_new_bool(%b{b})"
             | LUnit -> "vec3_new_nil()"
 
-        | ELambda(parameters, body, _, _, _, isAsync) ->
+        | ELambda(parameters, body, _, _, _, _) ->
             let paramNames =
                 parameters
                 |> List.map (fun (token, _) ->
@@ -143,20 +144,16 @@ let rec generateExpr (expr: Expr) : string =
                 }}
                 """
 
-            functionDefinitions
-            := { Name = funcName
-                 Implementation = funcImpl }
-               :: !functionDefinitions
+            functionDefinitions.Value <- { Name = funcName; Implementation = funcImpl } :: functionDefinitions.Value
 
             // Create function value that captures current environment
             $"vec3_new_function(\"%s{funcName}\", %d{List.length parameters}, %s{funcName}, env)"
-
-        // ... rest of the cases remain the same ...
 
 
         | EIdentifier(id, _) ->
             match id.Lexeme with
             | Identifier name -> $"vec3_env_get(env, \"{name}\")"
+            | _ -> raise <| InvalidProgramException "Expected identifier in expression"
 
         | EList(exprs, _) ->
             let args = exprs |> List.map generateExpr |> String.concat ", "
@@ -204,10 +201,10 @@ let rec generateExpr (expr: Expr) : string =
                         | DotStar -> "dot"
                         | ColonColon -> "cons"
                         | PlusPlus -> "concat"
-                        | _ -> failwithf "Unknown operator: %A" op
+                        | _ -> failwithf $"Unknown operator: %A{op}"
 
                     $"vec3_call_function(vec3_env_get(env, \"{funcName}\"), (Vec3Value*[]){{{argExprs}}}, {List.length args})"
-                | _ -> failwithf "Unknown identifier type: %A" id.Lexeme
+                | _ -> failwithf $"Unknown identifier type: %A{id.Lexeme}"
             | _ ->
                 let funcExpr = generateExpr callee
                 $"vec3_call_function(%s{funcExpr}, (Vec3Value*[]){{{argExprs}}}, {List.length args})"
@@ -234,7 +231,7 @@ let rec generateExpr (expr: Expr) : string =
             let endCode = generateExpr end_
             $"vec3_list_slice(%s{listCode}, %s{startCode}, %s{endCode})"
 
-        | EMatch(expr, cases, _) -> failwithf "Match expressions not implemented for: %A" expr
+        | EMatch(expr, _, _) -> failwithf $"Match expressions not implemented for: %A{expr}"
 
         | ERecordEmpty _ -> "vec3_new_record()"
 
@@ -262,7 +259,7 @@ let rec generateExpr (expr: Expr) : string =
 
     with ex ->
         printf $"%s{ex.Message}"
-        failwithf "Error generating code for expression %A:\n%s\nStackTrace: %s" expr ex.Message ex.StackTrace
+        failwithf $"Error generating code for expression %A{expr}:\n%s{ex.Message}\nStackTrace: %s{ex.StackTrace}"
 
 and generateStmt (stmt: Stmt) : string =
     try
@@ -284,27 +281,27 @@ and generateStmt (stmt: Stmt) : string =
 
         | STypeDeclaration _ -> ""
         | SImport _ -> ""
-        | SRecFunc(name, parameters, body, _) -> failwithf "Recursive functions not implemented for: %A" name
-        | SAsync(name, parameters, body, _) -> failwithf "Async functions not implemented for: %A" name
+        | SRecFunc(name, parameters, body, _) -> failwithf $"Recursive functions not implemented for: %A{name}"
+        | SAsync(name, parameters, body, _) -> failwithf $"Async functions not implemented for: %A{name}"
 
     with ex ->
         printf $"%s{ex.Message}"
-        failwithf "Error generating code for statement %A:\n%s\nStackTrace: %s" stmt ex.Message ex.StackTrace
+        failwithf $"Error generating code for statement %A{stmt}:\n%s{ex.Message}\nStackTrace: %s{ex.StackTrace}"
 
 let generateCCode (program: Program) : string =
     try
-        functionDefinitions := []
-        functionNames := Set.empty
+        functionDefinitions.Value <- []
+        functionNames.Value <- Set.empty
 
         let stmts = program |> List.map generateStmt |> String.concat "\n    "
 
         let forwardDecls =
-            !functionDefinitions
+            functionDefinitions.Value
             |> List.map (fun f -> $"Vec3Value* %s{f.Name}(Vec3Value** args);")
             |> String.concat "\n"
 
         let funcImplementations =
-            !functionDefinitions
+            functionDefinitions.Value
             |> List.rev
             |> List.map (fun f -> f.Implementation)
             |> String.concat "\n\n"
@@ -327,4 +324,4 @@ int main(void) {{
 }}
 """
     with ex ->
-        failwithf "Error generating program code:\n%s\nStackTrace: %s" ex.Message ex.StackTrace
+        failwithf $"Error generating program code:\n%s{ex.Message}\nStackTrace: %s{ex.StackTrace}"
