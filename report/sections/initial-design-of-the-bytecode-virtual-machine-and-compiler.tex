@@ -17,7 +17,8 @@ It maintained a \texttt{CompilerState} to track the chunk being generated, local
 The compilation process involved a recursive descent through the AST. Functions like \texttt{compileStmt} and \texttt{compileExpr} recursively processed statements and expressions, respectively. 
 For each AST node encountered, the compiler emitted corresponding bytecode instructions using helper functions like \texttt{emitByte}, \texttt{emitBytes}, \texttt{emitConstant}, and \texttt{emitOpCode}.
 
-Variable declarations were handled by \texttt{compileVariableDeclaration}, which added the variable to the \texttt{Locals} map in the \texttt{CompilerState}. 
+Variable declarations were handled by \texttt{compileVariableDeclaration}, which added the variable to the \texttt{Locals} map in the \texttt{CompilerState}.
+
 This map stored local variables and their corresponding slot indices on the virtual machine's stack. 
 Control flow instructions, like jumps and loops, were initially emitted with placeholder offsets. 
 These placeholders were later patched with the correct offsets once the target locations were determined.

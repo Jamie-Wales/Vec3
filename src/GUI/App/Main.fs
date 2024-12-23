@@ -3,6 +3,7 @@ namespace GUI.App
 open Avalonia
 open Avalonia.Controls.ApplicationLifetimes
 open Avalonia.Markup.Xaml
+open GUI.App.Windows
 
 /// <summary>
 /// The main application class (UI).

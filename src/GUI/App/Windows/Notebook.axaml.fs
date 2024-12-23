@@ -17,6 +17,7 @@ open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Compiler
 open Vec3.Interpreter.Repl
 open QuestPDF.Infrastructure
+open GUI.App
 
 /// <summary>
 /// The type of a cell in the notebook.

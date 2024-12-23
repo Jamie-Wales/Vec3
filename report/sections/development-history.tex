@@ -308,10 +308,92 @@ Other compound data types such as tuples and records were also added.
 In this sprint we added a number of maths functions to the language, including \texttt{sin}, \texttt{cos}, \texttt{tan},
 \texttt{asin}, \texttt{acos} and other, including vector operations, and added the ability to plot functions, both 
 built in and user defined.
+Support for complex numbers was also added.
 
 \subsection{Grammar in BNF}\label{subsec:grammar-in-bnf9}
 
 \begin{verbatim}
+<stmtlist> ::=  <stmt> 
+              | <stmt> <stmtlist>
+<stmt> ::=  <expr> 
+          | <vardecl>
+          | <assertion>
+          
+<vardecl> ::= "let" <identifier> "=" <expr>
+            | "let" <identifier> ":" <type> "=" <expr>
+            
+<assertion> ::= "assert" <expr> | "assert" <expr> <string>
+                
+
+<expr> ::=  <term> 
+          | <term> "+" <expr> 
+          | <term> "-" <expr>
+          | <term> "==" <expr>
+          | <term> "!=" <expr>
+          | <term> "<" <expr>
+          | <term> ">" <expr>
+          | <term> "<=" <expr>
+          | <term> ">=" <expr>
+          | <term> "&&" <expr>
+          | <term> "||" <expr>
+<term> ::=  <factor> 
+          | <factor> "*" <term> 
+          | <factor> "/" <term> 
+          | <factor> "%" <term> 
+<factor> ::=  <literal> 
+            | "(" <expr> ")" 
+            | <factor> "^" <factor>
+            | <unaryop> <factor>
+            | <factor> "(" <exprlist> ")"
+            | <factor> "." <identifier>
+            | <factor> "[" <expr> "]"
+            | <factor> "." <identifier>
+            | <factor> "[" <expr> ":" <expr> "]"
+            | <factor> "[" <expr> ":" "]"
+            | <factor> "[" ":" <expr> "]"
+
+<unaryop> ::= "-" | "!" | "+" | <userop>
+
+<literal> ::= <number> | <identifier> | <bool> | <list> | <lambda> | <string> | "()" | <tuple> | <record>
+<string> ::= '"' <charlist> '"' | '""'
+<charlist> ::= <char> | <char> <charlist>
+<list> ::= "[" <exprlist> "]"
+<tuple> ::= "(" <exprlist> ")"
+<record> ::= "{" <recordlist> "}"
+<recordlist> ::=  <identifier> "=" <expr> 
+                | <identifier> "=" <expr> "," <recordlist>
+                | <identifer> ":" <type> "=" <expr> 
+                | <identifier> ":" <type> "=" <expr> "," <recordlist>
+            
+<lambda> ::=  "(" <typedexprlist> ")" "->" <expr>
+            | "(" <typedexprlist> ")" ":" <type> "->" <expr>
+
+<bool> ::= "true" | "false"
+            
+<number> ::= <int> | <float> | <rational> | <complex>
+<int> ::= <digit> | <digit> <int>
+<float> ::= <int> "." <int>
+<rational> ::= <int> "/" <int>
+<complex> ::= <float> "+" <float> "i" | <float> "-" <float> "i" | <float> "i"
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+
+<identifier> ::= <letter> | <letter> <identifier>
+<letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" 
+            | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+
+<exprlist> ::= <expr> | <expr> "," <exprlist>
+<typedexprlist> ::=  <expr> ":" <type> 
+                   | <expr> ":" <type> "," <typedexprlist>
+                   | <expr> "," <typedexprlist>
+    
+<type> ::=  "int" | "float" | "bool" 
+          | "(" <typelist> ")" "->" <type> 
+          | "[" <type> "]" | "(" <typelist> ")"
+          | "{" <recordtypelist> "}"
+          
+<recordtypelist> ::= <identifier> ":" <type> | <identifier> ":" <type> "," <recordtypelist>
+
+<typelist> ::= <type> | <type> "," <typelist>
 \end{verbatim}
 
 \section{Sprint 10: Control flow}\label{sec:control-flow}
@@ -382,10 +464,11 @@ In this sprint we added control flow to the language, with \texttt{if} expressio
 
 <bool> ::= "true" | "false"
             
-<number> ::= <int> | <float> | <rational>
+<number> ::= <int> | <float> | <rational> | <complex>
 <int> ::= <digit> | <digit> <int>
 <float> ::= <int> "." <int>
 <rational> ::= <int> "/" <int>
+<complex> ::= <float> "+" <float> "i" | <float> "-" <float> "i" | <float> "i"
 <digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
 <identifier> ::= <letter> | <letter> <identifier>

@@ -13,12 +13,12 @@
 
     <ItemGroup>
         <Compile Include="App\NotebookPDFExport.fs" />
-        <Compile Include="App\Main.fs" />
         <Compile Include="App\Windows\Draw.axaml.fs" />
         <Compile Include="App\Windows\MainWindow.axaml.fs" />
         <Compile Include="App\Windows\Notebook.axaml.fs" />
         <Compile Include="App\Windows\PlotWindow.axaml.fs" />
         <Compile Include="App\Windows\SyntaxWindow.axaml.fs" />
+        <Compile Include="App\Main.fs" />
         <Compile Include="Program.fs"/>
     </ItemGroup>
     <ItemGroup>
