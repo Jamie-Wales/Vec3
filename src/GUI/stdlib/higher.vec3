@@ -1,0 +1,33 @@
+let compose = (f, g) -> (x) -> f(g(x))
+
+let curry = (f) -> (x) -> (y) -> f(x, y)
+let uncurry = (f) -> (x, y) -> f(x)(y)
+
+let flip = (f) -> (x, y) -> f(y, x)
+let partial = (f, x) -> (y) -> f(x, y)
+let identity = (x) -> x
+
+let (|>) = (x, f) -> f(x)
+let (<|) = (f, x) -> f(x)
+
+let compose2 = (f, g) -> (x, y) -> f(g(x, y))
+
+let rec iterate = (f, n, x) ->
+    if n <= 0 then
+        x
+    else
+        f(iterate(f, n - 1, x))
+
+let onn = (f, g) -> (x, y) -> f(g(x), g(y))
+
+let rec composeAll = (fs) ->
+    if len(fs) == 0 then
+        identity
+    else if len(fs) == 1 then
+        head(fs)
+    else
+        compose(head(fs), composeAll(tail(fs)))
+
+let both = (f) -> (x, y) -> [f(x), f(y)]
+let fork = (f, g, combine) -> (x) -> combine(f(x), g(x))
+let lift = (f) -> (mx) -> map(mx, f)

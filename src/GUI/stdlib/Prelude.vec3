@@ -1,0 +1,128 @@
+// Wrapper functions for built-in functions
+let cos = (x) -> BUILTIN_COS(x)
+let sin = (x) -> BUILTIN_SIN(x)
+let tan = (x) -> BUILTIN_TAN(x)
+let acos = (x) -> BUILTIN_ACOS(x)
+let asin = (x) -> BUILTIN_ASIN(x)
+let atan = (x) -> BUILTIN_ATAN(x)
+let log = (x, y) -> BUILTIN_LOG(x, y)
+let exp = (x) -> BUILTIN_EXP(x)
+let root = (x, y) -> BUILTIN_ROOT(x, y)
+let abs = (x) -> BUILTIN_ABS(x)
+let floor = (x) -> BUILTIN_FLOOR(x)
+let ceil = (x) -> BUILTIN_CEIL(x)
+let trunc = (x) -> BUILTIN_TRUNC(x)
+
+// Special cased roots
+let sqrt = (x) -> root(x, 2)
+let cubeRoot = (x) -> root(x, 3)
+
+// List operations
+let max = (x, y) -> if x > y then x else y
+let min = (x, y) -> if x < y then x else y
+
+// Standard identity function
+let id = (x) -> x
+
+// List core functions
+let tail = (list) -> if list == [] then 
+                        error("tail of empty list") 
+                     else 
+                        list[1..]
+
+let rec len = (list) -> if list == [] then 
+                    0 
+                 else 
+                    1 + len(tail(list))
+
+let head = (x) -> if len(x) == 0 then 
+                     error("head of empty list") 
+                  else 
+                     x[0]
+
+let rec fold = (list, acc, func) -> if len(list) == 0 then 
+                               acc 
+                            else 
+                               func(head(list), fold(tail(list), acc, func))
+
+let rec map = (list, func) -> if list == [] then 
+                          [] 
+                       else
+                          func(head(list)) :: map(tail(list), func)
+
+let rec filter = (list, func: (any) -> bool) {
+                                        if len(list) == 0 then 
+                                           [] 
+                                        else if func(head(list)) then 
+                                           head(list) :: filter(tail(list), func) 
+                                        else 
+                                           filter(tail(list), func)
+                                    }
+
+// List utility functions
+let sum = (list) -> fold(list, 0, (x, y) -> x + y)
+let product = (list) -> fold(list, 1, (x, y) -> x * y)
+let any = (list) -> fold(list, false, (x, y) -> x || y)
+let all = (list) -> fold(list, true, (x, y) -> x && y)
+
+// List predicate functions
+let anyAre = (list, func) -> any(map(list, func))
+let allAre = (list, func) -> all(map(list, func))
+
+// Range utilities
+let rec range = (start, end) -> if start >= end then 
+                           []
+                        else
+                           start :: range(start + 1, end)
+
+// Operators
+let (...) = (start, end) -> range(start, end)
+let (!!) = (list, index) -> list[index]
+let (++) = (x, y) -> append(x, y)
+
+// Constants
+let Keys = {
+    Left = 0,
+    Right = 1,
+    Up = 2,
+    Down = 3
+}
+
+let findIntegral = (f, x, y) -> {
+    let integral = integrate(f)
+    integral(y) - integral(x)
+}
+
+let findDerivative = (f, x) -> {
+    let derivative = differentiate(f)
+    derivative(x)
+}
+
+/*
+let Types = {
+    Int = "Integer",
+    Float = "Float",
+    Bool = "Boolean",
+    Rational = "Rational",
+    Complex = "Complex",
+    Char = "Char",
+    String = "String",
+    List = "List",
+    Tuple = "Tuple",
+    Record = "Record",
+    Function = "Function",
+    Closure = "Closure",
+    Nil = "Nil",
+    Block = "Block",
+    EventListener = "EventListener",
+    Promise = "Promise",
+    Builtin = "Builtin",
+    PlotData = "PlotData",
+    PlotFunction = "PlotFunction",
+    PlotFunctions = "PlotFunctions",
+    Shape = "Shape",
+    Shapes = "Shapes",
+    Output = "Output",
+    AsyncFunction = "AsyncFunction"
+}
+*/

@@ -1,0 +1,90 @@
+// Core list operations
+let rec spread = (lists) -> 
+    if len(lists) == 0 then
+        []
+    else
+        head(lists) ++ spread(tail(lists))
+
+let rec take = (list, n) -> 
+    if n <= 0 || len(list) == 0 then
+        []
+    else
+        head(list) :: take(tail(list), n - 1)
+
+let rec drop = (list, n) -> 
+    if n <= 0 || len(list) == 0 then 
+        list 
+    else 
+        drop(tail(list), n - 1)
+
+let rec zip = (list1, list2) -> 
+    if len(list1) == 0 || len(list2) == 0 then
+        []
+    else
+        [[head(list1), head(list2)]] ++ zip(tail(list1), tail(list2))
+
+let rec flatten = (list) -> 
+    if len(list) == 0 then
+        []
+    else
+        head(list) :: flatten(tail(list))
+
+let rec reverse = (list) -> 
+    if len(list) == 0 then 
+        [] 
+    else 
+        reverse(tail(list)) ++ [head(list)]
+
+
+let rec last = (list) -> 
+    if len(list) == 0 then
+        error("last of empty list")
+    else if len(list) == 1 then
+        head(list)
+    else
+        last(tail(list))
+
+let rec init = (list) -> 
+    if len(list) <= 1 then
+        []
+    else
+        head(list) :: init(tail(list))
+
+let rec contains = (list, elem) -> 
+    if len(list) == 0 then
+        false
+    else if head(list) == elem then
+        true
+    else
+        contains(tail(list), elem)
+
+let rec indexOf = (list, elem) -> 
+    if len(list) == 0 then
+        -1
+    else if head(list) == elem then
+        0
+    else 
+        1 + indexOf(tail(list), elem)
+
+let (@@) = (lists) -> spread(lists)
+
+let splitAt = (list, n) -> [take(list, n), drop(list, n)]
+
+let rec chunk = (list, n) -> 
+    if len(list) == 0 then
+        []
+    else
+        [take(list, n)] ++ chunk(drop(list, n), n)
+
+let rec unique = (list) -> 
+    if len(list) == 0 then
+        []
+    else
+        head(list) :: unique(filter(tail(list), (x) -> x != head(list)))
+
+let rec append_elem = (list, elem) -> 
+    if len(list) == 0 then
+        elem :: []
+    else
+        head(list) :: append_elem(tail(list), elem)
+

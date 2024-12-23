@@ -1,4 +1,4 @@
-namespace Vec3
+namespace GUI.App.Windows
 
 open Avalonia
 open Avalonia.Controls
