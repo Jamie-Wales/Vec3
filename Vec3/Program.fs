@@ -10,14 +10,25 @@ open Vec3.Transpiler.Transpiler
 /// </summary>
 module Program =
 
+    /// <summary>
+    /// Simple read file function.
+    /// </summary>
+    /// <param name="filePath">The file path.</param>
+    /// <returns>The file contents.</returns>
     let readFile (filePath: string) : string =
         if File.Exists(filePath) then
             File.ReadAllText(filePath)
         else
-            failwithf "File not found: %s" filePath
-    // args, -r to repl, -f to file, -g or no args for GUI
+            failwithf $"File not found: %s{filePath}"
+            
+    /// <summary>
+    /// args, -r to repl, -f to file, -g or no args for GUI
+    /// </summary>
     let usg_msg = "Usage: vec3 [-r | -f <filename> | -g]"
 
+    /// <summary>
+    /// Creates an Avalonia application.
+    /// </summary>
     [<CompiledName "BuildAvaloniaApp">]
     let buildAvaloniaApp () =
         AppBuilder
@@ -34,7 +45,7 @@ module Program =
         | [| "-c"; filename |] ->
             let config =
                 if argv.Length > 2 then
-                    createConfig (Some argv.[2])
+                    createConfig (Some argv[2])
                 else
                     defaultConfig
 

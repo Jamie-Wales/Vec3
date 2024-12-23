@@ -10,7 +10,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseEmptyInput() =
-        let result = parse ""
+        let result = parse "" false
 
         match result with
         | Ok(_, statements) -> Assert.That(statements, Is.Empty, "Expected no statements for empty input.")
@@ -18,7 +18,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseSingleNumber() =
-        let result = parse "42"
+        let result = parse "42" false
 
         match result with
         | Ok(_, statements) ->
@@ -31,7 +31,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseSimpleExpression() =
-        let result = parse "3 + 4"
+        let result = parse "3 + 4" false
 
         match result with
         | Ok(_, statements) ->
@@ -47,7 +47,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_HandleUnterminatedString() =
-        let result = parse "\"Unfinished string"
+        let result = parse "\"Unfinished string" false
 
         match result with
         | Ok _ -> Assert.Fail "Expected an error for unterminated string."
@@ -55,7 +55,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_HandlePrecendence() =
-        let result = parse "3 + 4 * 5"
+        let result = parse "3 + 4 * 5" false
 
         match result with
         | Ok(_, statements) ->
@@ -74,7 +74,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_HandleGrouping() =
-        let result = parse "(3 + 4) * 5"
+        let result = parse "(3 + 4) * 5" false
 
         match result with
         | Ok(_, statements) ->
@@ -93,7 +93,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_LeftAssociate() =
-        let result = parse "3 + 4 + 5"
+        let result = parse "3 + 4 + 5" false
 
         match result with
         | Ok(_, statements) ->
@@ -112,7 +112,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseFunctionCall() =
-        let result = parse "foo(3, 4)"
+        let result = parse "foo(3, 4)" false
 
         match result with
         | Ok(_, statements) ->
@@ -128,7 +128,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseVariableDeclaration() =
-        let result = parse "let foo = 42"
+        let result = parse "let foo = 42" false
 
         match result with
         | Ok(_, statements) ->
@@ -141,7 +141,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseLambda() =
-        let result = parse "let foo = (x) -> x + 1"
+        let result = parse "let foo = (x) -> x + 1" false
 
         match result with
         | Ok(_, statements) ->
@@ -164,7 +164,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseIf() =
-        let result = parse "if true then 1 else 0"
+        let result = parse "if true then 1 else 0" false
 
         match result with
         | Ok(_, statements) ->
@@ -181,7 +181,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseIfElseIf() =
-        let result = parse "if true then 1 else if false then 2 else 0"
+        let result = parse "if true then 1 else if false then 2 else 0" false
 
         match result with
         | Ok(_, statements) ->
@@ -201,7 +201,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseIfNoElse() =
-        let result = parse "if true then 1"
+        let result = parse "if true then 1" false
 
         match result with
         | Ok(_, statements) ->
@@ -215,7 +215,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseUnit() =
-        let result = parse "()"
+        let result = parse "()" false
 
         match result with
         | Ok(_, statements) ->
@@ -228,7 +228,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseTuple() =
-        let result = parse "(1, 2)"
+        let result = parse "(1, 2)" false
 
         match result with
         | Ok(_, statements) ->
@@ -242,7 +242,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseTupleWithUnit() =
-        let result = parse "(1, ())"
+        let result = parse "(1, ())" false
 
         match result with
         | Ok(_, statements) ->
@@ -255,7 +255,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseList() =
-        let result = parse "[1, 2]"
+        let result = parse "[1, 2]" false
 
         match result with
         | Ok(_, statements) ->
@@ -269,7 +269,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseRange() =
-        let result = parse "[1..2]"
+        let result = parse "[1..2]" false
 
         match result with
         | Ok(_, statements) ->
@@ -283,7 +283,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseIndex() =
-        let result = parse "foo[1]"
+        let result = parse "foo[1]" false
 
         match result with
         | Ok(_, statements) ->
@@ -297,7 +297,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseIndexRange() =
-        let result = parse "foo[1..2]"
+        let result = parse "foo[1..2]" false
 
         match result with
         | Ok(_, statements) ->
@@ -314,7 +314,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseIndexRangeNoStart() =
-        let result = parse "foo[..2]"
+        let result = parse "foo[..2]" false
 
         match result with
         | Ok(_, statements) ->
@@ -331,7 +331,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseIndexRangeNoEnd() =
-        let result = parse "foo[1..]"
+        let result = parse "foo[1..]" false
 
         match result with
         | Ok(_, statements) ->
@@ -348,7 +348,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseOperatorDefinitions() =
-        let result = parse "let (?) = (x, y) -> x + y"
+        let result = parse "let (?) = (x, y) -> x + y" false
 
         match result with
         | Ok(_, statements) ->
@@ -371,7 +371,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseInfixOperator() =
-        let result = parse "3 ? 4"
+        let result = parse "3 ? 4" false
 
         match result with
         | Ok(_, statements) ->
@@ -387,7 +387,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParsePrefixOperator() =
-        let result = parse "?3"
+        let result = parse "?3" false
 
         match result with
         | Ok(_, statements) ->
@@ -404,7 +404,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseVariableType() =
-        let result = parse "let foo: int = 42"
+        let result = parse "let foo: int = 42" false
 
         match result with
         | Ok(_, statements) ->
@@ -423,7 +423,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseFunctionType() =
-        let result = parse "let foo: (int) -> int = (x) -> x"
+        let result = parse "let foo: (int) -> int = (x) -> x" false
 
         match result with
         | Ok(_, statements) ->
@@ -443,7 +443,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseListType() =
-        let result = parse "let foo: [int] = [1, 2]"
+        let result = parse "let foo: [int] = [1, 2]" false
 
         match result with
         | Ok(_, statements) ->
@@ -462,7 +462,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseTupleType() =
-        let result = parse "let foo: (int, int) = (1, 2)"
+        let result = parse "let foo: (int, int) = (1, 2)" false
 
         match result with
         | Ok(_, statements) ->
@@ -477,7 +477,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseTypedLambda() =
-        let result = parse "let foo = (x: int) -> x"
+        let result = parse "let foo = (x: int) -> x" false
 
         match result with
         | Ok(_, statements) ->
@@ -497,7 +497,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseTypedRetLambda() =
-        let result = parse "let foo = (x): int -> x"
+        let result = parse "let foo = (x): int -> x" false
 
         match result with
         | Ok(_, statements) ->
@@ -517,7 +517,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseTypedLambdaWithReturnType() =
-        let result = parse "let foo = (x: int): int -> x"
+        let result = parse "let foo = (x: int): int -> x" false
 
         match result with
         | Ok(_, statements) ->
@@ -537,7 +537,7 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseMultiParameterLambda() =
-        let result = parse "let foo = (x, y) -> x + y"
+        let result = parse "let foo = (x, y) -> x + y" false
 
         match result with
         | Ok(_, statements) ->
@@ -560,14 +560,14 @@ type ParserTests() =
 
     [<Test>]
     member _.Should_ParseBlock() =
-        let result = parse "{ 1 }"
+        let result = parse "{ 1 }" false
 
         match result with
         | Ok(_, statements) ->
             Assert.That(statements, Has.Length.EqualTo(1), "Expected one statement for block.")
 
             match statements.Head with
-            | SExpression(EBlock(stmts, _), _) ->
+            | SExpression(EBlock(stmts, _, _), _) ->
                 Assert.That(stmts, Has.Length.EqualTo(1), "Expected one statement in block.")
 
                 match stmts.Head with
@@ -575,3 +575,16 @@ type ParserTests() =
                 | _ -> Assert.Fail $"Expected block statement, got {stmts.Head}."
             | _ -> Assert.Fail $"Expected block statement, got {statements.Head}."
         | Error _ -> Assert.Fail "Expected no errors for valid expression."
+
+    [<Test>]
+    member _.Should_AddPreludeImport() =
+        let result = parse "" true
+        match result with
+        | Ok(_, statements) ->
+            Assert.That(statements, Has.Length.EqualTo(1), "Expected one statement for prelude import.")
+
+            match statements.Head with
+            | SImport _ -> Assert.Pass()
+            | _ -> Assert.Fail $"Expected prelude import statement, got {statements.Head}."
+        | Error _ -> Assert.Fail "Expected no errors for valid expression."
+        

@@ -1,0 +1,2930 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doc>
+<assembly><name>Vec3</name></assembly>
+<members>
+<member name="T:Vec3.DrawWindow">
+ <summary>
+ The window used for drawing shapes.
+ </summary>
+</member>
+<member name="T:Vec3.NotebookWindow">
+ <summary>
+ The notebook window.
+ </summary>
+</member>
+<member name="T:Vec3.SyntaxWindow">
+ <summary>
+ Example window.
+ </summary>
+</member>
+<member name="T:Vec3.MainWindow">
+ <summary>
+ The main UI window used for the Vec3 editor.
+ </summary>
+</member>
+<member name="T:Vec3.App">
+ <summary>
+ The main application class (UI).
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Token.BuiltInFunction">
+ <summary>
+ A built-in function in the language.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Token.Token">
+ <summary>
+ A token in the language.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Token.Position">
+ <summary>
+ The position of a token in the source code.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Token.Placement">
+ <summary>
+ The placement of an operator in an expression.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Token.Lexeme.Operator">
+ <summary>
+ A given operator and its placement in the expression.
+ The placement is used to disambiguate between unary and binary operators.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Token.Lexeme">
+ <summary>
+ Represents a lexeme in the language (a token).
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Token.Keyword">
+ <summary>
+ Represents a keyword in the language.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Token.Punctuation">
+ <summary>
+ Represents a punctuation symbol in the language, i.e. a token only used for syntax.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Token.Operator.Custom">
+ <summary>
+ User defined operators (no precedence)
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Token.Operator">
+ <summary>
+ Possible operators in the language.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Token.Number">
+ <summary>
+ Type representing a number in the language.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Token.isBuiltInFunction(Vec3.Interpreter.Token.Lexeme)">
+ <summary>
+ Tests if a lexeme is a built-in function.
+ </summary>
+ <param name="s">The lexeme to test.</param>
+ <returns>True if the lexeme is a built-in function, false otherwise.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Token.builtInFunctionMap">
+ <summary>
+ Map of built-in functions to their respective function type.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Token.tokenToString(Vec3.Interpreter.Token.Token)">
+ <summary>
+ Converts a token to a string.
+ </summary>
+ <param name="token">The token to convert.</param>
+ <returns>The string representation of the token.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Token.lexemeToString(Vec3.Interpreter.Token.Lexeme)">
+ <summary>
+ Converts a lexeme to a string.
+ </summary>
+ <param name="lex">The lexeme to convert.</param>
+ <returns>The string representation of the lexeme.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Token.punctuationToString(Vec3.Interpreter.Token.Punctuation)">
+ <summary>
+ Converts a punctuation to a string.
+ </summary>
+ <param name="p">The punctuation to convert.</param>
+ <returns>The string representation of the punctuation.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Token.keywordToString(Vec3.Interpreter.Token.Keyword)">
+ <summary>
+ Converts a keyword to a string.
+ </summary>
+ <param name="kw">The keyword to convert.</param>
+ <returns>The string representation of the keyword.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Token.operatorToString(Vec3.Interpreter.Token.Operator)">
+ <summary>
+ Converts an operator to a string.
+ </summary>
+ <param name="op">The operator to convert.</param>
+ <returns>The string representation of the operator.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Token.numberToString(Vec3.Interpreter.Token.Number)">
+ <summary>
+ Converts a number type to a string.
+ </summary>
+ <param name="n">The number to convert.</param>
+ <returns>The string representation of the number.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Token.Empty">
+ <summary>
+ A token representing an empty token (for testing).
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Token.getKeyword(System.String)">
+ <summary>
+ Get the keyword type of a given string.
+ </summary>
+ <param name="s">The string to get the keyword type of.</param>
+ <returns>The keyword type of the string.</returns>
+ <exception cref="KeyNotFoundException">Thrown if the string is not a keyword.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Token.isKeyword(System.String)">
+ <summary>
+ Tests if a string is a keyword.
+ </summary>
+ <param name="s">The string to test.</param>
+ <returns>True if the string is a keyword, false otherwise.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Token.keywordMap">
+ <summary>
+ Map of keywords to their respective keyword type.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Token">
+ <summary>
+ Defines the types used in the lexer and parser.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Program">
+ <summary>
+ The program is a list of statements.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Pattern">
+ <summary>
+ Various patterns for pattern matching.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Stmt">
+ <summary>
+ A statement in the language (something that does not return a value).
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Expr.EMatch">
+ <summary>
+ Pattern matching expression.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Expr.ETail">
+ <summary>
+ A tail call (for tail recursion).
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Expr.ECodeBlock">
+ <summary>
+ Unevaluated code block.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Expr.ERecordExtend">
+ <summary>
+ Records represented recursively as a row type.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Expr.ELambda">
+ <summary>
+ A lambda expression with a list of arguments, a body, a return type, a pure flag, and a type.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Expr.EIndexRange">
+ <summary>
+ Indexing with a range operation on a list or tensor.
+ Expr (list or tensor), start, end, type
+ Allows for indexing in the form l[..1] or l[1..2] or l[1..]
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Expr.EIndex">
+ <summary>
+ Indexing operation on a list or tensor.
+ Expr (list or tensor), (index), type
+ Allows for indexing in the form l[1]
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Expr">
+ <summary>
+ The AST of the language.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Literal">
+ <summary>
+ A literal value in the language.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.TType">
+ <summary>
+ Alias as Type is also a system type.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Grammar.Constrain.GetHashCode">
+ <summary>
+ Hash code only based on the type variable.
+ </summary>
+ <returns>The hash code of the object.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Grammar.Constrain.Equals(System.Object)">
+ <summary>
+ Equality only based on the type variable.
+ </summary>
+ <param name="obj">The object to compare to</param>
+ <returns>True if the objects are equal, false otherwise.</returns>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Constrain">
+ <summary>
+ Represents a type constraint (a type variable and a predicate).
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Row">
+ <summary>
+ Alias for a row type (not strictly necessary, but makes the code more readable).
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Dims.DVar">
+ <summary>
+ A type variable representing an unknown dimension.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Dims.DAny">
+ <summary>
+ Any dimension.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Dims.Dims">
+ <summary>
+ A list of integers representing the dimensions of the tensor.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Dims">
+ <summary>
+ Represents the dimensions of a tensor type.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Type.TAlias">
+ <summary>
+ An alias type, representing a type that is an alias to another type.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Type.TRecord">
+ <summary>
+ Various record types.
+ Represented by a recursive definition of a row that extends other rows.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Type.TTensor">
+ <summary>
+ The list or array type. Contains the element type and the dimensions, allowing for type safe multidimensional arrays.
+ Can possibly be extended to allow dependant typing due to the dimensions.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Type.TConstrain">
+ <summary>
+ A type constraint. Allows constraining a type to a type that satisfies a predicate.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Type.TFunction">
+ <summary>
+ A function type with a list of argument types, a return type, a pure flag, and a builtin flag.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Type.TAny">
+ <summary>
+ The top type, representing any type.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Type.TNever">
+ <summary>
+ The bottom type, unsolvable type.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Type.TUnit">
+ <summary>
+ Represents the unit type (a type with only one value).
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Grammar.Type.hasMinDims(System.Int32)">
+ <summary>
+ Predicate to check the minimum number of dimensions of a tensor type.
+ </summary>
+ <param name="n">The minimum number of dimensions</param>
+ <returns>True if the tensor type has at least n dimensions, false otherwise.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Grammar.Type.hasFieldsThat(Microsoft.FSharp.Collections.FSharpList{System.Tuple{Vec3.Interpreter.Token.Lexeme,Microsoft.FSharp.Core.FSharpFunc{Vec3.Interpreter.Grammar.Type,System.Boolean}}})">
+ <summary>
+ Predicate to check if a record type has a specific set of fields that all satisfy a predicate.
+ </summary>
+ <param name="fields">A list of lexemes and predicates that the fields must satisfy</param>
+ <returns>True if the record type has the specified fields that all satisfy the predicates, false otherwise.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Grammar.Type.hasFieldsOf(Microsoft.FSharp.Collections.FSharpList{System.Tuple{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type}})">
+ <summary>
+ Predicate to check if a record type has a specific set of fields with specific types.
+ </summary>
+ <param name="fields">A list of lexemes and types that the fields must have</param>
+ <returns>True if the record type has the specified fields with the specified types, false otherwise.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Grammar.Type.hasFields(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Token.Lexeme})">
+ <summary>
+ Predicate to check if a record type has a specific set of fields.
+ </summary>
+ <param name="names">A list of lexemes that the fields must have</param>
+ <returns>True if the record type has the specified fields, false otherwise.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Grammar.Type.hasFieldThat(Vec3.Interpreter.Token.Lexeme,Microsoft.FSharp.Core.FSharpFunc{Vec3.Interpreter.Grammar.Type,System.Boolean})">
+ <summary>
+ Predicate to check if a record type has a specific field that satisfies a predicate.
+ </summary>
+ <param name="name">The lexeme that is expected in the record</param>
+ <param name="constrain">The predicate that the field type must satisfy</param>
+ <returns>True if the record type has the specified field that satisfies the predicate, false otherwise.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Grammar.Type.hasFieldOf(Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type)">
+ <summary>
+ Predicate to check if a record type has a specific field with a specific type.
+ </summary>
+ <param name="name">The lexeme that is expected in the record</param>
+ <param name="typ">The type that is expected for the field</param>
+ <returns>True if the record type has the specified field with the specified type, false otherwise.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Grammar.Type.hasField(Vec3.Interpreter.Token.Lexeme)">
+ <summary>
+ Predicate to check if a record type has a specific field.
+ </summary>
+ <param name="name">The lexeme that is expected in the record</param>
+ <returns>True if the record type has the specified field, false otherwise.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Grammar.Type.IsPure">
+ <summary>
+ Predicate to check if a type is 'pure', i.e. it does not have side effects.
+ </summary>
+ <returns>True if the type is pure, false otherwise.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Grammar.Type.IsPrimitive">
+ <summary>
+ Predicate to check if a type is a primitive type.
+ </summary>
+ <returns>True if the type is a primitive type, false otherwise.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Grammar.Type.IsPolynomial">
+ <summary>
+ Unfinished predicate to check if a type is a polynomial type.
+ </summary>
+ <returns>True if the type is a polynomial type, false otherwise.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Grammar.Type.IsNumeric">
+ <summary>
+ Predicate to check if a type is a numeric type.
+ </summary>
+ <returns>True if the type is a numeric type, false otherwise.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Grammar.Type.IsList">
+ <summary>
+ Predicate to check if a function type has a specific return type.
+ </summary>
+ <returns>True if the type is a tensor, false otherwise.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Grammar.Type.IsFunction">
+ <summary>
+ Predicate to check if a type is a list type.
+ </summary>
+ <returns>True if the type is a list type, false otherwise.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Grammar.Type.IsBuiltinFunc">
+ <summary>
+ Predicate to check if a type is a builtin function type.
+ </summary>
+ <returns>True if the type is a builtin function type, false otherwise.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Grammar.Type.IsArithmetic">
+ <summary>
+ Predicate to check if a type can be used in arithmetic operations.
+ </summary>
+ <returns>True if the type can be used in arithmetic operations, false otherwise.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Grammar.Type.NumArgsIs(System.Int32)">
+ <summary>
+ Predicate to check if a function type has a specific number of arguments.
+ </summary>
+ <param name="num">The number of arguments to check for.</param>
+ <returns>True if the function type has the specified number of arguments, false otherwise.</returns>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.Type">
+ <summary>
+ Represents a type in the language.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar.TypeVar">
+ <summary>
+ A type variable used for generic types and type inference.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Grammar.typeMap">
+ <summary>
+ Map of type names to type values.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Grammar.freshTypeVar">
+ <summary>
+ Generates a fresh type variable.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Grammar">
+ <summary>
+ Represents the abstract syntax tree of the language.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Scanner.LexerResult`1">
+ <summary>
+ Wrapper for the result of the lexer.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Scanner.LexerError">
+ <summary>
+ Represents a possible error that can occur during lexing.
+ Each error contains a position in the input string where the error occurred, as well as a message describing the error.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Scanner.lexer(System.String)">
+ <summary>
+ The lexer for the Vec3 language.
+ </summary>
+ <param name="input">The input string to lex.</param>
+ <returns>The list of tokens result.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Scanner.scNumber(Microsoft.FSharp.Collections.FSharpList{System.Char})">
+ <summary>
+ Scan in a number.
+ </summary>
+ <param name="nStr">The lexer input to scan.</param>
+ <returns><c>Some</c>the rest of the input, the scanned number and the length of the number literal (<c>None</c> if the number is // invalid).</returns>
+</member>
+<member name="M:Vec3.Interpreter.Scanner.scOperator(Microsoft.FSharp.Collections.FSharpList{System.Char},System.String)">
+ <summary>
+ Scans in an operator.
+ </summary>
+ <param name="iStr">The operator to scan.</param>
+ <param name="iVal">The value of the operator.</param>
+ <returns><c>Some</c>the rest of the input, the scanned operator and the length of the operator literal (<c>None</c> if the operator is invalid).</returns>
+</member>
+<member name="M:Vec3.Interpreter.Scanner.scIdentifier(Microsoft.FSharp.Collections.FSharpList{System.Char},System.String)">
+ <summary>
+ Scans in an identifier (a keyword or variable name).
+ </summary>
+ <param name="iStr">The identifier to scan.</param>
+ <param name="iVal">The value of the identifier.</param>
+ <returns><c>Some</c>the identifier and the rest of the input (<c>None</c> if the identifier is invalid).</returns>
+</member>
+<member name="M:Vec3.Interpreter.Scanner.scString(Microsoft.FSharp.Collections.FSharpList{System.Char})">
+ <summary>
+ Scans in a string literal.
+ </summary>
+ <param name="sStr">The string to scan.</param>
+ <returns><c>Some</c>string literal and the rest of the input (<c>None</c> if the string is unterminated).</returns>
+</member>
+<member name="M:Vec3.Interpreter.Scanner.str2lst(System.String)">
+ <summary>
+ Converts a string to a list of characters.
+ </summary>
+ <param name="s">The string to convert.</param>
+ <returns>The list of characters.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Scanner.intVal(System.Char)">
+ <summary>
+ Converts a character to an integer.
+ </summary>
+ <param name="c">The character to convert.</param>
+ <returns>The integer value of the character.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Scanner.isSymbol(System.Char)">
+ <summary>
+ Wrapper to check if a character is a symbol.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Scanner.isLetter(System.Char)">
+ <summary>
+ Wrapper to check if a character is a letter.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Scanner.isDigit(System.Char)">
+ <summary>
+ Wrapper to check if a character is a digit.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Scanner.isWhitespace(System.Char)">
+ <summary>
+ Wrapper to check if a character is whitespace.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Scanner.LexerException">
+ <summary>
+ Allows the creation of a LexerException from a LexerError.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Scanner">
+ <summary>
+ Provides a lexer for the Vec3 language.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.SyntaxAnalysis.TailAnalyser.analyseExpr(System.Boolean,Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Find the tail expression in a given expression.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.SyntaxAnalysis.TailAnalyser.analyseStmt(Vec3.Interpreter.Grammar.Stmt)">
+ <summary>
+ Analyse a single statement to find tail expressions.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.SyntaxAnalysis.TailAnalyser.analyseStmts(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Stmt})">
+ <summary>
+ Find any tail expressions in a given list of statements.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.SyntaxAnalysis.TailAnalyser">
+ <summary>
+ Module to determine whether a given expression is a tail expression.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Parser.ParseRule">
+ <summary>
+ Represents the parse rules for a given token.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Parser.ParseResult`1">
+ <summary>
+ Represents a parse success or failure.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Parser.ParserError">
+ <summary>
+ Various errors that can occur during parsing.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Parser.ParserState">
+ <summary>
+ Represents the state of the parser.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Parser.Position">
+ <summary>
+ The position of the parser in the input.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Parser.ParserLabel">
+ <summary>
+ A label for the parser state (the current state of the parser).
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Parser.Precedence">
+ <summary>
+ Represents the precedence of an operator.
+ Used in the Pratt parser to determine the order of operations.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Parser.formatParserError(Vec3.Interpreter.Parser.ParserError,Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Formats a parser error.
+ </summary>
+ <param name="error">The parser error.</param>
+ <param name="state">The parser state.</param>
+ <returns>The formatted error message.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.parseFile(System.String,System.Boolean)">
+ <summary>
+ Parses a program from a file.
+ </summary>
+ <param name="file">The file path.</param>
+ <param name="prelude">Whether to import the prelude.</param>
+ <returns>The parsed program result.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.parse(System.String,System.Boolean)">
+ <summary>
+ Parses a program from a string.
+ </summary>
+ <param name="input">The input string.</param>
+ <param name="prelude">Whether to import the prelude.</param>
+ <returns>The parsed program result.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.parseTokens(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Token.Token},System.Boolean)">
+ <summary>
+ Parses a program from a token list.
+ </summary>
+ <param name="tokens">The token list.</param>
+ <param name="prelude">Whether to import the prelude.</param>
+ <returns>The parsed program.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.parseProgram(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a program.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed program.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.parseStmt(System.String)">
+ <summary>
+ Parses a statement.
+ </summary>
+ <param name="input">The input string.</param>
+ <returns>The parsed statement result.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.statementUnsafe(System.String)">
+ <summary>
+ Parses a statement, may raise exceptions.
+ </summary>
+ <param name="input">The input string.</param>
+ <returns>The parsed statement.</returns>
+ <exception cref="ParserException">Thrown when the parser encounters an error.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Parser.statement(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a statement.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed statement.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.typeDecl(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a type declaration.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed statement.</returns>
+ <example>
+ <c> type T = int </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.assertStatement(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses an assert statement.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed statement.</returns>
+ <example>
+ <c> assert x, "message" </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.operatorDecl(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses an operator declaration.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed statement.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.varDecl(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a variable declaration.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed statement.</returns>
+ <example>
+ <c> let x = 1 </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.block(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a block.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> { 1 } </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.typeHint(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a type hint.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed type.</returns>
+ <example>
+ <c> int </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.recordType(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a record type hint.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed type.</returns>
+ <example>
+ <c> { a: int, b: float } </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.tensorType(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a tensor type hint.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed type.</returns>
+ <example>
+ <c> [int] </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.funcTypeOrTuple(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a function type hint or a tuple type hint.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed type.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.funcType(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a function type hint.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed type.</returns>
+ <example>
+ <c> (int, float) -> int </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.lambda(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a lambda expression.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> x -> x + 1 </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.groupingOrTuple(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Determines what parser to choose when encountering a left parenthesis in prefix position.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.lambdaOrTuple(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Determines what parser to choose when encountering a left parenthesis in prefix position.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.parseTuple(Vec3.Interpreter.Parser.ParserState,Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Expr})">
+ <summary>
+ Parses a tuple.
+ </summary>
+ <param name="state">The parser state.</param>
+ <param name="items">The items of the tuple.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> (1, true) </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.leftParen(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Determines what parser to choose when encountering a left parenthesis in prefix position.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.call(Vec3.Interpreter.Parser.ParserState,Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Parses a call expression.
+ </summary>
+ <param name="state">The parser state.</param>
+ <param name="callee">The callee of the call expression.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> f(1, 2) </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.ternary(Vec3.Interpreter.Parser.ParserState,Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Parses a ternary expression.
+ </summary>
+ <param name="state">The parser state.</param>
+ <param name="trueBranch">The true branch of the ternary expression.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> 1 if x else 2 </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.ifElse(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses an if expression.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> if x then 1 else 2 </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.index(Vec3.Interpreter.Parser.ParserState,Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Parses an index expression.
+ </summary>
+ <param name="state">The parser state.</param>
+ <param name="left">The left expression.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> x[1] </c>
+ <c> x[1..3] </c>
+ <c> x[1..] </c>
+ <c> x[..3] </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.grouping(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a grouping.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> (1 + 2) </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.listOrRange(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Determines what parser to choose when encountering a left bracket in prefix position.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.commaSeparatedList(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a comma separated list for tuples or lists.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> 1, 2, 3 </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.record(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a record.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> { x = 1, y = 2 } </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.recordFields(Vec3.Interpreter.Parser.ParserState,Microsoft.FSharp.Collections.FSharpList{System.Tuple{Vec3.Interpreter.Token.Token,Vec3.Interpreter.Grammar.Expr,Microsoft.FSharp.Core.FSharpOption{Vec3.Interpreter.Grammar.Type}}})">
+ <summary>
+ Parses the fields of a record.
+ </summary>
+ <param name="state">The parser state.</param>
+ <param name="fields">The current fields of the record.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> x = 1, y = 2 </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.leftBrace(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Determines what parser to choose when encountering a left brace in prefix position.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.unary(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parses a unary expression.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> -1 </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.binary(Vec3.Interpreter.Parser.ParserState,Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Parses a binary expression.
+ </summary>
+ <param name="state">The parser state.</param>
+ <param name="left">The left expression.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> 1 + 2 </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.recordSelect(Vec3.Interpreter.Parser.ParserState,Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Parses record select syntax.
+ </summary>
+ <param name="state">The parser state.</param>
+ <param name="left">The left expression.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> x.y </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.postfix(Vec3.Interpreter.Parser.ParserState,Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Parse a postfix expression.
+ </summary>
+ <param name="state">The parser state.</param>
+ <param name="expr">The left expression.</param>
+ <returns>The new state and the parsed expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.infix(Vec3.Interpreter.Parser.Precedence,Vec3.Interpreter.Parser.ParserState,Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Parse an infix expression.
+ </summary>
+ <param name="precedence">The precedence of the current expression.</param>
+ <param name="state">The parser state.</param>
+ <param name="expr">The left expression.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> 1 + 2 </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.prefix(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parse a prefix expression.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> -1 </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.expression(Vec3.Interpreter.Parser.ParserState,Vec3.Interpreter.Parser.Precedence)">
+ <summary>
+ Expression parser (the main parser).
+ </summary>
+ <param name="state">The parser state.</param>
+ <param name="precedence">The precedence of the current expression.</param>
+ <returns>The new state and the parsed expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.codeBlock(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parse a code block.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> $ { let x = 1 } </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.cast(Vec3.Interpreter.Parser.ParserState,Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Parser for casting an expression to a type.
+ </summary>
+ <param name="state">The parser state.</param>
+ <param name="left">The expression to cast.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> x : int </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.matchCase(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for a match case.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+ <example>
+ <c> match x with { case 1 -> 2, case 3 -> 4 } </c>
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Parser.getRule(Vec3.Interpreter.Token.Lexeme)">
+ <summary>
+ Get the precedence rule for a given lexeme.
+ </summary>
+ <param name="lexeme">The lexeme to get the rule for.</param>
+ <returns>The parse rule for the lexeme.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.identifierPattern(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for an identifier pattern, e.g. x.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed pattern.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.consPattern(Vec3.Interpreter.Parser.ParserState,Vec3.Interpreter.Grammar.Pattern)">
+ <summary>
+ Parser for a cons pattern, e.g. 1 :: [2, 3].
+ </summary>
+ <param name="state">The parser state.</param>
+ <param name="pat">The pattern to cons onto.</param>
+ <returns>The new state and the parsed pattern.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.nilPattern(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for a nil pattern.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed pattern.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.booleanPattern(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for a boolean pattern.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed pattern.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.stringPattern(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for a string pattern.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed pattern.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.numberPattern(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for a number pattern.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed pattern.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.tuplePattern(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for a tuple pattern, e.g. (1, 2, 3).
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed pattern.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.listPattern(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for a list or range pattern, e.g. [1, 2, 3] or [1..3]. TODO range
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed pattern.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.patternList(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for a list of patterns (e.g. 1, 2, 3).
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed pattern list.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.pattern(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for a match case pattern.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed pattern.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.ident(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for an identifier.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.number(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for numbers.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.string(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for string values.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.boolean(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for boolean values.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.nil(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Parser for unit or nil.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the parsed expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.expect(Vec3.Interpreter.Parser.ParserState,Vec3.Interpreter.Token.Lexeme)">
+ <summary>
+ Expects a token to be the next token in the parser state.
+ </summary>
+ <param name="state">The parser state.</param>
+ <param name="expected">The expected token.</param>
+ <returns>The new state if the token is the expected token, otherwise an error.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Parser.defaultRule">
+ <summary>
+ None rule for default.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Parser.nextToken(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Increments the state and returns the next token.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The new state and the next token as an option.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.previous(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Returns the previous token in the parser state.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The previous token as an option (if no previous).</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.rewind(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Decrements the parser state to the previous token.
+ </summary>
+ <param name="state">The current state.</param>
+ <returns>The new state with the token rewound.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.advance(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Increments the parser state to the next token.
+ </summary>
+ <param name="state">The current state.</param>
+ <returns>The new state with the token advanced.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Parser.peek">
+ <summary>
+ Views the current token in the parser state.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Parser.getCurrentToken(Vec3.Interpreter.Parser.ParserState)">
+ <summary>
+ Gets the current token from the parser state.
+ </summary>
+ <param name="state">The parser state.</param>
+ <returns>The current token as an option (if eof).</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.setLabel(Vec3.Interpreter.Parser.ParserState,System.String)">
+ <summary>
+ Sets the label of the parser state.
+ </summary>
+ <param name="state">The parser state.</param>
+ <param name="label">The label to set.</param>
+ <returns>The parser state with the label set.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Parser.createParserState(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Token.Token})">
+ <summary>
+ Creates a new parser state from a list of tokens.
+ </summary>
+ <param name="tokens">The list of tokens to create the parser state from.</param>
+ <returns>The parser state.</returns>
+</member>
+<member name="T:Vec3.Interpreter.Parser.ParserException">
+ <summary>
+ Makes a parser exception.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Parser">
+ <summary>
+ Parser for the Vec3 language.
+ Uses a Pratt parsing to parse the language.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.SymbolicExpression.Expression.Logarithm">
+ <summary>
+ Log base and value to take the logarithm.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.SymbolicExpression.Expression.Const">
+ <summary>
+ A constant value in the expression.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.SymbolicExpression.Expression.X">
+ <summary>
+ A variable.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.SymbolicExpression.Expression">
+ <summary>
+ The symbolic expression type (a DSL for symbolic expressions).
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.SymbolicExpression.taylorSeries(Vec3.Interpreter.SymbolicExpression.Expression,System.Int32)">
+ <summary>
+ Find the Taylor series of an expression.
+ </summary>
+ <param name="expression">The expression to find the Taylor series of.</param>
+ <param name="n">The number of terms in the Taylor series.</param>
+ <returns>The Taylor series of the expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.SymbolicExpression.toString(Vec3.Interpreter.SymbolicExpression.Expression)">
+ <summary>
+ Convert an expression to a string.
+ </summary>
+ <param name="expression">The expression to convert.</param>
+ <returns>The string representation of the expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.SymbolicExpression.tangentAt(Vec3.Interpreter.SymbolicExpression.Expression,System.Double)">
+ <summary>
+ Find the tangent line of an expression at a given point.
+ </summary>
+ <param name="expression">The expression to find the tangent line of.</param>
+ <param name="n">The point to find the tangent line at.</param>
+ <returns>The tangent line of the expression at the given point.</returns>
+</member>
+<member name="M:Vec3.Interpreter.SymbolicExpression.integrate(Vec3.Interpreter.SymbolicExpression.Expression)">
+ <summary>
+ Find the unbound integral of an expression.
+ </summary>
+ <param name="expression">The expression to integrate.</param>
+ <returns>The integral of the expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.SymbolicExpression.differentiate(Vec3.Interpreter.SymbolicExpression.Expression)">
+ <summary>
+ Find the derivative of an expression.
+ </summary>
+ <param name="expression">The expression to differentiate.</param>
+ <returns>The derivative of the expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.SymbolicExpression.simplify(Vec3.Interpreter.SymbolicExpression.Expression)">
+ <summary>
+ Simplify an expression using algebraic simplification rules.
+ </summary>
+ <param name="expression">The expression to simplify.</param>
+ <returns>The simplified expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.SymbolicExpression.fromExpr(Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Convert an expression in the grammar to a symbolic expression.
+ </summary>
+ <param name="expr">The expression in the grammar to convert (must be pure and have only 1 input / output).</param>
+ <returns>The symbolic expression that represents the expression in the grammar.</returns>
+ <exception cref="InvalidProgramException">If the expression is not a valid symbolic expression.</exception>
+</member>
+<member name="M:Vec3.Interpreter.SymbolicExpression.toBuiltin(Vec3.Interpreter.SymbolicExpression.Expression)">
+ <summary>
+ Convert a symbolic expression to a builtin function (a function defined in the f sharp runtime).
+ </summary>
+ <param name="expression">The symbolic expression to convert.</param>
+ <returns>The builtin function that represents the symbolic expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.SymbolicExpression.toExpr(Vec3.Interpreter.SymbolicExpression.Expression)">
+ <summary>
+ Convert a symbolic expression to an expression in the grammar.
+ </summary>
+ <param name="expression">The symbolic expression to convert.</param>
+ <returns>The expression in the grammar.</returns>
+</member>
+<member name="P:Vec3.Interpreter.SymbolicExpression.defaultPosition">
+ <summary>
+ A zero'd position for easier conversion.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.SymbolicExpression.evaluate(System.Double,Vec3.Interpreter.SymbolicExpression.Expression)">
+ <summary>
+ Evaluate the expression at a given value.
+ </summary>
+ <param name="a">The value to evaluate the expression at.</param>
+ <param name="expression">The expression to evaluate.</param>
+ <returns>The result of evaluating the expression at the given value.</returns>
+</member>
+<member name="M:Vec3.Interpreter.SymbolicExpression.logBase(System.Double,System.Double)">
+ <summary>
+ Log base function.
+ </summary>
+ <param name="bas">The base of the logarithm.</param>
+ <param name="x">The value to take the logarithm of.</param>
+ <returns>The logarithm of the value with the specified base.</returns>
+</member>
+<member name="T:Vec3.Interpreter.SymbolicExpression">
+ <summary>
+ Symbolic expression module.
+ DSL for symbolic expressions.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Exceptions.TypeErrors">
+ <summary>
+ Allows for multiple type errors to be thrown.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Exceptions.TypeError">
+ <summary>
+ Possible type errors.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Exceptions.formatTypeErrors(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Typing.Exceptions.TypeError})">
+ <summary>
+ Pretty print a list of type errors.
+ </summary>
+ <param name="errors">The list of type errors.</param>
+ <returns>A string representation of the type errors.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Exceptions.formatTypeError(Vec3.Interpreter.Typing.Exceptions.TypeError)">
+ <summary>
+ Pretty print a type error.
+ </summary>
+ <param name="error">The type error.</param>
+ <returns>A string representation of the type error.</returns>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Exceptions.TypeException">
+ <summary>
+ Represents a type exception.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Exceptions">
+ <summary>
+ Exceptions for the type checker.
+ </summary>
+
+</member>
+<member name="T:Vec3.Interpreter.Typing.Types.AliasMap">
+ <summary>
+ Map of aliases to types.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Types.ResolvedDims">
+ <summary>
+ Resolved tensor dimensions.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Types.ResolvedType">
+ <summary>
+ Already resolved types.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Types.TypeEnv">
+ <summary>
+ The type environment.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Types.Substitution">
+ <summary>
+ A map of substitutions to apply to a type.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Types.TypeResult`1">
+ <summary>
+ The result given by the type checker.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Types.Scheme">
+ <summary>
+ A type scheme for a binding.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Types">
+ <summary>
+ Types for the type checker.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Substitution.applySubstitutionToEnv(Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type},Microsoft.FSharp.Collections.FSharpMap{System.Int32,Vec3.Interpreter.Grammar.Type},Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type})">
+ <summary>
+ Applies a substitution to a type environment.
+ </summary>
+ <param name="aliases">The alias environment.</param>
+ <param name="sub">The substitution to apply.</param>
+ <param name="env">The type environment to apply the substitution to.</param>
+ <returns>The type environment with the substitution applied.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Substitution.applySubstitution(Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type},Microsoft.FSharp.Collections.FSharpMap{System.Int32,Vec3.Interpreter.Grammar.Type},Vec3.Interpreter.Grammar.Type)">
+ <summary>
+ Attempts to apply any necessary substitutions to a type, for example, replacing type variables with concrete types.
+ </summary>
+ <param name="env">The alias environment.</param>
+ <param name="sub">The substitution to apply.</param>
+ <param name="t">The type to apply the substitution to.</param>
+ <returns>The type with the substitution applied.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Substitution.resolveAlias(Vec3.Interpreter.Grammar.Type,Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type})">
+ <summary>
+ Attempts to resolve a type alias to its concrete type.
+ </summary>
+ <param name="typ">The type to resolve.</param>
+ <param name="env">The alias environment.</param>
+ <returns>The resolved type.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Substitution.resolvedDims">
+ <summary>
+ Concretely resolved dimensions.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Substitution.resolvedTypes">
+ <summary>
+ Concretely resolved types.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Substitution">
+ <summary>
+ Substitution functions for the type checker.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.BuiltinConstants">
+ <summary>
+ Map of built-in constants to their types.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.BuiltinFunctions">
+ <summary>
+ Map of built-in functions to their types.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.inverseType">
+ <summary>
+ Inverse function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.transpoteType">
+ <summary>
+ Tranpose function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.determType">
+ <summary>
+ Determinate function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.appendType">
+ <summary>
+ Append function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.PlotEllipsesType">
+ <summary>
+ Plot ellipses type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.PlotEllipseType">
+ <summary>
+ Plot ellipse type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.onType">
+ <summary>
+ On type (event handler).
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.readTyp">
+ <summary>
+ Read type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.drawType">
+ <summary>
+ Draw type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.plotType">
+ <summary>
+ Plot type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.plotFunsType">
+ <summary>
+ Plot functions type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.taylorSeriesT">
+ <summary>
+ Taylor series function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.tangentType">
+ <summary>
+ Tangent function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.integrateType">
+ <summary>
+ Integrate function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.differentiateType">
+ <summary>
+ Differentiate function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.bisectionTyp">
+ <summary>
+ Bisection function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.newtonRaphsonType">
+ <summary>
+ Newton-Raphson function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.castType">
+ <summary>
+ Intelligent cast function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.dotProduct">
+ <summary>
+ Dot product function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.crossProduct">
+ <summary>
+ Cross product function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.unneg">
+ <summary>
+ Unary unnegate function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.neg">
+ <summary>
+ Negate function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.notF">
+ <summary>
+ <c>Not</c> function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.orF">
+ <summary>
+ Or function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.andF">
+ <summary>
+ And function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.gte">
+ <summary>
+ Greater than or equal function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.lte">
+ <summary>
+ Less than or equal function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.gt">
+ <summary>
+ Greater than function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.lt">
+ <summary>
+ Less than function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.logType">
+ <summary>
+ Logarithm function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.expType">
+ <summary>
+ Exponential function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.eq">
+ <summary>
+ Equal function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.modF">
+ <summary>
+ Modulus function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.pow">
+ <summary>
+ Power function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.div">
+ <summary>
+ Divide function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.mul">
+ <summary>
+ Multiply function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.minus">
+ <summary>
+ Minus function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.plus">
+ <summary>
+ Plus function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.plotFunType">
+ <summary>
+ Plot function type.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Builtins.consType">
+ <summary>
+ Cons type.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Builtins">
+ <summary>
+ Contains the types of built-in functions and constants.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Inference.inferProgram1(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Stmt})">
+ <summary>
+ Infer the program with a default type environment.
+ </summary>
+ <param name="stmts">The statements to infer.</param>
+ <returns>The type environment, the new aliases, the substitution, and the new statements.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Inference.quickInferStmt(Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type},Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type},Vec3.Interpreter.Grammar.Stmt)">
+ <summary>
+ Quickly infer the type of a statement, without returning a result of the new stuff.
+ Just used to check if the program is valid.
+ </summary>
+ <param name="aliases">The type aliases.</param>
+ <param name="env">The type environment.</param>
+ <param name="stmt">The statement to infer.</param>
+ <returns>The type environment.</returns>
+ <exception cref="TypeException">If the statement is invalid.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Inference.inferProgram(Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type},Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type},Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Stmt})">
+ <summary>
+ Infer the type of a program (all the statements).
+ </summary>
+ <param name="aliases">The type aliases.</param>
+ <param name="env">The type environment.</param>
+ <param name="stmts">The statements to infer.</param>
+ <returns>The type environment, the new aliases, the substitution, and the new statements.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Inference.inferStmt(Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type},Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type},Vec3.Interpreter.Grammar.Stmt)">
+ <summary>
+ Infer the type of a statement.
+ </summary>
+ <param name="aliases">The type aliases.</param>
+ <param name="env">The type environment.</param>
+ <param name="stmt">The statement to infer.</param>
+ <returns>The type of the statement, the new aliases, the substitution, and the new statement.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Inference.infer(Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type},Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type},Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Infer the type of an expression.
+ </summary>
+ <param name="aliases">The alias map.</param>
+ <param name="env">The type environment.</param>
+ <param name="expr">The expression to infer the type of.</param>
+ <returns>The type of the expression, any substitutions, and the expression with the type attached.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Inference.unifyWithSubstitution(Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type},Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Type},Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Type},Microsoft.FSharp.Collections.FSharpMap{System.Int32,Vec3.Interpreter.Grammar.Type})">
+ <summary>
+ Unifies two types and builds a substitution map.
+ Used primarily for unifying function arguments.
+ </summary>
+ <param name="aliases">The alias map.</param>
+ <param name="paramTypes">The types of the parameters.</param>
+ <param name="argTypes">The types of the arguments.</param>
+ <param name="currentSubs">The current substitution map.</param>
+ <returns>The substitution map that unifies the two types.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Inference.unify(Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type},Vec3.Interpreter.Grammar.Type,Vec3.Interpreter.Grammar.Type)">
+ <summary>
+ Attempts to unify two types.
+ </summary>
+ <param name="aliases">The alias map.</param>
+ <param name="t1">The first type.</param>
+ <param name="t2">The second type.</param>
+ <returns>The substitution that unifies the two types.</returns>
+ <example>
+ unify Map.empty TInteger TInteger
+ Ok Map.empty // the types are the same
+
+ unify Map.empty TInteger TFloat
+ Error [ TypeError.TypeMismatch(Empty, TInteger, TFloat) ] // the types are different
+
+ unify Map.empty TTypeVariable 1 TInteger
+ Ok (Map.singleton 1 TInteger) // the type variable is unified with TInteger
+ </example>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Inference.checkIdentifier(Microsoft.FSharp.Collections.FSharpMap{Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Type},Vec3.Interpreter.Token.Token)">
+ <summary>
+ Find the type of a variable in the type environment.
+ </summary>
+ <param name="env">The type environment.</param>
+ <param name="token">The token representing the variable.</param>
+ <returns>The type of the variable.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Inference.checkLiteral(Vec3.Interpreter.Grammar.Literal)">
+ <summary>
+ Helper function to get the type of a literal.
+ </summary>
+ <param name="lit">The literal to check.</param>
+ <returns>The type of the literal.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Inference.occursCheck(System.Int32,Vec3.Interpreter.Grammar.Type)">
+ <summary>
+ Checks if a type variable occurs in a type.
+ This is to stop infinitely recursive types.
+ </summary>
+ <param name="tv">The type variable to check for.</param>
+ <param name="t">The type to check.</param>
+ <returns>True if the type variable occurs in the type, false otherwise.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Typing.Inference.combineMaps``2(Microsoft.FSharp.Collections.FSharpMap{``0,``1},Microsoft.FSharp.Collections.FSharpMap{``0,``1})">
+ <summary>
+ Helper function to combine two maps.
+ </summary>
+ <param name="map1">The first map.</param>
+ <param name="map2">The second map.</param>
+ <returns>The combined map.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Typing.Inference.defaultTypeEnv">
+ <summary>
+ The default type environment containing all built-in functions and constants.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Typing.Inference">
+ <summary>
+ Type inference for the type checker using the Hindley-Milner algorithm with row polymorphism.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types.VM">
+ <summary>
+ Represents the virtual machine.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types.CallFrame">
+ <summary>
+ Represents a call frame.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types.Value">
+ <summary>
+ A value.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types.Closure">
+ <summary>
+ A closure.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types.Function">
+ <summary>
+ A function.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types.Chunk">
+ <summary>
+ A chunk of code.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types.VNumber">
+ <summary>
+ Possible number types.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types.Local">
+ <summary>
+ Local variable.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types.CompoundType">
+ <summary>
+ Different types of compound values.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types.PlotType">
+ <summary>
+ Different types of plots.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types.OutputStreams">
+ <summary>
+ Output streams of the virtual machine.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types.StreamType">
+ <summary>
+ Different types of streams.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types.LineInfo">
+ <summary>
+ Debug information for a line.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Types.valueToString(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Converts a value to a string.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Types.simplifyRat(System.Int32,System.Int32)">
+ <summary>
+ Simplifies a rational number.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Types">
+<summary>
+ Types for the backend.
+ &lt;/summary&gt;
+</summary>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.inverseMatrix(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Finds the inverse of a matrix.
+ </summary>
+ <param name="matrix">The matrix to invert.</param>
+ <returns>The inverse of the matrix.</returns>
+ <exception cref="InvalidOperationException">If the value is not a matrix.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.transposeMatrix(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Finds the tranpose of a matrix.
+ </summary>
+ <param name="matrix">The matrix to transpose.</param>
+ <returns>The transpose of the matrix.</returns>
+ <exception cref="InvalidOperationException">If the value is not a matrix.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.calcDeterminant(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Calculates the determinant of a matrix.
+ </summary>
+ <param name="matrix">The matrix to calculate the determinant of.</param>
+ <returns>The determinant of the matrix.</returns>
+ <exception cref="InvalidOperationException">If the matrix is not square.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.bisection(Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Double},System.Double,System.Double,System.Double,System.Int32)">
+ <summary>
+ Find the root of a function using the bisection rule.
+ </summary>
+ <param name="f">The function to find the root of.</param>
+ <param name="a">The lower bound of the interval.</param>
+ <param name="b">The upper bound of the interval.</param>
+ <param name="tolerance">The tolerance for the root.</param>
+ <param name="maxIterations">The maximum number of iterations.</param>
+ <returns>The root of the function.</returns>
+ <exception cref="InvalidOperationException">If the root cannot be found.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.newtonRaphson(Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Double},Microsoft.FSharp.Core.FSharpFunc{System.Double,System.Double},System.Double,System.Double,System.Int32)">
+ <summary>
+ Find the root of a function using the Newton-Raphson method.
+ </summary>
+ <param name="f">The function to find the root of.</param>
+ ,param name="f'">The derivative of the function.</param>
+ <param name="initialGuess">The initial guess for the root.</param>
+ <param name="tolerance">The tolerance for the root.</param>
+ <param name="maxIterations">The maximum number of iterations.</param>
+ <returns>The root of the function.</returns>
+ <exception cref="InvalidOperationException">If the root cannot be found.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.compare(Vec3.Interpreter.Backend.Types.Value,Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Compares two values.
+ </summary>
+ <param name="a">The first value.</param>
+ <param name="b">The second value.</param>
+ <returns>The comparison of the values.</returns>
+ <exception cref="InvalidOperationException">If the values cannot be compared.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.power(Vec3.Interpreter.Backend.Types.Value,Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Raises a value to a power.
+ </summary>
+ <param name="a">The base value.</param>
+ <param name="b">The exponent value.</param>
+ <returns>The value raised to the power.</returns>
+ <exception cref="InvalidOperationException">If the values cannot be raised to a power.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.unnegate(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Unnegates a value.
+ </summary>
+ <param name="value">The value to unnegate.</param>
+ <returns>The unnegated value.</returns>
+ <exception cref="InvalidOperationException">If the value cannot be unnegated.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.negate(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Negates a value.
+ </summary>
+ <param name="value">The value to negate.</param>
+ <returns>The negated value.</returns>
+ <exception cref="InvalidOperationException">If the value cannot be negated.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.crossProduct(Vec3.Interpreter.Backend.Types.Value,Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Finds the cross product of two lists.
+ </summary>
+ <param name="a">The first list.</param>
+ <param name="b">The second list.</param>
+ <returns>The cross product of the lists.</returns>
+ <exception cref="InvalidOperationException">If the lists cannot be crossed.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.dotProduct(Vec3.Interpreter.Backend.Types.Value,Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Finds the dot product of two lists.
+ </summary>
+ <param name="a">The first list.</param>
+ <param name="b">The second list.</param>
+ <returns>The dot product of the lists.</returns>
+ <exception cref="InvalidOperationException">If the lists cannot be dotted.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.divide(Vec3.Interpreter.Backend.Types.Value,Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Divides two values.
+ </summary>
+ <param name="a">The first value.</param>
+ <param name="b">The second value.</param>
+ <returns>The division of the values.</returns>
+ <exception cref="InvalidOperationException">If the values cannot be divided.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.multiply(Vec3.Interpreter.Backend.Types.Value,Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Multiplies two values.
+ </summary>
+ <param name="a">The first value.</param>
+ <param name="b">The second value.</param>
+ <returns>The product of the values.</returns>
+ <exception cref="InvalidOperationException">If the values cannot be multiplied.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.subtract(Vec3.Interpreter.Backend.Types.Value,Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Subtracts two values.
+ </summary>
+ <param name="a">The first value.</param>
+ <param name="b">The second value.</param>
+ <returns>The difference of the values.</returns>
+ <exception cref="InvalidOperationException">If the values cannot be subtracted.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.add(Vec3.Interpreter.Backend.Types.Value,Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Adds two values.
+ </summary>
+ <param name="a">The first value.</param>
+ <param name="b">The second value.</param>
+ <returns>The sum of the values.</returns>
+ <exception cref="InvalidOperationException">If the values cannot be added.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.toComplex(Vec3.Interpreter.Backend.Types.VNumber)">
+ <summary>
+ Converts a value to a complex number.
+ </summary>
+ <param name="value">The value to convert.</param>
+ <returns>The complex value.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.floatValue(Vec3.Interpreter.Backend.Types.VNumber)">
+ <summary>
+ Converts a value to a float.
+ </summary>
+ <param name="value">The value to convert.</param>
+ <returns>The float value.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.numbersEqual(Vec3.Interpreter.Backend.Types.VNumber,Vec3.Interpreter.Backend.Types.VNumber)">
+ <summary>
+ Tests if two numbers are equal.
+ </summary>
+ <param name="a">The first number.</param>
+ <param name="b">The second number.</param>
+ <returns>True if the numbers are equal.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.valuesEqual(Vec3.Interpreter.Backend.Types.Value,Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Tests if two values are equal.
+ </summary>
+ <param name="a">The first value.</param>
+ <param name="b">The second value.</param>
+ <returns>True if the values are equal.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.castToString(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Casts a value to a string.
+ </summary>
+ <param name="a">The value to cast.</param>
+ <returns>The cast value.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.castToComp(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Casts a value to a complex number.
+ </summary>
+ <param name="a">The value to cast.</param>
+ <returns>The cast value.</returns>
+ <exception cref="InvalidOperationException">If the value cannot be cast to a complex number.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.castToRat(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Casts a value to a rational.
+ </summary>
+ <param name="a">The value to cast.</param>
+ <returns>The cast value.</returns>
+ <exception cref="InvalidOperationException">If the value cannot be cast to a rational.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.castToChar(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Casts a value to a char.
+ </summary>
+ <param name="a">The value to cast.</param>
+ <returns>The cast value.</returns>
+ <exception cref="InvalidOperationException">If the value cannot be cast to a char.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.castToFloat(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Casts a value to a float.
+ </summary>
+ <param name="a">The value to cast.</param>
+ <returns>The cast value.</returns>
+ <exception cref="InvalidOperationException">If the value cannot be cast to a float.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.castToInt(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Casts a value to an integer.
+ </summary>
+ <param name="a">The value to cast.</param>
+ <returns>The cast value.</returns>
+ <exception cref="InvalidOperationException">If the value cannot be cast to an integer.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.castToList(Vec3.Interpreter.Backend.Types.Value,Microsoft.FSharp.Core.FSharpOption{Vec3.Interpreter.Backend.Types.Value})">
+ <summary>
+ Casts a value to a list.
+ </summary>
+ <param name="a">The value to cast to</param>
+ <param name="typ">The type of the list.</param>
+ <returns>The cast value.</returns>
+ <exception cref="InvalidOperationException">If the value cannot be cast to a list.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.castToBool(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Casts a value to a boolean.
+ </summary>
+ <param name="a">The value to cast.</param>
+ <returns>The cast value.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.cast(Vec3.Interpreter.Backend.Types.Value,Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Casts a value to a specific type.
+ </summary>
+ <param name="org">The original value.</param>
+ <param name="castTyp">The type to cast to.</param>
+ <returns>The cast value.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.typeOf(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Gets the type of a value.
+ </summary>
+ <param name="v">The value.</param>
+ <returns>The type of the value.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.isTruthy(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Determines if a value is truthy.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.printValue(Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Prints a value (for debugging).
+ </summary>
+ <param name="value">The value to print.</param>
+ <returns>String representation of the value.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Value.filteri``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,System.Boolean}},Microsoft.FSharp.Collections.FSharpList{``0})">
+ <summary>
+ Helper function to filter a list by index.
+ </summary>
+ <param name="f">The filter function.</param>
+ <param name="l">The list to filter.</param>
+ <returns>The filtered list.</returns>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Value">
+ <summary>
+ Value operations for the interpreter.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Instructions.OP_CODE">
+ <summary>
+ Defines the opcodes for the virtual machine.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Instructions.opCodeToString(Vec3.Interpreter.Backend.Instructions.OP_CODE)">
+ <summary>
+ Converts an opcode to a string.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Instructions.byteToOpCode(System.Byte)">
+ <summary>
+ Converts a byte to an opcode.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Instructions.opCodeToByte(Vec3.Interpreter.Backend.Instructions.OP_CODE)">
+ <summary>
+ Converts an opcode to a byte.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Instructions">
+ <summary>
+ Defines instructions for the backend / virtual machine.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Chunk.getLineNumber(Vec3.Interpreter.Backend.Types.Chunk,System.Int32)">
+ <summary>
+ Gets the line number for a given offset.
+ </summary>
+ <param name="chunk">The chunk to get the line number from.</param>
+ <param name="offset">The offset to get the line number for.</param>
+ <returns>The line number.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Chunk.writeConstant(Vec3.Interpreter.Backend.Types.Chunk,Vec3.Interpreter.Backend.Types.Value,System.Int32)">
+ <summary>
+ Writes a constant to the chunk.
+ </summary>
+ <param name="chunk">The chunk to write to.</param>
+ <param name="value">The value to write.</param>
+ <param name="line">The line number.</param>
+ <returns>Unit.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Chunk.addConstant(Vec3.Interpreter.Backend.Types.Chunk,Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Adds a constant to the chunk.
+ </summary>
+ <param name="chunk">The chunk to add to.</param>
+ <param name="value">The value to add.</param>
+ <returns>The index of the constant.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Chunk.writeChunk(Vec3.Interpreter.Backend.Types.Chunk,System.Byte,System.Int32)">
+ <summary>
+ Writes a byte to the chunk.
+ </summary>
+ <param name="chunk">The chunk to write to.</param>
+ <param name="byte">The byte to write.</param>
+ <param name="line">The line number.</param>
+ <returns>Unit.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Chunk.emptyChunk">
+ <summary>
+ Function to create an empty chunk.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Chunk">
+ <summary>
+ Defines the chunk type and functions to work with it.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Compiler.Compiler`1">
+ <summary>
+ Represents a compiler.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Compiler.CompilerResult`1">
+ <summary>
+ Monadic Type of a compiler result.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Compiler.CompilerError">
+ <summary>
+ Type of a compiler error.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Compiler.CompilerState">
+ <summary>
+ The state of the compiler.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileProgram(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Stmt})">
+ <summary>
+ Compile a program.
+ </summary>
+ <param name="program">The program to compile.</param>
+ <returns>The function result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileProgramState(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Stmt},Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile a program.
+ </summary>
+ <param name="program">The program to compile.</param>
+ <param name="state">The current state.</param>
+ <returns>The chunk result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileVariableDeclaration(Vec3.Interpreter.Token.Token,Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile a variable declaration.
+ </summary>
+ <param name="name">The name of the variable.</param>
+ <param name="initializer">The initializer of the variable.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileStmt(Vec3.Interpreter.Grammar.Stmt,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile a statement.
+ </summary>
+ <param name="stmt">The statement to compile.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileMatch(Vec3.Interpreter.Grammar.Expr,Microsoft.FSharp.Collections.FSharpList{System.Tuple{Vec3.Interpreter.Grammar.Pattern,Vec3.Interpreter.Grammar.Expr}},Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile a match expression.
+ Not implemented fully yet.
+ </summary>
+ <param name="expr">The expression to match.</param>
+ <param name="cases">The cases to match against.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileIdentifier(Vec3.Interpreter.Token.Token,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile an identifier.
+ </summary>
+ <param name="token">The identifier token.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileGrouping(Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile an expression in a grouping.
+ </summary>
+ <param name="grouping">The grouping expression.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileCall(Vec3.Interpreter.Grammar.Expr,Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Expr},System.Boolean,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile a function call.
+ </summary>
+ <param name="callee">The callee of the function call.</param>
+ <param name="arguments">The arguments of the function call.</param>
+ <param name="recursive">Whether the function call is recursive.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileAsBuiltin(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Token.Token},Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Get the symbolic expression from a lambda.
+ </summary>
+ <param name="parameters">The parameters of the lambda.</param>
+ <param name="body">The body of the lambda.</param>
+ <returns>Maybe the symbolic expression</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileLambda(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Token.Token},Vec3.Interpreter.Grammar.Expr,System.Boolean,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile a lambda function.
+ </summary>
+ <param name="parameters">The parameters of the lambda function.</param>
+ <param name="body">The body of the lambda function.</param>
+ <param name="isAsync">Whether the lambda function is async.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileBlock(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Stmt},System.Boolean,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile a block expression.
+ Block is a new scope and an expression, therefore last expression is returned in the block
+ Compiled as an immediately invoked function for scoping.
+ </summary>
+ <param name="stmts">The statements in the block.</param>
+ <param name="isFunc">Whether the block is a function.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileIf(Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile an if expression.
+ </summary>
+ <param name="condition">The condition of the if statement.</param>
+ <param name="thenBranch">The then branch of the if statement.</param>
+ <param name="elseBranch">The else branch of the if statement.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileList(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Expr},Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile a list.
+ </summary>
+ <param name="elements">The elements of the list.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileTuple(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Expr},Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile a tuple.
+ </summary>
+ <param name="elements">The elements of the tuple.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileIndex(Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile index expression.
+ </summary>
+ <param name="list">The list to index.</param>
+ <param name="start">The start index.</param>
+ <param name="state">The current state.</param>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileIndexRange(Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile index range expression.
+ </summary>
+ <param name="list">The list to index.</param>
+ <param name="start">The start index.</param>
+ <param name="end_">The end index.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileExpr(Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile an expression.
+ </summary>
+ <param name="expr">The expression to compile.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+ <exception cref="System.Exception">Invalid record field name.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.flattenRecord(Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Flatten a recursive record type into a list of key value pairs.
+ </summary>
+ <param name="record">The record to flatten.</param>
+ <returns>The list of key value pairs.</returns>
+ <exception cref="System.Exception">Invalid record field name.</exception>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileCodeBlock(Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile a quoted value.
+ </summary>
+ <param name="expr">The expression to compile.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.compileLiteral(Vec3.Interpreter.Grammar.Literal,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Compile a simple literal.
+ </summary>
+ <param name="lit">The literal to compile.</param>
+ <param name="state">The current state.</param>
+ <returns>The monadic result</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.addUpValue(System.String,System.Int32,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Adds an upvalue to the state.
+ </summary>
+ <param name="name">The name of the upvalue.</param>
+ <param name="depth">The depth of the upvalue.</param>
+ <param name="state">The current state.</param>
+ <returns>The new state.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.addLocal(System.String,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Adds a local to the state
+ </summary>
+ <param name="name">The name of the local.</param>
+ <param name="state">The current state.</param>
+ <returns>The new state.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.initFunction(System.String)">
+ <summary>
+ Initialises a function.
+ </summary>
+ <param name="name">The name of the function.</param>
+ <returns>The initialised function.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.patchJump(System.Int32,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Patches a jump instruction.
+ </summary>
+ <param name="offset">The offset to patch.</param>
+ <param name="state">The current state.</param>
+ <returns>The new state.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.emitJump(System.Byte,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Emits a jump instruction to the chunk.
+ </summary>
+ <param name="instruction">The instruction to emit.</param>
+ <param name="state">The current state.</param>
+ <returns>The new state.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.emitJumpBack(System.Int32,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Emits a jump back instruction to the chunk (if statement).
+ </summary>
+ <param name="offset">The offset to jump back to.</param>
+ <param name="state">The current state.</param>
+ <returns>The new state.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.emitOpCode(Vec3.Interpreter.Backend.Instructions.OP_CODE,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Emits an opcode to the chunk.
+ </summary>
+ <param name="opCode">The opcode to emit.</param>
+ <param name="state">The current state.</param>
+ <returns>The new state.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.emitConstant(Vec3.Interpreter.Backend.Types.Value,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Emits a constant to the chunk.
+ </summary>
+ <param name="value">The value to emit.</param>
+ <param name="state">The current state.</param>
+ <returns>The new state.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.emitBytes(System.Collections.Generic.IEnumerable{System.Byte},Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Emits a series of bytes to the chunk.
+ </summary>
+ <param name="bytes">The bytes to emit.</param>
+ <param name="state">The current state.</param>
+ <returns>The new state.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Compiler.emitByte(System.Byte,Vec3.Interpreter.Backend.Compiler.CompilerState)">
+ <summary>
+ Emits a byte to the chunk.
+ </summary>
+ <param name="byte">The byte to emit.</param>
+ <param name="state">The current state.</param>
+ <returns>The new state.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Backend.Compiler.identMap">
+ <summary>
+ Map of identifiers to values.
+ To be used for function composition in the symbolic expression evaluator.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Compiler">
+ <summary>
+ Compiler for the backend.
+ Compiles the AST to bytecode.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Backend.Builtins.builtins">
+ <summary>
+ Built-in functions.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Backend.Builtins.parsePlotType(System.String)">
+ <summary>
+ Parse a plot type from a string.
+ </summary>
+</member>
+<member name="P:Vec3.Interpreter.Backend.Builtins.getNewDrawId">
+ <summary>
+ For each new draw shape, we need a unique id.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.Builtins">
+ <summary>
+ Built-in functions for the VM.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Backend.VM.OpCodeResult">
+ <summary>
+ The possible results of executing an opcode.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.runFunction(Vec3.Interpreter.Backend.Types.VM,Vec3.Interpreter.Backend.Types.Function,Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Backend.Types.Value})">
+ <summary>
+ Run a function in the VM.
+ </summary>
+ <param name="vm">The VM to run the function in.</param>
+ <param name="func">The function to run.</param>
+ <param name="args">The arguments to run the function with.</param>
+ <returns>The result of the function.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.specialCasedBuiltins">
+ <summary>
+ Builtins that need access to the VM.
+ </summary>
+ <returns>The builtins.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.createNewVM(Vec3.Interpreter.Backend.Types.Function)">
+ <summary>
+ Create a new VM.
+ </summary>
+ <param name="mainFunc">The main function to create the VM with.</param>
+ <returns>The new VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.joinOutput(Vec3.Interpreter.Backend.Types.VM,Vec3.Interpreter.Backend.Types.VM)">
+ <summary>
+ Join two standard output streams.
+ </summary>
+ <param name="vm1">The first VM.</param>
+ <param name="vm2">The second VM.</param>
+ <returns>The updated VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.run(Vec3.Interpreter.Backend.Types.VM)">
+ <summary>
+ Run the VM.
+ </summary>
+ <param name="vm">The VM to run.</param>
+ <returns>The updated VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.callValue(Vec3.Interpreter.Backend.Types.VM,System.Int32,System.Int32)">
+ <summary>
+ Call a value in the VM.
+ </summary>
+ <param name="vm">The VM to call the value in.</param>
+ <param name="argCount">The number of arguments to call the value with.</param>
+ <param name="recursive">Whether the call is recursive.</param>
+ <returns>The updated VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.runLoop(Vec3.Interpreter.Backend.Types.VM)">
+ <summary>
+ The main run loop of the VM.
+ </summary>
+ <param name="vm">The VM to run the loop on.</param>
+ <returns>The updated VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.runFrameRecursive(Vec3.Interpreter.Backend.Types.VM)">
+ <summary>
+ Run the current recursive frame without creating a new frame.
+ </summary>
+ <param name="vm">The VM to run the frame on.</param>
+ <returns>The updated VM and the result of the frame execution.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.executeOpcodeImpl(Vec3.Interpreter.Backend.Types.VM,Vec3.Interpreter.Backend.Instructions.OP_CODE)">
+ <summary>
+ The implementation of the opcode execution.
+ </summary>
+ <param name="vm">The VM to execute the opcode on.</param>
+ <param name="opcode">The opcode to execute.</param>
+ <returns>The updated VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.executeOpcode(Vec3.Interpreter.Backend.Types.VM,Vec3.Interpreter.Backend.Instructions.OP_CODE)">
+ <summary>
+ Execute an opcode.
+ </summary>
+ <param name="vm">The VM to execute the opcode on.</param>
+ <param name="opcode">The opcode to execute.</param>
+ <returns>The updated VM and the result of the opcode execution.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.resetStreams(Vec3.Interpreter.Backend.Types.VM)">
+ <summary>
+ Reset the output streams of the VM.
+ </summary>
+ <param name="vm">The VM to reset the streams of.</param>
+ <returns>The updated VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.getStreamContent(System.Collections.Generic.IEnumerable{System.String})">
+ <summary>
+ Get the string content of a stream.
+ </summary>
+ <param name="stream">The stream to get the content of.</param>
+ <returns>The content of the stream.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.getGlobal(Vec3.Interpreter.Backend.Types.VM,System.String)">
+ <summary>
+ Get a global variable from the VM.
+ </summary>
+ <param name="vm">The VM to get the global variable from.</param>
+ <param name="name">The name of the global variable.</param>
+ <returns>The global variable option.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.defineGlobal(Vec3.Interpreter.Backend.Types.VM,System.String,Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Add a global variable to the VM.
+ </summary>
+ <param name="vm">The VM to add the global variable to.</param>
+ <param name="name">The name of the global variable.</param>
+ <param name="value">The value of the global variable.</param>
+ <returns>The updated VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.peek(Vec3.Interpreter.Backend.Types.VM,System.Int32)">
+ <summary>
+ Peek at a value on the stack.
+ </summary>
+ <param name="vm">The VM to peek at the value on.</param>
+ <param name="offset">The offset to peek at.</param>
+ <returns>The value.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.pop(Vec3.Interpreter.Backend.Types.VM)">
+ <summary>
+ Pop a value from the stack.
+ </summary>
+ <param name="vm">The VM to pop the value from.</param>
+ <returns>The value and the updated VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.push(Vec3.Interpreter.Backend.Types.VM,Vec3.Interpreter.Backend.Types.Value)">
+ <summary>
+ Push a value onto the stack.
+ </summary>
+ <param name="vm">The VM to push the value onto.</param>
+ <param name="value">The value to push.</param>
+ <returns>The updated VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.findUpValue(Vec3.Interpreter.Backend.Types.VM,System.Int32,System.Int32)">
+ <summary>
+ Find an upvalue in the VM.
+ </summary>
+ <param name="vm">The VM to find the upvalue in.</param>
+ <param name="depth">The depth to search for the upvalue.</param>
+ <param name="index">The index of the upvalue.</param>
+ <returns>The upvalue.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.appendOutput(Vec3.Interpreter.Backend.Types.VM,Vec3.Interpreter.Backend.Types.StreamType,System.String)">
+ <summary>
+ Append output to a stream.
+ </summary>
+ <param name="vm">The VM to append the output to.</param>
+ <param name="streamType">The type of stream to append to.</param>
+ <param name="str">The string to append.</param>
+ <returns>The updated VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.appendToStream(System.Collections.Generic.IEnumerable{System.String},System.String)">
+ <summary>
+ Append a string to a stream.
+ </summary>
+ <param name="stream">The stream to append to.</param>
+ <param name="str">The string to append.</param>
+ <returns>The updated stream.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.saveVMState(Vec3.Interpreter.Backend.Types.VM)">
+ <summary>
+ Save the current VM state.
+ </summary>
+ <param name="vm">The VM to save the state of.</param>
+ <returns>The updated VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.readConstantLong(Vec3.Interpreter.Backend.Types.VM)">
+ <summary>
+ Read a long constant from the current frame.
+ </summary>
+ <param name="vm">The VM to read the constant from.</param>
+ <returns>The constant and the updated VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.readConstant(Vec3.Interpreter.Backend.Types.VM)">
+ <summary>
+ Read a constant from the current frame.
+ </summary>
+ <param name="vm">The VM to read the constant from.</param>
+ <returns>The constant and the updated VM.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.readByte(Vec3.Interpreter.Backend.Types.VM)">
+ <summary>
+ Read a byte from the current frame.
+ </summary>
+ <param name="vm">The VM to read the byte from.</param>
+ <returns>The VM and the byte read.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.getCurrentFrame(Vec3.Interpreter.Backend.Types.VM)">
+ <summary>
+ Retrieve the current frame from the VM.
+ </summary>
+ <param name="vm">The VM to retrieve the frame from.</param>
+ <returns>The current frame.</returns>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.createOutputStreams">
+ <summary>
+ Initialize the output streams for the VM.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.Backend.VM.loadFunction(Vec3.Interpreter.Backend.Types.VM,Vec3.Interpreter.Backend.Types.Function)">
+ <summary>
+ Load a function into the VM.
+ </summary>
+ <param name="vm">The VM to load the function into.</param>
+ <param name="func">The function to load.</param>
+ <returns>The VM with the function loaded.</returns>
+</member>
+<member name="P:Vec3.Interpreter.Backend.VM.output">
+ <summary>
+ Represents the sdout output steam
+</member>
+<member name="T:Vec3.Interpreter.Backend.VM">
+ <summary>
+ The virtual machine for the interpreter.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.ConstantFolding.foldConstants(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Stmt})">
+ <summary>
+ Fold constants in the program.
+ </summary>
+ <param name="program">The program to fold.</param>
+ <returns>The folded program.</returns>
+</member>
+<member name="M:Vec3.Interpreter.ConstantFolding.performIndexRange(Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Grammar.Expr,Microsoft.FSharp.Core.FSharpOption{Vec3.Interpreter.Grammar.Type})">
+ <summary>
+ Helper function to perform indexing on lists.
+ </summary>
+ <param name="expr">The expression to index.</param>
+ <param name="start">An optional start</param>
+ <param name="end_">An optional end</param>
+ <param name="typ">The type of the expression.</param>
+ <returns>The indexed expression.</returns>
+</member>
+<member name="M:Vec3.Interpreter.ConstantFolding.simplifyRational(Vec3.Interpreter.Token.Number)">
+ <summary>
+ Simplify a rational number.
+ </summary>
+ <param name="rat">The rational number to simplify.</param>
+ <returns>The simplified rational number.</returns>
+</member>
+<member name="M:Vec3.Interpreter.ConstantFolding.GCD(System.Int32,System.Int32)">
+ <summary>
+ Find the greatest common divisor of two numbers.
+ </summary>
+ <param name="a">The first number.</param>
+ <param name="b">The second number.</param>
+ <returns>The greatest common divisor.</returns>
+</member>
+<member name="P:Vec3.Interpreter.ConstantFolding.builtins">
+ <summary>
+ Map of builtin functions to their implementations.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.ConstantFolding.performUnary(Vec3.Interpreter.Token.Operator,Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Helper function to perform unary operations on numbers.
+ </summary>
+ <param name="op">The operation to perform.</param>
+ <param name="a">The operand.</param>
+ <param name="expr">The original expression.</param>
+ <returns>The result of the operation, or the expression itself.</returns>
+</member>
+<member name="M:Vec3.Interpreter.ConstantFolding.performComparision(Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Grammar.Expr,System.Int32)">
+ <summary>
+ A helper function to compare two values.
+ </summary>
+ <param name="a">The left operand.</param>
+ <param name="b">The right operand.</param>
+ <param name="expr">The original expression.</param>
+ <returns>The result of the comparison.</returns>
+</member>
+<member name="M:Vec3.Interpreter.ConstantFolding.performEquality``1(Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Grammar.Expr,``0)">
+ <summary>
+ Helper function to perform equality operations on values.
+ </summary>
+ <param name="a">The left operand.</param>
+ <param name="b">The right operand.</param>
+ <param name="expr">The original expression.</param>
+ <returns>The result of the operation, or the expression itself.</returns>
+</member>
+<member name="M:Vec3.Interpreter.ConstantFolding.performArithmetic(Vec3.Interpreter.Token.Operator,Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Grammar.Expr,Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Helper function to perform arithmetic operations on numbers.
+ </summary>
+ <param name="op">The operation to perform.</param>
+ <param name="left">The left operand.</param>
+ <param name="right">The right operand.</param>
+ <param name="expr">The original expression.</param>
+ <returns>The result of the operation, or the expression itself.</returns>
+</member>
+<member name="T:Vec3.Interpreter.ConstantFolding">
+ <summary>
+ Constant folding for the AST.
+ </summary>
+</member>
+<member name="M:Vec3.Interpreter.DCE.isUsedE(Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ Checks if a variable is used in an expression.
+ </summary>
+ <param name="name">The name of the variable.</param>
+ <param name="expr">The expression.</param>
+ <returns>True if the variable is used.</returns>
+</member>
+<member name="M:Vec3.Interpreter.DCE.isUsedInStmt(Vec3.Interpreter.Token.Lexeme,Vec3.Interpreter.Grammar.Stmt)">
+ <summary>
+ Checks if a variable is used in a statement.
+ </summary>
+ <param name="name">The name of the variable.</param>
+ <param name="stmt">The statement.</param>
+ <returns>True if the variable is used.</returns>
+</member>
+<member name="M:Vec3.Interpreter.DCE.isUsed(Vec3.Interpreter.Token.Lexeme,Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Stmt})">
+ <summary>
+ Checks if a variable is used in a list of statements.
+ </summary>
+ <param name="name">The name of the variable.</param>
+ <param name="stmts">The statements.</param>
+ <returns>True if the variable is used.</returns>
+</member>
+<member name="M:Vec3.Interpreter.DCE.eliminate(Microsoft.FSharp.Collections.FSharpList{Vec3.Interpreter.Grammar.Stmt})">
+ <summary>
+ Eliminates dead code.
+ </summary>
+ <param name="program">The program.</param>
+ <returns>The program with dead code eliminated.</returns>
+</member>
+<member name="M:Vec3.Interpreter.DCE.hasSideEffectsStmt(Vec3.Interpreter.Grammar.Stmt)">
+ <summary>
+ True if the statement has side effects.
+ </summary>
+ <param name="stmt">The statement.</param>
+ <returns>True if the statement has side effects.</returns>
+</member>
+<member name="M:Vec3.Interpreter.DCE.hasSideEffects(Vec3.Interpreter.Grammar.Expr)">
+ <summary>
+ True if the expression has side effects.
+ </summary>
+ <param name="expr">The expression.</param>
+ <returns>True if the expression has side effects.</returns>
+</member>
+<member name="P:Vec3.Interpreter.DCE.sideEffectFunctions">
+ <summary>
+ Functions that have side effects.
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.DCE">
+ <summary>
+ Dead code elimination.
+ simple dead code elimination, type system stores purity, can eliminate calls to pure functions if result is not used for example,
+ can also eliminate unused variables with ease (also can be done with a liveness analysis)
+ also check standard expressions, if not uses for anything with side effects, can be eliminated
+ also check for unused functions, can be eliminated
+ possibly also inline some calls, maybe not here though
+ </summary>
+</member>
+<member name="T:Vec3.Interpreter.Repl">
+ <summary>
+ REPL for the Vec3 language.
+ </summary>
+</member>
+<member name="T:Vec3.Transpiler.Transpiler.TranspilerConfig">
+ <summary>
+ Configuration for the transpiler including paths and compiler settings
+ </summary>
+</member>
+<member name="T:Vec3.Transpiler.Transpiler.TranspilerError">
+ <summary>
+ Represents possible transpiler errors with detailed messages
+ </summary>
+</member>
+<member name="M:Vec3.Transpiler.Transpiler.createConfig(Microsoft.FSharp.Core.FSharpOption{System.String})">
+ <summary>
+ Creates a TranspilerConfig with the specified output directory
+ </summary>
+</member>
+<member name="M:Vec3.Transpiler.Transpiler.toAbsolutePath(System.String,System.String)">
+ <summary>
+ Helper to convert a relative path to absolute path
+ </summary>
+</member>
+<member name="M:Vec3.Transpiler.Transpiler.isPathAbsolute(System.String)">
+ <summary>
+ Helper to determine if a path is absolute
+ </summary>
+</member>
+<member name="M:Vec3.Transpiler.Transpiler.formatError(Vec3.Transpiler.Transpiler.TranspilerError)">
+ <summary>
+ Helper to format error messages
+ </summary>
+</member>
+<member name="M:Vec3.Transpiler.Transpiler.transpile(System.String,Vec3.Transpiler.Transpiler.TranspilerConfig)">
+ <summary>
+ Main transpilation function that coordinates the entire process
+ </summary>
+</member>
+<member name="M:Vec3.Transpiler.Transpiler.compileCode(Vec3.Transpiler.Transpiler.TranspilerConfig,System.String)">
+ <summary>
+ Compiles the C code using gcc with proper include path handling
+ </summary>
+</member>
+<member name="M:Vec3.Transpiler.Transpiler.writeGeneratedCode(System.String,System.String)">
+ <summary>
+ Writes the generated C code to a file
+ </summary>
+</member>
+<member name="M:Vec3.Transpiler.Transpiler.copyRuntimeFiles(Vec3.Transpiler.Transpiler.TranspilerConfig)">
+ <summary>
+ Copies runtime files to the build directory
+ </summary>
+</member>
+<member name="M:Vec3.Transpiler.Transpiler.getExecutableExtension">
+ <summary>
+ Gets the appropriate file extension for executables based on platform
+ </summary>
+</member>
+<member name="P:Vec3.Transpiler.Transpiler.defaultConfig">
+ <summary>
+ Creates a default configuration with correct project paths
+ </summary>
+</member>
+<member name="M:Vec3.Transpiler.Transpiler.findProjectRoot">
+ <summary>
+ Finds the project root directory by looking for Executable folder
+ </summary>
+</member>
+<member name="M:Vec3.Program.BuildAvaloniaApp">
+ <summary>
+ Creates an Avalonia application.
+ </summary>
+</member>
+<member name="P:Vec3.Program.usg_msg">
+ <summary>
+ args, -r to repl, -f to file, -g or no args for GUI
+ </summary>
+</member>
+<member name="M:Vec3.Program.readFile(System.String)">
+ <summary>
+ Simple read file function.
+ </summary>
+ <param name="filePath">The file path.</param>
+ <returns>The file contents.</returns>
+</member>
+<member name="T:Vec3.Program">
+ <summary>
+ The main program module (entry point).
+ </summary>
+</member>
+</members>
+</doc>
