@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  23 DEC 2024 20:11
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  27 DEC 2024 16:57
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -688,13 +688,13 @@ Chapter 3.
 [4
 
 ]
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 63--63
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 65--65
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 63--63
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 65--65
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
@@ -702,13 +702,13 @@ u" | "v" | "w" | "x" | "y" | "z"[]
 
 
 [5]
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 130--130
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 135--135
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 130--130
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 135--135
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
@@ -716,13 +716,13 @@ u" | "v" | "w" | "x" | "y" | "z"[]
 
 
 [6]
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 198--198
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 205--205
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 198--198
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 205--205
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
@@ -730,27 +730,37 @@ u" | "v" | "w" | "x" | "y" | "z"[]
 
 
 [7]
-Overfull \hbox (178.61221pt too wide) in paragraph at lines 304--304
+LaTeX Font Info:    Trying to load font information for OMS+cmtt on input line 
+238.
+LaTeX Font Info:    No file OMScmtt.fd. on input line 238.
+
+
+LaTeX Font Warning: Font shape `OMS/cmtt/m/n' undefined
+(Font)              using `OMS/cmsy/m/n' instead
+(Font)              for symbol `textbraceleft' on input line 238.
+
+
+
+[8]
+Overfull \hbox (178.61221pt too wide) in paragraph at lines 323--323
 []\OT1/cmtt/m/n/10.95 <literal> ::= <number> | <identifier> | <bool> | <list> |
  <lambda> | <string> | "()" | <tuple> | <record>[] 
  []
 
 
-
-[8]
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 304--304
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 323--323
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 304--304
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 323--323
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
 
 
-Overfull \hbox (98.13058pt too wide) in paragraph at lines 304--304
+Overfull \hbox (98.13058pt too wide) in paragraph at lines 323--323
 []\OT1/cmtt/m/n/10.95 <recordtypelist> ::= <identifier> ":" <type> | <identifie
 r> ":" <type> "," <recordtypelist>[] 
  []
@@ -758,33 +768,33 @@ r> ":" <type> "," <recordtypelist>[]
 
 
 [9]
-Overfull \hbox (178.61221pt too wide) in paragraph at lines 397--397
+Overfull \hbox (178.61221pt too wide) in paragraph at lines 421--421
 []\OT1/cmtt/m/n/10.95 <literal> ::= <number> | <identifier> | <bool> | <list> |
  <lambda> | <string> | "()" | <tuple> | <record>[] 
  []
 
 
-Overfull \hbox (17.64896pt too wide) in paragraph at lines 397--397
+
+[10]
+Overfull \hbox (17.64896pt too wide) in paragraph at lines 421--421
 []\OT1/cmtt/m/n/10.95 <complex> ::= <float> "+" <float> "i" | <float> "-" <floa
 t> "i" | <float> "i"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 397--397
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 421--421
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 397--397
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 421--421
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
 
 
-
-[10]
-Overfull \hbox (98.13058pt too wide) in paragraph at lines 397--397
+Overfull \hbox (98.13058pt too wide) in paragraph at lines 421--421
 []\OT1/cmtt/m/n/10.95 <recordtypelist> ::= <identifier> ":" <type> | <identifie
 r> ":" <type> "," <recordtypelist>[] 
  []
@@ -792,38 +802,38 @@ r> ":" <type> "," <recordtypelist>[]
 
 
 [11]
-Overfull \hbox (178.61221pt too wide) in paragraph at lines 491--491
+Overfull \hbox (178.61221pt too wide) in paragraph at lines 525--525
 []\OT1/cmtt/m/n/10.95 <literal> ::= <number> | <identifier> | <bool> | <list> |
  <lambda> | <string> | "()" | <tuple> | <record>[] 
  []
 
 
-Overfull \hbox (17.64896pt too wide) in paragraph at lines 491--491
+
+[12]
+Overfull \hbox (17.64896pt too wide) in paragraph at lines 525--525
 []\OT1/cmtt/m/n/10.95 <complex> ::= <float> "+" <float> "i" | <float> "-" <floa
 t> "i" | <float> "i"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 491--491
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 525--525
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 491--491
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 525--525
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
 
 
-Overfull \hbox (98.13058pt too wide) in paragraph at lines 491--491
+Overfull \hbox (98.13058pt too wide) in paragraph at lines 525--525
 []\OT1/cmtt/m/n/10.95 <recordtypelist> ::= <identifier> ":" <type> | <identifie
 r> ":" <type> "," <recordtypelist>[] 
  []
 
-
-
-[12])
+)
 
 [13]
 Chapter 4.
@@ -832,25 +842,25 @@ Chapter 4.
 [14
 
 ]
-Overfull \hbox (178.61221pt too wide) in paragraph at lines 108--108
+Overfull \hbox (178.61221pt too wide) in paragraph at lines 109--109
 []\OT1/cmtt/m/n/10.95 <literal> ::= <number> | <identifier> | <bool> | <list> |
  <lambda> | <string> | "()" | <tuple> | <record>[] 
  []
 
 
-Overfull \hbox (17.64896pt too wide) in paragraph at lines 108--108
+Overfull \hbox (17.64896pt too wide) in paragraph at lines 109--109
 []\OT1/cmtt/m/n/10.95 <complex> ::= <float> "+" <float> "i" | <float> "-" <floa
 t> "i" | <float> "i"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 108--108
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 109--109
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 108--108
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 109--109
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
@@ -858,7 +868,7 @@ u" | "v" | "w" | "x" | "y" | "z"[]
 
 
 [15]
-Overfull \hbox (98.13058pt too wide) in paragraph at lines 108--108
+Overfull \hbox (98.13058pt too wide) in paragraph at lines 109--109
 []\OT1/cmtt/m/n/10.95 <recordtypelist> ::= <identifier> ":" <type> | <identifie
 r> ":" <type> "," <recordtypelist>[] 
  []
@@ -866,11 +876,11 @@ r> ":" <type> "," <recordtypelist>[]
 \pydata@fh@_E017103BDF0CAED79F13B8F548EAF24E.data.minted=\write5
 \openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
 
-runsystem(latexminted config  --timestamp 20241223201122Z E017103BDF0CAED79F13B
+runsystem(latexminted config  --timestamp 20241227165740Z E017103BDF0CAED79F13B
 8F548EAF24E)...executed safely (allowed).
 
 (./_E017103BDF0CAED79F13B8F548EAF24E.config.minted)
-runsystem(latexminted cleanconfig  --timestamp 20241223201122Z E017103BDF0CAED7
+runsystem(latexminted cleanconfig  --timestamp 20241227165740Z E017103BDF0CAED7
 9F13B8F548EAF24E)...executed safely (allowed).
 
 
@@ -881,17 +891,17 @@ LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <10.95> not available
 
 
 [16]))
-<assets/finalCodeEditor.png, id=420, 1196.47pt x 796.9775pt>
+<assets/finalCodeEditor.png, id=423, 1196.47pt x 796.9775pt>
 File: assets/finalCodeEditor.png Graphic file (type png)
 <use assets/finalCodeEditor.png>
 Package pdftex.def Info: assets/finalCodeEditor.png  used on input line 15.
 (pdftex.def)             Requested size: 340.0013pt x 226.47209pt.
-<assets/finalNotebook.png, id=422, 1196.47pt x 857.2025pt>
+<assets/finalNotebook.png, id=425, 1196.47pt x 857.2025pt>
 File: assets/finalNotebook.png Graphic file (type png)
 <use assets/finalNotebook.png>
 Package pdftex.def Info: assets/finalNotebook.png  used on input line 16.
 (pdftex.def)             Requested size: 340.0013pt x 243.58586pt.
-<assets/finalPlot.png, id=423, 794.97pt x 597.23125pt>
+<assets/finalPlot.png, id=426, 794.97pt x 597.23125pt>
 File: assets/finalPlot.png Graphic file (type png)
 <use assets/finalPlot.png>
 Package pdftex.def Info: assets/finalPlot.png  used on input line 17.
@@ -908,7 +918,7 @@ Plot.png>]
 
 pdfTeX warning: pdflatex (file ./assets/plotPDF.pdf): PDF inclusion: found PDF 
 version <1.7>, but at most version <1.5> allowed
-<assets/plotPDF.pdf, id=442, page=1, 597.23125pt x 845.1575pt>
+<assets/plotPDF.pdf, id=445, page=1, 597.23125pt x 845.1575pt>
 File: assets/plotPDF.pdf Graphic file (type pdf)
 <use assets/plotPDF.pdf, page 1>
 Package pdftex.def Info: assets/plotPDF.pdf , page1 used on input line 39.
@@ -917,7 +927,7 @@ Package pdftex.def Info: assets/plotPDF.pdf , page1 used on input line 39.
 
 pdfTeX warning: pdflatex (file ./assets/plotPDF.pdf): PDF inclusion: found PDF 
 version <1.7>, but at most version <1.5> allowed
-<assets/plotPDF.pdf, id=443, page=2, 597.23125pt x 845.1575pt>
+<assets/plotPDF.pdf, id=446, page=2, 597.23125pt x 845.1575pt>
 File: assets/plotPDF.pdf Graphic file (type pdf)
 <use assets/plotPDF.pdf, page 2>
 Package pdftex.def Info: assets/plotPDF.pdf , page2 used on input line 40.
@@ -939,12 +949,18 @@ Overfull \vbox (236.90312pt too high) has occurred while \output is active []
 
 [21]) (./_minted/EAB81081B9AA1ED6965DC7DAEE03FD8E.highlight.minted)
 (./_minted/635305B7C7508668CB9996B23449E3FC.highlight.minted)
+(./_minted/7E4128AEF66516C43820ED0F6D3603F4.highlight.minted)
 (./_minted/26A858ACD3E5527240FEAE15EA4BE4CA.highlight.minted)
 (./_minted/AE5E64C937F5E8B4F080AB36E0BA22D7.highlight.minted))
 
 [22]
 
-[23] (./sections/type-inference.tex
+[23]
+
+LaTeX Warning: Reference `sec:virtual-machine' on page 24 undefined on input li
+ne 122.
+
+(./sections/type-inference.tex
 
 [24]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
@@ -982,14 +998,15 @@ r-ing com-pi-la-tion was man-aged us-ing the \OT1/cmtt/m/n/10.95 CompilerResult
 
 [31] (./sections/plotting.tex
 (./_minted/F660FE74DC6363BFEC4729AEFBC55AF5.highlight.minted)
+(./_minted/163044B25EB141E7E7BE98D0B1ADC320.highlight.minted
 
-[32] (./_minted/163044B25EB141E7E7BE98D0B1ADC320.highlight.minted)
-<assets/scatterPlot.png, id=619, 794.97pt x 597.23125pt>
+[32])
+<assets/scatterPlot.png, id=623, 794.97pt x 597.23125pt>
 File: assets/scatterPlot.png Graphic file (type png)
 <use assets/scatterPlot.png>
 Package pdftex.def Info: assets/scatterPlot.png  used on input line 37.
 (pdftex.def)             Requested size: 340.0013pt x 255.43747pt.
-<assets/barChart.png, id=621, 797.98125pt x 598.235pt>
+<assets/barChart.png, id=625, 797.98125pt x 598.235pt>
 File: assets/barChart.png Graphic file (type png)
 <use assets/barChart.png>
 Package pdftex.def Info: assets/barChart.png  used on input line 50.
@@ -998,7 +1015,7 @@ Package pdftex.def Info: assets/barChart.png  used on input line 50.
 
 [33 <./assets/scatterPlot.png>]
 (./_minted/496284844B6A45E1BB99A6B6443B29E7.highlight.minted)
-<assets/polynomialPlot.png, id=630, 799.98875pt x 598.235pt>
+<assets/polynomialPlot.png, id=634, 799.98875pt x 598.235pt>
 File: assets/polynomialPlot.png Graphic file (type png)
 <use assets/polynomialPlot.png>
 Package pdftex.def Info: assets/polynomialPlot.png  used on input line 70.
@@ -1007,17 +1024,17 @@ Package pdftex.def Info: assets/polynomialPlot.png  used on input line 70.
 
 [34 <./assets/barChart.png> <./assets/polynomialPlot.png>]
 (./_minted/FCBAB69BF9AD898EBBAAEEACFDFE8786.highlight.minted)
-<assets/multiplePlots.png, id=640, 793.96625pt x 600.2425pt>
+<assets/multiplePlots.png, id=644, 793.96625pt x 600.2425pt>
 File: assets/multiplePlots.png Graphic file (type png)
 <use assets/multiplePlots.png>
 Package pdftex.def Info: assets/multiplePlots.png  used on input line 94.
 (pdftex.def)             Requested size: 340.0013pt x 257.04596pt.
-<assets/plotInput.png, id=642, 787.94376pt x 43.16125pt>
+<assets/plotInput.png, id=646, 787.94376pt x 43.16125pt>
 File: assets/plotInput.png Graphic file (type png)
 <use assets/plotInput.png>
 Package pdftex.def Info: assets/plotInput.png  used on input line 109.
 (pdftex.def)             Requested size: 340.0013pt x 18.62416pt.
-<assets/plotInput2.png, id=643, 789.95125pt x 45.16875pt>
+<assets/plotInput2.png, id=647, 789.95125pt x 45.16875pt>
 File: assets/plotInput2.png Graphic file (type png)
 <use assets/plotInput2.png>
 Package pdftex.def Info: assets/plotInput2.png  used on input line 110.
@@ -1027,10 +1044,10 @@ Package pdftex.def Info: assets/plotInput2.png  used on input line 110.
 
 [35 <./assets/multiplePlots.png> <./assets/plotInput.png> <./assets/plotInput2.
 png>]) (./_minted/6A586B663CA7F4657D0A639E37976A35.highlight.minted)
-<assets/drawImage.png, id=656, 792.9625pt x 594.22pt>
+<assets/drawImage.png, id=660, 792.9625pt x 594.22pt>
 File: assets/drawImage.png Graphic file (type png)
 <use assets/drawImage.png>
-Package pdftex.def Info: assets/drawImage.png  used on input line 320.
+Package pdftex.def Info: assets/drawImage.png  used on input line 318.
 (pdftex.def)             Requested size: 340.0013pt x 254.78426pt.
 
 
@@ -1132,7 +1149,7 @@ Overfull \hbox (1.16759pt too wide) in paragraph at lines 75--75
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 (./_minted/02B6A40D627285F36BA91C2D3D01A34E.highlight.minted)
-Overfull \hbox (1.16759pt too wide) in paragraph at lines 127--127
+Overfull \hbox (1.16759pt too wide) in paragraph at lines 117--117
 []\OT1/cmr/m/n/10.95 Pass/Fail| 
  []
 
@@ -1145,14 +1162,62 @@ Overfull \hbox (1.16759pt too wide) in paragraph at lines 127--127
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 (./_minted/F57320F513607D0AC0289F9AB1FD9EB9.highlight.minted)
-Overfull \hbox (1.16759pt too wide) in paragraph at lines 172--172
+Overfull \hbox (1.16759pt too wide) in paragraph at lines 160--160
 []\OT1/cmr/m/n/10.95 Pass/Fail| 
  []
 
 
-Underfull \hbox (badness 3514) in paragraph at lines 186--186
-[]$\OMS/cmsy/m/n/10.95 f\OML/cmm/m/it/10.95 a \OT1/cmr/m/n/10.95 = 3\OML/cmm/m/
-it/10.95 ; b \OT1/cmr/m/n/10.95 = 4\OMS/cmsy/m/n/10.95 g\OML/cmm/m/it/10.95 :a 
+Overfull \hbox (9.703pt too wide) in paragraph at lines 169--169
+[]\OT1/cmr/m/n/10.95 List[float]| 
+ []
+
+
+Overfull \hbox (16.93045pt too wide) in paragraph at lines 169--169
+[]\OT1/cmr/m/n/10.95 List[float]| 
+ []
+
+
+Overfull \hbox (9.06422pt too wide) in paragraph at lines 170--170
+[]\OT1/cmr/m/n/10.95 Record[a:
+ []
+
+
+Overfull \hbox (16.29167pt too wide) in paragraph at lines 170--170
+[]\OT1/cmr/m/n/10.95 Record[a:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 171--171
+[]$\OML/cmm/m/it/10.95 let x \OT1/cmr/m/n/10.95 = (() =\OML/cmm/m/it/10.95 >
+ []
+
+
+Overfull \hbox (9.06422pt too wide) in paragraph at lines 171--171
+[]\OT1/cmr/m/n/10.95 Record[a:
+ []
+
+
+Underfull \hbox (badness 3189) in paragraph at lines 171--171
+\OT1/cmr/m/n/10.95 int, b:
+ []
+
+
+Overfull \hbox (16.29167pt too wide) in paragraph at lines 171--171
+[]\OT1/cmr/m/n/10.95 Record[a:
+ []
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Overfull \hbox (1.16759pt too wide) in paragraph at lines 187--187
+[]\OT1/cmr/m/n/10.95 Pass/Fail| 
+ []
+
+
+Underfull \hbox (badness 3514) in paragraph at lines 201--201
+[]$\OMS/cmtt/m/n/10.95 f\OML/cmm/m/it/10.95 a \OT1/cmr/m/n/10.95 = 3\OML/cmm/m/
+it/10.95 ; b \OT1/cmr/m/n/10.95 = 4\OMS/cmtt/m/n/10.95 g\OML/cmm/m/it/10.95 :a 
 \OT1/cmr/m/n/10.95 +
  []
 
@@ -1160,12 +1225,12 @@ it/10.95 ; b \OT1/cmr/m/n/10.95 = 4\OMS/cmsy/m/n/10.95 g\OML/cmm/m/it/10.95 :a
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Overfull \hbox (1.16759pt too wide) in paragraph at lines 198--198
+Overfull \hbox (1.16759pt too wide) in paragraph at lines 213--213
 []\OT1/cmr/m/n/10.95 Pass/Fail| 
  []
 
 
-Underfull \hbox (badness 1817) in paragraph at lines 203--203
+Underfull \hbox (badness 1817) in paragraph at lines 218--218
 []\OT1/cmr/m/n/10.95 print no else (unit
  []
 
@@ -1181,133 +1246,53 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 [44]
 
 [45]
+
+[46]
 Appendix C.
-
-
-[46
-
-]
-Appendix D.
-
-! LaTeX Error: Something's wrong--perhaps a missing \item.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.273     \end{algorithmic}
-                           \label{alg:algorithm4}
-? 
-
-! LaTeX Error: Something's wrong--perhaps a missing \item.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.279     \end{algorithmic}
-                           \label{alg:algorithm5}
-? 
-
-! LaTeX Error: Something's wrong--perhaps a missing \item.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.290     \end{algorithmic}
-                           \label{alg:algorithm6}
-? 
 
 
 [47
 
 ]
-
-! LaTeX Error: Something's wrong--perhaps a missing \item.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.296     \end{algorithmic}
-                           \label{alg:algorithm7}
-? 
-
-! LaTeX Error: Something's wrong--perhaps a missing \item.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.306     \end{algorithmic}
-                           \label{alg:algorithm8}
-? 
-
-! LaTeX Error: Something's wrong--perhaps a missing \item.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.312     \end{algorithmic}
-                           \label{alg:algorithm9}
-? 
-
-! LaTeX Error: Something's wrong--perhaps a missing \item.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.318     \end{algorithmic}
-                           \label{alg:algorithm10}
-? 
+Appendix D.
 
 
-[48]
+[48
 
-[49] (./AP_REPORT_02.aux)
+]
+
+[49]
+
+[50] (./AP_REPORT_02.aux)
  ***********
 LaTeX2e <2024-11-01>
 L3 programming layer <2024-11-02>
  ***********
 
 
+LaTeX Font Warning: Some font shapes were not available, defaults substituted.
+
+
 LaTeX Warning: There were undefined references.
 
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
 Package rerunfilecheck Info: File `AP_REPORT_02.out' has not changed.
-(rerunfilecheck)             Checksum: E04FE2B4594A7F9BE6D618DB4E3B94CD;10982.
+(rerunfilecheck)             Checksum: 327290DEBDA2179EB1A83F13B9A48D6A;11025.
  ) 
 Here is how much of TeX's memory you used:
- 19395 strings out of 473362
- 371000 string characters out of 5720983
- 922335 words of memory out of 5000000
- 41932 multiletter control sequences out of 15000+600000
+ 19419 strings out of 473362
+ 371615 string characters out of 5720983
+ 934412 words of memory out of 5000000
+ 41953 multiletter control sequences out of 15000+600000
  569039 words of font info for 75 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  85i,12n,93p,1075b,938s stack positions out of 10000i,1000n,20000p,200000b,200000s
-
-pdfTeX warning (dest): name{table.caption.30} has been referenced but does not 
-exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{table.caption.29} has been referenced but does not 
-exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{table.caption.28} has been referenced but does not 
-exist, replaced by a fixed one
-
-</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><
-/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></
-usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb><
-/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb><
-/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmitt10.pfb><
-/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></
+</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
+></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
+</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb
+></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb
+></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmitt10.pfb
+></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb>
+</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></
 usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></us
 r/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/
 local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/lo
@@ -1318,10 +1303,10 @@ live/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texli
 ve/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texliv
 e/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive
 /2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on AP_REPORT_02.pdf (51 pages, 1393448 bytes).
+Output written on AP_REPORT_02.pdf (52 pages, 1411288 bytes).
 PDF statistics:
- 867 PDF objects out of 1000 (max. 8388607)
- 736 compressed objects within 8 object streams
+ 878 PDF objects out of 1000 (max. 8388607)
+ 744 compressed objects within 8 object streams
  191 named destinations out of 1000 (max. 500000)
  685 words of extra memory for PDF output out of 10000 (max. 10000000)
 

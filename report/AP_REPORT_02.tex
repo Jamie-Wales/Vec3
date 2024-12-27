@@ -222,101 +222,12 @@ directory, so this would be a useful feature to add.
 \input{sections/testing}
 
 \chapter{Syntax}\label{ch:other-stuff}
+
+Is needed?
     
 \chapter{Algorithms}\label{ch:algorithms}
-    
-This chapter will showcase some of the maths focused algorithms used in the project.
-    
-\section{Root finding}\label{sec:root-finding}
 
-Both the bisection and Newton-Raphson methods are implemented.
-    
-\begin{algorithm}
-    \caption{Bisection method}
-    \begin{algorithmic}
-        \Function{bisection}{f, a, b, tol}
-            \State $c \gets (a + b) / 2$
-            \While{$|f(c)| > tol$}
-                \If{$f(a) \cdot f(c) < 0$}
-                    \State $b \gets c$
-                \Else
-                    \State $a \gets c$
-                \EndIf
-                \State $c \gets (a + b) / 2$
-            \EndWhile
-            \State \Return $c$
-        \EndFunction
-    \end{algorithmic}\label{alg:algorithm2}
-\end{algorithm}
+\input{sections/algorithms}
 
-\begin{algorithm}
-    \caption{Newton-Raphson method}
-    \begin{algorithmic}
-        \Function{newtonRaphson}{f, df, x0, tol}
-            \State $x1 \gets x0 - f(x0) / df(x0)$
-            \While{$|f(x1)| > tol$}
-                \State $x0 \gets x1$
-                \State $x1 \gets x0 - f(x0) / df(x0)$
-            \EndWhile
-            \State \Return $x1$
-        \EndFunction
-    \end{algorithmic}\label{alg:algorithm3}
-\end{algorithm}
-    
-\section{Calculus}\label{sec:integration}
-In the language, pure functions are represented in a symbolic expression DSL, making it easy to differentiate and 
-integrate functions, as well as find tangent lines or the tailor series of a function.
-    
-\begin{algorithm}
-    \caption{Differentiation}
-    \begin{algorithmic}
-    \end{algorithmic}\label{alg:algorithm4}
-\end{algorithm}
-    
-\begin{algorithm}
-    \caption{Integration}
-    \begin{algorithmic}
-    \end{algorithmic}\label{alg:algorithm5}
-\end{algorithm}
-    
-\section{Vector operations}\label{sec:vector-ops}
-
-Functions used to find the cross and dot products of two vectors are implemented, as well as standard arithmetic
-operations.
-
-\begin{algorithm}
-    \caption{Cross product}
-    \begin{algorithmic}
-    \end{algorithmic}\label{alg:algorithm6}
-\end{algorithm}
-
-\begin{algorithm}
-    \caption{Dot product}
-    \begin{algorithmic}
-    \end{algorithmic}\label{alg:algorithm7}
-\end{algorithm}
-
-\section{Matrix operations}\label{sec:matrix-ops}
-    
-The language has built-in functions for finding the transpose, determinant and inverse of a matrix.
-    
-\begin{algorithm}
-    \caption{Transpose}
-    \begin{algorithmic}
-    \end{algorithmic}\label{alg:algorithm8}
-\end{algorithm}
-    
-\begin{algorithm}
-    \caption{Determinant}
-    \begin{algorithmic}
-    \end{algorithmic}\label{alg:algorithm9}
-\end{algorithm}
-    
-\begin{algorithm}
-    \caption{Inverse}
-    \begin{algorithmic}
-    \end{algorithmic}\label{alg:algorithm10}
-\end{algorithm}
-    
 \end{document}
 

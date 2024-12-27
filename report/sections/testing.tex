@@ -1,5 +1,6 @@
 The language has been tested thoroughly using .Net's built in unit testing framework, NUnit.
-Unit tests have been written for the lexer, parser, compiler, type inference, compiler and transpiler.
+Unit tests have been written for the lexer, parser, compiler, type inference, compiler and transpiler, and are 
+within the Test project.
 
 Additionally, tests have been written in the language itself to test the language's features.
 
@@ -107,16 +108,6 @@ assert x^2 == 1, "Assignment with expression failed"
 assert x^2 + 1 == 2, "Assignment with expression failed"
 \end{minted}
 
-%let x = 3
-%
-%print((2*x)-x^2*5)
-%print((2*x)-x^2* 5 / 2)
-%print((2*x)-x^2* (5 / 2))
-%print((2*x)-x^2* 5 / 2.0)
-%print((2*x)-x^2* 5 % 2)
-%print((2*x)-x^2* (5 % 2))
-%
-
 \section{Function testing}\label{sec:function-testing}
 
 Tests can be found in table~\ref{tab:functions}.
@@ -161,6 +152,31 @@ assert f(3) + f(2) == 13, "Function with expression failed"
 \end{minted}
 
 \section{Type inference testing}\label{sec:type-inference-testing}
+
+Type inference tests can be found in table~\ref{tab:type-inference}.
+
+\begin{table}[h]
+    \caption{Type Inference tests. ResE is expected result and ResA is actual result. \\}
+    \begin{tabular}{|p{1.8in}|p{0.5in}|p{0.4in}|p{0.6in}|p{1.4in}|} \hline
+    Expression & ResE & ResA& Pass/Fail & Action/comment \\ \hline \hline
+    $let\ x = 3$ & int & int & Pass & int \\ \hline
+    $let\ x = 3.0$ & float & float & Pass & float \\ \hline
+    $let\ x = 3.0 + 2$ & float & float & Pass & addition \\ \hline
+    $let\ x = 3.0 + 2.0$ & float & float & Pass & \\ \hline
+    $let\ x = 3 + 2.0$ & float & float & Pass & \\ \hline
+    $let\ x = 3 + 2$ & int & int & Pass & \\ \hline
+    $let\ x = (() => 3)()$ & int & int & Pass & \\ \hline
+    $let\ x = (() => 3.0)()$ & float & float & Pass & \\ \hline
+    $let\ x = (() => [1,2])()$ & List[float] & List[float] & Pass & \\ \hline
+    $let\ x = (() => {a = 3})()$ & Record[a: int] & Record[a: int] & Pass & \\ \hline
+    $let\ x = (() => {a = 3, b = 4})()$ & Record[a: int, b: int] & Record[a: int, b: int] & Pass & \\ \hline
+    $let\ x = 4 : float$ & float & float & Pass & Casting \\ \hline
+    $let\ x = 4 : int$ & int & int & Pass & \\ \hline
+    $let\ x = 4.0 : int$ & int & int & Pass & Casting \\ \hline
+    $let\ x = 4.0 : float$ & float & float & Pass & \\ \hline
+    \end{tabular}
+    \label{tab:type-inference}
+\end{table}
 
 \section{Compound data type testing}\label{sec:compound-data-type-testing}
 

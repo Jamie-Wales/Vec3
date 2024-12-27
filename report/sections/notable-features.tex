@@ -84,6 +84,13 @@ let det = determinant(m1)
 let inv = inverse(m1)
 \end{minted}
 
+\paragraph{Casting} The language has first class support for casting between types, allowing for the user to
+explicitly cast between types as desired.
+A useful example of this is casting integer lists to float lists:
+
+\begin{minted}{fsharp}
+let l = [1..10] : [float]
+\end{minted}
 
 \paragraph{Async functions} The language supports asynchronous functions, allowing for non-blocking operations
 to be performed.
@@ -109,3 +116,6 @@ let l3 = l[..5] // Extracts the sublist [1, 2, 3, 4, 5]
 \paragraph{Function Plotting} The language has built-in functions for plotting functions, allowing for easy
 visualisation of functions.
 This is done through the \textit{plotFunc} function, which takes in a function and plots it on a graph.
+
+\paragraph{Interactive Plotting} The plot windows are interactive, with the user being able to zoom in and out,
+move around and adjust the axes as desired, as well as inputting functions to be plotted on command.
