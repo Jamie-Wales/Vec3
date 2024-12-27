@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  23 DEC 2024 20:00
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  23 DEC 2024 20:11
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -866,11 +866,11 @@ r> ":" <type> "," <recordtypelist>[]
 \pydata@fh@_E017103BDF0CAED79F13B8F548EAF24E.data.minted=\write5
 \openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
 
-runsystem(latexminted config  --timestamp 20241223200037Z E017103BDF0CAED79F13B
+runsystem(latexminted config  --timestamp 20241223201122Z E017103BDF0CAED79F13B
 8F548EAF24E)...executed safely (allowed).
 
 (./_E017103BDF0CAED79F13B8F548EAF24E.config.minted)
-runsystem(latexminted cleanconfig  --timestamp 20241223200037Z E017103BDF0CAED7
+runsystem(latexminted cleanconfig  --timestamp 20241223201122Z E017103BDF0CAED7
 9F13B8F548EAF24E)...executed safely (allowed).
 
 
@@ -1283,33 +1283,45 @@ Package rerunfilecheck Info: File `AP_REPORT_02.out' has not changed.
 (rerunfilecheck)             Checksum: E04FE2B4594A7F9BE6D618DB4E3B94CD;10982.
  ) 
 Here is how much of TeX's memory you used:
- 19389 strings out of 473362
- 370919 string characters out of 5720983
+ 19395 strings out of 473362
+ 371000 string characters out of 5720983
  922335 words of memory out of 5000000
  41932 multiletter control sequences out of 15000+600000
  569039 words of font info for 75 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  85i,12n,93p,1075b,938s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
-></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
-</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb
-></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb
-></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmitt10.pfb
-></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb>
-</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></
-usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></us
-r/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/
-local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/loc
-al/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/
-texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/t
-exlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/tex
-live/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texl
-ive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texli
-ve/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on AP_REPORT_02.pdf (51 pages, 1391191 bytes).
+
+pdfTeX warning (dest): name{table.caption.30} has been referenced but does not 
+exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.29} has been referenced but does not 
+exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{table.caption.28} has been referenced but does not 
+exist, replaced by a fixed one
+
+</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><
+/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></
+usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb><
+/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb><
+/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmitt10.pfb><
+/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></
+usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></us
+r/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/
+local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/lo
+cal/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local
+/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/te
+xlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/tex
+live/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texli
+ve/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texliv
+e/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive
+/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
+Output written on AP_REPORT_02.pdf (51 pages, 1393448 bytes).
 PDF statistics:
- 860 PDF objects out of 1000 (max. 8388607)
- 729 compressed objects within 8 object streams
- 185 named destinations out of 1000 (max. 500000)
+ 867 PDF objects out of 1000 (max. 8388607)
+ 736 compressed objects within 8 object streams
+ 191 named destinations out of 1000 (max. 500000)
  685 words of extra memory for PDF output out of 10000 (max. 10000000)
 

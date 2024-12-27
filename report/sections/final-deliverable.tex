@@ -353,6 +353,8 @@ and then some other windows for the plots, drawing and notebook view, as well as
 module for PDF exports.
 It also contains a directory containing the prelude and standard library of the language, which are then imported as 
 desired (except the prelude, which is always implicitly imported).
+The frameworks are libraries used in the GUI project include AvaloniaUI, AvaloniaEdit, FSharp.Core, ScottPlot, 
+TextMate and QuestPDF\@. 
 
 \paragraph{The Tests} project mirrors the main project, with a similar structure and file naming for clear and sensible
 organisation.
@@ -371,6 +373,7 @@ submodules:
 A couple more files, such as the REPL, which contains helper functions for compilation and running of code, and the
 Symbolic Expression modules, which contain helper functions for maths operations such as simplification of formulas 
 and calculation of derivatives, are also present.
+No external libraries are used in the main project, as it is a standalone F\# project.
 
 We felt this structure was sensible, as it allowed for clear separation of concerns and easy navigation of the codebase.
 
