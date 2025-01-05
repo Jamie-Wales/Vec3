@@ -154,7 +154,7 @@ type Lexeme =
     | Operator of Operator * Placement option
     | Punctuation of Punctuation
     | Identifier of string
-
+    
 /// <summary>
 /// The placement of an operator in an expression.
 /// </summary>

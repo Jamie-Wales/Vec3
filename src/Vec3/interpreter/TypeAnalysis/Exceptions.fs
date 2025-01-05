@@ -70,7 +70,7 @@ let formatTypeError (error: TypeError) : string =
     | InvalidArgumentCount(expr, expected, actual) ->
         $"Invalid argument count at expr: {expr}, expected {expected}, got {actual}"
     | InvalidArgumentType(expr, expected, actual) ->
-        $"Invalid argument type at expr: {expr}, expected {expected}, got {actual}"
+        $"Invalid argument type at: {expr}, expected {expected}, got {actual}"
     | InvalidReturnType(token, expected, actual) ->
         $"Invalid return type at Line: {token.Position.Line}, expected {expected}, got {actual}"
     | InvalidOperandType(token, expected, actual) ->

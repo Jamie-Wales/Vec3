@@ -23,14 +23,16 @@ let consType =
 /// </summary>
 let plotFunType =
     let funConstrain =
-        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1), id, Some "Only 1 argument is allowed"))
 
     TConstrain(
         Constrain(
             freshTypeVar (),
             (fun t ->
                 t = TFunction([ TString; funConstrain ], TUnit, false, true)
-                || t = TFunction([ TString; funConstrain; TFloat; TFloat ], TUnit, false, true))
+                || t = TFunction([ TString; funConstrain; TFloat; TFloat ], TUnit, false, true)),
+            id,
+            Some "Maybe the function is not pure"
         )
     )
 
@@ -40,7 +42,7 @@ let plotFunType =
 /// </summary>
 let plus =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     TFunction([ constrain; constrain ], constrain, true, true)
 
@@ -49,7 +51,7 @@ let plus =
 /// </summary>
 let minus =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     TFunction([ constrain; constrain ], constrain, true, true)
 
@@ -58,7 +60,7 @@ let minus =
 /// </summary>
 let mul =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     TFunction([ constrain; constrain ], constrain, true, true)
 
@@ -67,7 +69,7 @@ let mul =
 /// </summary>
 let div =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     TFunction([ constrain; constrain ], constrain, true, true)
 
@@ -76,7 +78,7 @@ let div =
 /// </summary>
 let pow =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     TFunction([ constrain; constrain ], constrain, true, true)
 
@@ -106,7 +108,7 @@ let logType = TFunction([ TFloat; TFloat ], TFloat, false, true)
 /// </summary>
 let lt =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     TFunction([ constrain; constrain ], TBool, false, true)
 
@@ -115,7 +117,7 @@ let lt =
 /// </summary>
 let gt =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     TFunction([ constrain; constrain ], TBool, false, true)
 
@@ -124,7 +126,7 @@ let gt =
 /// </summary>
 let lte =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     TFunction([ constrain; constrain ], TBool, false, true)
 
@@ -133,7 +135,7 @@ let lte =
 /// </summary>
 let gte =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     TFunction([ constrain; constrain ], TBool, false, true)
 
@@ -157,7 +159,7 @@ let notF = TFunction([ TBool ], TBool, false, true)
 /// </summary>
 let neg =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     TFunction([ constrain ], constrain, true, true)
 
@@ -166,7 +168,7 @@ let neg =
 /// </summary>
 let unneg =
     let typeVar = freshTypeVar ()
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     TFunction([ constrain ], constrain, true, true)
 
@@ -189,7 +191,7 @@ let crossProduct =
 let dotProduct =
     let tensorTypeVar = freshTypeVar ()
     let dimsVar = DVar(freshTypeVar ())
-    let constrain = TConstrain(Constrain(tensorTypeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(tensorTypeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     TFunction([ TTensor(constrain, dimsVar); TTensor(constrain, dimsVar) ], constrain, false, true)
 
@@ -206,10 +208,10 @@ let castType =
 /// </summary>
 let newtonRaphsonType =
     let funcT1 =
-        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1), id, Some "The function must be pure"))
 
     let funcT2 =
-        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1), id, Some "The function must be pure"))
 
     TFunction([ funcT1; funcT2; TFloat; TFloat; TInteger ], TFloat, false, true)
 
@@ -218,7 +220,7 @@ let newtonRaphsonType =
 /// </summary>
 let bisectionTyp =
     let funcT =
-        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1), id, Some "The function must be pure"))
 
     TFunction([ funcT; TFloat; TFloat; TFloat; TInteger ], TFloat, false, true)
 
@@ -227,7 +229,7 @@ let bisectionTyp =
 /// </summary>
 let differentiateType =
     let funcT =
-        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1), id, Some "The function must be pure"))
 
     let retT = TFunction([ TFloat ], TFloat, true, false)
 
@@ -238,7 +240,7 @@ let differentiateType =
 /// </summary>
 let integrateType =
     let funcT =
-        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1), id, Some "The function must be pure"))
 
     let retT = TFunction([ TFloat ], TFloat, true, false)
 
@@ -249,7 +251,7 @@ let integrateType =
 /// </summary>
 let tangentType =
     let funcT =
-        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1), id, Some "The function must be pure"))
 
     let retT = TFunction([ TFloat ], TFloat, true, false)
 
@@ -261,7 +263,7 @@ let tangentType =
 /// </summary>
 let taylorSeriesT =
     let funcT =
-        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1), id, Some "The function must be pure"))
 
     let retT = TFunction([ TFloat ], TFloat, true, false)
 
@@ -273,7 +275,7 @@ let taylorSeriesT =
 /// </summary>
 let plotFunsType =
     let funcT =
-        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1)))
+        TConstrain(Constrain(freshTypeVar (), (fun typ -> typ.IsPure && typ.NumArgsIs 1), id, Some "The function must be pure"))
 
     TFunction([ TString; TTensor(funcT, DAny) ], TUnit, false, true)
 
@@ -307,7 +309,7 @@ let drawType =
         TConstrain(
             Constrain(
                 freshTypeVar (),
-                fun t ->
+                (fun t ->
                     t.hasFieldsThat
                         [ (Identifier "width", fun t -> t = TFloat)
                           (Identifier "height", fun t -> t = TFloat)
@@ -323,9 +325,8 @@ let drawType =
                                      (Identifier "x", fun t -> t = TFloat)
                                      (Identifier "y", fun t -> t = TFloat)
                                      (Identifier "colour", fun t -> t = TString) ]
-                           | _ -> false)
+                           | _ -> false)), id, Some "The type must have the required fields")
             )
-        )
 
     let token =
         { Lexeme = Identifier "id"
@@ -345,19 +346,19 @@ let readTyp = TFunction([ TString ], TAny, false, true)
 /// </summary>
 let onType =
     let idTyp =
-        TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldOf (Identifier "id") TInteger)))
+        TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldOf (Identifier "id") TInteger), id, Some "The type must have an id field"))
 
     let eventTyp = TInteger
     // TConstrain(Constrain(freshTypeVar (), (fun t -> t.hasFieldOf (Identifier "event") TInteger)))
 
     let stateT =
         TConstrain(
-            Constrain(freshTypeVar (), (fun t -> t.hasFieldsOf [ (Identifier "x", TFloat); (Identifier "y", TFloat) ]))
+            Constrain(freshTypeVar (), (fun t -> t.hasFieldsOf [ (Identifier "x", TFloat); (Identifier "y", TFloat) ]), id, Some "The type must have x and y fields")
         )
 
     let returnT =
         TConstrain(
-            Constrain(freshTypeVar (), (fun t -> t.hasFieldsOf [ (Identifier "x", TFloat); (Identifier "y", TFloat) ]))
+            Constrain(freshTypeVar (), (fun t -> t.hasFieldsOf [ (Identifier "x", TFloat); (Identifier "y", TFloat) ]), id, Some "The type must have x and y fields")
         )
 
     TFunction([ idTyp; eventTyp; TAny ], returnT, false, true)
@@ -370,12 +371,12 @@ let PlotEllipseType =
         TConstrain(
             Constrain(
                 freshTypeVar (),
-                fun t ->
+                (fun t ->
                     t.hasFieldsThat
                         [ (Identifier "x", fun t -> t = TFloat)
                           (Identifier "y", fun t -> t = TFloat)
                           (Identifier "rx", fun t -> t = TFloat)
-                          (Identifier "ry", fun t -> t = TFloat) ]
+                          (Identifier "ry", fun t -> t = TFloat) ]), id, Some "The type must have x, y, rx, and ry fields"
             )
         )
 
@@ -398,7 +399,7 @@ let PlotEllipsesType =
                                  (Identifier "y", fun t -> t = TFloat)
                                  (Identifier "rx", fun t -> t = TFloat)
                                  (Identifier "ry", fun t -> t = TFloat) ]
-                       | _ -> false)
+                       | _ -> false), id, Some "The type must have x, y, rx, and ry fields"
             )
         )
 
@@ -418,7 +419,7 @@ let appendType =
                 (fun t ->
                     match t with
                     | TTensor(t, _) -> TTensor(t, DAny)
-                    | _ -> t)
+                    | _ -> t), Some "The type must be a list or a string"
             )
         )
 
@@ -430,7 +431,7 @@ let appendType =
 let determType =
     let typeVar = freshTypeVar ()
     let dimsVar = DVar(freshTypeVar ())
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     let innerTensor = TTensor(constrain, dimsVar)
     let outerTensor = TTensor(innerTensor, dimsVar)
@@ -443,7 +444,7 @@ let determType =
 let transpoteType =
     let typeVar = freshTypeVar ()
     let dimsVar = DVar(freshTypeVar ())
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     let innerTensor = TTensor(constrain, dimsVar)
     let outerTensor = TTensor(innerTensor, dimsVar)
@@ -456,7 +457,7 @@ let transpoteType =
 let inverseType =
     let typeVar = freshTypeVar ()
     let dimsVar = DVar(freshTypeVar ())
-    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic))
+    let constrain = TConstrain(Constrain(typeVar, _.IsArithmetic, id, Some "The type must support arithmetic"))
 
     let innerTensor = TTensor(constrain, dimsVar)
     let outerTensor = TTensor(innerTensor, dimsVar)

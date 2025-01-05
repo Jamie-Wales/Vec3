@@ -297,6 +297,30 @@ type Type =
         match this with
         | TTensor(_, DAny) -> true
         | _ -> false
+    
+    override this.ToString() =
+        match this with
+        | TInteger -> "int"
+        | TFloat -> "float"
+        | TRational -> "rational"
+        | TComplex -> "complex"
+        | TChar -> "char"
+        | TBool -> "bool"
+        | TString -> "string"
+        | TUnit -> "unit"
+        | TAny -> "any"
+        | TNever -> "never"
+        | TFunction(args, ret, _, _) -> $"""({System.String.Join(", ", args)} -> {ret})"""
+        | TTypeVariable v -> $"t{v}"
+        | TConstrain c -> c.ToString()
+        | TTuple ts -> $"""({System.String.Join(", ", ts)})"""
+        | TTensor(t, d) -> $"""{t}[{d}]"""
+        | TRecord r -> r.ToString()
+        | TRowEmpty -> "{}"
+        | TRowExtend(f, t, r) -> $"""{f}: {t} | {r}"""
+        | TAlias(l, Some t) -> $"""{l.Lexeme} = {t}"""
+        | TAlias(l, None) -> l.Lexeme.ToString()
+        
 
 /// <summary>
 /// Represents the dimensions of a tensor type.
@@ -314,6 +338,12 @@ and Dims =
     /// A type variable representing an unknown dimension.
     /// </summary>
     | DVar of TypeVar
+    
+    override this.ToString() =
+        match this with
+        | Dims d -> d.ToString()
+        | DAny -> ".."
+        | DVar v -> $"d{v}"
 
 /// <summary>
 /// Alias for a row type (not strictly necessary, but makes the code more readable).
@@ -323,10 +353,11 @@ and Row = Type // Row | RowEmpty | RowExtend
 /// <summary>
 /// Represents a type constraint (a type variable and a predicate).
 /// </summary>
-and Constrain(typeVar: TypeVar, constrain: Type -> bool, ?transformation: Type -> Type) =
+and Constrain(typeVar: TypeVar, constrain: Type -> bool, ?transformation: Type -> Type, ?message: string option) =
     member this.TypeVar = typeVar
     member this.Constrain = constrain
     member this.Transformation = defaultArg transformation id
+    member this.Message = defaultArg message None
 
     /// <summary>
     /// Equality only based on the type variable.
@@ -343,6 +374,11 @@ and Constrain(typeVar: TypeVar, constrain: Type -> bool, ?transformation: Type -
     /// </summary>
     /// <returns>The hash code of the object.</returns>
     override this.GetHashCode() = hash this.TypeVar
+    
+    override this.ToString() =
+        match this.Message with
+        | Some m -> $"""t{this.TypeVar} ({m})"""
+        | None -> this.TypeVar.ToString()
 
 /// <summary>
 /// Alias as Type is also a system type.
