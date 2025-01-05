@@ -438,7 +438,7 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                                     standardOutput.Text <- "No errors"
                                 | Error err ->
                                     standardOutput.Foreground <- SolidColorBrush(Colors.Yellow)
-                                    standardOutput.Text <- Exceptions.formatTypeErrors err
+                                    standardOutput.Text <- Exceptions.formatTypeErrors err 3
                             | Error(err, state) ->
                                 printfn $"{err}"
                                 standardOutput.Foreground <- SolidColorBrush(Colors.Red)

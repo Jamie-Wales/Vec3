@@ -111,6 +111,7 @@ let formatTypeError (error: TypeError) : string =
 /// Pretty print a list of type errors.
 /// </summary>
 /// <param name="errors">The list of type errors.</param>
+/// <param name="count">The number of errors to display.</param>
 /// <returns>A string representation of the type errors.</returns>
-let formatTypeErrors (errors: TypeError list) : string =
-    List.map formatTypeError errors |> String.concat "\n"
+let formatTypeErrors (errors: TypeError list) (count: int) : string =
+    List.take count errors |> List.map formatTypeError |> String.concat "\n"
