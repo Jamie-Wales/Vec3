@@ -225,7 +225,7 @@ type NotebookWindow() as this =
                             plotControl.Margin <- Thickness(0, 10, 0, 10)
                             plotControl.Plot.Title(title)
                             let p = plotControl.Plot.Add.Function(f)
-                            p.LegendText <- SymbolicExpression.toString sf
+                            p.LegendText <- $"f(x) = {SymbolicExpression.toString sf}"
                             let yL = plotControl.Plot.Add.VerticalLine(0.0)
                             yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
                             let xL = plotControl.Plot.Add.HorizontalLine(0.0)
@@ -264,7 +264,7 @@ type NotebookWindow() as this =
                             for sf in fs do
                                 let f = SymbolicExpression.toBuiltin sf
                                 let p = plotControl.Plot.Add.Function(f)
-                                p.LegendText <- SymbolicExpression.toString sf
+                                p.LegendText <- $"f(x) = {SymbolicExpression.toString sf}"
 
                             plotControl.Refresh()
                             plotsPanel.Children.Add(plotControl)

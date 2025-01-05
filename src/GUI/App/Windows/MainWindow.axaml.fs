@@ -257,6 +257,15 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                     standardOutput.Text <- $"Error loading file: {ex.Message}")
         } |> ignore
         
+    member private this.GenPoints (f: Expression, start: float, end_: float, step: float): (float * float) list =
+        let f = toBuiltin f
+        let rec loop pos acc =
+            if pos > end_ then
+                acc
+            else
+                let y = f pos
+                loop (pos + step) ((pos, y) :: acc)
+        loop start []
     
     /// <summary>
     /// Plot the given data currently in the VM.
@@ -324,9 +333,9 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 let f = toBuiltin sf
                 let plotWindow = PlotWindow()
                 plotWindow.Title <- title
-                plotWindow.SetVM(vm)  
+                plotWindow.SetVM(vm)
                 let p = plotWindow.PlotControl.Plot.Add.Function(f)
-                p.LegendText <- toString sf
+                p.LegendText <- $"f(x) = {toString sf}"
                 // plotWindow.PlotControl.Plot.Add.Function(Math.Tan) |> ignore
                 // draw x and y axis
                 let yL = plotWindow.PlotControl.Plot.Add.VerticalLine(0.0)
@@ -342,12 +351,14 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                     plotWindow.PlotControl.Plot.Add.Line(end_, 0.0, end_, endHeight) |> ignore
 
                     plotWindow.PlotControl.Plot.Add.Annotation($"Area: %f{area}") |> ignore
+                    
                 | _ -> ()
                 
                 plotWindow.PlotControl.Plot.XLabel("x")
                 plotWindow.PlotControl.Plot.YLabel("y")
 
                 plotWindow.PlotControl.Refresh()
+                plotWindow.PlotControl.Plot.ShowLegend() |> ignore
                 plotWindow.Show()
 
             | VPlotFunctions(title, fs) ->
@@ -357,17 +368,19 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
                 let xL = plotWindow.PlotControl.Plot.Add.HorizontalLine(0.0)
                 xL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
+                plotWindow.PlotControl.Plot.Font.Automatic()
 
                 for sf in fs do
                     let f = toBuiltin sf
                     let p = plotWindow.PlotControl.Plot.Add.Function(f)
-                    p.LegendText <- toString sf
+                    p.LegendText <- $"f(x) = {toString sf}"
 
                 plotWindow.PlotControl.Plot.Title(title)
                 
                 plotWindow.PlotControl.Plot.XLabel("x")
                 plotWindow.PlotControl.Plot.YLabel("y")
-                
+                let legend = plotWindow.PlotControl.Plot.ShowLegend()
+                legend.FontSize <- 12f
                 plotWindow.PlotControl.Refresh()
                 plotWindow.Show()
             | _ -> ()

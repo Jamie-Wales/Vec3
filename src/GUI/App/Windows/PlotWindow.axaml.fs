@@ -60,7 +60,7 @@ type PlotWindow() as this =
             | VPlotFunction(title, sf, start, end_, area) ->
                 let f = SymbolicExpression.toBuiltin sf
                 let p = plotControl.Plot.Add.Function(f)
-                p.LegendText <- SymbolicExpression.toString sf
+                p.LegendText <- $"f(x) = {SymbolicExpression.toString sf}"
                 plotControl.Plot.Title(title)
                 match start, end_, area with
                 | Some s, Some e, Some a ->
@@ -91,7 +91,7 @@ type PlotWindow() as this =
                 for sf in fs do
                     let f = SymbolicExpression.toBuiltin sf
                     let p = plotControl.Plot.Add.Function(f)
-                    p.LegendText <- SymbolicExpression.toString sf
+                    p.LegendText <- $"f(x) = {SymbolicExpression.toString sf}"
                 plotControl.Plot.Title(title)
             | _ -> ()
             
