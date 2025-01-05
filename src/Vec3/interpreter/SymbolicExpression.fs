@@ -310,6 +310,22 @@ let rec toExpr (expression: Expression) : Expr =
             [ toExpr x ],
             None
         )
+         
+/// <summary>
+/// Tan, but returns nan for values close to its asymptotes.
+/// </summary>
+/// <param name="x">The value to take the tangent of.</param>
+/// <returns>The tangent of the value.</returns>
+let Tan (x: double) =
+    let normalized = abs x % Math.PI
+    let relativeToHalfPi = normalized % (Math.PI / 2.0)
+    let res = Math.Tan x
+    
+    if (abs res > 1) && (abs (relativeToHalfPi - (Math.PI / 2.0)) < 0.05 || abs (relativeToHalfPi + (Math.PI / 2.0)) < 0.05) 
+    then
+        nan
+    else
+        res
 
 /// <summary>
 /// Convert a symbolic expression to a builtin function (a function defined in the f sharp runtime).
@@ -324,7 +340,7 @@ let rec toBuiltin (expression: Expression) : (double -> double) =
 
     | Sine x -> (fun a -> Math.Sin(toBuiltin x a))
     | Cosine x -> (fun a -> Math.Cos(toBuiltin x a))
-    | Tangent x -> (fun a -> Math.Tan(toBuiltin x a))
+    | Tangent x -> (fun a -> Tan(toBuiltin x a))
 
     | ASine x -> (fun a -> Math.Asin(toBuiltin x a))
     | ACosine x -> (fun a -> Math.Acos(toBuiltin x a))

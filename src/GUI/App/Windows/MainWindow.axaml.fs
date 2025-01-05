@@ -335,6 +335,7 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 plotWindow.Title <- title
                 plotWindow.SetVM(vm)
                 let p = plotWindow.PlotControl.Plot.Add.Function(f)
+                
                 p.LegendText <- $"f(x) = {toString sf}"
                 // plotWindow.PlotControl.Plot.Add.Function(Math.Tan) |> ignore
                 // draw x and y axis
