@@ -2,7 +2,6 @@
 
 open System
 open System.IO
-open Avalonia
 open Vec3.Transpiler.Transpiler
 
 /// <summary>
@@ -29,19 +28,17 @@ module Program =
     /// <summary>
     /// Creates an Avalonia application.
     /// </summary>
-    [<CompiledName "BuildAvaloniaApp">]
-    let buildAvaloniaApp () =
-        AppBuilder
-            .Configure<App>()
-            .UsePlatformDetect()
-            .WithInterFont()
-            .LogToTrace(areas = Array.empty)
+    // [<CompiledName "BuildAvaloniaApp">]
+    // let buildAvaloniaApp () =
+    //     AppBuilder
+    //         .Configure<App>()
+    //         .UsePlatformDetect()
+    //         .WithInterFont()
+    //         .LogToTrace(areas = Array.empty)
 
     [<EntryPoint; STAThread>]
     let main (argv: string array) : int =
         match argv with
-        | [||]
-        | [| "-g" |] -> buildAvaloniaApp().StartWithClassicDesktopLifetime(argv)
         | [| "-c"; filename |] ->
             let config =
                 if argv.Length > 2 then

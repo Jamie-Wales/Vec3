@@ -18,6 +18,7 @@ open Vec3.Interpreter.Typing
 open System.Threading.Tasks
 open System.Threading
 open Vec3.Transpiler.Transpiler
+open Vec3.Interpreter.SymbolicExpression
 
 /// <summary>
 /// The main UI window used for the Vec3 editor.
@@ -296,6 +297,10 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 let plotWindow = PlotWindow()
                 plotWindow.PlotControl.Plot.Title(title)
                 plotWindow.SetVM(vm)  
+                let yL = plotWindow.PlotControl.Plot.Add.VerticalLine(0.0)
+                yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
+                let xL = plotWindow.PlotControl.Plot.Add.HorizontalLine(0.0)
+                xL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
                 let extractNumber =
                     function
                     | VNumber(VFloat f) -> f
@@ -315,11 +320,14 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 plotWindow.PlotControl.Plot.Title(title)
                 plotWindow.PlotControl.Refresh()
                 plotWindow.Show()
-            | VPlotFunction(title, f, start, end_, area) ->
+            | VPlotFunction(title, sf, start, end_, area) ->
+                let f = toBuiltin sf
                 let plotWindow = PlotWindow()
                 plotWindow.Title <- title
                 plotWindow.SetVM(vm)  
-                plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
+                let p = plotWindow.PlotControl.Plot.Add.Function(f)
+                p.LegendText <- toString sf
+                // plotWindow.PlotControl.Plot.Add.Function(Math.Tan) |> ignore
                 // draw x and y axis
                 let yL = plotWindow.PlotControl.Plot.Add.VerticalLine(0.0)
                 yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
@@ -335,6 +343,9 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
 
                     plotWindow.PlotControl.Plot.Add.Annotation($"Area: %f{area}") |> ignore
                 | _ -> ()
+                
+                plotWindow.PlotControl.Plot.XLabel("x")
+                plotWindow.PlotControl.Plot.YLabel("y")
 
                 plotWindow.PlotControl.Refresh()
                 plotWindow.Show()
@@ -342,11 +353,21 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
             | VPlotFunctions(title, fs) ->
                 let plotWindow = PlotWindow()
                 plotWindow.Title <- title
+                let yL = plotWindow.PlotControl.Plot.Add.VerticalLine(0.0)
+                yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
+                let xL = plotWindow.PlotControl.Plot.Add.HorizontalLine(0.0)
+                xL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
 
-                for f in fs do
-                    plotWindow.PlotControl.Plot.Add.Function(f) |> ignore
+                for sf in fs do
+                    let f = toBuiltin sf
+                    let p = plotWindow.PlotControl.Plot.Add.Function(f)
+                    p.LegendText <- toString sf
 
                 plotWindow.PlotControl.Plot.Title(title)
+                
+                plotWindow.PlotControl.Plot.XLabel("x")
+                plotWindow.PlotControl.Plot.YLabel("y")
+                
                 plotWindow.PlotControl.Refresh()
                 plotWindow.Show()
             | _ -> ()

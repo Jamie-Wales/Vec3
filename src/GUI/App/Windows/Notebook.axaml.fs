@@ -12,6 +12,7 @@ open Avalonia.Media
 open ScottPlot.Avalonia
 open TextMateSharp.Grammars
 open AvaloniaEdit.TextMate
+open Vec3.Interpreter
 open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Types
 open Vec3.Interpreter.Backend.Compiler
@@ -192,6 +193,10 @@ type NotebookWindow() as this =
                             plotControl.Width <- 400
                             plotControl.Margin <- Thickness(0, 10, 0, 10)
                             plotControl.Plot.Title(title)
+                            let yL = plotControl.Plot.Add.VerticalLine(0.0)
+                            yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
+                            let xL = plotControl.Plot.Add.HorizontalLine(0.0)
+                            xL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
 
                             let extractNumber =
                                 function
@@ -212,13 +217,19 @@ type NotebookWindow() as this =
                             plotControl.Refresh()
                             plotsPanel.Children.Add(plotControl)
 
-                        | VPlotFunction(title, f, start, end_, area) ->
+                        | VPlotFunction(title, sf, start, end_, area) ->
+                            let f = SymbolicExpression.toBuiltin sf
                             let plotControl = AvaPlot()
                             plotControl.Height <- 300
                             plotControl.Width <- 400
                             plotControl.Margin <- Thickness(0, 10, 0, 10)
                             plotControl.Plot.Title(title)
-                            plotControl.Plot.Add.Function(f) |> ignore
+                            let p = plotControl.Plot.Add.Function(f)
+                            p.LegendText <- SymbolicExpression.toString sf
+                            let yL = plotControl.Plot.Add.VerticalLine(0.0)
+                            yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
+                            let xL = plotControl.Plot.Add.HorizontalLine(0.0)
+                            xL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
 
                             match start, end_, area with
                             | Some start, Some end_, Some area ->
@@ -230,6 +241,9 @@ type NotebookWindow() as this =
 
                                 plotControl.Plot.Add.Annotation($"Area: %f{area}") |> ignore
                             | _ -> ()
+                            
+                            plotControl.Plot.XLabel("x")
+                            plotControl.Plot.YLabel("y")
 
                             plotControl.Refresh()
                             plotsPanel.Children.Add(plotControl)
@@ -240,9 +254,17 @@ type NotebookWindow() as this =
                             plotControl.Width <- 400
                             plotControl.Margin <- Thickness(0, 10, 0, 10)
                             plotControl.Plot.Title(title)
+                            let yL = plotControl.Plot.Add.VerticalLine(0.0)
+                            yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
+                            let xL = plotControl.Plot.Add.HorizontalLine(0.0)
+                            xL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
+                            plotControl.Plot.XLabel("x")
+                            plotControl.Plot.YLabel("y")
 
-                            for f in fs do
-                                plotControl.Plot.Add.Function(f) |> ignore
+                            for sf in fs do
+                                let f = SymbolicExpression.toBuiltin sf
+                                let p = plotControl.Plot.Add.Function(f)
+                                p.LegendText <- SymbolicExpression.toString sf
 
                             plotControl.Refresh()
                             plotsPanel.Children.Add(plotControl)

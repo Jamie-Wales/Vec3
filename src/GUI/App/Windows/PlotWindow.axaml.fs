@@ -57,8 +57,10 @@ type PlotWindow() as this =
     member private this.UpdatePlots(vm: VM) =
         for value in vm.Plots do
             match value with
-            | VPlotFunction(title, f, start, end_, area) ->
-                plotControl.Plot.Add.Function(f) |> ignore
+            | VPlotFunction(title, sf, start, end_, area) ->
+                let f = SymbolicExpression.toBuiltin sf
+                let p = plotControl.Plot.Add.Function(f)
+                p.LegendText <- SymbolicExpression.toString sf
                 plotControl.Plot.Title(title)
                 match start, end_, area with
                 | Some s, Some e, Some a ->
@@ -86,8 +88,10 @@ type PlotWindow() as this =
                 
                 plotControl.Plot.Title(title)
             | VPlotFunctions(title, fs) ->
-                for f in fs do
-                    plotControl.Plot.Add.Function(f) |> ignore
+                for sf in fs do
+                    let f = SymbolicExpression.toBuiltin sf
+                    let p = plotControl.Plot.Add.Function(f)
+                    p.LegendText <- SymbolicExpression.toString sf
                 plotControl.Plot.Title(title)
             | _ -> ()
             
@@ -111,8 +115,7 @@ type PlotWindow() as this =
                     match topOfStack with
                     | VClosure(_, Some f)
                     | VFunction(_, Some f) ->
-                        let builtin = SymbolicExpression.toBuiltin f
-                        let plotData = VPlotFunction ("", builtin, None, None, None)
+                        let plotData = VPlotFunction ("", f, None, None, None)
                         compiledVM.Plots.Add(plotData)
                     | _ -> ()
                     this.UpdatePlots(compiledVM)

@@ -83,27 +83,21 @@ let builtins =
           (fun args ->
               match args with
               | [ VString title; VClosure(_, Some f) ] ->
-                  let builtin = SymbolicExpression.toBuiltin f
-
-                  VPlotFunction(title, builtin, None, None, None)
+                  VPlotFunction(title, f, None, None, None)
               | [ VString title; VClosure(_, Some f); VNumber(VFloat start); VNumber(VFloat end_) ] ->
                   let integral = SymbolicExpression.integrate f
                   let builtinIntegral = SymbolicExpression.toBuiltin integral
 
                   let area = builtinIntegral end_ - builtinIntegral start
 
-                  let builtin = SymbolicExpression.toBuiltin f
-
-                  VPlotFunction(title, builtin, Some start, Some end_, Some area)
+                  VPlotFunction(title, f, Some start, Some end_, Some area)
               | [ VString title; VClosure(_, Some f); VNumber(VInteger start); VNumber(VInteger end_) ] ->
                   let integral = SymbolicExpression.integrate f
                   let builtinIntegral = SymbolicExpression.toBuiltin integral
 
                   let area = builtinIntegral end_ - builtinIntegral start
 
-                  let builtin = SymbolicExpression.toBuiltin f
-
-                  VPlotFunction(title, builtin, Some start, Some end_, Some area)
+                  VPlotFunction(title, f, Some start, Some end_, Some area)
 
               | _ -> raise <| InvalidProgramException "plotFunc expects a title and a function"),
           "PlotFunc"
@@ -116,7 +110,7 @@ let builtins =
                   let funcs =
                       List.map
                           (function
-                          | VClosure(_, Some f) -> SymbolicExpression.toBuiltin f
+                          | VClosure(_, Some f) -> f
                           | _ -> raise <| InvalidProgramException "plotFuncs expects a list of functions")
                           funcs
 
