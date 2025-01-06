@@ -25,6 +25,55 @@ type ResultBuilder() =
 let result = ResultBuilder()
 
 
+let rec findTokenInExpression expr =
+    match expr with
+    | EIdentifier(token, _) -> Some token
+    | EGrouping(expr, _) -> findTokenInExpression expr
+    | EBlock(stmts, _, _) -> findTokenInStatements stmts
+    | ECall(callee, args, _) -> findTokenInExpression callee
+    | ETuple(exprs, _) -> findTokenInExpressions exprs
+    | EList(exprs, _) -> findTokenInExpressions exprs
+    | ETail(expr, _) -> findTokenInExpression expr
+    | EIf(cond, thenBranch, elseBranch, _) -> findTokenInExpressions [cond; thenBranch; elseBranch]
+    | ELambda(params', body, _, _, _, _) ->
+        match params' with
+        | [] -> findTokenInExpression body
+        | (token, _) :: _ -> Some token
+    | ETernary(cond, trueBranch, falseBranch, _) -> findTokenInExpressions [cond; trueBranch; falseBranch]
+    | ELiteral _ -> None
+    | ECodeBlock expr -> findTokenInExpression expr
+    | EIndex (e1, e2, _) -> findTokenInExpressions [e1; e2]
+    | ERecordEmpty _ -> None
+    | ERecordExtend((token, _, _), expr, _) -> Some token
+    | ERecordRestrict(_, token, _) -> Some token
+    | ERecordSelect(_, token, _) -> Some token
+    | EIndexRange (e1, e2, e3, _) -> findTokenInExpressions [e1; e2; e3]
+    | EMatch (expr, _, _) -> findTokenInExpression expr
+    | ERange (e1, e2, _) -> findTokenInExpressions [e1; e2]
+
+and findTokenInStatements stmts =
+    match stmts with
+    | [] -> None
+    | SExpression(expr, _) :: stmts -> findTokenInExpression expr
+    | SVariableDeclaration(token, _, _) :: stmts -> Some token
+    | SAssertStatement(token, _, _) :: stmts ->
+        match findTokenInExpression token with
+        | Some token -> Some token
+        | None -> findTokenInStatements stmts
+    | STypeDeclaration(token, _, _) :: stmts -> Some token
+    | SRecFunc(token, _, _, _) :: stmts -> Some token
+    | SAsync(token, _, _, _) :: stmts -> Some token
+    | SImport(token, _, _, _) :: stmts -> token
+    
+and findTokenInExpressions exprs =
+    match exprs with
+    | [] -> None
+    | expr :: exprs ->
+        match findTokenInExpression expr with
+        | Some token -> Some token
+        | None -> findTokenInExpressions exprs
+    
+
 // TODO: ALSO PROBLEM WITH INFERRING RECORD ARGS ??
 
 /// <summary>
@@ -104,18 +153,19 @@ let checkIdentifier (env: TypeEnv) (token: Token) : TType TypeResult =
 /// <param name="aliases">The alias map.</param>
 /// <param name="t1">The first type.</param>
 /// <param name="t2">The second type.</param>
+/// <param name="token">The token for use with error messages.</param>
 /// <returns>The substitution that unifies the two types.</returns>
 /// <example>
-/// unify Map.empty TInteger TInteger
+/// unify Map.empty TInteger TInteger Empty
 /// Ok Map.empty // the types are the same
 ///
-/// unify Map.empty TInteger TFloat
-/// Error [ TypeError.TypeMismatch(Empty, TInteger, TFloat) ] // the types are different
+/// unify Map.empty TString TFloat Empty
+/// Error [ TypeError.TypeMismatch(Empty, TString, TFloat) ] // the types are different
 ///
 /// unify Map.empty TTypeVariable 1 TInteger
 /// Ok (Map.singleton 1 TInteger) // the type variable is unified with TInteger
 /// </example>
-let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeResult =
+let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) (token: Token) : Substitution TypeResult =
     let t1 = resolveAlias t1 aliases
     let t2 = resolveAlias t2 aliases
 
@@ -157,7 +207,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
         // Check if the type variable occurs in the other type
         // Prevents infinite recursion
         if occursCheck tv t then
-            Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
+            Error [ TypeError.TypeMismatch(token, t1, t2) ]
         else
             Ok <| Map.add tv t Map.empty
 
@@ -184,21 +234,21 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
     | t, TConstrain constrain ->
         // Prevent infinite recursion
         if occursCheck constrain.TypeVar t then
-            Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
+            Error [ TypeError.TypeMismatch(token, t1, t2) ]
         // Check that the type satisfies the constraint
         else if constrain.Constrain t then
             Ok <| Map.add constrain.TypeVar (constrain.Transformation t) Map.empty
         else
-            Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
+            Error [ TypeError.TypeMismatch(token, t1, t2) ]
 
     // Check that two functions have the same parameters and return type
     // Disregards the purity of the function, as not relevant in this context
     | TFunction(params1, ret1, _, _), TFunction(params2, ret2, _, _) ->
         if List.length params1 <> List.length params2 then
-            Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
+            Error [ TypeError.TypeMismatch(token, t1, t2) ]
         else
-            let paramResults = List.map2 unify params1 params2
-            let retResult = unify ret1 ret2
+            let paramResults = List.map2 (fun t1 t2 ->  unify t1 t2 token) params1 params2
+            let retResult = unify ret1 ret2 token
 
             // Combine the results of unifying the parameters
             let combinedResults =
@@ -221,10 +271,10 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
     | TTuple types1, TTuple types2 ->
         // Must have the same number of elements
         if List.length types1 <> List.length types2 then
-            Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
+            Error [ TypeError.TypeMismatch(token, t1, t2) ]
         else
             // Must have the same types, in the same order
-            let results = List.map2 unify types1 types2
+            let results = List.map2 (fun t1 t2 -> unify t1 t2 token) types1 types2
 
             List.fold
                 (fun acc result ->
@@ -237,7 +287,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
                 results
     | TRecord row1, TRecord row2 ->
         // Simply unwrap the rows and unify them
-        unify row1 row2
+        unify row1 row2 token
     | TRowEmpty, TRowEmpty ->
         // Empty rows are equal
         Ok Map.empty
@@ -253,7 +303,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
                 let inner = rewrite_row rest_rows2 label field_typ
 
                 match inner with
-                | Error _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
+                | Error _ -> Error [ TypeError.TypeMismatch(token, t1, t2) ]
                 | Ok(typ, rest) -> Ok(TRowExtend(label2, typ2, typ), rest)
             | TTypeVariable v ->
                 let resolved = Map.tryFind v resolvedTypes.Value
@@ -296,11 +346,11 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
 
         match rewritten with
         | Ok(typ2, rest_rows2) ->
-            unify typ1 typ2
+            unify typ1 typ2 token
             |> Result.bind (fun sub ->
                 let sub = combineMaps sub Map.empty
 
-                unify rest_row_1 rest_rows2
+                unify rest_row_1 rest_rows2 token
                 |> Result.bind (fun sub' ->
                     let sub' = combineMaps sub' sub
                     Ok sub'))
@@ -308,14 +358,14 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
 
     | TTensor(typ1, sizes1), TTensor(typ2, sizes2) ->
         match sizes1, sizes2 with
-        | DAny, DAny -> unify typ1 typ2
+        | DAny, DAny -> unify typ1 typ2 token
         | DAny, _
-        | _, DAny -> unify typ1 typ2 // DAny is a wildcard, but infectious
+        | _, DAny -> unify typ1 typ2 token // DAny is a wildcard, but infectious
         | Dims sizes1, Dims sizes2 -> // Must have the same dimensions, allows for slightly refined types
             if sizes1 = sizes2 then
-                unify typ1 typ2
+                unify typ1 typ2 token
             else
-                Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
+                Error [ TypeError.TypeMismatch(token, t1, t2) ]
         | DVar v, Dims sizes
         | Dims sizes, DVar v ->
             // This isn't correct in every circumstance, but it works for now
@@ -328,12 +378,13 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
             let resolved = Map.tryFind v resolvedDims.Value
 
             match resolved with
-            | Some(Dims sizes') when sizes = sizes' -> unify typ1 typ2 // This should be handled otherwise and resolved throughout.
+            | Some(Dims sizes') when sizes = sizes' -> unify typ1 typ2 token // This should be handled otherwise and 
+            // resolved throughout.
             | Some(Dims _) -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
             | _ ->
                 // If the resolved dimensions are unknown, set them to the new dimensions
                 resolvedDims.Value <- Map.add v (Dims sizes) resolvedDims.Value
-                unify typ1 typ2
+                unify typ1 typ2 token
         | DVar v1, DVar v2 ->
             // Similar to normal type variables, unify the two dimensions
             if v1 = v2 then
@@ -343,7 +394,7 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
                 let sub = Map.add v1 (TTensor(typ1, DVar v2)) Map.empty
                 resolvedDims.Value <- Map.add v1 (DVar v2) resolvedDims.Value
                 Ok sub
-    | _ -> Error [ TypeError.TypeMismatch(Empty, t1, t2) ]
+    | _ -> Error [ TypeError.TypeMismatch(token, t1, t2) ]
 
 /// <summary>
 /// Unifies two types and builds a substitution map.
@@ -352,12 +403,14 @@ let rec unify (aliases: AliasMap) (t1: TType) (t2: TType) : Substitution TypeRes
 /// <param name="aliases">The alias map.</param>
 /// <param name="paramTypes">The types of the parameters.</param>
 /// <param name="argTypes">The types of the arguments.</param>
+/// <param name="token">The token for use with error messages.</param>
 /// <param name="currentSubs">The current substitution map.</param>
 /// <returns>The substitution map that unifies the two types.</returns>
 let rec unifyWithSubstitution
     (aliases: AliasMap)
     (paramTypes: TType list)
     (argTypes: TType list)
+    (token: Token)
     (currentSubs: Substitution)
     : Substitution TypeResult =
     // Performs a standard fold over the two lists, unifying each pair of types and combining the substitutions
@@ -367,7 +420,7 @@ let rec unifyWithSubstitution
         let paramType = applySubstitution aliases currentSubs paramType
         let argType = applySubstitution aliases currentSubs argType
 
-        unify aliases paramType argType
+        unify aliases paramType argType token
         |> Result.bind (fun sub ->
             let combinedSubs = combineMaps currentSubs sub
 
@@ -377,12 +430,12 @@ let rec unifyWithSubstitution
             let updatedRestArgTypes =
                 List.map (applySubstitution aliases combinedSubs) restArgTypes
 
-            unifyWithSubstitution aliases updatedRestParamTypes updatedRestArgTypes combinedSubs)
+            unifyWithSubstitution aliases updatedRestParamTypes updatedRestArgTypes token combinedSubs)
 
     | _ ->
         Error
             [ TypeError.InvalidArgumentCount(
-                  EIdentifier(Empty, Some TNever), // Placeholder for the callee, should instead pass the callee
+                  EIdentifier(token, None),
                   List.length paramTypes,
                   List.length argTypes
               ) ]
@@ -497,7 +550,8 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
 
             // Return type either must be unified with the body type, or immediately substituted with the body type
             let returnT = Option.defaultValue (TTypeVariable(freshTypeVar ())) returnT
-            let! sub' = unify aliases bodyType returnT
+            let token = findTokenInExpression expr |> Option.defaultValue Empty
+            let! sub' = unify aliases bodyType returnT token
             let sub = combineMaps sub sub'
             let returnT = applySubstitution aliases sub returnT
 
@@ -524,6 +578,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             let argTypes = List.map (fun (t, _, _) -> t) argResults
             let argSubs = List.map (fun (_, sub, _) -> sub) argResults
             let argExprs = List.map (fun (_, _, expr) -> expr) argResults
+            let token = findTokenInExpression expr |> Option.defaultValue Empty
 
             match t with // t is the type of the callee
             | TFunction(paramTypes, ret, _, _) ->
@@ -533,7 +588,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                 else
                     // Standard unification of the parameter types and argument types
                     // Return the return type of the function
-                    let! sub' = unifyWithSubstitution aliases paramTypes argTypes Map.empty
+                    let! sub' = unifyWithSubstitution aliases paramTypes argTypes token Map.empty
                     let combinedSubs = List.fold combineMaps sub' argSubs
                     let returnType = applySubstitution aliases combinedSubs ret
 
@@ -548,7 +603,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             | TConstrain constrain ->
                 let f = constrain.Constrain
                 let returnT = TTypeVariable(freshTypeVar ())
-                let! sub = unify aliases t (TConstrain(Constrain(freshTypeVar (), f)))
+                let! sub = unify aliases t (TConstrain(Constrain(freshTypeVar (), f))) token
                 let t' = TFunction(argTypes, returnT, false, false)
                 let sub = List.fold combineMaps sub argSubs
                 // must return the return type of the function
@@ -556,7 +611,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             | TTypeVariable a ->
                 let returnT = TTypeVariable(freshTypeVar ())
                 let t = TFunction(argTypes, returnT, false, false)
-                let! sub = unify aliases t (TTypeVariable a)
+                let! sub = unify aliases t (TTypeVariable a) token
                 let t' = applySubstitution aliases sub (TTypeVariable a)
                 let sub = List.fold combineMaps sub argSubs
                 return (t', sub, ECall(expr, argExprs, Some t))
@@ -597,6 +652,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         // Infer the types of the condition, then branch, and else branch
         let thenResult = infer aliases env thenBranch
         let elseResult = infer aliases env elseBranch
+        let token = findTokenInExpression expr |> Option.defaultValue Empty
 
         match thenResult, elseResult with
         | Ok(t1, sub1, expr1), Ok(t2, sub2, expr2) ->
@@ -607,10 +663,10 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                 let cT = applySubstitution aliases sub cT
                 let sub = combineMaps sub sub3
                 // The condition must be a boolean
-                let! sub' = unify aliases cT TBool
+                let! sub' = unify aliases cT TBool token
                 let sub = combineMaps sub sub'
                 // The types of the then and else branches must be the same
-                let! sub' = unify aliases t1 t2
+                let! sub' = unify aliases t1 t2 token
                 let sub = combineMaps sub sub'
                 let returnType = applySubstitution aliases sub t1
                 return (returnType, sub, EIf(expr3, expr1, expr2, Some returnType))
@@ -619,6 +675,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         | _, Error errors -> Error errors
     | ETernary(cond, trueBranch, falseBranch, typ) -> infer aliases env (EIf(cond, trueBranch, falseBranch, typ)) // Same as if statement
     | ETuple(exprs, _) ->
+        let token = findTokenInExpression expr |> Option.defaultValue Empty
         // Infer the types of the expressions in the tuple
         inferArgs aliases env exprs
         |> Result.bind (fun results ->
@@ -627,7 +684,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             let exprs = List.map (fun (_, _, expr) -> expr) results
 
             let subResults =
-                List.map2 (unify aliases) types (List.replicate (List.length types) (TTypeVariable(freshTypeVar ())))
+                List.map2 (fun t1 t2 -> unify aliases t1 t2 token) types (List.replicate (List.length types) (TTypeVariable(freshTypeVar())))
 
             let hasErrors = List.exists Result.isError subResults
 
@@ -655,6 +712,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                 let returnType = TTuple(List.map (applySubstitution aliases combinedSubs) types)
                 Ok(returnType, combinedSubs, ETuple(exprs, Some returnType)))
     | EList(exprs, _) ->
+        let token = findTokenInExpression expr |> Option.defaultValue Empty
         // Infer the types of the expressions in the list
         result {
             let! results = inferArgs aliases env exprs
@@ -672,6 +730,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                     aliases
                     types
                     (List.replicate (List.length types) (TTypeVariable typeVar))
+                    token
                     Map.empty
 
             let combinedSubs = List.fold combineMaps Map.empty subs
@@ -687,12 +746,13 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
 
         }
     | ERange(start, end_, _) ->
+        let token = findTokenInExpression expr |> Option.defaultValue Empty
         result {
             let! typ1, sub2, expr2 = infer aliases env start
             let! typ2, sub3, expr3 = infer aliases env end_
             let sub = combineMaps sub2 sub3
-            let! sub' = unify aliases typ1 TInteger // start must be an integer
-            let! sub'' = unify aliases typ2 TInteger // end must be an integer
+            let! sub' = unify aliases typ1 TInteger token // start must be an integer
+            let! sub'' = unify aliases typ2 TInteger token // end must be an integer
             let sub = combineMaps sub sub'
             let sub = combineMaps sub sub''
 
@@ -709,6 +769,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         }
 
     | EIndex(expr, start, _) ->
+        let token = findTokenInExpression expr |> Option.defaultValue Empty
         let startNum =
             match start with
             | ELiteral(LNumber(LInteger n), _) -> Some n
@@ -720,7 +781,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             let innerType = TTypeVariable(freshTypeVar ())
             let! startType, sub', expr' = infer aliases env start
             let sub = combineMaps sub sub'
-            let! sub' = unify aliases startType TInteger
+            let! sub' = unify aliases startType TInteger token
             let sub = combineMaps sub sub'
 
             let t = applySubstitution aliases sub t
@@ -728,9 +789,9 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
 
             let startNum = Option.defaultValue 0 startNum
             let unifier = TConstrain(Constrain(freshTypeVar (), fun t -> t.hasMinDims startNum))
-            let! sub' = unify aliases t unifier
+            let! sub' = unify aliases t unifier token
             let sub = combineMaps sub sub'
-            let! sub' = unify aliases startType TInteger
+            let! sub' = unify aliases startType TInteger token
             let sub = combineMaps sub sub'
 
             // return type is the inner type
@@ -738,6 +799,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             return (returnType, sub, EIndex(expr, expr', Some returnType))
         }
     | EIndexRange(expr, start, end_, _) ->
+        let token = findTokenInExpression expr |> Option.defaultValue Empty
         let startNum =
             match start with
             | ELiteral(LNumber(LInteger n), _) -> Some n
@@ -757,12 +819,12 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             let innerType = TTypeVariable(freshTypeVar ())
             let! startType, sub', expr' = infer aliases env start
             let sub = combineMaps sub sub'
-            let! sub' = unify aliases startType TInteger
+            let! sub' = unify aliases startType TInteger token
             let sub = combineMaps sub sub'
 
             let! endType, sub', expr'' = infer aliases env end_
             let sub = combineMaps sub sub'
-            let! sub' = unify aliases endType TInteger
+            let! sub' = unify aliases endType TInteger token
             let sub = combineMaps sub sub'
 
             let t = applySubstitution aliases sub t
@@ -776,11 +838,11 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                     fun t -> t.hasMinDims endNum
 
             let unifier = TConstrain(Constrain(freshTypeVar (), func))
-            let! sub' = unify aliases t unifier
+            let! sub' = unify aliases t unifier token
             let sub = combineMaps sub sub'
-            let! sub' = unify aliases startType TInteger
+            let! sub' = unify aliases startType TInteger token
             let sub = combineMaps sub sub'
-            let! sub' = unify aliases endType TInteger
+            let! sub' = unify aliases endType TInteger token
             let sub = combineMaps sub sub'
 
             // return type is the inner type
@@ -913,6 +975,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
     | ECodeBlock e -> Ok(TAny, Map.empty, ECodeBlock e) // Code blocks are not typed
 
     | EMatch(expr, cases, _) ->
+        let token = findTokenInExpression expr |> Option.defaultValue Empty
         infer aliases env expr
         |> Result.bind (fun (t, sub, expr) ->
             let inferCase (case: Pattern * Expr) =
@@ -930,7 +993,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
                     |> Result.bind (fun (caseType, sub'', caseExpr) ->
                         let sub = combineMaps sub sub''
 
-                        unify aliases t patternType
+                        unify aliases t patternType token
                         |> Result.bind (fun sub''' ->
                             let sub = combineMaps sub sub'''
 
@@ -1032,7 +1095,7 @@ and inferPattern
             let tail = if List.length types > 1 then List.tail types else []
             let head = Option.defaultValue (TTypeVariable(freshTypeVar ())) head
 
-            let subResults = List.map (unify aliases head) tail
+            let subResults = List.map (fun t -> unify aliases head t Empty) tail
 
             let hasErrors = List.exists Result.isError subResults
 
@@ -1124,17 +1187,18 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
             let! t, sub, expr = infer aliases env expr
             let t = applySubstitution aliases sub t
             let typ = Option.defaultValue t typ // if the variable is typed
-            let! sub' = unify aliases t typ // check that the given type is correct
+            let! sub' = unify aliases t typ name // check that the given type is correct
             let sub = combineMaps sub sub'
             let typ = applySubstitution aliases sub typ
             let env = Map.add name.Lexeme typ env // allows for naming of variables not just by identifier (due to user defined ooperators)
             return (env, aliases, sub, SVariableDeclaration(name, expr, Some typ))
         }
     | SAssertStatement(expr, msg, _) ->
+        let token = findTokenInStatements [stmt] |> Option.defaultValue Empty
         result {
             let! t, sub, expr = infer aliases env expr
             let t = applySubstitution aliases sub t
-            let! sub' = unify aliases t TBool
+            let! sub' = unify aliases t TBool token
             let sub = combineMaps sub sub'
 
             let! msgT, sub', msg =
@@ -1143,7 +1207,7 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
                 | None -> Ok(TString, Map.empty, ELiteral(LString "", TString))
 
             let sub = combineMaps sub sub'
-            let! sub' = unify aliases msgT TString // check that the message is a string
+            let! sub' = unify aliases msgT TString token // check that the message is a string
             let sub = combineMaps sub sub'
             return (env, aliases, sub, SAssertStatement(expr, Some msg, Some TBool))
         }
@@ -1203,7 +1267,7 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
             let paramList = List.map (fun (id, typ) -> (id, Some typ)) paramList
             let returnT = Option.defaultValue (TTypeVariable(freshTypeVar ())) returnT // if not given default to type var
 
-            unify aliases bodyType returnT
+            unify aliases bodyType returnT name
             |> Result.bind (fun sub' ->
                 let sub = combineMaps sub sub'
 
