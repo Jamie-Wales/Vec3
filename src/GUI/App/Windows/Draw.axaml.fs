@@ -22,7 +22,7 @@ type ShapeInfo =
       typ: string
       id: int
       trace: bool // Whether to draw a trail behind the shape when it moves
-       }
+    }
 
 /// <summary>
 /// The window used for drawing shapes.
@@ -39,14 +39,6 @@ type DrawWindow() as this =
     let mutable eventListeners: Map<int, (int * Function) list> = Map.empty
     let mutable shapeInfo: Map<int, ShapeInfo> = Map.empty
 
-
-    // listen for arrow keys
-    do
-        this.KeyDown.Add(fun e ->
-            let listenerId = this.keyToInt (e.Key)
-            this.handleEvent listenerId)
-
-
     do
         AvaloniaXamlLoader.Load(this)
         this.InitializeComponent()
@@ -57,73 +49,14 @@ type DrawWindow() as this =
         this.Height <- 600.0
         this.Focusable <- true
 
-    /// <summary>
-    /// Event listeners
-    /// </summary>
-    /// <param name="listenerId">The id of the listener</param>
-    /// <returns>Unit</returns>
-    member private this.handleEvent listenerId =
-        let listeners = eventListeners.TryFind(listenerId)
-
-        match listeners with
-        | Some lst ->
-            lst
-            |> List.iter (fun (shapeId, func) ->
-                let shape = shapes.TryFind(shapeId)
-                let shapeInfo = shapeInfo.TryFind(shapeId)
-
-                if Option.isNone shape || Option.isNone shapeInfo then
-                    raise <| Exception $"Shape with id {shapeId} not found"
-                else
-                    let shape = Option.get shape
-                    let shapeInfo = Option.get shapeInfo
-
-                    let prevX = Canvas.GetLeft(shape) + 25.0
-                    let prevY = Canvas.GetTop(shape) + 25.0
-
-                    let args =
-                        VList(
-                            [ VList([ VString "x"; VNumber(VFloat prevX) ], LIST)
-                              VList([ VString "y"; VNumber(VFloat prevY) ], LIST) ],
-                            RECORD
-                        )
-
-                    match currentVm with
-                    | Some vm ->
-                        let newVal = runFunction vm func [ args ]
-
-                        match newVal with
-                        | VList([ VList([ VString "y"; VNumber(VFloat y) ], _)
-                                  VList([ VString "x"; VNumber(VFloat x) ], _) ],
-                                _) ->
-                            if shapeInfo.trace then
-                                let trail = Avalonia.Controls.Shapes.Line()
-                                trail.StartPoint <- Point(prevX, prevY)
-                                trail.EndPoint <- Point(x, y)
-                                trail.Stroke <- SolidColorBrush(Colors.Black)
-                                trail.StrokeThickness <- 1.0
-                                canvasControl.Children.Add(trail)
-
-                            match shape with
-                            | :? Rectangle as rect ->
-                                Canvas.SetLeft(rect, x)
-                                Canvas.SetTop(rect, y)
-                            | :? Ellipse as circle ->
-                                Canvas.SetLeft(circle, x - circle.Width / 2.0)
-                                Canvas.SetTop(circle, y - circle.Height / 2.0)
-                            | :? Avalonia.Controls.Shapes.Line as line ->
-                                Canvas.SetLeft(line, x)
-                                Canvas.SetTop(line, y)
-                            | _ -> ()
-                        | _ -> ()
-                    | _ -> ())
-        | None -> ()
+        // Listen for arrow keys
+        this.KeyDown.Add(fun e ->
+            let listenerId = this.keyToInt (e.Key)
+            this.handleEvent listenerId)
 
     /// <summary>
     /// Convert key to int
     /// </summary>
-    /// <param name="key">The key</param>
-    /// <returns>Int</returns>
     member private this.keyToInt key =
         match key with
         | Key.Left -> 0
@@ -135,16 +68,13 @@ type DrawWindow() as this =
     /// <summary>
     /// Initialize the component
     /// </summary>
-    /// <returns>Unit</returns>
     member private this.InitializeComponent() =
         canvasControl <- this.FindControl<Canvas>("Canvas")
         canvasControl.Background <- SolidColorBrush(Colors.White)
-
+    
     /// <summary>
     /// Parse color string
     /// </summary>
-    /// <param name="colorStr">The color string</param>
-    /// <returns>Color</returns>
     member private this.ParseColor(colorStr: string) =
         try
             match colorStr.ToLowerInvariant() with
@@ -162,30 +92,82 @@ type DrawWindow() as this =
             Colors.Black
 
     /// <summary>
-    /// Add event listener
+    /// Handle events for shapes
     /// </summary>
-    /// <param name="vm">The VM</param>
-    /// <param name="shapeId">The shape id</param>
-    /// <param name="listenerId">The listener id</param>
-    /// <param name="func">The function</param>
-    /// <returns>Unit</returns>
-    member this.AddEventListener(vm: VM, shapeId: int, listenerId: int, func: Function) =
-        currentVm <- Some vm
+    member private this.handleEvent listenerId =
         let listeners = eventListeners.TryFind(listenerId)
+        
+        // Get canvas bounds
+        let canvasWidth = canvasControl.Bounds.Width
+        let canvasHeight = canvasControl.Bounds.Height
+        
+        // Ensure coordinates stay within bounds
+        let clampX x width = 
+            Math.Max(width/2.0, Math.Min(canvasWidth - width/2.0, x))
+        
+        let clampY y height = 
+            Math.Max(height/2.0, Math.Min(canvasHeight - height/2.0, y))
 
-        let listeners =
-            match listeners with
-            | Some lst -> lst
-            | None -> []
+        match listeners with
+        | Some lst ->
+            lst
+            |> List.iter (fun (shapeId, func) ->
+                let shape = shapes.TryFind(shapeId)
+                let shapeInfo = shapeInfo.TryFind(shapeId)
 
-        eventListeners <- eventListeners.Add(listenerId, (shapeId, func) :: listeners)
+                if Option.isNone shape || Option.isNone shapeInfo then
+                    raise <| Exception $"Shape with id {shapeId} not found"
+                else
+                    let shape = Option.get shape
+                    let info = Option.get shapeInfo
+
+                    let prevX = Canvas.GetLeft(shape) + info.w/2.0
+                    let prevY = Canvas.GetTop(shape) + info.h/2.0
+
+                    let args =
+                        VList(
+                            [ VList([ VString "x"; VNumber(VFloat prevX) ], LIST)
+                              VList([ VString "y"; VNumber(VFloat prevY) ], LIST) ],
+                            RECORD
+                        )
+
+                    match currentVm with
+                    | Some vm ->
+                        let newVal = runFunction vm func [ args ]
+
+                        match newVal with
+                        | VList([ VList([ VString "y"; VNumber(VFloat y) ], _)
+                                  VList([ VString "x"; VNumber(VFloat x) ], _) ],
+                                _) ->
+                            let boundedX = clampX x info.w
+                            let boundedY = clampY y info.h
+                            
+                            if info.trace then
+                                let trail = Avalonia.Controls.Shapes.Line()
+                                trail.StartPoint <- Point(prevX, prevY)
+                                trail.EndPoint <- Point(boundedX, boundedY)
+                                trail.Stroke <- SolidColorBrush(Colors.Black)
+                                trail.StrokeThickness <- 1.0
+                                canvasControl.Children.Add(trail)
+
+                            match shape with
+                            | :? Rectangle as rect ->
+                                Canvas.SetLeft(rect, boundedX - info.w/2.0)
+                                Canvas.SetTop(rect, boundedY - info.h/2.0)
+                            | :? Ellipse as circle ->
+                                Canvas.SetLeft(circle, boundedX - info.w/2.0)
+                                Canvas.SetTop(circle, boundedY - info.h/2.0)
+                            | :? Avalonia.Controls.Shapes.Line as line ->
+                                Canvas.SetLeft(line, boundedX)
+                                Canvas.SetTop(line, boundedY)
+                            | _ -> ()
+                        | _ -> ()
+                    | _ -> ())
+        | None -> ()
 
     /// <summary>
     /// Draw a shape
     /// </summary>
-    /// <param name="vm">The VM</param>
-    /// <param name="shape">The shape</param>
-    /// <returns>Unit</returns>
     member this.DrawShape(vm: VM, shape: Value) =
         currentVm <- Some vm
 
@@ -195,6 +177,17 @@ type DrawWindow() as this =
             | _ -> raise <| InvalidProgramException("Unknown shape value")
 
         let colorBrush = SolidColorBrush(this.ParseColor(color))
+        
+        // Get canvas bounds
+        let canvasWidth = canvasControl.Bounds.Width
+        let canvasHeight = canvasControl.Bounds.Height
+        
+        // Ensure coordinates stay within bounds
+        let clampX x width = 
+            Math.Max(width/2.0, Math.Min(canvasWidth - width/2.0, x))
+        
+        let clampY y height = 
+            Math.Max(height/2.0, Math.Min(canvasHeight - height/2.0, y))
 
         // Determine shape type based on parameters and create appropriate shape
         let shape =
@@ -204,25 +197,42 @@ type DrawWindow() as this =
                 rect.Width <- abs w
                 rect.Height <- abs h
                 rect.Fill <- colorBrush
-                Canvas.SetLeft(rect, x)
-                Canvas.SetTop(rect, y)
+                let boundedX = clampX x (abs w)
+                let boundedY = clampY y (abs h)
+                Canvas.SetLeft(rect, boundedX - w/2.0) // Center the rectangle
+                Canvas.SetTop(rect, boundedY - h/2.0)
                 rect :> Shape
+                
             | "circle" ->
                 let circle = Ellipse()
                 circle.Width <- abs w
                 circle.Height <- abs h
                 circle.Fill <- colorBrush
-                Canvas.SetLeft(circle, x - w / 2.0) // Center the circle
-                Canvas.SetTop(circle, y - h / 2.0)
+                let boundedX = clampX x (abs w)
+                let boundedY = clampY y (abs h)
+                Canvas.SetLeft(circle, boundedX - w/2.0) // Center the circle
+                Canvas.SetTop(circle, boundedY - h/2.0)
                 circle :> Shape
+                
             | "line" ->
                 let line = Avalonia.Controls.Shapes.Line()
-                line.Width <- abs w
-                line.Height <- abs h
-                line.Fill <- colorBrush
-                Canvas.SetLeft(line, x)
-                Canvas.SetTop(line, y)
+                line.StartPoint <- Point(0, 0)
+                line.EndPoint <- Point(w, h)
+                line.Stroke <- colorBrush
+                line.StrokeThickness <- 2.0
+                let boundedX = clampX x w
+                let boundedY = clampY y h
+                Canvas.SetLeft(line, boundedX)
+                Canvas.SetTop(line, boundedY)
                 line :> Shape
+            | _ -> 
+                let rect = Rectangle() // Default to rectangle
+                rect.Width <- abs w
+                rect.Height <- abs h
+                rect.Fill <- colorBrush
+                Canvas.SetLeft(rect, clampX x (abs w))
+                Canvas.SetTop(rect, clampY y (abs h))
+                rect :> Shape
 
         shapes <- shapes.Add(id, shape)
 
@@ -243,24 +253,38 @@ type DrawWindow() as this =
         canvasControl.Children.Add(shape)
 
     /// <summary>
-    /// Remove all shapes from the canvas
+    /// Add event listener
     /// </summary>
-    member this.Clear() = canvasControl.Children.Clear()
+    member this.AddEventListener(vm: VM, shapeId: int, listenerId: int, func: Function) =
+        currentVm <- Some vm
+        let listeners = eventListeners.TryFind(listenerId)
+
+        let listeners =
+            match listeners with
+            | Some lst -> lst
+            | None -> []
+
+        eventListeners <- eventListeners.Add(listenerId, (shapeId, func) :: listeners)
+    
+    /// <summary>
+    /// Clear all shapes
+    /// </summary>
+    member this.Clear() = 
+        canvasControl.Children.Clear()
+        shapes <- Map.empty
+        eventListeners <- Map.empty
+        shapeInfo <- Map.empty
 
     /// <summary>
-    /// The canvas control instance
+    /// Get the canvas control
     /// </summary>
     member this.Canvas = canvasControl
 
     /// <summary>
-    /// When the window is closed
+    /// Handle window closing
     /// </summary>
-    /// <param name="e">The event args</param>
-    /// <returns>Unit</returns>
     override this.OnClosed(e) =
         windowCount <- windowCount - 1
-
         if windowCount = 0 then
             windowCount <- 0
-
         base.OnClosed(e)
