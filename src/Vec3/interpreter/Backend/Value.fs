@@ -72,7 +72,7 @@ let typeOf (v: Value) : string =
 /// <param name="org">The original value.</param>
 /// <param name="castTyp">The type to cast to.</param>
 /// <returns>The cast value.</returns>
-let rec cast org castTyp =
+let rec cast (org: Value) (castTyp: Value) : Value =
     match castTyp with
     | VBoolean _ -> castToBool org
     | VNumber(VInteger _) -> castToInt org
@@ -295,7 +295,6 @@ and numbersEqual (a: VNumber) (b: VNumber) =
 /// <summary>
 /// Converts a value to a float.
 /// </summary>
-/// <param name="value">The value to convert.</param>
 /// <returns>The float value.</returns>
 and floatValue =
     function
@@ -308,7 +307,6 @@ and floatValue =
 /// <summary>
 /// Converts a value to a complex number.
 /// </summary>
-/// <param name="value">The value to convert.</param>
 /// <returns>The complex value.</returns>
 let toComplex =
     function
@@ -575,7 +573,7 @@ let compare a b =
 /// Find the root of a function using the Newton-Raphson method.
 /// </summary>
 /// <param name="f">The function to find the root of.</param>
-/// ,param name="f'">The derivative of the function.</param>
+/// <param name="f'">The derivative of the function.</param>
 /// <param name="initialGuess">The initial guess for the root.</param>
 /// <param name="tolerance">The tolerance for the root.</param>
 /// <param name="maxIterations">The maximum number of iterations.</param>

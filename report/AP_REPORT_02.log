@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  5 JAN 2025 17:02
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  6 JAN 2025 12:17
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -876,11 +876,11 @@ r> ":" <type> "," <recordtypelist>[]
 \pydata@fh@_E017103BDF0CAED79F13B8F548EAF24E.data.minted=\write5
 \openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
 
-runsystem(latexminted config  --timestamp 20250105170203Z E017103BDF0CAED79F13B
+runsystem(latexminted config  --timestamp 20250106121745Z E017103BDF0CAED79F13B
 8F548EAF24E)...executed safely (allowed).
 
 (./_E017103BDF0CAED79F13B8F548EAF24E.config.minted)
-runsystem(latexminted cleanconfig  --timestamp 20250105170203Z E017103BDF0CAED7
+runsystem(latexminted cleanconfig  --timestamp 20250106121745Z E017103BDF0CAED7
 9F13B8F548EAF24E)...executed safely (allowed).
 
 
@@ -896,84 +896,95 @@ File: assets/finalCodeEditor.png Graphic file (type png)
 <use assets/finalCodeEditor.png>
 Package pdftex.def Info: assets/finalCodeEditor.png  used on input line 15.
 (pdftex.def)             Requested size: 340.0013pt x 226.47209pt.
-<assets/finalNotebook.png, id=425, 1196.47pt x 857.2025pt>
-File: assets/finalNotebook.png Graphic file (type png)
-<use assets/finalNotebook.png>
-Package pdftex.def Info: assets/finalNotebook.png  used on input line 16.
-(pdftex.def)             Requested size: 340.0013pt x 243.58586pt.
-<assets/finalPlot.png, id=426, 794.97pt x 597.23125pt>
-File: assets/finalPlot.png Graphic file (type png)
-<use assets/finalPlot.png>
-Package pdftex.def Info: assets/finalPlot.png  used on input line 17.
-(pdftex.def)             Requested size: 340.0013pt x 255.43747pt.
+<assets/finalGuiParserError.png, id=425, 608.2725pt x 275.0275pt>
+File: assets/finalGuiParserError.png Graphic file (type png)
+<use assets/finalGuiParserError.png>
+Package pdftex.def Info: assets/finalGuiParserError.png  used on input line 16.
+
+(pdftex.def)             Requested size: 340.0013pt x 153.73317pt.
+<assets/finalGuiTypeError.png, id=426, 605.26125pt x 272.01625pt>
+File: assets/finalGuiTypeError.png Graphic file (type png)
+<use assets/finalGuiTypeError.png>
+Package pdftex.def Info: assets/finalGuiTypeError.png  used on input line 17.
+(pdftex.def)             Requested size: 340.0013pt x 152.80537pt.
 
 
 [17]
-Overfull \vbox (1.09541pt too high) has occurred while \output is active []
+<assets/finalNotebook.png, id=436, 1196.47pt x 857.2025pt>
+File: assets/finalNotebook.png Graphic file (type png)
+<use assets/finalNotebook.png>
+Package pdftex.def Info: assets/finalNotebook.png  used on input line 38.
+(pdftex.def)             Requested size: 340.0013pt x 243.58586pt.
 
 
-
-[18 <./assets/finalCodeEditor.png> <./assets/finalNotebook.png> <./assets/final
-Plot.png>]
+[18 <./assets/finalCodeEditor.png> <./assets/finalGuiParserError.png> <./assets
+/finalGuiTypeError.png>]
 
 pdfTeX warning: pdflatex (file ./assets/plotPDF.pdf): PDF inclusion: found PDF 
 version <1.7>, but at most version <1.5> allowed
-<assets/plotPDF.pdf, id=445, page=1, 597.23125pt x 845.1575pt>
+<assets/plotPDF.pdf, id=448, page=1, 597.23125pt x 845.1575pt>
 File: assets/plotPDF.pdf Graphic file (type pdf)
 <use assets/plotPDF.pdf, page 1>
-Package pdftex.def Info: assets/plotPDF.pdf , page1 used on input line 39.
+Package pdftex.def Info: assets/plotPDF.pdf , page1 used on input line 46.
 (pdftex.def)             Requested size: 340.0013pt x 481.15157pt.
 
 
 pdfTeX warning: pdflatex (file ./assets/plotPDF.pdf): PDF inclusion: found PDF 
 version <1.7>, but at most version <1.5> allowed
-<assets/plotPDF.pdf, id=446, page=2, 597.23125pt x 845.1575pt>
+<assets/plotPDF.pdf, id=449, page=2, 597.23125pt x 845.1575pt>
 File: assets/plotPDF.pdf Graphic file (type pdf)
 <use assets/plotPDF.pdf, page 2>
-Package pdftex.def Info: assets/plotPDF.pdf , page2 used on input line 40.
+Package pdftex.def Info: assets/plotPDF.pdf , page2 used on input line 47.
 (pdftex.def)             Requested size: 340.0013pt x 481.15157pt.
 
 
-[19]
+[19 <./assets/finalNotebook.png>]
 Overfull \vbox (236.90312pt too high) has occurred while \output is active []
 
 
 
 [20 <./assets/plotPDF.pdf> <./assets/plotPDF.pdf>]
+<assets/finalPlot.png, id=502, 794.97pt x 597.23125pt>
+File: assets/finalPlot.png Graphic file (type png)
+<use assets/finalPlot.png>
+Package pdftex.def Info: assets/finalPlot.png  used on input line 61.
+(pdftex.def)             Requested size: 340.0013pt x 255.43747pt.
+
 (./sections/notable-features.tex
 (./_minted/F7CB97C4481211FE7B7A2BECBCC454DA.highlight.minted)
 (./_minted/36EF230F4C7E8CBDBE836838F0CAEC87.highlight.minted)
-(./_minted/7B293B2FFC7057B786CBB1CC553B17FF.highlight.minted)
-(./_minted/5A9951D97F313ED4504AC2BB26B29E0F.highlight.minted)
-(./_minted/E2D3A820EB4CA488CD41D50F3B850039.highlight.minted
+(./_minted/7B293B2FFC7057B786CBB1CC553B17FF.highlight.minted
 
-[21]) (./_minted/EAB81081B9AA1ED6965DC7DAEE03FD8E.highlight.minted)
+[21 <./assets/finalPlot.png>])
+(./_minted/5A9951D97F313ED4504AC2BB26B29E0F.highlight.minted)
+(./_minted/E2D3A820EB4CA488CD41D50F3B850039.highlight.minted)
+(./_minted/EAB81081B9AA1ED6965DC7DAEE03FD8E.highlight.minted)
 (./_minted/635305B7C7508668CB9996B23449E3FC.highlight.minted)
 (./_minted/7E4128AEF66516C43820ED0F6D3603F4.highlight.minted)
-(./_minted/26A858ACD3E5527240FEAE15EA4BE4CA.highlight.minted)
-(./_minted/AE5E64C937F5E8B4F080AB36E0BA22D7.highlight.minted))
 
-[22]
+[22] (./_minted/26A858ACD3E5527240FEAE15EA4BE4CA.highlight.minted)
+(./_minted/AE5E64C937F5E8B4F080AB36E0BA22D7.highlight.minted))
 
 [23]
 
 LaTeX Warning: Reference `sec:virtual-machine' on page 24 undefined on input li
-ne 122.
+ne 136.
 
 (./sections/type-inference.tex
 
 [24]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 42.
- (./_minted/F40D6D54477465BCEECC8B6E7E04BEDD.highlight.minted)
-(./_minted/076F0DA663A8573A8B256E046112D377.highlight.minted)
+
 
 [25]
 
-[26] (./_minted/AC0986121432020082BA3A06BCD36FF6.highlight.minted)
-(./_minted/AC94E63AF40D12F1A6580BD8F2133C69.highlight.minted)
+[26] (./_minted/F40D6D54477465BCEECC8B6E7E04BEDD.highlight.minted)
+(./_minted/076F0DA663A8573A8B256E046112D377.highlight.minted)
+(./_minted/AC0986121432020082BA3A06BCD36FF6.highlight.minted)
+(./_minted/AC94E63AF40D12F1A6580BD8F2133C69.highlight.minted
 
-[27] (./_minted/34D0082645AAFF1AED91CC877C506064.highlight.minted)
+[27]) (./_minted/34D0082645AAFF1AED91CC877C506064.highlight.minted)
 (./_minted/10150E2A538D7F776F7D32D6B708C9CC.highlight.minted)
 
 [28] (./_minted/993C00FACF51BCA98D2B5063B1CC21F6.highlight.minted)
@@ -981,10 +992,6 @@ put line 42.
 (./_minted/E807680B3EE48BD6D50D0194B49FDD9B.highlight.minted))
 
 [29]
-
-LaTeX Warning: Reference `sec:notebook-view' on page 30 undefined on input line
- 187.
-
 (./sections/initial-design-of-the-bytecode-virtual-machine-and-compiler.tex
 
 [30]
@@ -994,81 +1001,84 @@ r-ing com-pi-la-tion was man-aged us-ing the \OT1/cmtt/m/n/10.95 CompilerResult
 
  []
 
-) (./_minted/F66DA172101949CB7B6861F72C7D121C.highlight.minted)
+)
 
-[31] (./sections/plotting.tex
+[31] (./_minted/F66DA172101949CB7B6861F72C7D121C.highlight.minted)
+
+[32] (./sections/plotting.tex
 (./_minted/F660FE74DC6363BFEC4729AEFBC55AF5.highlight.minted)
-(./_minted/163044B25EB141E7E7BE98D0B1ADC320.highlight.minted
-
-[32])
-<assets/scatterPlot.png, id=623, 794.97pt x 597.23125pt>
+(./_minted/163044B25EB141E7E7BE98D0B1ADC320.highlight.minted)
+<assets/scatterPlot.png, id=628, 794.97pt x 597.23125pt>
 File: assets/scatterPlot.png Graphic file (type png)
 <use assets/scatterPlot.png>
 Package pdftex.def Info: assets/scatterPlot.png  used on input line 37.
 (pdftex.def)             Requested size: 340.0013pt x 255.43747pt.
-<assets/barChart.png, id=625, 797.98125pt x 598.235pt>
+
+
+[33]
+<assets/barChart.png, id=637, 797.98125pt x 598.235pt>
 File: assets/barChart.png Graphic file (type png)
 <use assets/barChart.png>
 Package pdftex.def Info: assets/barChart.png  used on input line 50.
 (pdftex.def)             Requested size: 340.0013pt x 254.89006pt.
+ (./_minted/496284844B6A45E1BB99A6B6443B29E7.highlight.minted
 
-
-[33 <./assets/scatterPlot.png>]
-(./_minted/496284844B6A45E1BB99A6B6443B29E7.highlight.minted)
-<assets/polynomialPlot.png, id=634, 799.98875pt x 598.235pt>
+[34 <./assets/scatterPlot.png> <./assets/barChart.png>])
+<assets/polynomialPlot.png, id=647, 799.98875pt x 598.235pt>
 File: assets/polynomialPlot.png Graphic file (type png)
 <use assets/polynomialPlot.png>
 Package pdftex.def Info: assets/polynomialPlot.png  used on input line 70.
 (pdftex.def)             Requested size: 340.0013pt x 254.25107pt.
 
-
-[34 <./assets/barChart.png> <./assets/polynomialPlot.png>]
 (./_minted/FCBAB69BF9AD898EBBAAEEACFDFE8786.highlight.minted)
-<assets/multiplePlots.png, id=644, 793.96625pt x 600.2425pt>
+<assets/multiplePlots.png, id=649, 793.96625pt x 600.2425pt>
 File: assets/multiplePlots.png Graphic file (type png)
 <use assets/multiplePlots.png>
 Package pdftex.def Info: assets/multiplePlots.png  used on input line 94.
 (pdftex.def)             Requested size: 340.0013pt x 257.04596pt.
-<assets/plotInput.png, id=646, 787.94376pt x 43.16125pt>
+
+
+[35 <./assets/polynomialPlot.png>]
+<assets/plotInput.png, id=660, 787.94376pt x 43.16125pt>
 File: assets/plotInput.png Graphic file (type png)
 <use assets/plotInput.png>
 Package pdftex.def Info: assets/plotInput.png  used on input line 109.
 (pdftex.def)             Requested size: 340.0013pt x 18.62416pt.
-<assets/plotInput2.png, id=647, 789.95125pt x 45.16875pt>
+<assets/plotInput2.png, id=661, 789.95125pt x 45.16875pt>
 File: assets/plotInput2.png Graphic file (type png)
 <use assets/plotInput2.png>
 Package pdftex.def Info: assets/plotInput2.png  used on input line 110.
 (pdftex.def)             Requested size: 340.0013pt x 19.44078pt.
 )
-(./_minted/CB3B4529D532F8DD9E96112D36DB8CB4.highlight.minted
+(./_minted/CB3B4529D532F8DD9E96112D36DB8CB4.highlight.minted)
+(./_minted/6A586B663CA7F4657D0A639E37976A35.highlight.minted
 
-[35 <./assets/multiplePlots.png> <./assets/plotInput.png> <./assets/plotInput2.
-png>]) (./_minted/6A586B663CA7F4657D0A639E37976A35.highlight.minted)
-<assets/drawImage.png, id=660, 792.9625pt x 594.22pt>
+[36 <./assets/multiplePlots.png> <./assets/plotInput.png> <./assets/plotInput2.
+png>])
+<assets/drawImage.png, id=671, 792.9625pt x 594.22pt>
 File: assets/drawImage.png Graphic file (type png)
 <use assets/drawImage.png>
-Package pdftex.def Info: assets/drawImage.png  used on input line 318.
+Package pdftex.def Info: assets/drawImage.png  used on input line 332.
 (pdftex.def)             Requested size: 340.0013pt x 254.78426pt.
+ (./_minted/E6C392DADA90F89F225476F1CE2866E4.highlight.minted)
 
+[37 <./assets/drawImage.png>])
 
-[36 <./assets/drawImage.png>]
-(./_minted/E6C392DADA90F89F225476F1CE2866E4.highlight.minted))
-
-[37]
+[38]
 Chapter 5.
 (./AP_REPORT_02.bbl
 
-[38
+[39
 
 ])
 
-[39
+[40
 
 ]
 Appendix A.
 
 
-[40
+[41
 
 ]
 Appendix B.
@@ -1155,7 +1165,7 @@ Overfull \hbox (1.16759pt too wide) in paragraph at lines 118--118
 
 
 
-[41
+[42
 
 ]
 
@@ -1239,8 +1249,6 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 )
 
-[42]
-
 [43]
 
 [44]
@@ -1248,22 +1256,24 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 [45]
 
 [46]
+
+[47]
 Appendix C.
 
 
-[47
+[48
 
 ]
 Appendix D.
 (./sections/algorithms.tex
 
-[48
+[49
 
 ])
 
-[49]
+[50]
 
-[50] (./AP_REPORT_02.aux)
+[51] (./AP_REPORT_02.aux)
  ***********
 LaTeX2e <2024-11-01>
 L3 programming layer <2024-11-02>
@@ -1279,13 +1289,13 @@ Package rerunfilecheck Info: File `AP_REPORT_02.out' has not changed.
 (rerunfilecheck)             Checksum: 327290DEBDA2179EB1A83F13B9A48D6A;11025.
  ) 
 Here is how much of TeX's memory you used:
- 19427 strings out of 473362
- 371830 string characters out of 5720983
- 934412 words of memory out of 5000000
- 41958 multiletter control sequences out of 15000+600000
+ 19453 strings out of 473362
+ 372652 string characters out of 5720983
+ 934501 words of memory out of 5000000
+ 41981 multiletter control sequences out of 15000+600000
  569039 words of font info for 75 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 85i,12n,93p,1075b,938s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 85i,12n,93p,1075b,939s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 ></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb
@@ -1303,10 +1313,10 @@ live/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texli
 ve/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texliv
 e/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive
 /2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on AP_REPORT_02.pdf (52 pages, 1411541 bytes).
+Output written on AP_REPORT_02.pdf (53 pages, 1558931 bytes).
 PDF statistics:
- 878 PDF objects out of 1000 (max. 8388607)
- 744 compressed objects within 8 object streams
- 191 named destinations out of 1000 (max. 500000)
- 685 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 890 PDF objects out of 1000 (max. 8388607)
+ 751 compressed objects within 8 object streams
+ 194 named destinations out of 1000 (max. 500000)
+ 695 words of extra memory for PDF output out of 10000 (max. 10000000)
 
