@@ -1,0 +1,49 @@
+// Create a bouncing circle
+let circle = {
+    x = 400.0,
+    y = 300.0,
+    width = 40.0,
+    height = 40.0,
+    colour = "blue",
+    shape = "circle",
+    trace = true
+}
+
+// Create an orbiting rectangle
+let rect = {
+    x = 200.0,
+    y = 200.0,
+    width = 30.0,
+    height = 30.0,
+    colour = "red",
+    shape = "rectangle",
+    trace = true
+}
+
+// Draw our shapes
+let circleId = draw(circle)
+let rectId = draw(rect)
+
+// Make the circle bounce in a sine wave pattern
+on(circleId, Keys.Right, (state) -> {
+    x = state.x + 5.0,
+    y = 300.0 + sin(state.x / 30.0) * 100.0
+})
+
+on(circleId, Keys.Left, (state) -> {
+    x = state.x - 5.0,
+    y = 300.0 + sin(state.x / 30.0) * 100.0
+})
+
+// Make the rectangle orbit in a circle
+on(rectId, Keys.Right, (state) -> {
+    x = 400.0 + cos(state.x / 50.0) * 150.0,
+    y = 300.0 + sin(state.x / 50.0) * 150.0
+})
+
+on(rectId, Keys.Left, (state) -> {
+    x = 400.0 + cos(state.x / 50.0) * 150.0,
+    y = 300.0 + sin(state.x / 50.0) * 150.0
+})
+
+print("Press Right/Left arrow keys to animate the shapes!")
