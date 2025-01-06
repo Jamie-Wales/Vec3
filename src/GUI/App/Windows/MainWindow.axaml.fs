@@ -32,7 +32,7 @@ type MainWindow() as this =
     let mutable openFileButton: Button = null
     let mutable textMateInstallation: TextMate.Installation = null
     let mutable replInput: TextEditor = null
-
+    let mutable windows: ResizeArray<Window> = ResizeArray()
     let mutable openNotebookButton: Button = null
     let mutable loadButton: Button = null
     let mutable runButton: Button = null
@@ -217,6 +217,7 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
     /// </summary>
     member private this.CreatePlotWindow(title: string) =
         let plotWindow = PlotWindow()
+        windows.Add(plotWindow)
         plotWindow.Title <- title
         plotWindow.PlotControl.Plot.Clear()
         plotWindow
@@ -288,6 +289,7 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
 
         if not (List.isEmpty shapes) then
             let drawWindow = DrawWindow()
+            windows.Add(drawWindow) 
             drawWindow.Show()
 
             Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
@@ -309,6 +311,7 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 ()
             | VPlotData(title, xs, ys, plotType) ->
                 let plotWindow = PlotWindow()
+                windows.Add(plotWindow) 
                 plotWindow.PlotControl.Plot.Title(title)
                 plotWindow.SetVM(vm)  
                 let yL = plotWindow.PlotControl.Plot.Add.VerticalLine(0.0)
@@ -337,10 +340,9 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
             | VPlotFunction(title, sf, start, end_, area) ->
                 let f = toBuiltin sf
                 let plotWindow = PlotWindow()
+                windows.Add(plotWindow) 
                 plotWindow.Title <- title
                 plotWindow.SetVM(vm)
-                
-                // Draw x and y axis
                 let yL = plotWindow.PlotControl.Plot.Add.VerticalLine(0.0)
                 yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
                 let xL = plotWindow.PlotControl.Plot.Add.HorizontalLine(0.0)
@@ -374,6 +376,7 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
 
             | VPlotFunctions(title, fs) ->
                 let plotWindow = PlotWindow()
+                windows.Add(plotWindow) 
                 plotWindow.Title <- title
                 
                 let yL = plotWindow.PlotControl.Plot.Add.VerticalLine(0.0)
@@ -406,6 +409,10 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
     /// Run the code currently in the editor.
     /// </summary>
     member private this.LoadCode() =
+        for window in windows do
+            window.Close()
+        windows.Clear()
+
         replState <- createNewVM (initFunction "Main")
         let code = this.GetEditorText()
 
