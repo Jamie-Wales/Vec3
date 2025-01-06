@@ -61,6 +61,7 @@ type PlotWindow() as this =
                 let f = SymbolicExpression.toBuiltin sf
                 let p = plotControl.Plot.Add.Function(f)
                 p.LegendText <- $"f(x) = {SymbolicExpression.toString sf}"
+                
                 plotControl.Plot.Title(title)
                 match start, end_, area with
                 | Some s, Some e, Some a ->

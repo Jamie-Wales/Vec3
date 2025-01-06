@@ -85,7 +85,6 @@ void vec3_register_builtins(struct Vec3Env* env)
     // Operators
     vec3_env_define(env, "add", vec3_new_function("add", 2, vec3_add, NULL));
     vec3_env_define(env, "mul", vec3_new_function("mul", 2, vec3_multiply, NULL));
-    vec3_env_define(env, "pow", vec3_new_function("power", 2, vec3_power, NULL));
     vec3_env_define(env, "eq", vec3_new_function("equal", 2, vec3_equal, NULL));
     vec3_env_define(env, "neq", vec3_new_function("not_equal", 2, vec3_not_equal, NULL));
     vec3_env_define(env, "lt", vec3_new_function("less", 2, vec3_less, NULL));

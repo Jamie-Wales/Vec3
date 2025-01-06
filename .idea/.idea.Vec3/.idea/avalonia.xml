@@ -6,6 +6,9 @@
         <entry key="Vec3/GUI/MainWindow.axaml" value="Tests/Tests.fsproj" />
         <entry key="Vec3/GUI/Notebook.axaml" value="Tests/Tests.fsproj" />
         <entry key="Vec3/GUI/Styles.axaml" value="Tests/Tests.fsproj" />
+        <entry key="src/GUI/App/Windows/MainWindow.axaml" value="src/GUI/GUI.fsproj" />
+        <entry key="src/GUI/App/Windows/PlotWindow.axaml" value="src/GUI/GUI.fsproj" />
+        <entry key="src/GUI/App/Windows/SytaxWindow.axaml" value="src/GUI/GUI.fsproj" />
       </map>
     </option>
   </component>

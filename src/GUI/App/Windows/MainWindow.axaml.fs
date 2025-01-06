@@ -272,6 +272,11 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
     /// </summary>
     /// <param name="vm">The current vm</param>
     /// <returns>Unit</returns>
+    /// <summary>
+    /// Plot the given data currently in the VM.
+    /// </summary>
+    /// <param name="vm">The current vm</param>
+    /// <returns>Unit</returns>
     member private this.HandlePlotOutput(vm: VM) =
         let shapes =
             vm.Canvas
@@ -334,15 +339,17 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 let plotWindow = PlotWindow()
                 plotWindow.Title <- title
                 plotWindow.SetVM(vm)
-                let p = plotWindow.PlotControl.Plot.Add.Function(f)
                 
-                p.LegendText <- $"f(x) = {toString sf}"
-                // plotWindow.PlotControl.Plot.Add.Function(Math.Tan) |> ignore
-                // draw x and y axis
+                // Draw x and y axis
                 let yL = plotWindow.PlotControl.Plot.Add.VerticalLine(0.0)
                 yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
                 let xL = plotWindow.PlotControl.Plot.Add.HorizontalLine(0.0)
                 xL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
+                
+                // Add function plot
+                let p = plotWindow.PlotControl.Plot.Add.Function(f)
+                p.LegendText <- $"f(x) = {toString sf}"
+                
                 match start, end_, area with
                 | Some start, Some end_, Some area ->
                     let startHeight = f start
@@ -350,38 +357,45 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
 
                     plotWindow.PlotControl.Plot.Add.Line(start, 0.0, start, startHeight) |> ignore
                     plotWindow.PlotControl.Plot.Add.Line(end_, 0.0, end_, endHeight) |> ignore
-
                     plotWindow.PlotControl.Plot.Add.Annotation($"Area: %f{area}") |> ignore
-                    
                 | _ -> ()
                 
                 plotWindow.PlotControl.Plot.XLabel("x")
                 plotWindow.PlotControl.Plot.YLabel("y")
-
-                plotWindow.PlotControl.Refresh()
+                plotWindow.PlotControl.Plot.Title(title)
+                plotWindow.PlotControl.Plot.Legend.Padding <- ScottPlot.PixelPadding(10.0f, 10.0f, 10.0f,30.0f)
+                plotWindow.PlotControl.Plot.Legend.Location <- ScottPlot.Alignment.UpperRight
+                plotWindow.PlotControl.Plot.Legend.FontSize <- 12f
+                plotWindow.PlotControl.Plot.Legend.Orientation <- ScottPlot.Orientation.Horizontal
+                plotWindow.PlotControl.Plot.Legend.Margin <- ScottPlot.PixelPadding(10.0f, 10.0f, 10.0f, 30.0f)
                 plotWindow.PlotControl.Plot.ShowLegend() |> ignore
+                plotWindow.PlotControl.Refresh()
                 plotWindow.Show()
 
             | VPlotFunctions(title, fs) ->
                 let plotWindow = PlotWindow()
                 plotWindow.Title <- title
+                
                 let yL = plotWindow.PlotControl.Plot.Add.VerticalLine(0.0)
                 yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
                 let xL = plotWindow.PlotControl.Plot.Add.HorizontalLine(0.0)
                 xL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
-                plotWindow.PlotControl.Plot.Font.Automatic()
-
+                
                 for sf in fs do
                     let f = toBuiltin sf
                     let p = plotWindow.PlotControl.Plot.Add.Function(f)
                     p.LegendText <- $"f(x) = {toString sf}"
-
-                plotWindow.PlotControl.Plot.Title(title)
                 
+                // Configure legend
+                plotWindow.PlotControl.Plot.Legend.Padding <- ScottPlot.PixelPadding(10.0f, 10.0f, 10.0f, 30.0f)
+                plotWindow.PlotControl.Plot.Legend.Location <- ScottPlot.Alignment.UpperRight
+                plotWindow.PlotControl.Plot.Legend.FontSize <- 11f
+                plotWindow.PlotControl.Plot.Legend.Orientation <- ScottPlot.Orientation.Horizontal
+                plotWindow.PlotControl.Plot.Legend.Margin <- ScottPlot.PixelPadding(10.0f, 10.0f, 10.0f, 30.0f)
                 plotWindow.PlotControl.Plot.XLabel("x")
                 plotWindow.PlotControl.Plot.YLabel("y")
-                let legend = plotWindow.PlotControl.Plot.ShowLegend()
-                legend.FontSize <- 12f
+                plotWindow.PlotControl.Plot.Title(title)
+                plotWindow.PlotControl.Plot.ShowLegend() |> ignore
                 plotWindow.PlotControl.Refresh()
                 plotWindow.Show()
             | _ -> ()
