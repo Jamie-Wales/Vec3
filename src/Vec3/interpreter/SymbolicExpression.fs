@@ -562,6 +562,7 @@ let rec fromExpr (expr: Expr) : Expression =
             _) -> Truncate(fromExpr x)
 
     | EGrouping(x, _) -> fromExpr x
+    | ELambda([(_, _)], body, _, _, _, _) -> fromExpr body
 
     | _ -> raise (InvalidProgramException("Invalid symbolic expression."))
 
@@ -768,7 +769,7 @@ let rec toString (expression: Expression) : string =
     | Subtraction(x, y) -> $"({toString x} - {toString y})"
     | Multiplication(x, y) -> $"({toString x} * {toString y})"
     | Division(x, y) -> $"({toString x} / {toString y})"
-    | Power(x, y) -> $"({toString x} ** {toString y})"
+    | Power(x, y) -> $"({toString x} ^ {toString y})"
 
     | Sine x -> $"sin({toString x})"
     | Cosine x -> $"cos({toString x})"

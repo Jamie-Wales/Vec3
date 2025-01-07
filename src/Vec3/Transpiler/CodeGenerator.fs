@@ -231,8 +231,6 @@ let rec generateExpr (expr: Expr) : string =
             let endCode = generateExpr end_
             $"vec3_list_slice(%s{listCode}, %s{startCode}, %s{endCode})"
 
-        | EMatch(expr, _, _) -> failwithf $"Match expressions not implemented for: %A{expr}"
-
         | ERecordEmpty _ -> "vec3_new_record()"
 
         | ERecordExtend((name, value, _), record, _) ->

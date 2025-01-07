@@ -30,7 +30,7 @@ let rec findTokenInExpression expr =
     | EIdentifier(token, _) -> Some token
     | EGrouping(expr, _) -> findTokenInExpression expr
     | EBlock(stmts, _, _) -> findTokenInStatements stmts
-    | ECall(callee, args, _) -> findTokenInExpression callee
+    | ECall(callee, _, _) -> findTokenInExpression callee
     | ETuple(exprs, _) -> findTokenInExpressions exprs
     | EList(exprs, _) -> findTokenInExpressions exprs
     | ETail(expr, _) -> findTokenInExpression expr
@@ -44,26 +44,28 @@ let rec findTokenInExpression expr =
     | ECodeBlock expr -> findTokenInExpression expr
     | EIndex (e1, e2, _) -> findTokenInExpressions [e1; e2]
     | ERecordEmpty _ -> None
-    | ERecordExtend((token, _, _), expr, _) -> Some token
+    | ERecordExtend((token, _, _), _, _) -> Some token
     | ERecordRestrict(_, token, _) -> Some token
     | ERecordSelect(_, token, _) -> Some token
     | EIndexRange (e1, e2, e3, _) -> findTokenInExpressions [e1; e2; e3]
-    | EMatch (expr, _, _) -> findTokenInExpression expr
     | ERange (e1, e2, _) -> findTokenInExpressions [e1; e2]
 
 and findTokenInStatements stmts =
     match stmts with
     | [] -> None
-    | SExpression(expr, _) :: stmts -> findTokenInExpression expr
-    | SVariableDeclaration(token, _, _) :: stmts -> Some token
-    | SAssertStatement(token, _, _) :: stmts ->
-        match findTokenInExpression token with
+    | SExpression(expr, _) :: stmts ->
+        match findTokenInExpression expr with
         | Some token -> Some token
         | None -> findTokenInStatements stmts
-    | STypeDeclaration(token, _, _) :: stmts -> Some token
-    | SRecFunc(token, _, _, _) :: stmts -> Some token
-    | SAsync(token, _, _, _) :: stmts -> Some token
-    | SImport(token, _, _, _) :: stmts -> token
+    | SVariableDeclaration(token, _, _) :: _ -> Some token
+    | SAssertStatement(expr, _, _) :: stmts ->
+        match findTokenInExpression expr with
+        | Some token -> Some token
+        | None -> findTokenInStatements stmts
+    | STypeDeclaration(token, _, _) :: _ -> Some token
+    | SRecFunc(token, _, _, _) :: _ -> Some token
+    | SAsync(token, _, _, _) :: _ -> Some token
+    | SImport(token, _, _, _) :: _ -> token
     
 and findTokenInExpressions exprs =
     match exprs with
@@ -974,197 +976,6 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
         | _ -> Error [ TypeError.InvalidField(name, TNever) ]
     | ECodeBlock e -> Ok(TAny, Map.empty, ECodeBlock e) // Code blocks are not typed
 
-    | EMatch(expr, cases, _) ->
-        let token = findTokenInExpression expr |> Option.defaultValue Empty
-        infer aliases env expr
-        |> Result.bind (fun (t, sub, expr) ->
-            let inferCase (case: Pattern * Expr) =
-                let pattern, caseExpr = case
-
-                inferPattern aliases env pattern
-                |> Result.bind (fun (patternType, sub', pattern, env) ->
-                    let sub = combineMaps sub sub'
-                    let patternType = applySubstitution aliases sub patternType
-
-                    // need to bind pattern names
-                    let newEnv = applySubstitutionToEnv aliases sub env
-
-                    infer aliases newEnv caseExpr
-                    |> Result.bind (fun (caseType, sub'', caseExpr) ->
-                        let sub = combineMaps sub sub''
-
-                        unify aliases t patternType token
-                        |> Result.bind (fun sub''' ->
-                            let sub = combineMaps sub sub'''
-
-                            let returnType = applySubstitution aliases sub caseType
-                            Ok(returnType, sub, (pattern, caseExpr)))))
-
-            let caseResults = List.map inferCase cases
-
-            let hasErrors = List.exists Result.isError caseResults
-
-            if hasErrors then
-                let errors =
-                    List.collect
-                        (fun result ->
-                            match result with
-                            | Error errors -> errors
-                            | _ -> [])
-                        caseResults
-
-                Error errors
-            else
-                let caseResults =
-                    List.choose
-                        (function
-                        | Ok(t, sub, expr) -> Some(t, sub, expr)
-                        | _ -> None)
-                        caseResults
-
-                let types = List.map (fun (t, _, _) -> t) caseResults
-                let subs = List.map (fun (_, sub, _) -> sub) caseResults
-                let exprs = List.map (fun (_, _, expr) -> expr) caseResults
-
-                let subs = List.fold combineMaps Map.empty subs
-
-                let head = List.tryHead types
-                let head = Option.defaultValue (TTypeVariable(freshTypeVar ())) head
-                let returnType = applySubstitution aliases subs head
-
-                Ok(returnType, subs, EMatch(expr, List.zip (List.map fst cases) (List.map snd exprs), Some returnType)))
-
-// doesnt work
-and inferPattern
-    (aliases: AliasMap)
-    (env: TypeEnv)
-    (pattern: Pattern)
-    : (TType * Substitution * Pattern * TypeEnv) TypeResult =
-    match pattern with
-    | PWildcard -> Ok(TAny, Map.empty, PWildcard, env)
-    | PIdentifier id ->
-        Ok(
-            TTypeVariable(freshTypeVar ()),
-            Map.empty,
-            PIdentifier id,
-            Map.add id.Lexeme (TTypeVariable(freshTypeVar ())) env
-        )
-    | PCons(head, rest) ->
-        let headResult = inferPattern aliases env head
-        let restResult = inferPattern aliases env rest
-
-        match headResult, restResult with
-        | Ok(t1, sub1, expr1, env1), Ok(_, sub2, expr2, env2) ->
-            let env = combineMaps env1 env2
-            let sub = combineMaps sub1 sub2
-            let sub = combineMaps sub sub2
-
-            let newType = TTensor(t1, DAny)
-            Ok(newType, sub, PCons(expr1, expr2), env)
-        | Error errors, _ -> Error errors
-        | _, Error errors -> Error errors
-    | PList elems ->
-        let results = List.map (inferPattern aliases env) elems
-
-        let hasErrors = List.exists Result.isError results
-
-        if hasErrors then
-            let errors =
-                List.collect
-                    (fun result ->
-                        match result with
-                        | Error errors -> errors
-                        | _ -> [])
-                    results
-
-            Error errors
-        else
-            let results =
-                List.choose
-                    (function
-                    | Ok(t, sub, expr, env) -> Some(t, sub, expr, env)
-                    | _ -> None)
-                    results
-
-            let types = List.map (fun (t, _, _, _) -> t) results
-            let subs = List.map (fun (_, sub, _, _) -> sub) results
-            let exprs = List.map (fun (_, _, expr, _) -> expr) results
-            let envs = List.map (fun (_, _, _, env) -> env) results
-
-            let head = List.tryHead types
-            let tail = if List.length types > 1 then List.tail types else []
-            let head = Option.defaultValue (TTypeVariable(freshTypeVar ())) head
-
-            let subResults = List.map (fun t -> unify aliases head t Empty) tail
-
-            let hasErrors = List.exists Result.isError subResults
-
-            if hasErrors then
-                let errors =
-                    List.collect
-                        (fun result ->
-                            match result with
-                            | Error errors -> errors
-                            | _ -> [])
-                        subResults
-
-                Error errors
-            else
-                let subResults =
-                    List.choose
-                        (function
-                        | Ok(sub) -> Some(sub)
-                        | _ -> None)
-                        subResults
-
-                let env = List.fold combineMaps Map.empty envs
-                let combinedSubs = List.fold combineMaps Map.empty subResults
-                let combinedSubs = List.fold combineMaps combinedSubs subs
-
-                // doesnt work
-                let returnType = applySubstitution aliases combinedSubs head
-                let returnType = TTensor(returnType, DAny)
-
-                Ok(returnType, combinedSubs, PList(exprs), env)
-    | PRecordEmpty -> Ok(TRecord(TRowEmpty), Map.empty, PRecordEmpty, env)
-    | PLiteral(lit) ->
-        let t = checkLiteral lit
-        Ok(t, Map.empty, PLiteral(lit), env)
-    | PTuple(elems) ->
-        let types = List.map (inferPattern aliases env) elems
-
-        let hasErrors = List.exists Result.isError types
-
-        if hasErrors then
-            let errors =
-                List.collect
-                    (fun result ->
-                        match result with
-                        | Error errors -> errors
-                        | _ -> [])
-                    types
-
-            Error errors
-        else
-            let results =
-                List.choose
-                    (function
-                    | Ok(t, sub, expr, env) -> Some(t, sub, expr, env)
-                    | _ -> None)
-                    types
-
-            let types = List.map (fun (t, _, _, _) -> t) results
-            let subs = List.map (fun (_, sub, _, _) -> sub) results
-            let exprs = List.map (fun (_, _, expr, _) -> expr) results
-            let envs = List.map (fun (_, _, _, env) -> env) results
-
-            let combinedSubs = List.fold combineMaps Map.empty subs
-            let env = List.fold combineMaps Map.empty envs
-
-            let returnType = TTuple(types)
-
-            Ok(returnType, combinedSubs, PTuple(exprs), env)
-
 /// <summary>
 /// Infer the type of a statement.
 /// </summary>
@@ -1313,7 +1124,7 @@ and inferProgram
     (env: TypeEnv)
     (stmts: Program)
     : (TypeEnv * AliasMap * Substitution * Program) TypeResult =
-    // Fold all the statemnets, accumulating the environment, aliases, substitution, and new statements (or errors)
+    // Fold all the statements, accumulating the environment, aliases, substitution, and new statements (or errors)
     List.fold
         (fun acc stmt ->
             match acc with

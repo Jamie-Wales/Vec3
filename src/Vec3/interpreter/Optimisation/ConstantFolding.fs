@@ -328,7 +328,6 @@ let foldConstants (program: Program) : Program =
                 EList(range, typ)
             | _ -> ERange(start, stop, typ)
         | ECodeBlock e -> ECodeBlock e
-        | EMatch(expr, cases, typ) -> EMatch(foldExpr expr, cases, typ)
 
     in
 

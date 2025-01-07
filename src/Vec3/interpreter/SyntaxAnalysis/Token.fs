@@ -12,6 +12,7 @@ type Number =
     | LInteger of int
     | LRational of int * int
     | LComplex of float * float
+        
 
 /// <summary>
 /// Possible operators in the language.

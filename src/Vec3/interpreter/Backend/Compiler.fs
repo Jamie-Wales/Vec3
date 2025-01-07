@@ -322,7 +322,6 @@ let rec compileExpr (expr: Expr) (state: CompilerState) : unit CompilerResult =
         match ex with
         | ECall(name, args, _) -> compileCall name args true state
         | e -> compileExpr e state
-    | EMatch(expr, cases, _) -> compileMatch expr cases state
 
 /// <summary>
 /// Compile index range expression.
@@ -502,10 +501,10 @@ and compileLambda (parameters: Token list) (body: Expr) (isAsync: bool) (state: 
 
     let body =
         match body with
-        | EBlock(stmts, b, typeOption) -> EBlock(stmts, true, typeOption)
+        | EBlock(stmts, _, typeOption) -> EBlock(stmts, true, typeOption)
         | ETail(e, typeOption) ->
             match e with
-            | EBlock(stmts, b, typeOption) -> EBlock(stmts, true, typeOption)
+            | EBlock(stmts, _, typeOption) -> EBlock(stmts, true, typeOption)
             | _ -> ETail(body, typeOption)
         | _ -> body
 
@@ -617,71 +616,6 @@ and compileIdentifier (token: Token) (state: CompilerState) : CompilerResult<uni
         | None ->
             let constIndex = addConstant state.CurrentFunction.Function.Chunk (VString name)
             emitBytes [| byte (opCodeToByte OP_CODE.GET_GLOBAL); byte constIndex |] state
-
-/// <summary>
-/// Compile a match expression.
-/// Not implemented fully yet.
-/// </summary>
-/// <param name="expr">The expression to match.</param>
-/// <param name="cases">The cases to match against.</param>
-/// <param name="state">The current state.</param>
-/// <returns>The monadic result</returns>
-and compileMatch (expr: Expr) (cases: (Pattern * Expr) list) (state: CompilerState) : CompilerResult<unit> =
-    // hwo to do this ?
-    // compile expr
-    // compile each case
-    // if match then jump to end
-    // if no match then jump to next case
-    // if no case then error
-    // how to compile cons ?
-    // how to compile record ?
-    // answer is to compile as call to builtin
-
-    // translate to series of if else
-    // EIF(ECall(match, [ pattern compile, expr compile ]), case, else EIF(ECall(match, [ pattern compile, expr compile ]), case, else ...))
-
-    // compile as call to lambda for access to local variables, sorry no impl case as call with pattern
-    let rec patternToExpression (pattern: Pattern) : Expr =
-        match pattern with
-        | PWildcard -> ELiteral(LBool true, TBool)
-        | PIdentifier name -> EIdentifier(name, None)
-        | PTuple ps -> ETuple(List.map patternToExpression ps, None)
-        | PList ps -> EList(List.map patternToExpression ps, None)
-        | PCons(head, tail) -> EList([ patternToExpression head; patternToExpression tail ], None)
-        | PLiteral lit -> ELiteral(lit, TAny)
-        | PRecordEmpty -> ERecordEmpty TRowEmpty
-        | PType _ -> ELiteral(LBool true, TBool)
-
-    let rec generateExpression (cases: (Pattern * Expr) list) : Expr =
-        match cases with
-        | [] ->
-            let errIdentifier =
-                EIdentifier(
-                    { Lexeme = Identifier "error"
-                      Position = { Line = 0; Column = 0 } },
-                    None
-                )
-
-            ECall(errIdentifier, [ ELiteral(LString "No match found", TString) ], None)
-
-        | (pattern, case) :: rest ->
-            ETernary(
-                ECall(
-                    EIdentifier(
-                        { Lexeme = Identifier "match"
-                          Position = { Line = 0; Column = 0 } },
-                        None
-                    ),
-                    [ (patternToExpression pattern); expr ],
-                    None
-                ),
-                case,
-                generateExpression rest,
-                None
-            )
-
-    let expression = generateExpression cases
-    compileExpr expression state
 
 /// <summary>
 /// Compile a statement.
