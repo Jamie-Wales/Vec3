@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  6 JAN 2025 12:17
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  7 JAN 2025 10:47
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -876,12 +876,12 @@ r> ":" <type> "," <recordtypelist>[]
 \pydata@fh@_E017103BDF0CAED79F13B8F548EAF24E.data.minted=\write5
 \openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
 
-runsystem(latexminted config  --timestamp 20250106121745Z E017103BDF0CAED79F13B
-8F548EAF24E)...executed safely (allowed).
+runsystem(latexminted config  --timestamp 20250107104735 E017103BDF0CAED79F13B8
+F548EAF24E)...executed safely (allowed).
 
 (./_E017103BDF0CAED79F13B8F548EAF24E.config.minted)
-runsystem(latexminted cleanconfig  --timestamp 20250106121745Z E017103BDF0CAED7
-9F13B8F548EAF24E)...executed safely (allowed).
+runsystem(latexminted cleanconfig  --timestamp 20250107104735 E017103BDF0CAED79
+F13B8F548EAF24E)...executed safely (allowed).
 
 
 (./_minted/default.style.minted)
@@ -944,47 +944,35 @@ Overfull \vbox (236.90312pt too high) has occurred while \output is active []
 
 
 [20 <./assets/plotPDF.pdf> <./assets/plotPDF.pdf>]
-<assets/finalPlot.png, id=502, 794.97pt x 597.23125pt>
-File: assets/finalPlot.png Graphic file (type png)
-<use assets/finalPlot.png>
-Package pdftex.def Info: assets/finalPlot.png  used on input line 61.
-(pdftex.def)             Requested size: 340.0013pt x 255.43747pt.
-
 (./sections/notable-features.tex
 (./_minted/F7CB97C4481211FE7B7A2BECBCC454DA.highlight.minted)
 (./_minted/36EF230F4C7E8CBDBE836838F0CAEC87.highlight.minted)
-(./_minted/7B293B2FFC7057B786CBB1CC553B17FF.highlight.minted
-
-[21 <./assets/finalPlot.png>])
+(./_minted/7B293B2FFC7057B786CBB1CC553B17FF.highlight.minted)
 (./_minted/5A9951D97F313ED4504AC2BB26B29E0F.highlight.minted)
-(./_minted/E2D3A820EB4CA488CD41D50F3B850039.highlight.minted)
-(./_minted/EAB81081B9AA1ED6965DC7DAEE03FD8E.highlight.minted)
+(./_minted/E2D3A820EB4CA488CD41D50F3B850039.highlight.minted
+
+[21]) (./_minted/EAB81081B9AA1ED6965DC7DAEE03FD8E.highlight.minted)
 (./_minted/635305B7C7508668CB9996B23449E3FC.highlight.minted)
 (./_minted/7E4128AEF66516C43820ED0F6D3603F4.highlight.minted)
-
-[22] (./_minted/26A858ACD3E5527240FEAE15EA4BE4CA.highlight.minted)
+(./_minted/26A858ACD3E5527240FEAE15EA4BE4CA.highlight.minted)
 (./_minted/AE5E64C937F5E8B4F080AB36E0BA22D7.highlight.minted))
 
-[23]
+[22]
 
-LaTeX Warning: Reference `sec:virtual-machine' on page 24 undefined on input li
-ne 136.
-
-(./sections/type-inference.tex
+[23] (./sections/type-inference.tex
 
 [24]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 42.
-
+ (./_minted/F40D6D54477465BCEECC8B6E7E04BEDD.highlight.minted)
+(./_minted/076F0DA663A8573A8B256E046112D377.highlight.minted)
 
 [25]
 
-[26] (./_minted/F40D6D54477465BCEECC8B6E7E04BEDD.highlight.minted)
-(./_minted/076F0DA663A8573A8B256E046112D377.highlight.minted)
-(./_minted/AC0986121432020082BA3A06BCD36FF6.highlight.minted)
-(./_minted/AC94E63AF40D12F1A6580BD8F2133C69.highlight.minted
+[26] (./_minted/AC0986121432020082BA3A06BCD36FF6.highlight.minted)
+(./_minted/AC94E63AF40D12F1A6580BD8F2133C69.highlight.minted)
 
-[27]) (./_minted/34D0082645AAFF1AED91CC877C506064.highlight.minted)
+[27] (./_minted/34D0082645AAFF1AED91CC877C506064.highlight.minted)
 (./_minted/10150E2A538D7F776F7D32D6B708C9CC.highlight.minted)
 
 [28] (./_minted/993C00FACF51BCA98D2B5063B1CC21F6.highlight.minted)
@@ -1001,84 +989,81 @@ r-ing com-pi-la-tion was man-aged us-ing the \OT1/cmtt/m/n/10.95 CompilerResult
 
  []
 
-)
+) (./_minted/F66DA172101949CB7B6861F72C7D121C.highlight.minted)
 
-[31] (./_minted/F66DA172101949CB7B6861F72C7D121C.highlight.minted)
-
-[32] (./sections/plotting.tex
+[31] (./sections/plotting.tex
 (./_minted/F660FE74DC6363BFEC4729AEFBC55AF5.highlight.minted)
-(./_minted/163044B25EB141E7E7BE98D0B1ADC320.highlight.minted)
-<assets/scatterPlot.png, id=628, 794.97pt x 597.23125pt>
+(./_minted/F0FF2752D3712A4EF3EA4D2472A73BBD.highlight.minted
+
+[32])
+<assets/scatterPlot.png, id=627, 794.97pt x 597.23125pt>
 File: assets/scatterPlot.png Graphic file (type png)
 <use assets/scatterPlot.png>
 Package pdftex.def Info: assets/scatterPlot.png  used on input line 37.
 (pdftex.def)             Requested size: 340.0013pt x 255.43747pt.
-
-
-[33]
-<assets/barChart.png, id=637, 797.98125pt x 598.235pt>
+<assets/barChart.png, id=629, 800.9925pt x 599.23875pt>
 File: assets/barChart.png Graphic file (type png)
 <use assets/barChart.png>
 Package pdftex.def Info: assets/barChart.png  used on input line 50.
-(pdftex.def)             Requested size: 340.0013pt x 254.89006pt.
- (./_minted/496284844B6A45E1BB99A6B6443B29E7.highlight.minted
+(pdftex.def)             Requested size: 340.0013pt x 254.36679pt.
 
-[34 <./assets/scatterPlot.png> <./assets/barChart.png>])
-<assets/polynomialPlot.png, id=647, 799.98875pt x 598.235pt>
+
+[33 <./assets/scatterPlot.png>]
+(./_minted/496284844B6A45E1BB99A6B6443B29E7.highlight.minted)
+<assets/polynomialPlot.png, id=639, 797.98125pt x 598.235pt>
 File: assets/polynomialPlot.png Graphic file (type png)
 <use assets/polynomialPlot.png>
 Package pdftex.def Info: assets/polynomialPlot.png  used on input line 70.
-(pdftex.def)             Requested size: 340.0013pt x 254.25107pt.
+(pdftex.def)             Requested size: 340.0013pt x 254.89006pt.
 
+
+[34 <./assets/barChart.png> <./assets/polynomialPlot.png>]
 (./_minted/FCBAB69BF9AD898EBBAAEEACFDFE8786.highlight.minted)
-<assets/multiplePlots.png, id=649, 793.96625pt x 600.2425pt>
+<assets/multiplePlots.png, id=650, 1257.69875pt x 795.97375pt>
 File: assets/multiplePlots.png Graphic file (type png)
 <use assets/multiplePlots.png>
-Package pdftex.def Info: assets/multiplePlots.png  used on input line 94.
-(pdftex.def)             Requested size: 340.0013pt x 257.04596pt.
-
-
-[35 <./assets/polynomialPlot.png>]
-<assets/plotInput.png, id=660, 787.94376pt x 43.16125pt>
+Package pdftex.def Info: assets/multiplePlots.png  used on input line 99.
+(pdftex.def)             Requested size: 340.0013pt x 215.17084pt.
+<assets/plotInput.png, id=652, 787.94376pt x 43.16125pt>
 File: assets/plotInput.png Graphic file (type png)
 <use assets/plotInput.png>
-Package pdftex.def Info: assets/plotInput.png  used on input line 109.
+Package pdftex.def Info: assets/plotInput.png  used on input line 115.
 (pdftex.def)             Requested size: 340.0013pt x 18.62416pt.
-<assets/plotInput2.png, id=661, 789.95125pt x 45.16875pt>
+<assets/plotInput2.png, id=653, 789.95125pt x 45.16875pt>
 File: assets/plotInput2.png Graphic file (type png)
 <use assets/plotInput2.png>
-Package pdftex.def Info: assets/plotInput2.png  used on input line 110.
+Package pdftex.def Info: assets/plotInput2.png  used on input line 116.
 (pdftex.def)             Requested size: 340.0013pt x 19.44078pt.
 )
-(./_minted/CB3B4529D532F8DD9E96112D36DB8CB4.highlight.minted)
-(./_minted/6A586B663CA7F4657D0A639E37976A35.highlight.minted
+(./_minted/CB3B4529D532F8DD9E96112D36DB8CB4.highlight.minted
 
-[36 <./assets/multiplePlots.png> <./assets/plotInput.png> <./assets/plotInput2.
-png>])
-<assets/drawImage.png, id=671, 792.9625pt x 594.22pt>
+[35 <./assets/multiplePlots.png> <./assets/plotInput.png> <./assets/plotInput2.
+png>]) (./_minted/6A586B663CA7F4657D0A639E37976A35.highlight.minted)
+<assets/drawImage.png, id=667, 792.9625pt x 594.22pt>
 File: assets/drawImage.png Graphic file (type png)
 <use assets/drawImage.png>
-Package pdftex.def Info: assets/drawImage.png  used on input line 332.
+Package pdftex.def Info: assets/drawImage.png  used on input line 325.
 (pdftex.def)             Requested size: 340.0013pt x 254.78426pt.
- (./_minted/E6C392DADA90F89F225476F1CE2866E4.highlight.minted)
 
-[37 <./assets/drawImage.png>])
 
-[38]
+[36 <./assets/drawImage.png>]
+(./_minted/E6C392DADA90F89F225476F1CE2866E4.highlight.minted))
+
+[37]
 Chapter 5.
 (./AP_REPORT_02.bbl
 
-[39
+[38
 
 ])
 
-[40
+[39
 
 ]
 Appendix A.
 
 
-[41
+[40
 
 ]
 Appendix B.
@@ -1165,7 +1150,7 @@ Overfull \hbox (1.16759pt too wide) in paragraph at lines 118--118
 
 
 
-[42
+[41
 
 ]
 
@@ -1249,6 +1234,8 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 )
 
+[42]
+
 [43]
 
 [44]
@@ -1256,24 +1243,22 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 [45]
 
 [46]
-
-[47]
 Appendix C.
 
 
-[48
+[47
 
 ]
 Appendix D.
 (./sections/algorithms.tex
 
-[49
+[48
 
 ])
 
-[50]
+[49]
 
-[51] (./AP_REPORT_02.aux)
+[50] (./AP_REPORT_02.aux)
  ***********
 LaTeX2e <2024-11-01>
 L3 programming layer <2024-11-02>
@@ -1283,40 +1268,56 @@ L3 programming layer <2024-11-02>
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 
-LaTeX Warning: There were undefined references.
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
 Package rerunfilecheck Info: File `AP_REPORT_02.out' has not changed.
 (rerunfilecheck)             Checksum: 327290DEBDA2179EB1A83F13B9A48D6A;11025.
  ) 
 Here is how much of TeX's memory you used:
- 19453 strings out of 473362
- 372652 string characters out of 5720983
- 934501 words of memory out of 5000000
- 41981 multiletter control sequences out of 15000+600000
+ 19443 strings out of 473362
+ 372390 string characters out of 5720983
+ 934506 words of memory out of 5000000
+ 41969 multiletter control sequences out of 15000+600000
  569039 words of font info for 75 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 85i,12n,93p,1075b,939s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
-></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
-</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb
-></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb
-></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmitt10.pfb
-></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb>
-</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></
-usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></us
-r/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/
-local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/lo
-cal/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local
-/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/te
-xlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/tex
-live/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texli
-ve/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texliv
-e/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive
-/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on AP_REPORT_02.pdf (53 pages, 1558931 bytes).
+ 85i,12n,93p,1075b,938s stack positions out of 10000i,1000n,20000p,200000b,200000s
+
+pdfTeX warning (dest): name{table.caption.40} has been referenced but does not 
+exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.30} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.26} has been referenced but does not
+ exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{figure.caption.24} has been referenced but does not
+ exist, replaced by a fixed one
+
+</usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><
+/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></
+usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb><
+/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb><
+/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmitt10.pfb><
+/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></
+usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></us
+r/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/
+local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/lo
+cal/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/loca
+l/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/t
+exlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texl
+ive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texli
+ve/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive
+/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/
+2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2
+024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
+Output written on AP_REPORT_02.pdf (52 pages, 1645671 bytes).
 PDF statistics:
- 890 PDF objects out of 1000 (max. 8388607)
+ 887 PDF objects out of 1000 (max. 8388607)
  751 compressed objects within 8 object streams
- 194 named destinations out of 1000 (max. 500000)
- 695 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 196 named destinations out of 1000 (max. 500000)
+ 690 words of extra memory for PDF output out of 10000 (max. 10000000)
 

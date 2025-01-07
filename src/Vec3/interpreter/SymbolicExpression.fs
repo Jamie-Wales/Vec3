@@ -9,6 +9,7 @@ open System
 open Grammar
 open Token
 
+// This was used as inspiration for the symbolic expression module, and extended with more features and adapted to fit the overall system.
 // https://bmitc.me/articles/symbolic-expressions-in-fsharp#:~:text=By%20pattern%20matching%20against%20Sum,used%20in%20the%20result%20expression.
 
 /// <summary>
