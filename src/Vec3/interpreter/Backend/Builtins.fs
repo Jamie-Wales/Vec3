@@ -859,7 +859,7 @@ let builtins =
                   let res =
                       l
                       |> List.tryFind (function
-                          | VList([ VString k; v ], _) when k = s -> true
+                          | VList([ VString k; _ ], _) when k = s -> true
                           | _ -> false)
 
                   match res with

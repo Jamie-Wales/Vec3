@@ -56,7 +56,7 @@ As the language is immutable, this is done through recursion and higher order fu
 managed through if expressions.
 
 \begin{minted}{fsharp}
-let rec map = (list, f) -> if len(list) == 0 then [] else f (head(list)) :: map (tail(list), f)
+let rec map = (list, f) -> if len(list) == 0 then [] else f(head(list)) :: map(tail(list), f)
 \end{minted}
 
 \paragraph{Calculus} The language has built-in functions for finding the integral function, derivative function

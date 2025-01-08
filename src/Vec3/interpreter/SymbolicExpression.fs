@@ -9,6 +9,7 @@ open System
 open Grammar
 open Token
 
+// This was used as inspiration for the symbolic expression module, and extended with more features and adapted to fit the overall system.
 // https://bmitc.me/articles/symbolic-expressions-in-fsharp#:~:text=By%20pattern%20matching%20against%20Sum,used%20in%20the%20result%20expression.
 
 /// <summary>
@@ -562,6 +563,7 @@ let rec fromExpr (expr: Expr) : Expression =
             _) -> Truncate(fromExpr x)
 
     | EGrouping(x, _) -> fromExpr x
+    | ELambda([(_, _)], body, _, _, _, _) -> fromExpr body
 
     | _ -> raise (InvalidProgramException("Invalid symbolic expression."))
 
@@ -768,7 +770,7 @@ let rec toString (expression: Expression) : string =
     | Subtraction(x, y) -> $"({toString x} - {toString y})"
     | Multiplication(x, y) -> $"({toString x} * {toString y})"
     | Division(x, y) -> $"({toString x} / {toString y})"
-    | Power(x, y) -> $"({toString x} ** {toString y})"
+    | Power(x, y) -> $"({toString x} ^ {toString y})"
 
     | Sine x -> $"sin({toString x})"
     | Cosine x -> $"cos({toString x})"

@@ -23,8 +23,8 @@ let x = [1..10] : [float]
 let y = map(x, (x) -> x^2)
 let data = {
     title = "Example Plot",
-    XValues = x,
-    YValues = y,
+    x = x,
+    y = y,
     ptype = "scatter"
 }
 plot(data)
@@ -71,6 +71,11 @@ Image~\ref{fig:polynomial-plot} shows the resulting plot.
     \caption{Polynomial plot}\label{fig:polynomial-plot}
 \end{figure}
 
+A point of interest is that for both the \textit{plotFunc} and \textit{plotFuncs} functions, a legend is provided 
+with a textual representation of the function being plotted.
+This is particularly useful when plotting multiple functions on the same graph, or when dynamically plotting 
+functions (or their derivatives/integrals) based on user input.
+
 \paragraph{The \textit{plotFuncs}} function takes in a string title and a list of pure functions of type 
 \textit{float -> float}.
 This allows for multiple plots to be placed on the same window, which we felt was valuable for comparing functions 
@@ -103,6 +108,7 @@ on command\ref{fig:plot-input}.
 This is useful for quick visualisation of functions, and allows for a more interactive experience.
 Note that variable resolution is performed on the input, allowing for the user to use variables defined in the
 program in the input.
+Additionally, the legend updates dynamically.
 
 \begin{figure}[H]
     \centering

@@ -12,6 +12,11 @@ Bierman, G., Abadi, M., and Torgersen, M. (2014).
   Conference, Uppsala, Sweden, July 28--August 1, 2014. Proceedings 28}, pages
   257--281. Springer.
 
+\bibitem[{Desmos Studio PBC}, 2023]{Desmos:2023}
+{Desmos Studio PBC} (2023).
+\newblock Desmos website.
+\newblock https://desmos.com [Accessed: 30/11/2023].
+
 \bibitem[Freeman and Pfenning, 1991]{freeman1991refinement}
 Freeman, T. and Pfenning, F. (1991).
 \newblock Refinement types for ml.
@@ -23,10 +28,20 @@ Garcia, R., Clark, A.~M., and Tanter, {\'E}. (2016).
 \newblock Abstracting gradual typing.
 \newblock {\em ACM SIGPLAN Notices}, 51(1):429--442.
 
-\bibitem[{Haskell}, 2024]{haskellDocs}
-{Haskell} (2024).
+\bibitem[{Haskell}, 2024a]{haskell}
+{Haskell} (2024a).
+\newblock Haskell.
+\newblock \url{https://www.haskell.org/}.
+
+\bibitem[{Haskell}, 2024b]{haskellDocs}
+{Haskell} (2024b).
 \newblock Haskell documentation.
 \newblock \url{https://www.haskell.org/documentation/}.
+
+\bibitem[{MathWorks}, 2024]{matlab}
+{MathWorks} (2024).
+\newblock Matlab.
+\newblock \url{https://www.mathworks.com/products/matlab.html}.
 
 \bibitem[{Microsoft}, 2024]{fsharpdocs}
 {Microsoft} (2024).
@@ -58,6 +73,16 @@ Pratt, V.~R. (1973).
 {Project Jupyter} (2023).
 \newblock Jupyter website.
 \newblock \url{https://jupyter.org/}.
+
+\bibitem[{Python}, 2024]{python}
+{Python} (2024).
+\newblock Python.
+\newblock \url{https://www.python.org/}.
+
+\bibitem[{R}, 2024]{rlang}
+{R} (2024).
+\newblock R.
+\newblock \url{https://www.r-project.org/}.
 
 \bibitem[{ScottPlot}, 2024]{scottPlot}
 {ScottPlot} (2024).

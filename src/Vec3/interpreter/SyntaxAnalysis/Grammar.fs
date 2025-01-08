@@ -467,12 +467,6 @@ type Expr =
     /// </summary>
     | ETail of Expr * Type option
 
-    /// <summary>
-    /// Pattern matching expression.
-    /// </summary>
-    | EMatch of Expr * (Pattern * Expr) list * Type option
-
-
 /// <summary>
 /// A statement in the language (something that does not return a value).
 /// </summary>
@@ -484,20 +478,6 @@ and Stmt =
     | SRecFunc of Token * (Token * Type option) list * Expr * Type option
     | SAsync of Token * (Token * Type option) list * Expr * Type option
     | SImport of Token option * string * bool * Type option // maybe binding name, module name (path), isstd, type
-
-/// <summary>
-/// Various patterns for pattern matching.
-/// </summary>
-and Pattern =
-    | PLiteral of Literal
-    | PIdentifier of Token
-    | PWildcard
-    | PList of Pattern list
-    | PCons of Pattern * Pattern
-    | PTuple of Pattern list
-    | PRecordEmpty
-    | PRecord of (Token * Pattern) list
-    | PType of Type
 
 /// <summary>
 /// The program is a list of statements.

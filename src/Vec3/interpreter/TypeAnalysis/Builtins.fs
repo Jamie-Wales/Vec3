@@ -283,17 +283,11 @@ let plotFunsType =
 /// Plot type.
 /// </summary>
 let plotType =
-    let tensWithArithFieldsFunc =
-        fun (t: TType) ->
-            match t with
-            | TTensor(typ, _) -> typ.IsArithmetic
-            | _ -> false
-
     let func =
         fun (t: TType) ->
             t.hasFieldsThat
-                [ (Identifier "x", tensWithArithFieldsFunc)
-                  (Identifier "y", tensWithArithFieldsFunc)
+                [ (Identifier "x", _.IsList)
+                  (Identifier "y", _.IsList)
                   (Identifier "title", fun t -> t = TString)
                   (Identifier "ptype", fun t -> t = TString) ]
 

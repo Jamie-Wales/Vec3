@@ -48,7 +48,6 @@ let rec hasSideEffects (expr: Expr) : bool =
     | ERecordExtend((_, body, _), fields, _) -> hasSideEffects body || hasSideEffects fields
     | ERecordEmpty _ -> false
     | ERange(start, end_, _) -> hasSideEffects start || hasSideEffects end_
-    | EMatch(expr, cases, _) -> hasSideEffects expr || List.exists (fun (_, e) -> hasSideEffects e) cases
     | ERecordRestrict(expr, _, _) -> hasSideEffects expr
     | ETail(expr, _) -> hasSideEffects expr
 
@@ -161,6 +160,5 @@ and isUsedE (name: Lexeme) (expr: Expr) : bool =
     | ERecordExtend((_, body, _), fields, _) -> isUsedE name body || isUsedE name fields
     | ERecordEmpty _ -> false
     | ERange(start, end_, _) -> isUsedE name start || isUsedE name end_
-    | EMatch(expr, cases, _) -> isUsedE name expr || List.exists (fun (_, e) -> isUsedE name e) cases
     | ERecordRestrict(expr, _, _) -> isUsedE name expr
     | ETail(expr, _) -> isUsedE name expr

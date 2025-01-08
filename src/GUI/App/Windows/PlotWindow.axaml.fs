@@ -64,32 +64,7 @@ type PlotWindow() as this =
             | Ok(_, [SExpression(expr, _)]) ->
                 let symExpr = fromExpr expr
                 addToPlot symExpr
-                
-            | _ ->
-                // If it's not a direct expression, try normal VM compilation path
-                match currentVM with
-                | Some vm ->
-                    match noTcParseAndCompile input vm false with
-                    | Some compiledVM ->
-                        match compiledVM.Stack with 
-                        | stack when stack.Count > 0 ->
-                            let topOfStack = stack[stack.Count - 1]
-                            match topOfStack with
-                            | VClosure(_, Some f)
-                            | VFunction(_, Some f) -> addToPlot f
-                            | VNumber(num) ->
-                                let constant = SymbolicExpression.Const(
-                                    match num with 
-                                    | VFloat f -> f 
-                                    | VInteger i -> float i
-                                    | _ -> 0.0)
-                                addToPlot constant
-                            | _ -> ()
-                            
-                            compiledVM.Stack.Clear()
-                        | _ -> ()
-                    | None -> ()
-                | None -> ()
+            | _ -> ()
 
         with ex ->
             printfn $"Error: %s{ex.Message}"
