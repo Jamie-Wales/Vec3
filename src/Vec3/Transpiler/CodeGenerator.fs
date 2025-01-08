@@ -12,7 +12,7 @@ let functionNames: Set<string> ref = ref Set.empty
 
 let generateUniqueName baseName =
     let rec findUnique i =
-        let name = if i = 0 then baseName else $"%s{baseName}_%d{i}"
+        let name = if i = 0 then baseName else $"{baseName}_{i}"
 
         if Set.contains name functionNames.Value then
             findUnique (i + 1)
@@ -43,7 +43,7 @@ let builtInFunctionMap =
       Operator(GreaterEqual, Some Infix), BuiltInFunction.Gte
       Operator(Cross, Some Infix), BuiltInFunction.CrossProduct
       Operator(DotStar, Some Infix), BuiltInFunction.DotProduct
-      Operator(ColonColon, Some Infix), BuiltInFunction.Cons ]
+      Operator(ColonColon, Some Infix), BuiltInFunction.Cons]
     |> Map.ofList
 
 let tryGetBuiltInFunction lexeme =
@@ -52,8 +52,7 @@ let tryGetBuiltInFunction lexeme =
     else
         None
 
-let headers =
-    """
+let headers = $"""
 #include "number.h"
 #include "value.h"
 #include "vec3_math.h"
@@ -68,8 +67,7 @@ let headers =
 Vec3Env* env;
 """
 
-let initCode =
-    """
+let initCode = $"""
     // Create global environment
     env = vec3_new_environment(NULL);
     
@@ -77,78 +75,69 @@ let initCode =
     vec3_register_builtins(env);
 """
 
-let cleanupCode =
-    """
-    // Cleanup environment
-    vec3_destroy_environment(env);
+let cleanupCode = $"""
     return 0;
 """
 
 let escapeString (s: string) =
-    s
-        .Replace("\\", "\\\\")
-        .Replace("\"", "\\\"")
-        .Replace("\n", "\\n")
-        .Replace("\t", "\\t")
+    s.Replace("\\", "\\\\")
+     .Replace("\"", "\\\"")
+     .Replace("\n", "\\n")
+     .Replace("\t", "\\t")
 
 let rec generateExpr (expr: Expr) : string =
     try
         match expr with
         | ELiteral(lit, _) ->
             match lit with
-            | LNumber(LInteger i) -> $"vec3_new_number(number_from_int(%d{i}))"
-            | LNumber(LFloat f) -> $"vec3_new_number(number_from_float(%f{f}))"
-            | LNumber(LRational(n, d)) -> $"vec3_new_number(number_from_rational(%d{n}, %d{d}))"
-            | LNumber(LComplex(r, i)) -> $"vec3_new_number(number_from_complex(%f{r}, %f{i}))"
-            | LNumber(LChar c) -> $"vec3_new_number(number_from_int(%d{int c}))"
-            | LString s -> $"vec3_new_string(\"%s{escapeString s}\")"
-            | LBool b -> $"vec3_new_bool(%b{b})"
+            | LNumber(LInteger i) -> $"vec3_new_number(number_from_int({i}))"
+            | LNumber(LFloat f) -> $"vec3_new_number(number_from_float({f}))"
+            | LNumber(LRational(n, d)) -> $"vec3_new_number(number_from_rational({n}, {d}))"
+            | LNumber(LComplex(r, i)) -> $"vec3_new_number(number_from_complex({r}, {i}))"
+            | LNumber(LChar c) -> $"vec3_new_number(number_from_int({int c}))"
+            | LString s -> $"vec3_new_string(\"{escapeString s}\")"
+            | LBool b -> $"vec3_new_bool({b})"
             | LUnit -> "vec3_new_nil()"
 
         | ELambda(parameters, body, _, _, _, _) ->
             let paramNames =
-                parameters
+                parameters 
                 |> List.map (fun (token, _) ->
                     match token.Lexeme with
                     | Identifier name -> name
                     | _ -> failwith "Expected identifier in parameter list")
 
             let funcName = generateUniqueName "lambda"
+            let paramBindings = 
+                paramNames 
+                |> List.mapi (fun i name -> 
+                    $"vec3_env_define(func_env, \"{name}\", args[{i + 1}]);")
+                |> String.concat "\n    "
 
-            let funcImpl =
-                $"""
-                Vec3Value* %s{funcName}(Vec3Value** args) {{
-                    // Create new environment with captured environment as parent
-                    Vec3Env* func_env = vec3_new_environment(env);
-                    
-                    // Bind parameters to the new environment
-                    %s{paramNames
-                       |> List.mapi (fun i name -> $"vec3_env_define(func_env, \"{name}\", args[{i}]);")
-                       |> String.concat "\n    "}
-                    
-                    // Create temporary environment swap to execute in function's scope
-                    Vec3Env* previous_env = env;
+            let funcImpl = $"""
+                Vec3Value* {funcName}(Vec3Value** args) {{
+                    Vec3Value* result = NULL;
+                    Vec3Function* func = ((Vec3Value*)args[0])->as.function;
+                    Vec3Env* func_env = vec3_new_environment(func->env);
+                    Vec3Env* prev_env = env;
                     env = func_env;
                     
-                    // Execute body in function's environment
-                    Vec3Value* result = %s{generateExpr body};
+                    // Bind parameters
+                    {paramBindings}
                     
-                    // Restore original environment
-                    env = previous_env;
+                    // Execute body
+                    result = {generateExpr body};
+                    if (result != NULL) {{
+                        vec3_incref(result);
+                    }}
                     
-                    // Clean up function environment but keep result
-                    vec3_incref(result);  // Increment before destroying environment
-                    vec3_destroy_environment(func_env);
-                    
+                    env = prev_env;
                     return result;
                 }}
                 """
 
             functionDefinitions.Value <- { Name = funcName; Implementation = funcImpl } :: functionDefinitions.Value
-
-            // Create function value that captures current environment
-            $"vec3_new_function(\"%s{funcName}\", %d{List.length parameters}, %s{funcName}, env)"
-
+            $"vec3_new_function(\"{funcName}\", {List.length parameters}, {funcName}, env)"
 
         | EIdentifier(id, _) ->
             match id.Lexeme with
@@ -157,37 +146,37 @@ let rec generateExpr (expr: Expr) : string =
 
         | EList(exprs, _) ->
             let args = exprs |> List.map generateExpr |> String.concat ", "
-            $"vec3_new_list(%d{List.length exprs}, %s{args})"
+            $"vec3_new_list({List.length exprs}, {args})"
 
         | ETuple(exprs, _) ->
             let args = exprs |> List.map generateExpr |> String.concat ", "
-            $"vec3_new_list(%d{List.length exprs}, %s{args})"
+            $"vec3_new_list({List.length exprs}, {args})"
 
         | EIndex(list, index, _) ->
             let listCode = generateExpr list
             let indexCode = generateExpr index
-            $"vec3_list_get(%s{listCode}, %s{indexCode})"
+            let func = $"vec3_env_get(env, \"index\")"
+            $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {listCode}, {indexCode}}}, 3)"
 
-        | EGrouping(e, _) -> $"(%s{generateExpr e})"
+        | EGrouping(e, _) -> $"({generateExpr e})"
 
         | ECall(callee, args, _) ->
             let argExprs = args |> List.map generateExpr |> String.concat ", "
-
             match callee with
             | EIdentifier(id, _) ->
                 match id.Lexeme with
                 | Identifier name ->
-                    $"vec3_call_function(vec3_env_get(env, \"{name}\"), (Vec3Value*[]){{{argExprs}}}, {List.length args})"
+                    let func = $"vec3_env_get(env, \"{name}\")"
+                    $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {argExprs}}}, {List.length args + 1})"
                 | Operator(op, _) ->
                     let funcName =
                         match op with
+                        | StarStar | Caret -> "power"
                         | Plus -> "add"
                         | Minus -> "sub"
                         | Star -> "mul"
                         | Slash -> "div"
                         | Percent -> "mod"
-                        | StarStar -> "pow"
-                        | Caret -> "pow"
                         | AmpersandAmpersand -> "and"
                         | PipePipe -> "or"
                         | Bang -> "not"
@@ -201,65 +190,83 @@ let rec generateExpr (expr: Expr) : string =
                         | DotStar -> "dot"
                         | ColonColon -> "cons"
                         | PlusPlus -> "concat"
-                        | _ -> failwithf $"Unknown operator: %A{op}"
+                        | _ -> failwithf $"Unknown operator: {op}"
 
-                    $"vec3_call_function(vec3_env_get(env, \"{funcName}\"), (Vec3Value*[]){{{argExprs}}}, {List.length args})"
-                | _ -> failwithf $"Unknown identifier type: %A{id.Lexeme}"
+                    let func = $"vec3_env_get(env, \"{funcName}\")"
+                    $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {argExprs}}}, {List.length args + 1})"
+                | _ -> failwithf $"Unknown identifier type: {id.Lexeme}"
             | _ ->
                 let funcExpr = generateExpr callee
-                $"vec3_call_function(%s{funcExpr}, (Vec3Value*[]){{{argExprs}}}, {List.length args})"
+                $"vec3_call_function({funcExpr}, (Vec3Value*[]){{{funcExpr}, {argExprs}}}, {List.length args + 1})"
+
         | EBlock(stmts, _, _) ->
             let stmtCodes = stmts |> List.map generateStmt |> String.concat "\n    "
-            $"{{\n    Vec3Env* block_env = vec3_new_environment(env);\n    %s{stmtCodes}\n    vec3_destroy_environment(block_env);\n}}"
+            $"({{ 
+                Vec3Value* result = NULL;
+                Vec3Env* block_env = vec3_new_environment(env);
+                Vec3Env* prev_env = env;
+                env = block_env;
+                
+                {stmtCodes}
+                
+                if (result != NULL) {{
+                    vec3_incref(result);
+                }}
+                
+                env = prev_env;
+                result; 
+            }})"
 
         | EIf(cond, thenExpr, elseExpr, _) ->
             let condCode = generateExpr cond
             let thenCode = generateExpr thenExpr
             let elseCode = generateExpr elseExpr
-            $"vec3_is_truthy(%s{condCode}) ? %s{thenCode} : %s{elseCode}"
+            $"vec3_is_truthy({condCode}) ? {thenCode} : {elseCode}"
 
         | ETail(expr, _) -> generateExpr expr
 
         | ERange(start, end_, _) ->
             let startCode = generateExpr start
             let endCode = generateExpr end_
-            $"vec3_range(%s{startCode}, %s{endCode})"
+            let func = $"vec3_env_get(env, \"range\")"
+            $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {startCode}, {endCode}}}, 3)"
 
         | EIndexRange(list, start, end_, _) ->
             let listCode = generateExpr list
             let startCode = generateExpr start
             let endCode = generateExpr end_
-            $"vec3_list_slice(%s{listCode}, %s{startCode}, %s{endCode})"
+            let func = $"vec3_env_get(env, \"slice\")"
+            $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {listCode}, {startCode}, {endCode}}}, 4)"
 
-        | EMatch(expr, _, _) -> failwithf $"Match expressions not implemented for: %A{expr}"
+        | EMatch(expr, _, _) -> failwithf $"Match expressions not implemented for: {expr}"
 
         | ERecordEmpty _ -> "vec3_new_record()"
 
         | ERecordExtend((name, value, _), record, _) ->
             let recordCode = generateExpr record
             let valueCode = generateExpr value
-
             match name.Lexeme with
-            | Identifier fieldName -> $"vec3_record_extend(%s{recordCode}, \"%s{fieldName}\", %s{valueCode})"
+            | Identifier fieldName -> 
+                $"vec3_record_extend({recordCode}, \"{fieldName}\", {valueCode})"
             | _ -> failwith "Expected identifier in record field"
 
         | ERecordSelect(record, field, _) ->
             let recordCode = generateExpr record
-
             match field.Lexeme with
-            | Identifier fieldName -> $"vec3_record_select(%s{recordCode}, \"%s{fieldName}\")"
+            | Identifier fieldName -> 
+                $"vec3_record_get({recordCode}, \"{fieldName}\")"
             | _ -> failwith "Expected identifier in record field"
 
         | ERecordRestrict(record, field, _) ->
             let recordCode = generateExpr record
-
             match field.Lexeme with
-            | Identifier fieldName -> $"vec3_record_restrict(%s{recordCode}, \"%s{fieldName}\")"
+            | Identifier fieldName -> 
+                $"vec3_record_restrict({recordCode}, \"{fieldName}\")"
             | _ -> failwith "Expected identifier in record field"
 
     with ex ->
-        printf $"%s{ex.Message}"
-        failwithf $"Error generating code for expression %A{expr}:\n%s{ex.Message}\nStackTrace: %s{ex.StackTrace}"
+        printf $"{ex.Message}"
+        failwithf $"Error generating code for expression {expr}:\n{ex.Message}\nStackTrace: {ex.StackTrace}"
 
 and generateStmt (stmt: Stmt) : string =
     try
@@ -268,36 +275,74 @@ and generateStmt (stmt: Stmt) : string =
             match name.Lexeme with
             | Identifier id ->
                 let exprCode = generateExpr expr
-                $"vec3_env_define(env, \"{id}\", %s{exprCode});"
+                $"""{{
+                    Vec3Value* value = {exprCode};
+                    vec3_env_define(env, "{id}", value);
+                }}"""
             | _ -> failwith "Expected identifier in variable declaration"
 
-        | SExpression(expr, _) -> $"%s{generateExpr expr};"
+        | SExpression(expr, _) -> 
+            let exprCode = generateExpr expr
+            $"result = {exprCode};"
 
         | SAssertStatement(expr, msg, _) ->
             match msg with
-            | Some msgExpr -> $"if (!vec3_is_truthy(%s{generateExpr expr})) {{ vec3_error(%s{generateExpr msgExpr}); }}"
+            | Some msgExpr -> 
+                $"if (!vec3_is_truthy({generateExpr expr})) {{ vec3_error({generateExpr msgExpr}); }}"
             | None ->
-                $"if (!vec3_is_truthy(%s{generateExpr expr})) {{ vec3_error(vec3_new_string(\"Assertion failed\")); }}"
+                $"if (!vec3_is_truthy({generateExpr expr})) {{ vec3_error(vec3_new_string(\"Assertion failed\")); }}"
 
         | STypeDeclaration _ -> ""
         | SImport _ -> ""
-        | SRecFunc(name, parameters, body, _) -> failwithf $"Recursive functions not implemented for: %A{name}"
-        | SAsync(name, parameters, body, _) -> failwithf $"Async functions not implemented for: %A{name}"
+        | SRecFunc(name, parameters, body, _) -> failwithf $"Recursive functions not implemented for: {name}"
+        | SAsync(name, parameters, body, _) -> failwithf $"Async functions not implemented for: {name}"
 
     with ex ->
-        printf $"%s{ex.Message}"
-        failwithf $"Error generating code for statement %A{stmt}:\n%s{ex.Message}\nStackTrace: %s{ex.StackTrace}"
+        printf $"{ex.Message}"
+        failwithf $"Error generating code for statement {stmt}:\n{ex.Message}\nStackTrace: {ex.StackTrace}"
+and generateTopLevelStmt (stmt: Stmt) : string =
+    try
+        match stmt with
+        | SVariableDeclaration(name, expr, _) ->
+            match name.Lexeme with
+            | Identifier id ->
+                let exprCode = generateExpr expr
+                $"""{{
+                    Vec3Value* value = {exprCode};
+                    vec3_env_define(env, "{id}", value);
+                }}"""
+            | _ -> failwith "Expected identifier in variable declaration"
+            
+        | SExpression(expr, _) ->
+            let exprCode = generateExpr expr
+            $"{{ Vec3Value* temp = {exprCode}; }}"
+            
+        | SAssertStatement(expr, msg, _) ->
+            match msg with
+            | Some msgExpr -> 
+                $"if (!vec3_is_truthy({generateExpr expr})) {{ vec3_error({generateExpr msgExpr}); }}"
+            | None ->
+                $"if (!vec3_is_truthy({generateExpr expr})) {{ vec3_error(vec3_new_string(\"Assertion failed\")); }}"
+
+        | STypeDeclaration _ -> ""
+        | SImport _ -> ""
+        | SRecFunc(name, parameters, body, _) -> failwithf $"Recursive functions not implemented for: {name}"
+        | SAsync(name, parameters, body, _) -> failwithf $"Async functions not implemented for: {name}"
+
+    with ex ->
+        printf $"{ex.Message}"
+        failwithf $"Error generating code for statement {stmt}:\n{ex.Message}\nStackTrace: {ex.StackTrace}"
 
 let generateCCode (program: Program) : string =
     try
         functionDefinitions.Value <- []
         functionNames.Value <- Set.empty
 
-        let stmts = program |> List.map generateStmt |> String.concat "\n    "
+        let stmts = program |> List.map generateTopLevelStmt |> String.concat "\n    "
 
         let forwardDecls =
             functionDefinitions.Value
-            |> List.map (fun f -> $"Vec3Value* %s{f.Name}(Vec3Value** args);")
+            |> List.map (fun f -> $"Vec3Value* {f.Name}(Vec3Value** args);")
             |> String.concat "\n"
 
         let funcImplementations =
@@ -306,22 +351,38 @@ let generateCCode (program: Program) : string =
             |> List.map (fun f -> f.Implementation)
             |> String.concat "\n\n"
 
-        $"""{headers}
+        $"""
+#include "number.h"
+#include "value.h"
+#include "vec3_math.h"
+#include "vec3_list.h"
+#include "env.h"
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
+
+Vec3Env* env;
 
 // Forward declarations
-%s{forwardDecls}
+{forwardDecls}
 
 // Function implementations 
-%s{funcImplementations}
+{funcImplementations}
 
 int main(void) {{
-{initCode}
+    // Create global environment
+    env = vec3_new_environment(NULL);
+    
+    // Register builtin functions
+    vec3_register_builtins(env);
     
     // Program statements
-    %s{stmts}
+    {stmts}
     
-{cleanupCode}
+    return 0;
 }}
 """
     with ex ->
-        failwithf $"Error generating program code:\n%s{ex.Message}\nStackTrace: %s{ex.StackTrace}"
+        failwithf $"Error generating program code:\n{ex.Message}\nStackTrace: {ex.StackTrace}"

@@ -8,7 +8,28 @@
 #include <string.h>
 
 #define INITIAL_CAPACITY 16
+Vec3Value* vec3_concat(Vec3Value** args)
+{
+    Vec3Value* a = args[0];
+    Vec3Value* b = args[1];
 
+    if (a->object.type != TYPE_STRING || b->object.type != TYPE_STRING) {
+        fprintf(stderr, "Concatenate operation requires two strings\n");
+        return vec3_new_nil();
+    }
+
+    size_t len1 = a->as.string.length;
+    size_t len2 = b->as.string.length;
+    char* result = malloc(len1 + len2 + 1);
+
+    strcpy(result, a->as.string.chars);
+    strcat(result, b->as.string.chars);
+
+    Vec3Value* new_string = vec3_new_string(result);
+    free(result);
+
+    return new_string;
+}
 static uint32_t hash_string(const char* key)
 {
     uint32_t hash = 2166136261u;
@@ -254,7 +275,7 @@ bool vec3_is_truthy(const Vec3Value* value)
 
 Vec3Value* vec3_print(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_print_internal(value, true);
     return vec3_new_nil();
 }
@@ -329,16 +350,15 @@ void vec3_print_internal(const Vec3Value* value, bool nl)
 }
 
 Vec3Value* vec3_new_function(const char* name, int arity,
-    Vec3Value* (*fn)(Vec3Value** args),
-    struct Vec3Env* env)
-{
+                            Vec3Value* (*fn)(Vec3Value** args),
+                            struct Vec3Env* env) {
     Vec3Function* function = malloc(sizeof(Vec3Function));
     function->name = strdup(name);
     function->arity = arity;
     function->fn = fn;
+
+    // Create new environment with current env as parent
     function->env = env;
-    function->closure.captured = NULL;
-    function->closure.captured_count = 0;
 
     Vec3Value* value = malloc(sizeof(Vec3Value));
     value->object.type = TYPE_FUNCTION;
@@ -350,28 +370,22 @@ Vec3Value* vec3_new_function(const char* name, int arity,
 }
 Vec3Value* vec3_call_function(Vec3Value* function, Vec3Value** args, int argCount)
 {
-    if (function->object.type != TYPE_FUNCTION) {
+  if (function->object.type != TYPE_FUNCTION) {
         fprintf(stderr, "Can only call functions\n");
         return vec3_new_nil();
     }
 
     Vec3Function* fn = function->as.function;
-    if (fn->arity != argCount) {
-        fprintf(stderr, "Expected %d arguments but got %d\n", fn->arity, argCount);
+    if (fn->arity != argCount - 1) {  
+        fprintf(stderr, "Expected %d arguments but got %d\n", fn->arity, argCount - 1);
         return vec3_new_nil();
     }
 
-    return fn->fn(args);
-}
+    return fn->fn(args);}
 
-void vec3_destroy_function(Vec3Object* object)
-{
+void vec3_destroy_function(Vec3Object* object) {
     Vec3Value* value = (Vec3Value*)object;
     Vec3Function* function = value->as.function;
-    for (int i = 0; i < function->closure.captured_count; i++) {
-        vec3_decref(function->closure.captured[i]);
-    }
-    free(function->closure.captured);
     free(function->name);
     if (function->env != NULL) {
         vec3_destroy_environment(function->env);
@@ -379,14 +393,6 @@ void vec3_destroy_function(Vec3Object* object)
     free(function);
 }
 
-void vec3_capture_variable(Vec3Function* fn, const char* name, Vec3Value* value)
-{
-    fn->closure.captured = realloc(fn->closure.captured,
-        (fn->closure.captured_count + 1) * sizeof(Vec3Value*));
-
-    vec3_incref(value);
-    fn->closure.captured[fn->closure.captured_count++] = value;
-}
 
 Vec3Value* vec3_equal(Vec3Value** args)
 {

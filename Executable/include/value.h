@@ -2,6 +2,7 @@
 #include "number.h"
 #include <stdbool.h>
 #include <stddef.h>
+#define TABLE_MAX_LOAD 0.75
 
 typedef struct Vec3Value Vec3Value;
 typedef struct Vec3Object Vec3Object;
@@ -42,11 +43,7 @@ typedef struct {
     char* name;
     int arity;
     Vec3Value* (*fn)(Vec3Value** args);
-    struct Vec3Env* env;
-    struct {
-        Vec3Value** captured;
-        int captured_count;
-    } closure;
+    Vec3Env* env;
 } Vec3Function;
 
 typedef struct Vec3Object {
@@ -124,8 +121,12 @@ void vec3_print_internal(const Vec3Value* value, bool nl);
 Vec3Value* vec3_print(Vec3Value** args);
 
 bool vec3_is_truthy(const Vec3Value* value);
+
 Vec3Value* vec3_to_string(Vec3Value** args);
 Vec3Value* vec3_to_number(Vec3Value** args);
 Vec3Value* vec3_to_bool(Vec3Value** args);
 Vec3Value* vec3_input(Vec3Value** args);
 Vec3Value* vec3_error(Vec3Value* message);
+
+// string
+Vec3Value* vec3_concat(Vec3Value** args);

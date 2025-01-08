@@ -1,13 +1,22 @@
 #pragma once
 #include "value.h"
-
+typedef enum {
+    PLOT_SCATTER,
+    PLOT_LINE,
+    PLOT_BAR,
+    PLOT_SIGNAL
+} PlotType;
 // Math functions
 Vec3Value* vec3_add(Vec3Value** args);
+Vec3Value* vec3_sub(Vec3Value** args);
 Vec3Value* vec3_multiply(Vec3Value** args);
 Vec3Value* vec3_power(Vec3Value** args);
 Vec3Value* vec3_sqrt(Vec3Value** args);
 Vec3Value* vec3_abs(Vec3Value** args);
 Vec3Value* vec3_floor(Vec3Value** args);
+Vec3Value* vec3_plot(Vec3Value** args);
+Vec3Value* vec3_plot_function(Vec3Value** args);
+Vec3Value* vec3_plot_functions(Vec3Value** args);
 
 // Trigonometric functions
 Vec3Value* vec3_cos(Vec3Value** args);
