@@ -1,2 +1,5 @@
-on(id, Keys.Right, (state) -> { x = state.x + 10.0, y = cos(state.x) * 10.0 + 100.0 })
-on(id, Keys.Left, (state) -> { x = state.x - 10.0, y = cos(state.x) * 10.0 + 100.0 })
+// function tests
+let f = (x) -> x^2
+assert f(3) == 9, "Function failed"
+assert f(3) + f(2) == 13, "Function with expression failed"
+assert f(3) + f(2) == 13, "Function with expression failed"

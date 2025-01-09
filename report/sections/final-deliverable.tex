@@ -206,53 +206,6 @@ Only constants are evaluated, and thus no variable resolution is performed due t
 
 \input{sections/initial-design-of-the-bytecode-virtual-machine-and-compiler}
 
-\section{Virtual Machine}\label{sec:virtual-machine2}
-
-The Virtual Machine (VM) was responsible for executing the compiled bytecode. 
-It was designed as a stack-based machine, meaning that it used a stack to store intermediate values during computation. 
-The VM's state was represented by the \texttt{VM} type, defined as follows:
-
-\begin{minted}{fsharp}
-type VM = {
-    Chunk: Chunk
-    IP: int
-    Stack: ResizeArray<Value>
-    ScopeDepth: int  
-}
-\end{minted}
-
-\noindent where:
-
-\begin{itemize}
-    \item \texttt{Chunk} held the bytecode and associated data (constant pool, line information) currently being executed.
-    \item \texttt{IP} (Instruction Pointer) was an integer representing the index of the next bytecode instruction
-    \item \texttt{Stack} was a dynamically sized array used to store values during computation.
-    Operations like arithmetic, comparisons, and function calls would push and pop values from this stack.
-    \item \texttt{ScopeDepth} tracked the current level of scope nesting.
-\end{itemize}
-
-The \texttt{createVM} function initialized a new VM instance with a given chunk.
-The core of the VM was the \texttt{run} function, a recursive loop that fetched, decoded, and executed instructions until a \texttt{RETURN} instruction was encountered or an error occurred.
-
-Key helper functions included:
-
-\begin{itemize}
-    \item \texttt{push} and \texttt{pop} for manipulating the stack
-    \item \texttt{peek} for inspecting the top value on the stack without removing it
-    \item \texttt{readByte} for reading the next byte from the bytecode and incrementing the IP
-    \item \texttt{readConstant} and \texttt{readConstantLong} for reading constant values from the constant pool
-    \item \texttt{call} for calling functions, which involved setting up a new frame on the call stack
-\end{itemize}
-
-The \texttt{run} function used a match expression to dispatch to the appropriate code based on the current opcode.
-Each opcode case handled a specific instruction, potentially manipulating the stack, performing calculations, or managing control flow.
-
-The \texttt{interpret} function provided the main entry point for executing a chunk of bytecode.
-It first disassembled the chunk for debugging purposes, then created a new VM instance and called \texttt{run} to start the execution process.
-
-In conclusion, this initial design established a solid foundation for a stack-based virtual machine and its associated compiler.
-It emphasized a clean separation of concerns between compiling and executing code, a compact bytecode representation, and a focus on essential features for a functional language.
-The inclusion of debugging tools, a well-defined error-handling mechanism, and a dedicated virtual machine for execution further contributed to the robustness and efficiency of the system.
 
 \section{Prelude}\label{sec:prelude}
 
