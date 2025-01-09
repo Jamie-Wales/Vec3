@@ -238,8 +238,6 @@ let rec generateExpr (expr: Expr) : string =
             let func = $"vec3_env_get(env, \"slice\")"
             $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {listCode}, {startCode}, {endCode}}}, 4)"
 
-        | EMatch(expr, _, _) -> failwithf $"Match expressions not implemented for: {expr}"
-
         | ERecordEmpty _ -> "vec3_new_record()"
 
         | ERecordExtend((name, value, _), record, _) ->
