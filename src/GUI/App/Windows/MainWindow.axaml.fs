@@ -8,7 +8,6 @@ open AvaloniaEdit
 open Avalonia.Media
 open TextMateSharp.Grammars
 open AvaloniaEdit.TextMate
-open Vec3
 open Vec3.Interpreter.Repl
 open Vec3.Interpreter.Backend.VM
 open Vec3.Interpreter.Backend.Types
@@ -268,11 +267,6 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 loop (pos + step) ((pos, y) :: acc)
         loop start []
     
-    /// <summary>
-    /// Plot the given data currently in the VM.
-    /// </summary>
-    /// <param name="vm">The current vm</param>
-    /// <returns>Unit</returns>
     /// <summary>
     /// Plot the given data currently in the VM.
     /// </summary>

@@ -12,6 +12,11 @@ Bierman, G., Abadi, M., and Torgersen, M. (2014).
   Conference, Uppsala, Sweden, July 28--August 1, 2014. Proceedings 28}, pages
   257--281. Springer.
 
+\bibitem[{BMITC}, 2022]{symbolicExprF}
+{BMITC} (2022).
+\newblock Symbolic calculus in f\#.
+\newblock \url{https://bmitc.me/articles/symbolic-expressions-in-fsharp}.
+
 \bibitem[{Desmos Studio PBC}, 2023]{Desmos:2023}
 {Desmos Studio PBC} (2023).
 \newblock Desmos website.
@@ -58,6 +63,12 @@ Morris, J.~G. and McKinna, J. (2019).
 \newblock Abstracting extensible data types: or, rows by any other name.
 \newblock {\em Proceedings of the ACM on Programming Languages}, 3(POPL):1--28.
 
+\bibitem[Nonsense, 2013]{symbolicExprHask}
+Nonsense, A. (2013).
+\newblock Symbolic calculus in haskell.
+\newblock
+  \url{http://5outh.blogspot.com/2013/05/symbolic-calculus-in-haskell.html}.
+
 \bibitem[{OCaml}, 2024]{ocamlDocs}
 {OCaml} (2024).
 \newblock Ocaml documentation.
@@ -94,6 +105,11 @@ Sulzmann, M.~F. (2000).
 \newblock {\em A general framework for Hindley/Milner type systems with
   constraints}.
 \newblock Yale University.
+
+\bibitem[{SymPy}, 2024]{symbolicExprPython}
+{SymPy} (2024).
+\newblock Symbolic calculus in python.
+\newblock \url{https://www.sympy.org/en/index.html}.
 
 \bibitem[Timany et~al., 2024]{timany2024logical}
 Timany, A., Krebbers, R., Dreyer, D., and Birkedal, L. (2024).

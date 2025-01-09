@@ -26,7 +26,8 @@ type OpCodeResult =
     | Continue
 
 /// <summary>
-/// Represents the sdout output steam
+/// Represents the stdout output steam
+/// </summary>
 let output = ref Seq.empty
 
 /// <summary>
@@ -520,10 +521,9 @@ and executeOpcodeImpl (vm: VM) (opcode: OP_CODE) : VM =
         let closure = findClosure 0
 
         match closure with
-        | VClosure({ UpValues = upValues
+        | VClosure({ UpValues = _
                      UpValuesValues = vals },
                    _) ->
-            let upValues = List.rev upValues
             // let upValue = upValues[int slot]
             let vals = Array.rev vals
             let upValue = vals[if int slot = 0 then 0 else int slot - 1]
@@ -865,8 +865,8 @@ and specialCasedBuiltins () : Map<string, Value> =
           (fun args ->
               match args with
               | [ VClosure(_, Some f) ] ->
-                  let diff = SymbolicExpression.differentiate f
-                  let expr = SymbolicExpression.toExpr diff
+                  let diff = differentiate f
+                  let expr = toExpr diff
 
                   let param =
                       { Lexeme = Identifier "x"
@@ -938,7 +938,7 @@ and specialCasedBuiltins () : Map<string, Value> =
           (fun args ->
               match args with
               | [ VClosure(_, Some f) ] ->
-                  let integral = SymbolicExpression.integrate f
+                  let integral = integrate f
                   let expr = toExpr integral
 
                   let param =
@@ -964,8 +964,8 @@ and specialCasedBuiltins () : Map<string, Value> =
           (fun args ->
               match args with
               | [ VClosure(_, Some f); VNumber(VInteger n) ] ->
-                  let series = SymbolicExpression.taylorSeries f n
-                  let expr = SymbolicExpression.toExpr series
+                  let series = taylorSeries f n
+                  let expr = toExpr series
 
                   let param =
                       { Lexeme = Identifier "x"

@@ -51,7 +51,7 @@ type DrawWindow() as this =
 
         // Listen for arrow keys
         this.KeyDown.Add(fun e ->
-            let listenerId = this.keyToInt (e.Key)
+            let listenerId = this.keyToInt e.Key
             this.handleEvent listenerId)
 
     /// <summary>

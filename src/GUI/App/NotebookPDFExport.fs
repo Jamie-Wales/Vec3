@@ -125,7 +125,6 @@ module NotebookPdfExport =
                                         .FontSize(10.0f)
                                         .FontColor("#718096")
                                     |> ignore)
-                            |> ignore
 
                             column.Spacing(25.0f)
 
@@ -166,7 +165,6 @@ module NotebookPdfExport =
                                                     |> ignore
                                                 elif not (String.IsNullOrWhiteSpace(line)) then
                                                     textCol.Item().Text(line).FontColor("#2D3748") |> ignore)
-                                    |> ignore
 
                                 | CodeCell data ->
                                     column
@@ -195,7 +193,6 @@ module NotebookPdfExport =
                                                         .Text(data.Code)
                                                         .FontColor("#2D3748")
                                                     |> ignore)
-                                            |> ignore
 
                                             // Output Section (if any)
                                             if not (String.IsNullOrWhiteSpace(data.Output)) then
@@ -222,7 +219,6 @@ module NotebookPdfExport =
                                                             .Text(data.Output)
                                                             .FontColor("#2F855A")
                                                         |> ignore)
-                                                |> ignore
 
                                             // Plots Section (if any)
                                             if not (List.isEmpty data.Plots) then

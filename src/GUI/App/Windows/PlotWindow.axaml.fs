@@ -41,7 +41,7 @@ type PlotWindow() as this =
             xL.Color <- Color(byte 0, byte 0, byte 0)
             plotControl.Plot.XLabel("x")
             plotControl.Plot.YLabel("y")
-            plotControl.Plot.Legend.Location <- ScottPlot.Alignment.UpperRight
+            plotControl.Plot.Legend.Location <- Alignment.UpperRight
             plotControl.Plot.ShowLegend() |> ignore
             plotControl.Refresh()
             
@@ -55,9 +55,9 @@ type PlotWindow() as this =
     member private this.HandleInput(input: string) =
         try
             let addToPlot symExpr =
-                let f = SymbolicExpression.toBuiltin symExpr
+                let f = toBuiltin symExpr
                 let p = plotControl.Plot.Add.Function(f)
-                p.LegendText <- $"f(x) = {SymbolicExpression.toString symExpr}"
+                p.LegendText <- $"f(x) = {toString symExpr}"
                 plotControl.Refresh()
             
             match parse input false with
@@ -80,12 +80,12 @@ type PlotWindow() as this =
             
             // Re-add axes
             let yL = plotControl.Plot.Add.VerticalLine(0.0)
-            yL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
+            yL.Color <- Color(byte 0, byte 0, byte 0)
             let xL = plotControl.Plot.Add.HorizontalLine(0.0)
-            xL.Color <- ScottPlot.Color(byte 0, byte 0, byte 0)
+            xL.Color <- Color(byte 0, byte 0, byte 0)
             
             plotControl.Plot.XLabel("x")
             plotControl.Plot.YLabel("y")
-            plotControl.Plot.Legend.Location <- ScottPlot.Alignment.UpperRight
+            plotControl.Plot.Legend.Location <- Alignment.UpperRight
             plotControl.Plot.ShowLegend() |> ignore
             plotControl.Refresh()

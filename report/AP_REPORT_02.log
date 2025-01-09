@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  7 JAN 2025 11:02
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  7 JAN 2025 11:12
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -876,11 +876,11 @@ r> ":" <type> "," <recordtypelist>[]
 \pydata@fh@_E017103BDF0CAED79F13B8F548EAF24E.data.minted=\write5
 \openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
 
-runsystem(latexminted config  --timestamp 20250107110219 E017103BDF0CAED79F13B8
+runsystem(latexminted config  --timestamp 20250107111258 E017103BDF0CAED79F13B8
 F548EAF24E)...executed safely (allowed).
 
 (./_E017103BDF0CAED79F13B8F548EAF24E.config.minted)
-runsystem(latexminted cleanconfig  --timestamp 20250107110219 E017103BDF0CAED79
+runsystem(latexminted cleanconfig  --timestamp 20250107111258 E017103BDF0CAED79
 F13B8F548EAF24E)...executed safely (allowed).
 
 
@@ -1056,20 +1056,28 @@ Chapter 5.
 [38
 
 ]
-Underfull \hbox (badness 2027) in paragraph at lines 16--19
+Underfull \hbox (badness 6808) in paragraph at lines 16--19
+[]\OT1/cmr/m/n/10.95 BMITC (2022).  Sym-bolic cal-cu-lus in f#.  []$\OT1/cmtt/m
+/n/10.95 https : / / bmitc . me / articles /
+ []
+
+
+Underfull \hbox (badness 2027) in paragraph at lines 21--24
 []\OT1/cmr/m/n/10.95 Desmos Stu-dio PBC (2023).  Desmos web-site.  https://desm
 os.com [Ac-cessed:
  []
 
-)
+
 
 [39
 
-]
+])
+
+[40]
 Appendix A.
 
 
-[40
+[41
 
 ]
 Appendix B.
@@ -1156,7 +1164,7 @@ Overfull \hbox (1.16759pt too wide) in paragraph at lines 118--118
 
 
 
-[41
+[42
 
 ]
 
@@ -1240,8 +1248,6 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 )
 
-[42]
-
 [43]
 
 [44]
@@ -1249,16 +1255,18 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 [45]
 
 [46]
+
+[47]
 Appendix C.
 (./sections/algorithms.tex
 
-[47
+[48
 
 ])
 
-[48]
+[49]
 
-[49] (./AP_REPORT_02.aux)
+[50] (./AP_REPORT_02.aux)
  ***********
 LaTeX2e <2024-11-01>
 L3 programming layer <2024-11-02>
@@ -1271,10 +1279,10 @@ Package rerunfilecheck Info: File `AP_REPORT_02.out' has not changed.
 (rerunfilecheck)             Checksum: 19A6C96B5A5B485FC0B6D59DD6C88FFB;10950.
  ) 
 Here is how much of TeX's memory you used:
- 19458 strings out of 473362
- 372592 string characters out of 5720983
- 934574 words of memory out of 5000000
- 41981 multiletter control sequences out of 15000+600000
+ 19471 strings out of 473362
+ 372874 string characters out of 5720983
+ 934652 words of memory out of 5000000
+ 41990 multiletter control sequences out of 15000+600000
  569039 words of font info for 75 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  85i,12n,93p,1075b,938s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -1295,10 +1303,10 @@ live/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texli
 ve/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texliv
 e/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive
 /2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on AP_REPORT_02.pdf (51 pages, 1647718 bytes).
+Output written on AP_REPORT_02.pdf (52 pages, 1648782 bytes).
 PDF statistics:
- 900 PDF objects out of 1000 (max. 8388607)
- 765 compressed objects within 8 object streams
- 199 named destinations out of 1000 (max. 500000)
+ 918 PDF objects out of 1000 (max. 8388607)
+ 782 compressed objects within 8 object streams
+ 203 named destinations out of 1000 (max. 500000)
  682 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -126,7 +126,7 @@ let newton = (f, x0, tolerance, maxIter) {
                     match Color.TryParse(colorString) with
                     | true, color ->
                         let brush = SolidColorBrush(color)
-                        action (brush)
+                        action brush
                     | _ -> ()
 
             applyColor "editor.background" (fun brush -> syntaxEditor.Background <- brush)
