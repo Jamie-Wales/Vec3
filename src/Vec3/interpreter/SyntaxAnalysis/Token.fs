@@ -307,7 +307,7 @@ type BuiltInFunction =
     | Print
     | Input
     | Exit
-
+    | Concat
     | Cos
     | Sin
     | Tan

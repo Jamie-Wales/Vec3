@@ -4,6 +4,7 @@ open System
 open System.IO
 open Vec3.Interpreter.Parser
 open Vec3.Interpreter.Typing
+open Vec3.Interpreter.SyntaxAnalysis.TailAnalyser
 
 /// <summary>
 /// Represents possible transpiler errors with detailed messages
@@ -205,10 +206,12 @@ let transpile (inputPath: string) (config: TranspilerConfig) : Result<string, Tr
             | Ok result -> Ok result
             | Error errors -> Error(TypeError $"Type error: %A{errors}")
 
+        let analyzedProgram = analyseStmts typedProgram
+
         let! cCode =
             try
                 printfn "Generating C code..."
-                Ok(CodeGenerator.generateCCode typedProgram)
+                Ok(CodeGenerator.generateCCode analyzedProgram) // Pass analyzed program instead
             with ex ->
                 Error(CodeGenError $"Code generation failed: {ex.Message}")
 

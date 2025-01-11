@@ -9,6 +9,7 @@ type GeneratedFunction =
 
 let functionDefinitions: GeneratedFunction list ref = ref []
 let functionNames: Set<string> ref = ref Set.empty
+let recursiveFunctions: Set<string> ref = ref Set.empty
 
 let generateUniqueName baseName =
     let rec findUnique i =
@@ -52,33 +53,6 @@ let tryGetBuiltInFunction lexeme =
     else
         None
 
-let headers = $"""
-#include "number.h"
-#include "value.h"
-#include "vec3_math.h"
-#include "vec3_list.h"
-#include "env.h"
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
-#include <stdlib.h>
-#include <math.h>
-
-Vec3Env* env;
-"""
-
-let initCode = $"""
-    // Create global environment
-    env = vec3_new_environment(NULL);
-    
-    // Register builtin functions
-    vec3_register_builtins(env);
-"""
-
-let cleanupCode = $"""
-    return 0;
-"""
-
 let escapeString (s: string) =
     s.Replace("\\", "\\\\")
      .Replace("\"", "\\\"")
@@ -86,186 +60,263 @@ let escapeString (s: string) =
      .Replace("\t", "\\t")
 
 let rec generateExpr (expr: Expr) : string =
-    try
-        match expr with
-        | ELiteral(lit, _) ->
-            match lit with
-            | LNumber(LInteger i) -> $"vec3_new_number(number_from_int({i}))"
-            | LNumber(LFloat f) -> $"vec3_new_number(number_from_float({f}))"
-            | LNumber(LRational(n, d)) -> $"vec3_new_number(number_from_rational({n}, {d}))"
-            | LNumber(LComplex(r, i)) -> $"vec3_new_number(number_from_complex({r}, {i}))"
-            | LNumber(LChar c) -> $"vec3_new_number(number_from_int({int c}))"
-            | LString s -> $"vec3_new_string(\"{escapeString s}\")"
-            | LBool b -> $"vec3_new_bool({b})"
-            | LUnit -> "vec3_new_nil()"
+   try
+       match expr with
+       | ELiteral(lit, _) ->
+           match lit with
+           | LNumber(LInteger i) -> $"vec3_new_number(number_from_int({i}))"
+           | LNumber(LFloat f) -> $"vec3_new_number(number_from_float({f}))"
+           | LNumber(LRational(n, d)) -> $"vec3_new_number(number_from_rational({n}, {d}))"
+           | LNumber(LComplex(r, i)) -> $"vec3_new_number(number_from_complex({r}, {i}))"
+           | LNumber(LChar c) -> $"vec3_new_number(number_from_int({int c}))"
+           | LString s -> $"vec3_new_string(\"{escapeString s}\")"
+           | LBool b -> $"vec3_new_bool({b})"
+           | LUnit -> "vec3_new_nil()"
 
-        | ELambda(parameters, body, _, _, _, _) ->
-            let paramNames =
-                parameters 
-                |> List.map (fun (token, _) ->
-                    match token.Lexeme with
-                    | Identifier name -> name
-                    | _ -> failwith "Expected identifier in parameter list")
+       | ELambda(parameters, body, _, _, _, _) ->
+           let paramNames =
+               parameters 
+               |> List.map (fun (token, _) ->
+                   match token.Lexeme with
+                   | Identifier name -> name
+                   | _ -> failwith "Expected identifier in parameter list")
 
-            let funcName = generateUniqueName "lambda"
-            let paramBindings = 
-                paramNames 
-                |> List.mapi (fun i name -> 
-                    $"vec3_env_define(func_env, \"{name}\", args[{i + 1}]);")
-                |> String.concat "\n    "
+           let funcName = generateUniqueName "lambda"
+           let paramBindings = 
+               paramNames 
+               |> List.mapi (fun i name -> 
+                   $"vec3_env_define(func_env, \"{name}\", args[{i + 1}]);") 
+               |> String.concat "\n    "
 
-            let funcImpl = $"""
-                Vec3Value* {funcName}(Vec3Value** args) {{
-                    Vec3Value* result = NULL;
-                    Vec3Function* func = ((Vec3Value*)args[0])->as.function;
-                    Vec3Env* func_env = vec3_new_environment(func->env);
-                    Vec3Env* prev_env = env;
-                    env = func_env;
-                    
-                    // Bind parameters
-                    {paramBindings}
-                    
-                    // Execute body
-                    result = {generateExpr body};
-                    if (result != NULL) {{
-                        vec3_incref(result);
-                    }}
-                    
-                    env = prev_env;
-                    return result;
-                }}
-                """
+           let funcImpl = $"""
+               Vec3Value* {funcName}(Vec3Value** args) {{
+                   Vec3Function* func = ((Vec3Value*)args[0])->as.function;
+                   Vec3Env* func_env = vec3_new_environment(func->env);
+                   
+                   // Bind parameters
+                   {paramBindings}
+                   
+                   // Execute body
+                   Vec3Value* result = {generateExpr body};
+                   
+                   // Evaluate any thunks
+                   if (result != NULL && result->object.type == TYPE_TRAMPOLINE && result->as.trampoline->is_thunk) {{
+                       result = vec3_trampoline_eval((Vec3TrampolineValue*)result);
+                   }}
+                   
+                   vec3_destroy_environment(func_env);
+                   return result;
+               }}
+               """
 
-            functionDefinitions.Value <- { Name = funcName; Implementation = funcImpl } :: functionDefinitions.Value
-            $"vec3_new_function(\"{funcName}\", {List.length parameters}, {funcName}, env)"
+           functionDefinitions.Value <- { Name = funcName; Implementation = funcImpl } :: functionDefinitions.Value
+           $"vec3_new_function(\"{funcName}\", {List.length parameters}, {funcName}, env)"
 
-        | EIdentifier(id, _) ->
-            match id.Lexeme with
-            | Identifier name -> $"vec3_env_get(env, \"{name}\")"
-            | _ -> raise <| InvalidProgramException "Expected identifier in expression"
+       | EIdentifier(id, _) ->
+           match id.Lexeme with
+           | Identifier name -> 
+               // Evaluate any thunks when getting from environment
+               $"""({{
+                   Vec3Value* value = vec3_env_get(env, "{name}");
+                   if (value != NULL && value->object.type == TYPE_TRAMPOLINE && value->as.trampoline->is_thunk) {{
+                       value = vec3_trampoline_eval((Vec3TrampolineValue*)value);
+                   }}
+                   value;
+               }})"""
+           | _ -> raise <| InvalidProgramException "Expected identifier in expression"
 
-        | EList(exprs, _) ->
-            let args = exprs |> List.map generateExpr |> String.concat ", "
-            $"vec3_new_list({List.length exprs}, {args})"
+       | EList(exprs, _) ->
+           let args = 
+               exprs 
+               |> List.map (fun e -> 
+                   let exprCode = generateExpr e
+                   $"""({{
+                       Vec3Value* value = {exprCode};
+                       if (value != NULL && value->object.type == TYPE_TRAMPOLINE && value->as.trampoline->is_thunk) {{
+                           value = vec3_trampoline_eval((Vec3TrampolineValue*)value);
+                       }}
+                       value;
+                   }})""") 
+               |> String.concat ", "
+           $"vec3_new_list({List.length exprs}, {args})"
 
-        | ETuple(exprs, _) ->
-            let args = exprs |> List.map generateExpr |> String.concat ", "
-            $"vec3_new_list({List.length exprs}, {args})"
+       | ETuple(exprs, _) ->
+           let args = 
+               exprs 
+               |> List.map (fun e -> 
+                   let exprCode = generateExpr e
+                   $"""({{
+                       Vec3Value* value = {exprCode};
+                       if (value != NULL && value->object.type == TYPE_TRAMPOLINE && value->as.trampoline->is_thunk) {{
+                           value = vec3_trampoline_eval((Vec3TrampolineValue*)value);
+                       }}
+                       value;
+                   }})""") 
+               |> String.concat ", "
+           $"vec3_new_list({List.length exprs}, {args})"
 
-        | EIndex(list, index, _) ->
-            let listCode = generateExpr list
-            let indexCode = generateExpr index
-            let func = $"vec3_env_get(env, \"index\")"
-            $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {listCode}, {indexCode}}}, 3)"
+       | EIndex(list, index, _) ->
+           let listCode = generateExpr list
+           let indexCode = generateExpr index
+           let func = $"vec3_env_get(env, \"index\")"
+           $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {listCode}, {indexCode}}}, 3)"
 
-        | EGrouping(e, _) -> $"({generateExpr e})"
+       | EGrouping(e, _) -> generateExpr e
 
-        | ECall(callee, args, _) ->
-            let argExprs = args |> List.map generateExpr |> String.concat ", "
-            match callee with
-            | EIdentifier(id, _) ->
-                match id.Lexeme with
-                | Identifier name ->
-                    let func = $"vec3_env_get(env, \"{name}\")"
-                    $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {argExprs}}}, {List.length args + 1})"
-                | Operator(op, _) ->
-                    let funcName =
-                        match op with
-                        | StarStar | Caret -> "power"
-                        | Plus -> "add"
-                        | Minus -> "sub"
-                        | Star -> "mul"
-                        | Slash -> "div"
-                        | Percent -> "mod"
-                        | AmpersandAmpersand -> "and"
-                        | PipePipe -> "or"
-                        | Bang -> "not"
-                        | EqualEqual -> "eq"
-                        | BangEqual -> "neq"
-                        | Less -> "lt"
-                        | LessEqual -> "lte"
-                        | Greater -> "gt"
-                        | GreaterEqual -> "gte"
-                        | Cross -> "cross"
-                        | DotStar -> "dot"
-                        | ColonColon -> "cons"
-                        | PlusPlus -> "concat"
-                        | _ -> failwithf $"Unknown operator: {op}"
+       | ECall(callee, args, _) ->
+           match callee with
+           | EIdentifier({Lexeme = Identifier name}, _) when Set.contains name recursiveFunctions.Value ->
+               let argsCode = 
+                   args 
+                   |> List.map (fun e -> 
+                       let argCode = generateExpr e
+                       $"""({{
+                           Vec3Value* value = {argCode};
+                           if (value != NULL && value->object.type == TYPE_TRAMPOLINE && value->as.trampoline->is_thunk) {{
+                               value = vec3_trampoline_eval((Vec3TrampolineValue*)value);
+                           }}
+                           value;
+                       }})""") 
+                   |> String.concat ", "
+               let func = $"vec3_env_get(env, \"{name}\")"
+               $"""(Vec3Value*)vec3_new_trampoline_thunk(
+                   vec3_new_thunk(((Vec3Value*){func})->as.function, 
+                       (Vec3Value*[]){{{func}, {argsCode}}}, 
+                       {List.length args + 1}))"""
+           | EIdentifier(id, _) ->
+               let argExprs = 
+                   args 
+                   |> List.map (fun e -> 
+                       let argCode = generateExpr e
+                       $"""({{
+                           Vec3Value* value = {argCode};
+                           if (value != NULL && value->object.type == TYPE_TRAMPOLINE && value->as.trampoline->is_thunk) {{
+                               value = vec3_trampoline_eval((Vec3TrampolineValue*)value);
+                           }}
+                           value;
+                       }})""") 
+                   |> String.concat ", "
+               match id.Lexeme with
+               | Identifier name ->
+                   let func = $"vec3_env_get(env, \"{name}\")"
+                   $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {argExprs}}}, {List.length args + 1})"
+               | Operator(op, _) ->
+                   let funcName =
+                       match op with
+                       | StarStar | Caret -> "power"
+                       | Plus -> "add"
+                       | Minus -> "sub"
+                       | Star -> "mul"
+                       | Slash -> "div"
+                       | Percent -> "mod"
+                       | AmpersandAmpersand -> "and"
+                       | PipePipe -> "or"
+                       | Bang -> "not"
+                       | EqualEqual -> "eq"
+                       | BangEqual -> "neq"
+                       | Less -> "lt"
+                       | LessEqual -> "lte"
+                       | Greater -> "gt"
+                       | GreaterEqual -> "gte"
+                       | Cross -> "cross"
+                       | DotStar -> "dot"
+                       | ColonColon -> "cons"
+                       | PlusPlus -> "concat"
+                       | _ -> failwithf $"Unknown operator: {op}"
 
-                    let func = $"vec3_env_get(env, \"{funcName}\")"
-                    $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {argExprs}}}, {List.length args + 1})"
-                | _ -> failwithf $"Unknown identifier type: {id.Lexeme}"
-            | _ ->
-                let funcExpr = generateExpr callee
-                $"vec3_call_function({funcExpr}, (Vec3Value*[]){{{funcExpr}, {argExprs}}}, {List.length args + 1})"
+                   let func = $"vec3_env_get(env, \"{funcName}\")"
+                   $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {argExprs}}}, {List.length args + 1})"
+               | _ -> failwithf $"Unknown identifier type: {id.Lexeme}"
+           | _ ->
+               let funcExpr = generateExpr callee
+               let argExprs = 
+                   args 
+                   |> List.map (fun e -> 
+                       let argCode = generateExpr e
+                       $"""({{
+                           Vec3Value* value = {argCode};
+                           if (value != NULL && value->object.type == TYPE_TRAMPOLINE && value->as.trampoline->is_thunk) {{
+                               value = vec3_trampoline_eval((Vec3TrampolineValue*)value);
+                           }}
+                           value;
+                       }})""") 
+                   |> String.concat ", "
+               $"vec3_call_function({funcExpr}, (Vec3Value*[]){{{funcExpr}, {argExprs}}}, {List.length args + 1})"
 
-        | EBlock(stmts, _, _) ->
-            let stmtCodes = stmts |> List.map generateStmt |> String.concat "\n    "
-            $"({{ 
-                Vec3Value* result = NULL;
-                Vec3Env* block_env = vec3_new_environment(env);
-                Vec3Env* prev_env = env;
-                env = block_env;
-                
-                {stmtCodes}
-                
-                if (result != NULL) {{
-                    vec3_incref(result);
-                }}
-                
-                env = prev_env;
-                result; 
-            }})"
+       | EBlock(stmts, _, _) ->
+           let stmtCodes = 
+               stmts 
+               |> List.map generateStmt 
+               |> String.concat "\n    "
+           $"({{ 
+               Vec3Value* result = NULL;
+               Vec3Env* block_env = vec3_new_environment(env);
+               
+               {stmtCodes}
+               
+               if (result != NULL && result->object.type == TYPE_TRAMPOLINE && result->as.trampoline->is_thunk) {{
+                   result = vec3_trampoline_eval((Vec3TrampolineValue*)result);
+               }}
+               
+               vec3_destroy_environment(block_env);
+               result;
+           }})"
 
-        | EIf(cond, thenExpr, elseExpr, _) ->
-            let condCode = generateExpr cond
-            let thenCode = generateExpr thenExpr
-            let elseCode = generateExpr elseExpr
-            $"vec3_is_truthy({condCode}) ? {thenCode} : {elseCode}"
+       | EIf(cond, thenExpr, elseExpr, _) ->
+           let condCode = generateExpr cond
+           let thenCode = generateExpr thenExpr
+           let elseCode = generateExpr elseExpr
+           $"""({{
+               Vec3Value* cond_val = {condCode};
+               if (cond_val != NULL && cond_val->object.type == TYPE_TRAMPOLINE && cond_val->as.trampoline->is_thunk) {{
+                   cond_val = vec3_trampoline_eval((Vec3TrampolineValue*)cond_val);
+               }}
+               vec3_is_truthy(cond_val) ? {thenCode} : {elseCode};
+           }})"""
 
-        | ETail(expr, _) -> generateExpr expr
+       | ETail(expr, _) -> generateExpr expr
 
-        | ERange(start, end_, _) ->
-            let startCode = generateExpr start
-            let endCode = generateExpr end_
-            let func = $"vec3_env_get(env, \"range\")"
-            $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {startCode}, {endCode}}}, 3)"
+       | ERange(start, end_, _) ->
+           let startCode = generateExpr start
+           let endCode = generateExpr end_
+           let func = $"vec3_env_get(env, \"range\")"
+           $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {startCode}, {endCode}}}, 3)"
 
-        | EIndexRange(list, start, end_, _) ->
-            let listCode = generateExpr list
-            let startCode = generateExpr start
-            let endCode = generateExpr end_
-            let func = $"vec3_env_get(env, \"slice\")"
-            $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {listCode}, {startCode}, {endCode}}}, 4)"
+       | EIndexRange(list, start, end_, _) ->
+           let listCode = generateExpr list
+           let startCode = generateExpr start
+           let endCode = generateExpr end_
+           let func = $"vec3_env_get(env, \"slice\")"
+           $"vec3_call_function({func}, (Vec3Value*[]){{{func}, {listCode}, {startCode}, {endCode}}}, 4)"
 
-        | ERecordEmpty _ -> "vec3_new_record()"
+       | ERecordEmpty _ -> "vec3_new_record()"
 
-        | ERecordExtend((name, value, _), record, _) ->
-            let recordCode = generateExpr record
-            let valueCode = generateExpr value
-            match name.Lexeme with
-            | Identifier fieldName -> 
-                $"vec3_record_extend({recordCode}, \"{fieldName}\", {valueCode})"
-            | _ -> failwith "Expected identifier in record field"
+       | ERecordExtend((name, value, _), record, _) ->
+           let recordCode = generateExpr record
+           let valueCode = generateExpr value
+           match name.Lexeme with
+           | Identifier fieldName -> 
+               $"vec3_record_extend({recordCode}, \"{fieldName}\", {valueCode})"
+           | _ -> failwith "Expected identifier in record field"
 
-        | ERecordSelect(record, field, _) ->
-            let recordCode = generateExpr record
-            match field.Lexeme with
-            | Identifier fieldName -> 
-                $"vec3_record_get({recordCode}, \"{fieldName}\")"
-            | _ -> failwith "Expected identifier in record field"
+       | ERecordSelect(record, field, _) ->
+           let recordCode = generateExpr record
+           match field.Lexeme with
+           | Identifier fieldName -> 
+               $"vec3_record_get({recordCode}, \"{fieldName}\")"
+           | _ -> failwith "Expected identifier in record field"
 
-        | ERecordRestrict(record, field, _) ->
-            let recordCode = generateExpr record
-            match field.Lexeme with
-            | Identifier fieldName -> 
-                $"vec3_record_restrict({recordCode}, \"{fieldName}\")"
-            | _ -> failwith "Expected identifier in record field"
+       | ERecordRestrict(record, field, _) ->
+           let recordCode = generateExpr record
+           match field.Lexeme with
+           | Identifier fieldName -> 
+               $"vec3_record_restrict({recordCode}, \"{fieldName}\")"
+           | _ -> failwith "Expected identifier in record field"
 
-    with ex ->
-        printf $"{ex.Message}"
-        failwithf $"Error generating code for expression {expr}:\n{ex.Message}\nStackTrace: {ex.StackTrace}"
-
+   with ex ->
+       printf $"{ex.Message}"
+       failwithf $"Error generating code for expression {expr}:\n{ex.Message}\nStackTrace: {ex.StackTrace}"
+        
 and generateStmt (stmt: Stmt) : string =
     try
         match stmt with
@@ -275,6 +326,10 @@ and generateStmt (stmt: Stmt) : string =
                 let exprCode = generateExpr expr
                 $"""{{
                     Vec3Value* value = {exprCode};
+                    // Evaluate if it's a thunk
+                    if (value != NULL && value->object.type == TYPE_TRAMPOLINE && value->as.trampoline->is_thunk) {{
+                        value = vec3_trampoline_eval((Vec3TrampolineValue*)value);
+                    }}
                     vec3_env_define(env, "{id}", value);
                 }}"""
             | _ -> failwith "Expected identifier in variable declaration"
@@ -292,9 +347,53 @@ and generateStmt (stmt: Stmt) : string =
 
         | STypeDeclaration _ -> ""
         | SImport _ -> ""
-        | SRecFunc(name, parameters, body, _) -> failwithf $"Recursive functions not implemented for: {name}"
-        | SAsync(name, parameters, body, _) -> failwithf $"Async functions not implemented for: {name}"
+        | SRecFunc(name, parameters, body, _) ->
+            match name.Lexeme with
+            | Identifier fname ->
+                recursiveFunctions.Value <- Set.add fname recursiveFunctions.Value
+                let paramNames =
+                    parameters 
+                    |> List.map (fun (token, _) ->
+                        match token.Lexeme with
+                        | Identifier name -> name
+                        | _ -> failwith "Expected identifier in parameter list")
 
+                let funcName = generateUniqueName "rec_func"
+                let paramBindings = 
+                    paramNames 
+                    |> List.mapi (fun i name -> 
+                        $"vec3_env_define(func_env, \"{name}\", args[{i + 1}]);")
+                    |> String.concat "\n    "
+
+                let funcImpl = $"""
+                    Vec3Value* {funcName}(Vec3Value** args) {{
+                        Vec3Function* func = ((Vec3Value*)args[0])->as.function;
+                        Vec3Env* func_env = vec3_new_environment(func->env);
+                        
+                        // Bind parameters
+                        {paramBindings}
+                        
+                        // Execute body
+                        Vec3Value* result = {generateExpr body};
+                        
+                        // If we got a thunk back, evaluate it to get the final value
+                        if (result != NULL && result->object.type == TYPE_TRAMPOLINE && result->as.trampoline->is_thunk) {{
+                            result = vec3_trampoline_eval((Vec3TrampolineValue*)result);
+                        }}
+                        
+                        vec3_destroy_environment(func_env);
+                        return result;
+                    }}"""
+
+                functionDefinitions.Value <- { Name = funcName; Implementation = funcImpl } :: functionDefinitions.Value
+                $"""{{
+                    Vec3Value* func = vec3_new_function("{funcName}", {List.length parameters}, {funcName}, env);
+                    func->as.function->is_recursive = true;
+                    vec3_env_define(env, "{fname}", func);
+                }}"""
+            | _ -> failwith "Expected identifier for recursive function name"
+        | SAsync(name, parameters, body, _) -> 
+            failwithf $"Async functions not implemented for: {name}"
     with ex ->
         printf $"{ex.Message}"
         failwithf $"Error generating code for statement {stmt}:\n{ex.Message}\nStackTrace: {ex.StackTrace}"
@@ -324,9 +423,11 @@ and generateTopLevelStmt (stmt: Stmt) : string =
 
         | STypeDeclaration _ -> ""
         | SImport _ -> ""
-        | SRecFunc(name, parameters, body, _) -> failwithf $"Recursive functions not implemented for: {name}"
-        | SAsync(name, parameters, body, _) -> failwithf $"Async functions not implemented for: {name}"
-
+        | SRecFunc(name, parameters, body, _) as recFunc ->
+            // Handle recursive functions same way in both contexts
+            generateStmt recFunc
+        | SAsync(name, parameters, body, _) -> 
+            failwithf $"Async functions not implemented for: {name}"
     with ex ->
         printf $"{ex.Message}"
         failwithf $"Error generating code for statement {stmt}:\n{ex.Message}\nStackTrace: {ex.StackTrace}"
@@ -335,6 +436,7 @@ let generateCCode (program: Program) : string =
     try
         functionDefinitions.Value <- []
         functionNames.Value <- Set.empty
+        recursiveFunctions.Value <- Set.empty  // Reset recursive functions set
 
         let stmts = program |> List.map generateTopLevelStmt |> String.concat "\n    "
 

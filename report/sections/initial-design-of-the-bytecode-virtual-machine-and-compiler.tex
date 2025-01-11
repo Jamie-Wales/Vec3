@@ -53,7 +53,7 @@ COMPOUND_CREATE & --- & Create compound value & $... \rightarrow ..., compound$ 
 \end{table}
 \textit{Note:} Stack effects are depicted from left to right, with `...` representing the remaining stack contents.
 
-### \subsubsection{Chunk Structure}
+\subsubsection{Chunk Structure}
 
 Bytecode is organized into \textit{chunks}. Each chunk, represented by the \texttt{Chunk} data structure in the F\# code, encapsulates the following:
 
@@ -67,20 +67,16 @@ Functions are represented by the \texttt{Function} type, which includes the func
 
 \subsection{Compiler Implementation}
 
-The compiler, implemented in F#, performs a recursive descent traversal of the AST, generating bytecode instructions corresponding to each node.
-
-\subsubsection{Compiler State}
-
-The compiler maintains state throughout the compilation process using the \texttt{CompilerState} record:
+The compiler, implemented in F\#, performs a recursive descent traversal of the AST, generating bytecode instructions corresponding to each node.
 
 \subsection{Compiler Implementation}
 
-The compiler, implemented in F#, performs a recursive descent traversal of the AST, generating bytecode instructions corresponding to each node.
+The compiler, implemented in F\#, performs a recursive descent traversal of the AST, generating bytecode instructions corresponding to each node.
 
 \subsubsection{Compiler State}
 
 The compiler maintains state throughout the compilation process using the \texttt{CompilerState} record:
-F#
+F\#
 
 type CompilerState =
     { CurrentFunction: Closure
@@ -95,7 +91,9 @@ type CompilerState =
 \item \texttt{LocalCount}: Keeps track of the number of local variables within the current scope.
 \end{itemize}
 
-The compiler uses a monadic approach, threading the CompilerState through the compilation process. The CompilerResult type, defined as a Result type, is used to handle potential errors during compilation. The use of a monadic approach with CompilerResult offers several advantages. Firstly, it avoids mutable state variables, making the compiler more modular and easier to reason about. Secondly, it enhances testability by explicitly passing the state as an argument. Finally, it provides type-safe error handling.
+The compiler uses a monadic approach, threading the CompilerState through the compilation process. The CompilerResult type, defined as a exentsion of a Result type, is used to handle potential errors during compilation. 
+The use of a monadic approach with CompilerResult offers several advantages. Firstly, it avoids mutable state variables, making the compiler more modular and easier to reason about. Secondly, it enhances testability by explicitly passing the state as an argument. 
+Finally, it provides type-safe error handling.
 \subsubsection{Expression Compilation}
 
 The \texttt{compileExpr} function recursively compiles expressions into bytecode. Here are a few examples:
@@ -149,7 +147,8 @@ In essence, this mechanism allows the Vec3 interpreter to treat compiled code as
 \section{Virtual Machine Implementation}
 \label{sec:virtual-machine}
 
-The Vec3 virtual machine executes bytecode through a straightforward execution model centered around a stack and call frames. At its heart is a simple loop that fetches, decodes, and executes instructions one at a time, maintaining program state through a carefully designed stack structure.
+The Vec3 virtual machine executes bytecode through a straightforward execution model centered around a stack and call frames. 
+At its heart is a simple loop that fetches, decodes, and executes instructions one at a time, maintaining program state through a carefully designed stack structure.
 
 \subsection{Core Execution Loop}
 
@@ -170,20 +169,6 @@ let rec runLoop (vm: VM) =
 \end{minted}
 
 The simplicity of our main execution loop isn't just about clean code - it directly impacts the VM's performance. Since this loop executes for every single instruction in our program, its efficiency is crucial. Each extra check or operation in this loop would be multiplied across millions of instruction executions.
-Consider what happens when the VM executes a simple addition operation:
-\begin{minted}{fsharp}
-let rec runLoop (vm: VM) =
-let frame = getCurrentFrame vm
-let vm, instruction = readByte vm  // Just one byte read
-let opcode = byteToOpCode instruction  // Simple array lookup
-match executeOpcode vm opcode with    // Direct dispatch
-| Return value ->
-push vm value |> continue
-| Call(args, recursive) ->
-callValue vm args recursive |> continue
-| Continue ->
-continue vm
-\end{minted}
 
 Each instruction follows this exact path: read a byte, convert it to an opcode (a constant time array lookup), and dispatch to the specific handler. No extra checks, no special cases, no branching logic. This matters because modern CPUs can efficiently predict and pipeline these consistent operations.
 This is why we implement operations like addition as function calls rather than dedicated instructions. While it might seem counterintuitive to turn a simple addition into a function call, this tradeoff means our main execution loop stays fast for all instructions. The small performance cost of occasional function calls is more than offset by the efficiency gained in the core loop that handles every single instruction.
@@ -198,26 +183,13 @@ Local variables are accessed through offsets from the frame's base pointer. When
 let x = 10
 let y = x + 5
 \end{minted}
+
 The VM pushes 10 onto the stack and stores its position as variable 'x'. When later accessing 'x', it simply reads from that stack position using the frame's base pointer plus the variable's index.
 
 \subsection{Function Calls and Returns}
 
-Function calls demonstrate how all parts of the VM work together. When making a call, the VM:
-
-\begin{minted}{fsharp}
-let callValue vm argCount recursive =
-    let callee = peek vm argCount  // Get function being called
-    let stackBase = vm.Stack.Count - argCount
-    let frame = {
-        Closure = createClosure callee
-        IP = 0
-        StackBase = stackBase
-    }
-    vm.Frames.Add(frame)
-\end{minted}
-
-The new frame's stack base points just past the arguments, setting up the local variable area for the called function. This frame structure means each function has its own view of the stack, with its arguments and locals neatly organized.
-When a function returns, the VM pops off its frame and any temporary values, preserving only the return value for the caller. This disciplined stack management ensures memory usage stays predictable and bounded.
+Function calls demonstrate how all parts of the VM work together. The new frame's stack base points just past the arguments, setting up the local variable area for the called function. 
+This frame structure means each function has its own view of the stack, with its arguments and locals neatly organized. When a function returns, the VM pops off its frame and any temporary values, preserving only the return value for the caller. This disciplined stack management ensures memory usage stays predictable and bounded.
 
 \subsection{Tail Call Support}
 
@@ -235,6 +207,8 @@ This means deeply recursive code runs in constant stack space, enabling function
 \subsection{Closures and Upvalues}
 To support lexical scoping with nested functions, the Vec3 VM implements closures using a mechanism similar to Lua. A \textit{closure} is a combination of a function and its surrounding environment, captured at the time of the function's definition. This environment is represented by \textit{upvalues}.
 When a function is defined within another function, and it references variables from the enclosing function's scope, those variables become upvalues for the inner function.  The compiler identifies these upvalues and generates appropriate bytecode instructions (`GET_UPVALUE`, `SET_UPVALUE`, `CLOSURE`, `CLOSE_UPVALUE`) to manage them.
+
+%% redo this cunt
 When a closure is created at runtime (via the `CLOSURE` instruction), the VM creates `UpValue` objects that point to the relevant variables on the stack. If the enclosing function returns, and the upvalues are no longer on the stack, the `CLOSE_UPVALUE` instruction is executed, which moves the upvalue's value to the heap, ensuring the closure still has access to its environment even after the outer function has completed.
 This upvalue mechanism allows inner functions to retain access to the variables of their enclosing scope, even after the outer function has returned. This is essential for implementing higher-order functions and other functional programming paradigms. The use of upvalues and closures adds a layer of complexity to the VM, but it significantly enhances the expressive power of the Vec3 language. By carefully managing the lifetime and accessibility of upvalues, the VM ensures that closures behave correctly and maintain the integrity of lexical scoping.
 
