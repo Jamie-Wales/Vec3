@@ -34,6 +34,7 @@ type MainWindow() as this =
     let mutable windows: ResizeArray<Window> = ResizeArray()
     let mutable openNotebookButton: Button = null
     let mutable loadButton: Button = null
+    let mutable drawWindow: DrawWindow option = None  
     let mutable runButton: Button = null
     let mutable saveButton: Button = null
     let mutable standardOutput: TextBlock = null
@@ -317,20 +318,27 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
             |> Seq.toList
 
         if not (List.isEmpty shapes) then
-            let drawWindow = DrawWindow()
-            windows.Add(drawWindow) 
-            drawWindow.Show()
+            match drawWindow with
+            | None ->
+                // Only create a new window if one doesn't exist
+                let window = DrawWindow()
+                windows.Add(window)
+                drawWindow <- Some window
+                window.Show()
+            | Some window ->
+                // Clear existing window before drawing new shapes
+                window.Clear()
+                
+            // Now use the window (either new or existing)
+            let currentWindow = Option.get drawWindow
+            for shape in shapes do
+                currentWindow.DrawShape(vm, shape)
 
-            Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
-                for shape in shapes do
-                    drawWindow.DrawShape(vm, shape)
+            for eventListener in vm.EventListeners do
+                let shapeId, listenerId, func = eventListener
+                currentWindow.AddEventListener(vm, shapeId, listenerId, func)
 
-                for eventListener in vm.EventListeners do
-                    let shapeId, listenerId, func = eventListener
-                    drawWindow.AddEventListener(vm, shapeId, listenerId, func)
-
-                vm.EventListeners.Clear())
-            |> ignore
+            vm.EventListeners.Clear()
 
         // Handle other plot types
         for value in vm.Plots do
@@ -462,6 +470,7 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
         for window in windows do
             window.Close()
         windows.Clear()
+        drawWindow <- None  // Reset the drawWindow reference
 
         replState <- createNewVM (initFunction "Main")
         let code = this.GetEditorText()

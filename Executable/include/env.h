@@ -11,5 +11,4 @@ void vec3_env_define(struct Vec3Env* env, const char* name, Vec3Value* value);
 bool vec3_env_assign(struct Vec3Env* env, const char* name, Vec3Value* value);
 Vec3Value* vec3_env_get(struct Vec3Env* env, const char* name);
 void vec3_destroy_environment(struct Vec3Env* env);
-
 void vec3_register_builtins(struct Vec3Env* env);

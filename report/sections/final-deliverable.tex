@@ -315,18 +315,193 @@ Where keys is a record defined in the prelude of the language (see~\autoref{sec:
 Additionally, the \textit{trace} option allows for the shape to leave a trail behind it, which can be useful for
 animations or visualising movement.
 
-\section{Transpiler}\label{sec:transpiler}
+\section{Transpiler Implementation} \label{sec:transpiler-implementation}
+The Vec3 transpiler provides an alternative execution path by converting Vec3 programs into C code, enabling direct compilation to native machine code. This approach offers potential performance benefits while maintaining the language's semantics through careful mapping of Vec3's features to equivalent C constructs.
+\subsection{Architecture Overview}
+The transpiler follows a multi-phase pipeline that transforms Vec3 source code into executable programs. The process begins with the existing parser and type checker, then proceeds through code generation and compilation phases. Each phase is designed to be independent, allowing for easier maintenance and optimisation of individual components.
+The transpilation process consists of the following main phases:
+\begin{itemize}
+\item Source code parsing and AST generation
+\item Type checking and semantic analysis
+\item C code generation
+\item Compilation of generated C code to native executables
+\end{itemize}
+\subsection{Code Generation Strategy}
+The code generator maps Vec3's high-level constructs to equivalent C implementations while preserving the language's semantics. 
+This mapping is particularly careful in handling Vec3's functional features, which don't have direct equivalents in C. The generator maintains a reference counting system for memory management and implements a runtime environment that supports Vec3's dynamic features.
+The transpiler generates C code that relies on a custom runtime library implementing Vec3's core features:
+\begin{itemize}
+\item Complex number arithmetic
+\item First-class functions
+\item Garbage collection through reference counting
+\item Dynamic typing with runtime type checking
+\item List and tuple operations
+\item Record types with dynamic field access
+\end{itemize}
+\section{Memory Management and Garbage Collection}
+\label{sec:memory-management}
+The Vec3 runtime implements a deterministic memory management system through reference counting, offering predictable cleanup behavior while avoiding the complexity of tracing garbage collection. This approach particularly suits Vec3's transpiled nature, as it maps cleanly to C's manual memory management while providing automated cleanup semantics.
+\subsection{Reference Counting Implementation}
+The reference counting system centers around the Vec3Object structure, which serves as the base for all Vec3 values:
+\begin{minted}{c}
+typedef struct Vec3Object {
+Type type;
+int ref_count;
+void (destructor)(struct Vec3Object);
+} Vec3Object;
+\end{minted}
+Each object tracks its reference count, and the runtime provides two core operations:
+\begin{minted}{c}
+void vec3_incref(Vec3Value* value) {
+if (value != NULL) {
+value->object.ref_count++;
+}
+}
+void vec3_decref(Vec3Value* value) {
+if (value != NULL) {
+assert(value->object.ref_count > 0);
+value->object.ref_count--;
+if (value->object.ref_count == 0) {
+if (value->object.destructor) {
+value->object.destructor((Vec3Object*)value);
+}
+free(value);
+}
+}
+}
+\end{minted}
+\subsection{Destructor System}
+The destructor function pointer in Vec3Object enables type-specific cleanup. Each value type can register its own destructor:
+\begin{itemize}
+\item Strings need to free their character buffer
+\item Lists must decrement references to their elements
+\item Functions must clean up their environment and name
+\item Records must deallocate their hash table and decrement field references
+\end{itemize}
+This extensible destructor system ensures proper cleanup of complex data structures:
+\begin{minted}{c}
+void vec3_destroy_list(Vec3Object* object) {
+Vec3Value* value = (Vec3Value*)object;
+vec3_list* current = value->as.list;
+while (current != NULL) {
+vec3_list* next = current->next;
+vec3_decref(current->value);
+free(current);
+current = next;
+}
+}
+\end{minted}
+\subsection{Cycle Handling}
+While reference counting normally cannot handle cyclic references, Vec3's type system and standard library are designed to minimize the creation of reference cycles. The few cases where cycles could occur (such as in recursive data structures) are handled through weak references or explicit cleanup operations.
+\section{Generic Value Representation}
+\label{sec:generic-value}
+Vec3 implements a unified value representation that enables dynamic typing while maintaining efficiency. This design allows Vec3 to support multiple data types within a single value structure while providing type-safe operations.
+\subsection{Value Structure}
+The Vec3Value structure combines a type tag with a union of possible values:
+\begin{minted}{c}
+typedef struct {
+Vec3Object object;
+union {
+Number number;
+struct {
+size_t length;
+char* chars;
+} string;
+vec3_list* list;
+bool boolean;
+Vec3Function* function;
+HashMap* record;
+} as;
+} Vec3Value;
+\end{minted}
+This design achieves several key objectives:
+\begin{itemize}
+\item Efficient memory usage through union-based storage
+\item Fast type checking via the object type tag
+\item Uniform handling of reference counting
+\item Support for value-specific destructors
+\end{itemize}
+\subsection{Number System}
+Vec3's number system demonstrates the flexibility of this approach by supporting multiple numeric types within a single representation:
+\begin{minted}{c}
+typedef struct {
+NumberType type;
+union {
+int64_t integer;
+double float_val;
+struct { int64_t num; int64_t denom; } rational;
+struct { double real; double imag; } complex;
+} as;
+} Number;
+\end{minted}
+This nested union structure allows Vec3 to efficiently represent different numeric types while maintaining type safety through the NumberType tag.
+\subsection{Type-Safe Operations}
+The value system includes comprehensive type checking and conversion operations. For example, the truthiness check demonstrates type-specific behavior:
+\begin{minted}{c}
+bool vec3_is_truthy(const Vec3Value* value) {
+if (value == NULL || value->object.type == TYPE_NIL) {
+return false;
+}
+\subsection{Function Translation}
+One of the more complex aspects of the transpiler is the translation of Vec3's first-class functions to C. The transpiler generates wrapper structures that capture the function's environment and parameters:
+\begin{minted}{c}
+typedef struct {
+char* name;
+int arity;
+Vec3Value* (fn)(Vec3Value* args);
+struct Vec3Env* env;
+bool is_recursive;
+} Vec3Function;
+\end{minted}
+This structure enables proper handling of closures and maintains Vec3's lexical scoping rules in the generated C code. 
+The transpiler pays special attention to recursive functions, implementing them through a trampolining mechanism to prevent stack overflow in tail-recursive cases.
+\subsection{Error Handling}
+The transpiler implements comprehensive error handling throughout the generation process. 
+It categorises errors into these distinct types:
+\begin{itemize}
+\item IOError for file system and input/output operations
+\item ParseError for syntax and parsing failures
+\item TypeError for type checking violations
+\item CodeGenError for code generation issues
+\item CompilationError for C compiler errors
+\end{itemize}
+This granular error categorisation helps developers quickly identify and fix issues in their Vec3 programs, whether they occur during parsing, type checking, code generation, or final compilation.
+\subsection{Build System Integration}
+The transpiler includes a configurable build system that manages the compilation pipeline. It handles directory structure creation, runtime library inclusion, and compiler invocation. The system is designed to be platform-independent, automatically adjusting paths and compiler commands based on the operating system:
+\begin{minted}{fsharp}
+type TranspilerConfig =
+{ OutputDir: string
+RuntimeDir: string
+IncludeDir: string
+CompilerPath: string }
+\end{minted}
+This configuration system ensures consistent behavior across different development environments while maintaining flexibility for different deployment scenarios.
 
-The user also has the option of transpiling their code to C, which can then be compiled and run as a standalone
-executable, allowing for faster execution of the code which is important for larger or more computationally
-intensive programs.
+\subsection{Performance Considerations}
+The transpiler's output prioritises runtime performance through several optimisation strategies:
 
-TODO
+\begin{itemize}
+\item Minimises dynamic memory allocations where possible
+\item Implements efficient reference counting mechanisms
+\item Generates code that can benefit from the C compiler's optimisations
+\item Structures code to enable the C compiler's full range of optimisations
+\item Produces code patterns that potentially outperform interpreted execution
+\end{itemize}
+
+\section{Future Developments}
+While the current transpiler implementation successfully handles the core Vec3 language features, several areas present opportunities for future enhancement:
+\begin{itemize}
+\item Optimisation of generated code patterns
+\item Improved debug information generation
+\item Integration with profile-guided optimisation techniques
+\item Enhanced cross-platform compatibility
+\item Expanded runtime library capabilities
+\end{itemize}
+
+The modular design of the transpiler makes it well-suited for such future expansions while maintaining its current reliability and functionality.
 
 \section{Code architecture}\label{sec:code-architecture}
-
 The solution is split into 3 separate projects: the GUI, Tests and the main interpreter / compiler project.
-
 \paragraph{The GUI} is where the project runs from, and is a standard Avalonia project, with a main window (the code editor), 
 and then some other windows for the plots, drawing and notebook view, as well as some non-UI files such as the a helper 
 module for PDF exports.
@@ -334,21 +509,17 @@ It also contains a directory containing the prelude and standard library of the 
 desired (except the prelude, which is always implicitly imported).
 The frameworks are libraries used in the GUI project include AvaloniaUI, AvaloniaEdit, FSharp.Core, ScottPlot, 
 TextMate and QuestPDF\@. 
-
 \paragraph{The Tests} project mirrors the main project, with a similar structure and file naming for clear and sensible
 organisation.
 It uses the NUnit framework for testing, and tests the lexer, parser, compiler and type inference.
-
 \paragraph{The main project} is where the main interpreter and compiler are implemented, and is split into the following
 submodules:
-
 \begin{itemize}
     \item \textit{Syntax Analysis} contains the lexer and parser, as well as the AST of the language.
     \item \textit{Type Analysis} contains the type inference engine.
     \item \textit{Backend} contains the compiler and virtual machine.
     \item \textit{Optimisation} contains the optimisation passes (dead code elimination and constant folding).
 \end{itemize}
-
 A couple more files, such as the REPL, which contains helper functions for compilation and running of code, and the
 Symbolic Expression modules, which contain helper functions for maths operations such as simplification of formulas 
 and calculation of derivatives, are also present.
