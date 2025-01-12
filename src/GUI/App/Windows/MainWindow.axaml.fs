@@ -320,13 +320,11 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
         if not (List.isEmpty shapes) then
             match drawWindow with
             | None ->
-                // Only create a new window if one doesn't exist
                 let window = DrawWindow()
                 windows.Add(window)
                 drawWindow <- Some window
                 window.Show()
             | Some window ->
-                // Clear existing window before drawing new shapes
                 window.Clear()
                 
             // Now use the window (either new or existing)
@@ -467,31 +465,54 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
     /// Run the code currently in the editor.
     /// </summary>
     member private this.LoadCode() =
-        for window in windows do
-            window.Close()
-        windows.Clear()
-        drawWindow <- None  // Reset the drawWindow reference
+        task {
+            try
+                do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                    // Close all existing windows
+                    for window in windows do
+                        window.Close()
+                    windows.Clear()
+                    
+                    // Explicitly close draw window if it exists
+                    match drawWindow with
+                    | Some window -> 
+                        window.Close()
+                    | None -> ()
+                    
+                    drawWindow <- None
+                    standardOutput.Foreground <- SolidColorBrush(Colors.White)
+                    standardOutput.Text <- "Running code...")
 
-        replState <- createNewVM (initFunction "Main")
-        let code = this.GetEditorText()
+                replState <- createNewVM (initFunction "Main")  // Create fresh VM
+                let code = this.GetEditorText()
+                
+                match parseAndCompile code replState with
+                | Some vm ->
+                    // Clear the VM's canvas before running
+                    vm.Canvas.Clear()  
+                    
+                    let! executedVm = Task.Run(fun () -> run vm)
+                    
+                    do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                        replState <- executedVm
+                        standardOutput.Foreground <- SolidColorBrush(Colors.White)
+                        let outputText = String.concat "\n" executedVm.Streams.StandardOutput.Value
+                        standardOutput.Text <- $"Vec3 code loaded and executed:\n{outputText}"
+                        vm.Streams.StandardOutput.Value <- Seq.empty
+                        vm.Stack.Clear()
+                        // Handle plot output after clearing everything
+                        this.HandlePlotOutput(replState))
+                | None ->
+                    do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                        standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                        standardOutput.Text <- "Failed to compile code")
 
-        try
-            match parseAndCompile code replState with
-            | Some vm ->
-                replState <- run vm
-                standardOutput.Foreground <- SolidColorBrush(Colors.White)
-                let outputText = String.concat "\n" output.Value
-                standardOutput.Text <- $"Vec3 code loaded and executed:\n%s{outputText}"
-                this.HandlePlotOutput(replState)
-                vm.Streams.StandardOutput.Value <- Seq.empty
-                vm.Stack.Clear()
-            | None ->
-                standardOutput.Foreground <- SolidColorBrush(Colors.Red)
-                standardOutput.Text <- "Failed to compile code"
-        with ex ->
-            printfn $"Error: {ex}"
-            standardOutput.Foreground <- SolidColorBrush(Colors.Red)
-            standardOutput.Text <- $"Error: %s{ex.Message}"
+            with ex ->
+                do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                    printfn $"Error: {ex}"
+                    standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                    standardOutput.Text <- $"Error: {ex.Message}")
+        } |> ignore
 
     /// <summary>
     /// Feedback for the user when the text changes.
@@ -593,7 +614,6 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
     member this.run() =
         if replInput <> null then
             let code = replInput.Text.Trim()
-
             if code = "help()" then
                 let syntaxWindow = SyntaxWindow()
                 syntaxWindow.Show()
@@ -601,36 +621,50 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 standardOutput.Text <- $"%s{standardOutput.Text}\n<Vec3> help()\nOpening syntax guide window..."
                 replInput.Text <- ""
             else
-                try
-                    match noTcParseAndCompile code replState false with
-                    | Some vm ->
+                task {
+                    try
                         let previousOutput = standardOutput.Text
                         let oldOutputLength = Seq.length replState.Streams.StandardOutput.Value
-                        replState <- run vm
-                        standardOutput.Foreground <- SolidColorBrush(Colors.White)
-                        let topOfStack = vm.Stack[Seq.length vm.Stack - 1] |> valueToString
 
-                        let newOutput =
-                            replState.Streams.StandardOutput.Value
-                            |> Seq.skip oldOutputLength
-                            |> String.concat "\n"
+                        // Parse and compile on main thread
+                        match noTcParseAndCompile code replState false with
+                        | Some vm ->
+                            // Clear VM canvas before running
+                            vm.Canvas.Clear()
+                            
+                            // Execute on background thread
+                            let! executedVm = Task.Run(fun () -> run vm)
+                            
+                            do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                                replState <- executedVm
+                                standardOutput.Foreground <- SolidColorBrush(Colors.White)
+                                let topOfStack = vm.Stack[Seq.length vm.Stack - 1] |> valueToString
+                                
+                                let newOutput =
+                                    executedVm.Streams.StandardOutput.Value
+                                    |> Seq.skip oldOutputLength
+                                    |> String.concat "\n"
 
-                        if not (String.IsNullOrWhiteSpace(newOutput)) then
-                            standardOutput.Text <- $"%s{previousOutput}\n<Vec3> %s{code}\n%s{newOutput}\n%s{topOfStack}"
-                        else
-                            standardOutput.Text <- $"%s{previousOutput}\n<Vec3> %s{code}\n%s{topOfStack}"
+                                if not (String.IsNullOrWhiteSpace(newOutput)) then
+                                    standardOutput.Text <- $"%s{previousOutput}\n<Vec3> %s{code}\n%s{newOutput}\n%s{topOfStack}"
+                                else
+                                    standardOutput.Text <- $"%s{previousOutput}\n<Vec3> %s{code}\n%s{topOfStack}"
 
-                        this.HandlePlotOutput(replState)
-                        replInput.Text <- ""
-                    | None ->
-                        standardOutput.Foreground <- SolidColorBrush(Colors.Red)
-                        standardOutput.Text <- $"%s{standardOutput.Text}\nFailed to compile: %s{replInput.Text}"
-                with ex ->
-                    printfn $"Error: {ex}"
-                    standardOutput.Foreground <- SolidColorBrush(Colors.Red)
-                    standardOutput.Text <- $"%s{standardOutput.Text}\nError: %s{ex.Message}"
-                    replInput.Text <- ""
+                                this.HandlePlotOutput(replState)
+                                replInput.Text <- "")
 
+                        | None ->
+                            do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                                standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                                standardOutput.Text <- $"%s{standardOutput.Text}\nFailed to compile: %s{replInput.Text}")
+
+                    with ex ->
+                        do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                            printfn $"Error: {ex}"
+                            standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                            standardOutput.Text <- $"%s{standardOutput.Text}\nError: %s{ex.Message}"
+                            replInput.Text <- "")
+                } |> ignore
     /// <summary>
     /// Helper function to get the text from the editor.
     /// </summary>
