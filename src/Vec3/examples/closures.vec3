@@ -1,32 +1,20 @@
 
 
-let accessors = (x) -> {
-    let y = x
-    let get = () -> y
+let accessors = (x) {
+    let get = () -> x
     get
 }
+
 let a = accessors(10)
 
 print(a())  
 
+let curry = (x) -> (y) -> x + y
 
-// Upvalues indexing error, look into this
+let b = curry(10)
 
-let createAnimal = (name, speak) {
-	let a = name
-	let b = name
-	let c = "Hello, I am " ++ name
-	{
-		getName = () ->  name,
-		getSpeak = () -> speak,
-		talk = () -> print(name)
-	}
-}
-	
+print(b(20))
 
-let tiger = createAnimal("tiger", "roah")
+let c = curry(10)(20)
 
-print(tiger.getName())
-
-let x = tiger.talk()
-
+print(c)

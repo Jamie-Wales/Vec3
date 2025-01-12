@@ -1,9 +1,19 @@
+// Matrix operations
 let m1 = [[1.0, 2.0], [3.0, 4.0]]
+
 let trans = transpose(m1)
 let det = determinate(m1)
 let inv = inverse(m1)
+
 let product = m1 * m1
 
+print("Matrix 1")
+print(m1)
+print("Matrix 1 * Matrix 1")
+print(product)
+print("Matrix 1 transposed")
 print(trans)
+print("Matrix 1 determinate")
 print(det)
+print("Matrix 1 inverse")
 print(inv)

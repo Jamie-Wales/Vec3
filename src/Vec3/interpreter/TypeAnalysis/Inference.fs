@@ -763,7 +763,7 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             // No variable resolution
             let dims =
                 match expr2, expr3 with
-                | ELiteral(LNumber(LInteger n1), _), ELiteral(LNumber(LInteger n2), _) -> Dims(n2 - n1)
+                | ELiteral(LNumber(LInteger n1), _), ELiteral(LNumber(LInteger n2), _) -> Dims(n2 - n1 + 1)
                 | _, _ -> DAny
 
             let returnType = TTensor(TInteger, dims)

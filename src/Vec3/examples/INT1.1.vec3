@@ -1,0 +1,44 @@
+// Built in maths functions
+
+print("Cosine of 0:")
+print(cos(0.0))
+print("Sine of 0:")
+print(sin(0.0))
+print("Tangent of 0:")
+print(tan(0.0))
+
+print("Arc cosine of 0.6:")
+print(acos(0.6))
+print("Arc sine of 0.7:")
+print(asin(0.7))
+print("Arc tangent of 0.8:")
+print(atan(0.8))
+
+print("Log base E of 0.5:")
+print(log(E, 0.5))
+
+print("Log base 10 of 6.0:")
+print(log(10.0, 6.0))
+
+print("Exponential of 1.0:")
+print(exp(1.0))
+
+print("Absolute value of -1.0:")
+print(abs(-1.0))
+
+print("Ceiling of 0.5:")
+print(ceil(0.5))
+print("Floor of 0.5:")
+print(floor(0.5))
+print("Sqrt of 4:")
+print(sqrt(4))
+print("Cbrt of 8:")
+print(cubeRoot(8))
+
+// Built in maths constants
+print("E:")
+print(E)
+print("PI:")
+print(PI)
+print("TAU:")
+print(TAU)

@@ -1,5 +1,5 @@
-// define vectors
-let x = [1,2,3]
+// Vectors
+let x = [1..3] // range syntax
 let y = [3,2,1]
 
 // x[5] // error due to indexing
@@ -14,3 +14,15 @@ print(x .* y)
 // To note: the length is encoded in the type, so the compiler can catch errors like this:
 // let z = [1,2,3,4] 
 // let err = x + z // error due to length mismatch
+
+// Other list operations
+print("Concatenation")
+print(4 :: x) // cons operator
+print("Slicing")
+print(x[0..2]) // slicing
+print(x[..2]) // slice operator
+print(x[2..]) // slice operator
+print("Indexing")
+print(x[1]) // indexing
+print("Length")
+print(len(x)) // length. Note this is defined in Prelude.vec3

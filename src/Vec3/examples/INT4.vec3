@@ -1,0 +1,29 @@
+// Advanced maths
+let f = (x) -> x^2.0 - 2.0
+print("Function:")
+print(f)
+let deriv = differentiate(f)
+print("Derivative:")
+print(deriv)
+let integral = integrate(f)
+print("Integral:")
+print(integral)
+let tangent = tangentFunc(f, 1)
+print("Tangent function at x = 1:")
+print(tangent)
+
+let integral2 = findIntegral(f, 0, 10)
+print("Integral:")
+print(integral2)
+
+let root = bisection(f, 1.0, 2.0, 1e-6, 100)
+print("Root:")
+print(root)
+
+plotFuncs("Calculus", [f, deriv, tangent, integral])
+
+let trig = (x) -> sin(x) + cos(x)
+let trigDeriv = differentiate(trig)
+let trigIntegral = integrate(trig)
+let trigTangent = tangentFunc(trig, 1)
+plotFuncs("Trigonometry", [trig, trigDeriv, trigTangent, trigIntegral])

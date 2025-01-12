@@ -160,9 +160,9 @@ let rec valueToString =
     | VNumber(VChar c) -> $"'{c}'"
     | VBoolean b -> string b
     | VString s -> s
-    | VFunction(func, Some f) -> $"<fn {func.Name} : f(x) = {toString f}>"
+    | VFunction(_, Some f) -> $"f(x) = {toString f}"
     | VFunction(f, _) -> $"<fn {f.Name}>"
-    | VClosure(c, Some f) -> $"<closure {c.Function.Name} : f(x) = {toString f}>"
+    | VClosure(_, Some f) -> $"f(x) = {toString f}"
     | VClosure(c, _) -> $"<closure {c.Function.Name}>"
     | VNil -> "()"
     | VList(l, typ) ->

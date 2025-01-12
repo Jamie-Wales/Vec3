@@ -1,0 +1,8 @@
+// Prelude is implicitly imported
+import higher // import the higher module
+
+let f = (x) -> x^2.0 - 2.0
+
+// pipe operator defined in higher module
+let y = 4 |> f
+print(y) // 4.0

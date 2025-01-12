@@ -357,9 +357,9 @@ The reference counting system centers around the Vec3Object structure, which ser
 
 \begin{minted}{c}
 typedef struct Vec3Object {
-Type type;
-int ref_count;
-void (destructor)(struct Vec3Object);
+    Type type;
+    int ref_count;
+    void (destructor)(struct Vec3Object);
 } Vec3Object;
 \end{minted}
 

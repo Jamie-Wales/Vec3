@@ -397,7 +397,7 @@ let rec getRule (lexeme: Lexeme) : ParseRule =
             { Prefix = Some unary
               Infix = Some binary
               Postfix = None
-              Precedence = Precedence.None }
+              Precedence = Precedence.Call }
 
         | Colon ->
             { Prefix = None

@@ -222,7 +222,8 @@ let scNumber (nStr: char list) : (char list * Number * int) option =
                     let eStr, expVal, eLen = scInt expTail 0 0
                     Some(eStr, LFloat((float iVal + fVal) * (10.0 ** float expVal)), iLen + fLen + eLen + 2)
             | _ -> Some(fStr, LFloat(float iVal + fVal), iLen + fLen + 1)
-        | 'e' :: expTail ->
+        | 'e' :: expTail
+        | 'E' :: expTail ->
             match expTail with
             | '+' :: expTail ->
                 let eStr, expVal, eLen = scInt expTail 0 0

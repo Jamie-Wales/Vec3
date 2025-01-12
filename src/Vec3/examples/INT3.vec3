@@ -1,0 +1,21 @@
+// Control flow
+// This file demonstrates the control flow features of the language
+
+// boolean type
+let x = true
+assert x && true, "Boolean failed"
+
+// if expression
+let x = 1
+let y = if x == 1 then 2 else 3
+assert y == 2, "If expression failed"
+
+// recursive function
+let rec factorial = (n) -> if n == 0 then 1 else n * factorial(n - 1)
+assert factorial(5) == 120, "Factorial failed"
+
+print("All assertions passed")
+
+// Will not stack overflow
+let rec sum = (n) -> if n == 0 then 0 else n + sum(n - 1)
+print(sum(50000)) 

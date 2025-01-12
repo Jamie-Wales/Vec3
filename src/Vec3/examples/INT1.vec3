@@ -1,0 +1,63 @@
+// The most essential and elementary task of the project
+
+// + token
+assert 4 + 4 == 8, "Addition failed"
+
+// - token (subtraction)
+assert 4 - 4 == 0, "Subtraction failed"
+
+// - token (negation)
+assert -4 == 0 - 4, "Negation failed"
+
+// * token
+assert 4 * 4 == 16, "Multiplication failed"
+
+// / token
+assert 4 / 4 == 1, "Division failed"
+
+// % token
+assert 4 % 4 == 0, "Modulus failed"
+
+// ^ token
+assert 4 ^ 4 == 256, "Exponentiation failed"
+
+// ( and ) tokens
+assert (4 + 4) * 4 == 32, "Parentheses failed"
+
+// . for floating point numbers
+assert 4.0 + 4.0 == 8.0, "Floating point addition failed"
+assert 4.0 - 4.0 == 0.0, "Floating point subtraction failed"
+assert 4.0 * 4.0 == 16.0, "Floating point multiplication failed"
+assert 4.0 / 4.0 == 1.0, "Floating point division failed"
+
+// E or e for scientific notation
+assert 4E+2 + 4E+2 == 8E+2, "Scientific notation addition failed"
+assert 4E+2 - 4E+2 == 0E+2, "Scientific notation subtraction failed"
+assert 4E+2 * 4E+2 == 16E+4, "Scientific notation multiplication failed"
+assert 4E+2 / 4E+2 == 1E+0, "Scientific notation division failed"
+
+// Rational numbers
+assert 4/4 + 4/4 == 8/4, "Rational number addition failed"
+assert 4/4 - 4/4 == 0/4, "Rational number subtraction failed"
+assert 4/4 * 4/4 == 16/16, "Rational number multiplication failed"
+assert 4/4 / 4/4 == 1/1, "Rational number division failed"
+
+// Complex numbers
+assert (4+4i) + (4+4i) == 8+8i, "Complex number addition failed"
+assert (4+4i) - (4+4i) == 0+0i, "Complex number subtraction failed"
+assert (4+4i) * (4+4i) == 0+32i, "Complex number multiplication failed"
+
+// BIDMAS
+assert 4 + 4 * 4 == 20, "BIDMAS failed"
+assert (4 + 4) * 4 == 32, "BIDMAS failed"
+
+// Division by zero
+// print(4 / 0 == 0)
+
+// Modulus by zero
+// print(4 % 0 == 0)
+
+
+print("All assertions passed")
+
+

@@ -1,0 +1,50 @@
+// Plotting in GUI window
+
+// Simple function plotting
+let f = (x) -> 5*x + 3
+plotFunc("Simple Function", f)
+
+// Polynomial function plotting
+let f = (x) -> x^2 + 2*x + 1
+plotFunc("Polynomial Function", f)
+plotFunc("Polynomial with integral", f, 0, 10)
+
+// Trigonometric function plotting
+plotFunc("Sine Function", sin)
+plotFunc("Cosine Function", cos)
+plotFunc("Tangent Function", tan)
+
+// Logarithmic function plotting
+let f = (x) -> log(E, x)
+plotFunc("Natural Logarithm Function", f)
+
+let f = (x) -> log(10.0, x)
+plotFunc("Logarithm Base 10 Function", f)
+
+// Exponential function plotting
+let f = (x) -> exp(x)
+plotFunc("Exponential Function", f)
+
+// Combination of functions
+plotFuncs("Sine + polynomial Function", [sin, (x) -> x^2 + 2*x + 1])
+
+// Bar chart
+let data = {
+    title="Bar Chart",
+    x=[1, 2, 3, 4],
+    y=[1, 4, 9, 16],
+    ptype="bar" 
+}
+
+plot(data)
+
+// Scatter plot
+let data = {
+    title="Scatter Plot",
+    x=[1, 2, 3, 4],
+    y=[1, 4, 9, 16],
+    ptype="scatter" 
+}
+
+plot(data)
+

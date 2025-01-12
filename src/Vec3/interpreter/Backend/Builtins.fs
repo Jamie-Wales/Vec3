@@ -157,6 +157,16 @@ let builtins =
 
       Identifier "print",
       VBuiltin((fun args -> VOutput $"""{String.concat " " (List.map valueToString args)}"""), "Print")
+      
+      Identifier "BUILTIN_CEIL",
+        VBuiltin(
+            (fun args ->
+                match args with
+                | [ VNumber(VFloat f) ] -> VNumber(VFloat(ceil f))
+                | [ VNumber(VInteger i) ] -> VNumber(VInteger(i))
+                | _ -> raise <| InvalidProgramException "ceil expects a float"),
+            "Ceil"
+        )
 
       Identifier "BUILTIN_ROOT",
       VBuiltin(
@@ -664,8 +674,13 @@ let builtins =
       VBuiltin(
           (fun args ->
               match args with
+              | [VNumber (VInteger _); VNumber(VInteger 0)] -> raise <| InvalidProgramException "Division by zero"
               | [ VNumber(VInteger a); VNumber(VInteger b) ] -> VNumber(VInteger(a % b))
-              | [ VNumber(a); VNumber(b) ] -> VNumber(VFloat(floatValue a % floatValue b))
+              | [ VNumber(a); VNumber(b) ] ->
+                  if floatValue b = 0.0 then
+                      raise <| InvalidProgramException "Division by zero"
+                  else
+                      VNumber(VFloat(floatValue a % floatValue b))
               | _ -> raise <| InvalidProgramException "Expected two integers or floats for %"),
           "Mod"
       )
