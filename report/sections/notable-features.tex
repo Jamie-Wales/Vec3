@@ -9,7 +9,7 @@ following syntax:
 let (|+|) = (a: float, b: float) -> a + b
 
 // Define a unary operator
-let (|!|) = (a: bool) -> not a
+let (|!|) = (a: bool) -> not(a)
 \end{minted}
 
 This is a powerful feature allowing for the language to be extended in a way that is meaningful to the user.
@@ -19,9 +19,10 @@ expressions while giving the user the option of specifying types explicitly, imp
 code and reducing the cognitive load on the user.
 
 \begin{minted}{fsharp}
-let f = (x: float) -> x + 1.0
-let f: (float) -> float = (x) -> x + 1.0
-let f = (x: float) : float -> x + 1.0
+let f = (x) -> x + 1.0
+let f = (x: float) -> x + 1.0 // Explicit type annotation
+let f: (float) -> float = (x) -> x + 1.0 // Alternative explicit type annotation
+let f = (x: float) : float -> x + 1.0 // Alternative explicit type annotation
 \end{minted}
 
 \paragraph{Compound data types} The language supports compound data types such as lists, tuples and records,
@@ -82,7 +83,7 @@ let cross = v1 X v2
 
 let m1 = [[1.0, 2.0], [3.0, 4.0]]
 let trans = transpose(m1)
-let det = determinant(m1)
+let det = determinate(m1)
 let inv = inverse(m1)
 \end{minted}
 

@@ -61,5 +61,6 @@
         <Content Include="examples\test.vec3" />
         <Content Include="examples\tests.vec3" />
         <Content Include="examples\draw.vec3" />
+        <Content Include="examples\matrix.vec3" />
     </ItemGroup>
 </Project>

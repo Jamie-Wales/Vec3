@@ -6,7 +6,8 @@
 
 The final GUI is shown in subsections~\ref{subsec:code-editor},~\ref{subsec:notebook-view} and~\ref{subsec:plot-view}.
 It has 3 types of windows: the code editor, the notebook view and the plot view.
-It has support for loading in a file, buttons for running or transpiling the code, and an interactive repl.
+It has support for loading in or saving to a file, buttons for running or transpiling the code, a button for parse 
+tree visualisation and an interactive repl.
 The notebook view supports importing or exporting from a proprietary file format, running code blocks and exporting 
 to a PDF\@.
 
@@ -15,6 +16,7 @@ to a PDF\@.
     \includegraphics[width=0.8\textwidth]{assets/finalCodeEditor}
     \includegraphics[width=0.8\textwidth]{assets/finalGuiParserError}
     \includegraphics[width=0.8\textwidth]{assets/finalGuiTypeError}
+    \includegraphics[width=0.8\textwidth]{assets/finalGuiParseTree}
     \includegraphics[width=0.8\textwidth]{assets/finalREPL}
     \caption{Final GUI}\label{fig:final-gui}
 \end{figure}
@@ -23,6 +25,8 @@ to a PDF\@.
 
 The code editor is where the user writes their code, and is the main window of the GUI\@.
 It has syntax highlighting, live error checking and a REPL\@.
+Files can be loaded into the editor, and the code can be saved to a file.
+The user can run the code or transpile to C by pressing the appropriate button, as well as visualise the parse tree.
 
 Images are given in figure~\ref{fig:final-gui} of the code editor with output, live parser errors and live type errors.
 
@@ -143,7 +147,7 @@ definition, a tuple or a \textit{unit} type when encountered in the prefix posit
 This is resolved through a state machine approach, where the parser can move around the state at will, allowing 
 lookahead and backtracking in order to reach a point where the ambiguity is resolved.
 
-In order to simplify the Virtual Machine\ref{sec:virtual-machine2}, the parser parses all binary and unary operations 
+In order to simplify the Virtual Machine\ref{sec:virtual-machine}, the parser parses all binary and unary operations 
 as function calls, with the operator as the function name.
 
 In order to make type inference simpler for operators that are overloaded for both unary and binary operations (such 
@@ -160,8 +164,8 @@ and easy diagnosis of errors.
 
 \section{AST}\label{sec:expression}
 
-The AST of the language is represented as a list of statements, where a statement is either expression, a
-variable assignment or another statement type.
+The AST of the language is represented as a list of statements, where a statement is either an expression, a
+variable assignment or another statement type (such as a recursive function definition).
 It is typed (after type inference\ref{sec:type-inference}) in order to allow for easier optimisation and
 bytecode generation.
 

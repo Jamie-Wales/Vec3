@@ -199,7 +199,10 @@ let dotProduct =
 /// Intelligent cast function type.
 /// </summary>
 let castType =
-    let typ = TTypeVariable(freshTypeVar ())
+    let typ = TConstrain(Constrain(freshTypeVar (), (fun _ -> true), (fun t -> match t with
+                                                                                | TTensor(t, _) -> TTensor(t, DAny)
+                                                                                | _ -> t), None
+                                                                      ))
 
     TFunction([ TAny; typ ], typ, false, true)
 
