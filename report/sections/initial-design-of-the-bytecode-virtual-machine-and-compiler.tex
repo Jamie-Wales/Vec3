@@ -24,38 +24,61 @@ The instruction set is designed for a stack machine, with most instructions oper
 
 \subsubsection{Instruction Set}
 
+The Vec3 instruction set is designed to be concise and expressive, with a focus on common operations and control flow.
+Table~\ref{tab:instruction-set} provides an overview of the instruction set, including the opcode, operands, description, and stack effect of each instruction.
+
 \begin{table}[h]
-\caption{Vec3 Virtual Machine Instruction Set}
-\label{tab:instruction-set}
-\begin{tabular}{>{\ttfamily}p{0.2\linewidth} p{0.15\linewidth} p{0.45\linewidth} p{0.15\linewidth}}
-\toprule
-Opcode & Operands & Description & Stack Effect \\ 
-\midrule
-CONSTANT & index (byte) & Load constant from pool & $\dots \rightarrow \dots, val$ \\
-CONSTANT\_LONG & index (3 bytes) & Load constant (long index) & $\dots \rightarrow \dots, val$ \\
-POP & --- & Remove top value & $\dots, val \rightarrow \dots$ \\
-NIL & --- & Push nil & $\dots \rightarrow \dots, nil$ \\
-TRUE & --- & Push true & $\dots \rightarrow \dots, true$ \\
-FALSE & --- & Push false & $\dots \rightarrow \dots, false$ \\
-GET\_LOCAL & index (byte) & Load local variable & $\dots \rightarrow \dots, val$ \\
-SET\_LOCAL & index (byte) & Store to local variable & $\dots, val \rightarrow \dots$ \\
-GET\_GLOBAL & index (byte) & Load global variable & $\dots \rightarrow \dots, val$ \\
-SET\_GLOBAL & index (byte) & Store to global variable & $\dots, val \rightarrow \dots$ \\
-DEFINE\_GLOBAL & index (byte) & Define global variable & $\dots, val \rightarrow \dots$ \\
-GET\_UPVALUE & index (byte) & Load upvalue & $\dots \rightarrow \dots, val$ \\
-SET\_UPVALUE & index (byte) & Store to upvalue & $\dots, val \rightarrow \dots$ \\
-JUMP & offset (2 bytes) & Jump forward & $\dots \rightarrow \dots$ \\
-JUMP\_IF\_FALSE & offset (2 bytes) & Jump if false & $\dots, val \rightarrow \dots$ \\
-LOOP & offset (2 bytes) & Jump backward & $\dots \rightarrow \dots$ \\
-CALL & count, r (bytes) & Call function with args & $\dots, fn, a_1, \dots, a_n \rightarrow \dots, ret$ \\
-RETURN & b (byte) & Return from function & $\dots, val \rightarrow \dots$ \\
-CLOSURE & index (byte) & Create closure & $\dots \rightarrow \dots, closure$ \\
-CLOSE\_UPVALUE & --- & Close upvalue & $\dots, upvalue \rightarrow \dots$ \\
-COMPOUND\_CREATE & --- & Create compound value & $\dots \rightarrow \dots, compound$ \\
-\bottomrule
-\end{tabular}
+    \caption{Vec3 Virtual Machine Instruction Set. The stack effect is depicted from left to right, with `\ldots` representing the remaining stack contents.}
+    \begin{tabularx}{\textwidth}{|X|X|X|X|}
+        \hline
+        \textbf{Opcode} & \textbf{Operands} & \textbf{Description} & \textbf{Stack Effect} \\
+        \hline \hline
+        CONSTANT & index (byte) & Load constant from pool & $\dots \rightarrow \dots, val$ \\
+        \hline
+        CONSTANT\_LONG & index (3 bytes) & Load constant (long index) & $\dots \rightarrow \dots, val$ \\
+        \hline
+        POP & --- & Remove top value & $\dots, val \rightarrow \dots$ \\
+        \hline
+        NIL & --- & Push nil & $\dots \rightarrow \dots, nil$ \\
+        \hline
+        TRUE & --- & Push true & $\dots \rightarrow \dots, true$ \\
+        \hline
+        FALSE & --- & Push false & $\dots \rightarrow \dots, false$ \\
+        \hline
+        GET\_LOCAL & index (byte) & Load local variable & $\dots \rightarrow \dots, val$ \\
+        \hline
+        SET\_LOCAL & index (byte) & Store to local variable & $\dots, val \rightarrow \dots$ \\
+        \hline
+        GET\_GLOBAL & index (byte) & Load global variable & $\dots \rightarrow \dots, val$ \\
+        \hline
+        SET\_GLOBAL & index (byte) & Store to global variable & $\dots, val \rightarrow \dots$ \\
+        \hline
+        DEFINE\_GLOBAL & index (byte) & Define global variable & $\dots, val \rightarrow \dots$ \\
+        \hline
+        GET\_UPVALUE & index (byte) & Load upvalue & $\dots \rightarrow \dots, val$ \\
+        \hline
+        SET\_UPVALUE & index (byte) & Store to upvalue & $\dots, val \rightarrow \dots$ \\
+        \hline
+        JUMP & offset (2 bytes) & Jump forward & $\dots \rightarrow \dots$ \\
+        \hline
+        JUMP\_IF\_FALSE & offset (2 bytes) & Jump if false & $\dots, val \rightarrow \dots$ \\
+        \hline
+        LOOP & offset (2 bytes) & Jump backward & $\dots \rightarrow \dots$ \\
+        \hline
+        CALL & count, r (bytes) & Call function with args & $\dots, fn, a_1, \dots, a_n \rightarrow \dots, ret$ \\
+        \hline
+        RETURN & b (byte) & Return from function & $\dots, val \rightarrow \dots$ \\
+        \hline
+        CLOSURE & index (byte) & Create closure & $\dots \rightarrow \dots, closure$ \\
+        \hline
+        CLOSE\_UPVALUE & --- & Close upvalue & $\dots, upvalue \rightarrow \dots$ \\
+        \hline
+        COMPOUND\_CREATE & --- & Create compound value & $\dots \rightarrow \dots, compound$ \\
+        \hline
+    \end{tabularx}
+    \label{tab:instruction-set}
 \end{table}
-\textit{Note:} Stack effects are depicted from left to right, with `\ldots` representing the remaining stack contents.
+% \textit{Note:} Stack effects are depicted from left to right, with `\ldots` representing the remaining stack contents.
 
 \subsubsection{Chunk Structure}
 
@@ -144,7 +167,7 @@ The structure of the \texttt{Function} object is as follows:
 \end{enumerate}
 The \texttt{Function} object effectively represents the entry point for execution within the VM. The VM can readily load this object, instantiate a new \texttt{Closure} (a wrapper around the \texttt{Function} that also holds references to any necessary upvalues), and subsequently initialize a \texttt{CallFrame} to commence execution.
 The \textit{compileProgram} function is the main driver of the compilation pipeline.
-It accepts the root of the AST as input and orchestrates the generation of the final \textttt{Function} object.
+It accepts the root of the AST as input and orchestrates the generation of the final \texttt{Function} object.
 The process can be summarized as follows:
 
 \begin{enumerate}
@@ -270,8 +293,15 @@ When a function is defined within another function, and it references variables 
 \textit{SET\_UPVALUE}, \textit{CLOSURE}, \textit{CLOSE\_UPVALUE}) to manage them.
 
 %% redo this cunt
-When a closure is created at runtime (via the `CLOSURE` instruction), the VM creates `UpValue` objects that point to the relevant variables on the stack. If the enclosing function returns, and the upvalues are no longer on the stack, the `CLOSE_UPVALUE` instruction is executed, which moves the upvalue's value to the heap, ensuring the closure still has access to its environment even after the outer function has completed.
-This upvalue mechanism allows inner functions to retain access to the variables of their enclosing scope, even after the outer function has returned. This is essential for implementing higher-order functions and other functional programming paradigms. The use of upvalues and closures adds a layer of complexity to the VM, but it significantly enhances the expressive power of the Vec3 language. By carefully managing the lifetime and accessibility of upvalues, the VM ensures that closures behave correctly and maintain the integrity of lexical scoping.
+When a closure is created at runtime (via the `CLOSURE` instruction), the VM creates \textit{UpValue} objects that 
+point to the relevant variables on the stack.
+If the enclosing function returns, and the upvalues are no longer on the stack, the \textit{CLOSE\_UPVALUE} 
+instruction is 
+executed, which moves the upvalue's value to the heap, ensuring the closure still has access to its environment even after the outer function has completed.
+This upvalue mechanism allows inner functions to retain access to the variables of their enclosing scope, even after the outer function has returned.
+This is essential for implementing higher-order functions and other functional programming paradigms.
+The use of upvalues and closures adds a layer of complexity to the VM, but it significantly enhances the expressive power of the Vec3 language.
+By carefully managing the lifetime and accessibility of upvalues, the VM ensures that closures behave correctly and maintain the integrity of lexical scoping.
 
 \subsection{Built-in Functions}\label{subsec:built-in-functions}
 The VM integrates built-in functions through a special value type that can directly manipulate VM state.

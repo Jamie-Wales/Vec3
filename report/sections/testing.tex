@@ -264,21 +264,23 @@ Tests can be found in table~\ref{tab:gui}.
 
 Tests can be found in table~\ref{tab:plot-tests}.
 
-\caption{Plot Tests}
+\begin{table}[h]
+    \caption{Plot Tests}
 \begin{tabular}{|p{1.8in}|p{0.5in}|p{0.4in}|p{0.6in}|p{1.4in}|} \hline
 Plot & ResE & ResA& Pass/Fail & Action/comment \\ \hline \hline
 $let\ x = [1..10] : [float]$ & & & & \\
 $let\ y = map(x, (x) -> x^2)$ & & & & \\
 $let\ data = \{ title = "Example Plot", x = x, y = y, ptype = "scatter" \}$ & & & & \\
-$plot(data)$ & f(x) = x^2 & f(x) = x^2 & Pass & scatter plot \\ \hline
+$plot(data)$ & $f(x) = x^2$ & $f(x) = x^2$ & Pass & scatter plot \\ \hline
 $let\ f = (x) -> x^2$ & & & & \\
-$plotFunc("Example Plot", f)$ & f(x) = x^2 & f(x) = x^2 & Pass & plot function \\ \hline
-$let\ f = (x) -> cos(x)$ & & & & \\
-$plotFunc("Example Plot", f)$ & f(x) = cos(x) & f(x) = cos(x) & Pass & plot function \\ \hline
-$plotFunc("Example Plot", cos)$ & f(x) = cos(x) & f(x) = cos(x) & Pass & plot function \\ \hline
-$let\ f = (x) -> tan(x)$ & & & & \\
-$plotFunc("Example Plot", f)$ & f(x) = tan(x) & f(x) = tan(x) & Pass, but not infinite asymptotes & No joined asymptotes \\ \hline
+$plotFunc("Example Plot", f)$ & $f(x) = x^2$ & $f(x) = x^2$ & Pass & plot function \\ \hline
+$let\ f = (x) -> \cos(x)$ & & & & \\
+$plotFunc("Example Plot", f)$ & $f(x) = \cos(x)$ & $f(x) = \cos(x)$ & Pass & plot function \\ \hline
+$plotFunc("Example Plot", \cos)$ & $f(x) = \cos(x)$ & $f(x) = \cos(x)$ & Pass & plot function \\ \hline
+$let\ f = (x) -> \tan(x)$ & & & & \\
+$plotFunc("Example Plot", f)$ & $f(x) = \tan(x)$ & $f(x) = \tan(x)$ & Pass, but not infinite asymptotes & No joined asymptotes \\ \hline
 $let\ f = (x) -> 1 / x$ & & & & \\
-$plotFunc("Example Plot", f)$ & f(x) = 1/x & f(x) = 1/x & Pass, but not infinite asymptotes & No joined asymptotes \\ \hline
+$plotFunc("Example Plot", f)$ & $f(x) = 1/x$ & $f(x) = 1/x$ & Pass, but not infinite asymptotes & No joined asymptotes \\ \hline
 \end{tabular}
 \label{tab:plot-tests}
+\end{table}

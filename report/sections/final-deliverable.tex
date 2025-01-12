@@ -6,7 +6,8 @@
 
 The final GUI is shown in subsections~\ref{subsec:code-editor},~\ref{subsec:notebook-view} and~\ref{subsec:plot-view}.
 It has 3 types of windows: the code editor, the notebook view and the plot view.
-It has support for loading in a file, buttons for running or transpiling the code, and an interactive repl.
+It has support for loading in or saving to a file, buttons for running or transpiling the code, a button for parse 
+tree visualisation and an interactive repl.
 The notebook view supports importing or exporting from a proprietary file format, running code blocks and exporting 
 to a PDF\@.
 
@@ -15,6 +16,7 @@ to a PDF\@.
     \includegraphics[width=0.8\textwidth]{assets/finalCodeEditor}
     \includegraphics[width=0.8\textwidth]{assets/finalGuiParserError}
     \includegraphics[width=0.8\textwidth]{assets/finalGuiTypeError}
+    \includegraphics[width=0.8\textwidth]{assets/finalGuiParseTree}
     \includegraphics[width=0.8\textwidth]{assets/finalREPL}
     \caption{Final GUI}\label{fig:final-gui}
 \end{figure}
@@ -23,6 +25,8 @@ to a PDF\@.
 
 The code editor is where the user writes their code, and is the main window of the GUI\@.
 It has syntax highlighting, live error checking and a REPL\@.
+Files can be loaded into the editor, and the code can be saved to a file.
+The user can run the code or transpile to C by pressing the appropriate button, as well as visualise the parse tree.
 
 Images are given in figure~\ref{fig:final-gui} of the code editor with output, live parser errors and live type errors.
 
@@ -143,7 +147,7 @@ definition, a tuple or a \textit{unit} type when encountered in the prefix posit
 This is resolved through a state machine approach, where the parser can move around the state at will, allowing 
 lookahead and backtracking in order to reach a point where the ambiguity is resolved.
 
-In order to simplify the Virtual Machine\ref{sec:virtual-machine2}, the parser parses all binary and unary operations 
+In order to simplify the Virtual Machine\ref{sec:virtual-machine}, the parser parses all binary and unary operations 
 as function calls, with the operator as the function name.
 
 In order to make type inference simpler for operators that are overloaded for both unary and binary operations (such 
@@ -160,8 +164,8 @@ and easy diagnosis of errors.
 
 \section{AST}\label{sec:expression}
 
-The AST of the language is represented as a list of statements, where a statement is either expression, a
-variable assignment or another statement type.
+The AST of the language is represented as a list of statements, where a statement is either an expression, a
+variable assignment or another statement type (such as a recursive function definition).
 It is typed (after type inference\ref{sec:type-inference}) in order to allow for easier optimisation and
 bytecode generation.
 
@@ -209,7 +213,7 @@ and then the variable).
 It is to be noted that variable assignments are never removed during DCE when running the code editor due to the 
 attached REPL, as the user may wish to use the variable in the REPL\@, or when running code blocks in the notebook 
 view\ref{subsec:notebook-view} as the variable may be used in a later code block.
-However, DCE can be aggressively performed when transpiling to C\ref{sec:transpiler}, as the user is not expected to 
+However, DCE can be aggressively performed when transpiling to C\ref{sec:transpiler-implementation}, as the user is not expected to 
 interact with the generated C code.
 
 \subsection{Constant folding}\label{subsec:constant-folding}
@@ -312,21 +316,28 @@ Additionally, the \textit{trace} option allows for the shape to leave a trail be
 animations or visualising movement.
 
 \section{Transpiler Implementation} \label{sec:transpiler-implementation}
-The Vec3 transpiler provides an alternative execution path by converting Vec3 programs into C code, enabling direct compilation to native machine code. This approach offers potential performance benefits while maintaining the language's semantics through careful mapping of Vec3's features to equivalent C constructs.
-\subsection{Architecture Overview}
-The transpiler follows a multi-phase pipeline that transforms Vec3 source code into executable programs. The process begins with the existing parser and type checker, then proceeds through code generation and compilation phases. Each phase is designed to be independent, allowing for easier maintenance and optimisation of individual components.
+The Vec3 transpiler provides an alternative execution path by converting Vec3 programs into C code, enabling direct compilation to native machine code.
+This approach offers potential performance benefits while maintaining the language's semantics through careful mapping of Vec3's features to equivalent C constructs.
+
+\subsection{Architecture Overview}\label{subsec:architecture-overview}
+The transpiler follows a multiphase pipeline that transforms Vec3 source code into executable programs.
+The process begins with the existing parser and type checker, then proceeds through code generation and compilation phases.
+Each phase is designed to be independent, allowing for easier maintenance and optimisation of individual components.
 The transpilation process consists of the following main phases:
-\begin{itemize}
+
+\begin{itemize}[nolistsep]
 \item Source code parsing and AST generation
 \item Type checking and semantic analysis
 \item C code generation
 \item Compilation of generated C code to native executables
 \end{itemize}
-\subsection{Code Generation Strategy}
+
+\subsection{Code Generation Strategy}\label{subsec:code-generation-strategy}
 The code generator maps Vec3's high-level constructs to equivalent C implementations while preserving the language's semantics. 
 This mapping is particularly careful in handling Vec3's functional features, which don't have direct equivalents in C. The generator maintains a reference counting system for memory management and implements a runtime environment that supports Vec3's dynamic features.
 The transpiler generates C code that relies on a custom runtime library implementing Vec3's core features:
-\begin{itemize}
+
+\begin{itemize}[nolistsep]
 \item Complex number arithmetic
 \item First-class functions
 \item Garbage collection through reference counting
@@ -334,11 +345,16 @@ The transpiler generates C code that relies on a custom runtime library implemen
 \item List and tuple operations
 \item Record types with dynamic field access
 \end{itemize}
+
 \section{Memory Management and Garbage Collection}
 \label{sec:memory-management}
-The Vec3 runtime implements a deterministic memory management system through reference counting, offering predictable cleanup behavior while avoiding the complexity of tracing garbage collection. This approach particularly suits Vec3's transpiled nature, as it maps cleanly to C's manual memory management while providing automated cleanup semantics.
-\subsection{Reference Counting Implementation}
+
+The Vec3 runtime implements a deterministic memory management system through reference counting, offering predictable cleanup behavior while avoiding the complexity of tracing garbage collection.
+This approach particularly suits Vec3's transpiled nature, as it maps cleanly to C's manual memory management while providing automated cleanup semantics.
+
+\subsection{Reference Counting Implementation}\label{subsec:reference-counting-implementation}
 The reference counting system centers around the Vec3Object structure, which serves as the base for all Vec3 values:
+
 \begin{minted}{c}
 typedef struct Vec3Object {
 Type type;
@@ -346,196 +362,189 @@ int ref_count;
 void (destructor)(struct Vec3Object);
 } Vec3Object;
 \end{minted}
+
 Each object tracks its reference count, and the runtime provides two core operations:
+
 \begin{minted}{c}
 void vec3_incref(Vec3Value* value) {
-if (value != NULL) {
-value->object.ref_count++;
+    if (value != NULL) {
+    value->object.ref_count++;
 }
-}
+
 void vec3_decref(Vec3Value* value) {
-if (value != NULL) {
-assert(value->object.ref_count > 0);
-value->object.ref_count--;
-if (value->object.ref_count == 0) {
-if (value->object.destructor) {
-value->object.destructor((Vec3Object*)value);
-}
-free(value);
-}
-}
+    if (value != NULL) {
+        assert(value->object.ref_count > 0);
+        value->object.ref_count--;
+            if (value->object.ref_count == 0) {
+                if (value->object.destructor) {
+                    value->object.destructor((Vec3Object*)value);
+            }
+            free(value);
+        }
+    }
 }
 \end{minted}
-\subsection{Destructor System}
-The destructor function pointer in Vec3Object enables type-specific cleanup. Each value type can register its own destructor:
-\begin{itemize}
+
+\subsection{Destructor System}\label{subsec:destructor-system}
+The destructor function pointer in Vec3Object enables type-specific cleanup.
+Each value type can register its own destructor:
+
+\begin{itemize}[nolistsep]
 \item Strings need to free their character buffer
 \item Lists must decrement references to their elements
 \item Functions must clean up their environment and name
 \item Records must deallocate their hash table and decrement field references
 \end{itemize}
+
 This extensible destructor system ensures proper cleanup of complex data structures:
+
 \begin{minted}{c}
 void vec3_destroy_list(Vec3Object* object) {
-Vec3Value* value = (Vec3Value*)object;
-vec3_list* current = value->as.list;
-while (current != NULL) {
-vec3_list* next = current->next;
-vec3_decref(current->value);
-free(current);
-current = next;
-}
+    Vec3Value* value = (Vec3Value*)object;
+    vec3_list* current = value->as.list;
+    while (current != NULL) {
+        vec3_list* next = current->next;
+        vec3_decref(current->value);
+        free(current);
+        current = next;
+    }
 }
 \end{minted}
-\section{Generic Value Representation}
-\label{sec:generic-value}
-Vec3 implements a unified value representation that enables dynamic typing while maintaining efficiency. This design allows Vec3 to support multiple data types within a single value structure while providing type-safe operations.
-\subsection{Value Structure}
+
+\subsection{Cycle Handling}\label{subsec:cycle-handling}
+While reference counting normally cannot handle cyclic references, Vec3's type system and standard library are designed to minimize the creation of reference cycles.
+The few cases where cycles could occur (such as in recursive data structures) are handled through weak references or explicit cleanup operations.
+
+\section{Generic Value Representation}\label{sec:generic-value}
+
+Vec3 implements a unified value representation that enables dynamic typing while maintaining efficiency.
+This design allows Vec3 to support multiple data types within a single value structure while providing type-safe operations.
+
+\subsection{Value Structure}\label{subsec:value-structure}
+
 The Vec3Value structure combines a type tag with a union of possible values:
+
 \begin{minted}{c}
 typedef struct {
-Vec3Object object;
-union {
-Number number;
-struct {
-size_t length;
-char* chars;
-} string;
-vec3_list* list;
-bool boolean;
-Vec3Function* function;
-HashMap* record;
-} as;
+    Vec3Object object;
+    union {
+        Number number;
+        struct {
+            size_t length;
+            char* chars;
+        } string;
+        vec3_list* list;
+        bool boolean;
+        Vec3Function* function;
+        HashMap* record;
+    } as;
 } Vec3Value;
 \end{minted}
+
 This design achieves several key objectives:
-\begin{itemize}
-\item Efficient memory usage through union-based storage
-\item Fast type checking via the object type tag
-\item Uniform handling of reference counting
-\item Support for value-specific destructors
+
+\begin{itemize}[nolistsep]
+    \item Efficient memory usage through union-based storage
+    \item Fast type checking via the object type tag
+    \item Uniform handling of reference counting
+    \item Support for value-specific destructors
 \end{itemize}
-\subsection{Number System}
+
+\subsection{Number System}\label{subsec:number-system}
+
 Vec3's number system demonstrates the flexibility of this approach by supporting multiple numeric types within a single representation:
+
 \begin{minted}{c}
 typedef struct {
-NumberType type;
-union {
-int64_t integer;
-double float_val;
-struct { int64_t num; int64_t denom; } rational;
-struct { double real; double imag; } complex;
-} as;
+    NumberType type;
+    union {
+        int64_t integer;
+        double float_val;
+        struct { int64_t num; int64_t denom; } rational;
+        struct { double real; double imag; } complex;
+    } as;
 } Number;
 \end{minted}
+
 This nested union structure allows Vec3 to efficiently represent different numeric types while maintaining type safety through the NumberType tag.
-\subsection{Type-Safe Operations}
-The value system includes comprehensive type checking and conversion operations. For example, the truthiness check demonstrates type-specific behavior:
+
+\subsection{Type-Safe Operations}\label{subsec:type-safe-operations}
+
+The value system includes comprehensive type checking and conversion operations.
+For example, the truthiness check demonstrates type-specific behavior:
+
 \begin{minted}{c}
 bool vec3_is_truthy(const Vec3Value* value) {
-if (value == NULL || value->object.type == TYPE_NIL) {
-return false;
+    if (value == NULL || value->object.type == TYPE_NIL) {
+        return false;
+    }
+    switch (value->object.type) {
+        case TYPE_NUMBER:
+            return value->as.number.type != NUMBER_INT || value->as.number.as.integer != 0;
+        case TYPE_STRING:
+            return value->as.string.length > 0;
+        case TYPE_LIST:
+            return value->as.list != NULL;
+        case TYPE_BOOLEAN:
+            return value->as.boolean;
+        default:
+            return true;
+    }
 }
-\subsection{Function Translation}
+\end{minted}
+
+\subsection{Function Translation}\label{subsec:function-translation}
+
 One of the more complex aspects of the transpiler is the translation of Vec3's first-class functions to C. The transpiler generates wrapper structures that capture the function's environment and parameters:
+
 \begin{minted}{c}
 typedef struct {
-char* name;
-int arity;
-Vec3Value* (fn)(Vec3Value* args);
-struct Vec3Env* env;
-bool is_recursive;
+    char* name;
+    int arity;
+    Vec3Value* (fn)(Vec3Value* args);
+    struct Vec3Env* env;
+    bool is_recursive;
 } Vec3Function;
 \end{minted}
+
 This structure enables proper handling of closures and maintains Vec3's lexical scoping rules in the generated C code. 
 The transpiler pays special attention to recursive functions, implementing them through a trampolining mechanism to prevent stack overflow in tail-recursive cases.
-\section{Plotting}\label{sec:plotting}
 
-The plotting system in Vec3 is built on top of GnuPlot, providing a powerful and flexible interface for data visualization. GnuPlot was chosen for its robust plotting capabilities, wide range of plot types, and ability to generate high-quality visualizations. The system interfaces with GnuPlot through pipes, allowing for real-time updates and interactive manipulation of plots.
+\subsection{Error Handling}\label{subsec:error-handling}
 
-\subsection{Core Plotting Functions}\label{subsec:core-plotting-functions}
-
-The language provides three main plotting functions: \textit{plot}, \textit{plotFunc}, and \textit{plotFuncs}. Each serves a distinct purpose in data visualization:
-
-\textit{plot} takes a configuration record containing the plot title, type, and data series. It supports various plot types including scatter plots, line plots, bar charts, and signal plots. The configuration is passed as a list of key-value pairs:
-
-\begin{minted}{fsharp}
-plot([
-    "title" -> "Plot Title",
-    "ptype" -> "scatter",  // or "line", "bar", "signal"
-    "x" -> [x_values],
-    "y" -> [y_values]
-])
-\end{minted}
-
-\textit{plotFunc} specializes in visualizing mathematical functions. It takes a title string and a function that maps real numbers to real numbers, plotting the function over the domain [-10, 10]:
-
-\begin{minted}{fsharp}
-plotFunc("Title", f)  // where f: float -> float
-\end{minted}
-
-\textit{plotFuncs} extends this capability to multiple functions, allowing for comparative visualization. Functions are plotted in different colors with an automatically generated legend:
-
-\begin{minted}{fsharp}
-plotFuncs("Title", [f1, f2, ...])
-\end{minted}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{assets/gnuplot.png}
-    \caption{Example GnuPlot output showing two parabolas}\label{fig:gnuplot-example}
-\end{figure}
-
-Figure~\ref{fig:gnuplot-example} demonstrates the output of \textit{plotFuncs} with two parabolic functions:
-
-\begin{minted}{fsharp}
-let f = (x) -> x^2.0 - 2.0     // Upward parabola shifted down
-let d = (x) -> -x^2.0 + 2.0    // Downward parabola shifted up
-plotFuncs("Function differential", [f, d])
-\end{minted}
-
-The purple line shows $f(x) = x^2 - 2$, while the green line shows $d(x) = -x^2 + 2$. This example demonstrates the system's ability to handle multiple functions and generate clear, distinguishable plots.
-
-\subsection{Implementation Details}\label{subsec:plotting-implementation}
-
-The plotting system communicates with GnuPlot through pipes, sending commands and data for real-time plot generation. The implementation handles memory management, data conversion, and proper cleanup of GnuPlot processes. Error handling ensures robust operation, with clear error messages for common issues like invalid function inputs or plotting errors.
-
-GnuPlot's native features are exposed through the Vec3 interface, including:
-\begin{itemize}
-    \item Interactive zooming and panning
-    \item Configurable plot styles and colors
-    \item Automatic axis scaling
-    \item Grid lines and legends
-    \item Multiple plot types
-\end{itemize}
-The system automatically handles data conversion between Vec3's number types and GnuPlot's expected formats, ensuring accurate plotting regardless of the input number type (integer, float, rational, or complex).
-
-\subsection{Error Handling}
 The transpiler implements comprehensive error handling throughout the generation process. 
 It categorises errors into these distinct types:
-\begin{itemize}
+
+\begin{itemize}[nolistsep]
 \item IOError for file system and input/output operations
 \item ParseError for syntax and parsing failures
 \item TypeError for type checking violations
 \item CodeGenError for code generation issues
 \item CompilationError for C compiler errors
 \end{itemize}
+
 This granular error categorisation helps developers quickly identify and fix issues in their Vec3 programs, whether they occur during parsing, type checking, code generation, or final compilation.
-\subsection{Build System Integration}
-The transpiler includes a configurable build system that manages the compilation pipeline. It handles directory structure creation, runtime library inclusion, and compiler invocation. The system is designed to be platform-independent, automatically adjusting paths and compiler commands based on the operating system:
+
+\subsection{Build System Integration}\label{subsec:build-system-integration}
+The transpiler includes a configurable build system that manages the compilation pipeline.
+It handles directory structure creation, runtime library inclusion, and compiler invocation.
+The system is designed to be platform-independent, automatically adjusting paths and compiler commands based on the operating system:
+
 \begin{minted}{fsharp}
 type TranspilerConfig =
-{ OutputDir: string
-RuntimeDir: string
-IncludeDir: string
-CompilerPath: string }
+    { OutputDir: string
+      RuntimeDir: string
+      IncludeDir: string
+      CompilerPath: string }
 \end{minted}
+
 This configuration system ensures consistent behavior across different development environments while maintaining flexibility for different deployment scenarios.
 
-\subsection{Performance Considerations}
+\subsection{Performance Considerations}\label{subsec:performance-considerations}
+
 The transpiler's output prioritises runtime performance through several optimisation strategies:
 
-\begin{itemize}
+\begin{itemize}[nolistsep]
 \item Minimises dynamic memory allocations where possible
 \item Implements efficient reference counting mechanisms
 \item Generates code that can benefit from the C compiler's optimisations
@@ -543,9 +552,10 @@ The transpiler's output prioritises runtime performance through several optimisa
 \item Produces code patterns that potentially outperform interpreted execution
 \end{itemize}
 
-\section{Future Developments}
+\section{Future Developments}\label{sec:future-developments}
 While the current transpiler implementation successfully handles the core Vec3 language features, several areas present opportunities for future enhancement:
-\begin{itemize}
+
+\begin{itemize}[nolistsep]
 \item Optimisation of generated code patterns
 \item Improved debug information generation
 \item Integration with profile-guided optimisation techniques

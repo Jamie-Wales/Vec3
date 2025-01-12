@@ -1,5 +1,0 @@
-\begin{MintedVerbatim}[commandchars=\\\{\}]
-\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{f}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{x}\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{float}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{n}{x}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{o}{.}\PYG{l+m+mi}{0}
-\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{f}\PYG{o}{:}\PYG{+w}{ }\PYG{o}{(}\PYG{k+kt}{float}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{k+kt}{float}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{x}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{n}{x}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{o}{.}\PYG{l+m+mi}{0}
-\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{f}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{x}\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{float}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{float}\PYG{+w}{ }\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{n}{x}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{o}{.}\PYG{l+m+mi}{0}
-\end{MintedVerbatim}
