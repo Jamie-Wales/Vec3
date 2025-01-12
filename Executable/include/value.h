@@ -76,20 +76,22 @@ typedef struct {
     bool is_recursive;
 } Vec3Function;
 
-typedef struct Vec3Thunk {
+// Thunk structure for trampolining
+struct Vec3Thunk {
     Vec3Function* func;
     Vec3Value** args;
     int arg_count;
-} Vec3Thunk;
+};
 
-typedef struct Vec3TrampolineValue {
+// Trampoline value structure
+struct Vec3TrampolineValue {
     Vec3Object object;
     union {
         Vec3Thunk* thunk;
         Vec3Value* value;
     } as;
     bool is_thunk;
-} Vec3TrampolineValue;
+};
 
 // Main value structure
 struct Vec3Value {

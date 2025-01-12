@@ -8,6 +8,21 @@
 #include <string.h>
 
 #define INITIAL_CAPACITY 16
+Vec3Thunk* vec3_new_thunk(Vec3Function* func, Vec3Value** args, int arg_count)
+{
+    Vec3Thunk* thunk = malloc(sizeof(Vec3Thunk));
+    thunk->func = func;
+    thunk->args = malloc(sizeof(Vec3Value*) * arg_count);
+    thunk->arg_count = arg_count;
+
+    for (int i = 0; i < arg_count; i++) {
+        thunk->args[i] = args[i];
+        vec3_incref(args[i]);
+    }
+
+    return thunk;
+}
+
 void vec3_destroy_thunk(Vec3Thunk* thunk)
 {
     for (int i = 0; i < thunk->arg_count; i++) {
@@ -17,6 +32,16 @@ void vec3_destroy_thunk(Vec3Thunk* thunk)
     free(thunk);
 }
 
+Vec3TrampolineValue* vec3_new_trampoline_thunk(Vec3Thunk* thunk)
+{
+    Vec3TrampolineValue* tramp = malloc(sizeof(Vec3TrampolineValue));
+    tramp->object.type = TYPE_TRAMPOLINE;
+    tramp->object.ref_count = 1;
+    tramp->object.destructor = vec3_destroy_trampoline;
+    tramp->as.thunk = thunk;
+    tramp->is_thunk = true;
+    return tramp;
+}
 
 Vec3TrampolineValue* vec3_new_trampoline_value(Vec3Value* value)
 {
@@ -39,59 +64,24 @@ void vec3_destroy_trampoline(Vec3Object* object)
     }
 }
 
-Vec3Thunk* vec3_new_thunk(Vec3Function* func, Vec3Value** args, int arg_count) {
-    Vec3Thunk* thunk = malloc(sizeof(Vec3Thunk));
-    thunk->func = func;
-    thunk->args = malloc(sizeof(Vec3Value*) * arg_count);
-    thunk->arg_count = arg_count;
-
-    // Take ownership of arguments
-    for (int i = 0; i < arg_count; i++) {
-        thunk->args[i] = args[i];
-        vec3_incref(args[i]);
-    }
-
-    return thunk;
-}
-
-// Wrap a thunk in a trampoline value
-Vec3TrampolineValue* vec3_new_trampoline_thunk(Vec3Thunk* thunk) {
-    Vec3TrampolineValue* tramp = malloc(sizeof(Vec3TrampolineValue));
-    tramp->object.type = TYPE_TRAMPOLINE;
-    tramp->object.ref_count = 1;
-    tramp->object.destructor = vec3_destroy_trampoline;
-    tramp->as.thunk = thunk;
-    tramp->is_thunk = true;
-    return tramp;
-}
-
-Vec3Value* vec3_trampoline_eval(Vec3TrampolineValue* tramp) {
+Vec3Value* vec3_trampoline_eval(Vec3TrampolineValue* tramp)
+{
     Vec3Value* result = NULL;
-    Vec3TrampolineValue* current = tramp;
-    
-    while (current != NULL && current->is_thunk) {
-        Vec3Thunk* thunk = current->as.thunk;
-        // Call the function with its own environment from func->env
-        result = thunk->func->fn(thunk->args);
-        
-        // Clean up current thunk unless it's the original
-        if (current != tramp) {
-            vec3_destroy_thunk(current->as.thunk);
-            free(current);
-        }
-        
-        // Check if we got another thunk
-        if (result != NULL && result->object.type == TYPE_TRAMPOLINE) {
-            current = (Vec3TrampolineValue*)result;
-        } else {
-            // We got a final result
-            break;
-        }
+
+    while (tramp->is_thunk) {
+        Vec3Thunk* thunk = tramp->as.thunk;
+        Vec3TrampolineValue* next = (Vec3TrampolineValue*)thunk->func->fn(thunk->args);
+
+        vec3_destroy_thunk(thunk);
+        free(tramp);
+
+        tramp = next;
     }
-    
+
+    result = tramp->as.value;
+    free(tramp);
     return result;
 }
-
 Vec3Value* vec3_concat(Vec3Value** args)
 {
     Vec3Value* a = args[1];
