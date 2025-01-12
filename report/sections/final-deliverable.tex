@@ -387,8 +387,6 @@ current = next;
 }
 }
 \end{minted}
-\subsection{Cycle Handling}
-While reference counting normally cannot handle cyclic references, Vec3's type system and standard library are designed to minimize the creation of reference cycles. The few cases where cycles could occur (such as in recursive data structures) are handled through weak references or explicit cleanup operations.
 \section{Generic Value Representation}
 \label{sec:generic-value}
 Vec3 implements a unified value representation that enables dynamic typing while maintaining efficiency. This design allows Vec3 to support multiple data types within a single value structure while providing type-safe operations.
@@ -451,6 +449,67 @@ bool is_recursive;
 \end{minted}
 This structure enables proper handling of closures and maintains Vec3's lexical scoping rules in the generated C code. 
 The transpiler pays special attention to recursive functions, implementing them through a trampolining mechanism to prevent stack overflow in tail-recursive cases.
+\section{Plotting}\label{sec:plotting}
+
+The plotting system in Vec3 is built on top of GnuPlot, providing a powerful and flexible interface for data visualization. GnuPlot was chosen for its robust plotting capabilities, wide range of plot types, and ability to generate high-quality visualizations. The system interfaces with GnuPlot through pipes, allowing for real-time updates and interactive manipulation of plots.
+
+\subsection{Core Plotting Functions}\label{subsec:core-plotting-functions}
+
+The language provides three main plotting functions: \textit{plot}, \textit{plotFunc}, and \textit{plotFuncs}. Each serves a distinct purpose in data visualization:
+
+\textit{plot} takes a configuration record containing the plot title, type, and data series. It supports various plot types including scatter plots, line plots, bar charts, and signal plots. The configuration is passed as a list of key-value pairs:
+
+\begin{minted}{fsharp}
+plot([
+    "title" -> "Plot Title",
+    "ptype" -> "scatter",  // or "line", "bar", "signal"
+    "x" -> [x_values],
+    "y" -> [y_values]
+])
+\end{minted}
+
+\textit{plotFunc} specializes in visualizing mathematical functions. It takes a title string and a function that maps real numbers to real numbers, plotting the function over the domain [-10, 10]:
+
+\begin{minted}{fsharp}
+plotFunc("Title", f)  // where f: float -> float
+\end{minted}
+
+\textit{plotFuncs} extends this capability to multiple functions, allowing for comparative visualization. Functions are plotted in different colors with an automatically generated legend:
+
+\begin{minted}{fsharp}
+plotFuncs("Title", [f1, f2, ...])
+\end{minted}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{assets/gnuplot.png}
+    \caption{Example GnuPlot output showing two parabolas}\label{fig:gnuplot-example}
+\end{figure}
+
+Figure~\ref{fig:gnuplot-example} demonstrates the output of \textit{plotFuncs} with two parabolic functions:
+
+\begin{minted}{fsharp}
+let f = (x) -> x^2.0 - 2.0     // Upward parabola shifted down
+let d = (x) -> -x^2.0 + 2.0    // Downward parabola shifted up
+plotFuncs("Function differential", [f, d])
+\end{minted}
+
+The purple line shows $f(x) = x^2 - 2$, while the green line shows $d(x) = -x^2 + 2$. This example demonstrates the system's ability to handle multiple functions and generate clear, distinguishable plots.
+
+\subsection{Implementation Details}\label{subsec:plotting-implementation}
+
+The plotting system communicates with GnuPlot through pipes, sending commands and data for real-time plot generation. The implementation handles memory management, data conversion, and proper cleanup of GnuPlot processes. Error handling ensures robust operation, with clear error messages for common issues like invalid function inputs or plotting errors.
+
+GnuPlot's native features are exposed through the Vec3 interface, including:
+\begin{itemize}
+    \item Interactive zooming and panning
+    \item Configurable plot styles and colors
+    \item Automatic axis scaling
+    \item Grid lines and legends
+    \item Multiple plot types
+\end{itemize}
+The system automatically handles data conversion between Vec3's number types and GnuPlot's expected formats, ensuring accurate plotting regardless of the input number type (integer, float, rational, or complex).
+
 \subsection{Error Handling}
 The transpiler implements comprehensive error handling throughout the generation process. 
 It categorises errors into these distinct types:

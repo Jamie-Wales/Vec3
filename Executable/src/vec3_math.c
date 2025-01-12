@@ -225,10 +225,11 @@ Vec3Value* vec3_plot_function(Vec3Value** args)
 
     for (int i = 0; i < num_points; i++) {
         x_data[i] = start + i * step;
-
         Vec3Value* x_val = vec3_new_number(number_from_float(x_data[i]));
-        Vec3Value* fn_args[] = { x_val };
-        Vec3Value* y_val = vec3_call_function(func, fn_args, 1);
+        
+        // Pass function as first argument
+        Vec3Value* fn_args[] = { func, x_val };
+        Vec3Value* y_val = vec3_call_function(func, fn_args, 2);  // Count is 2 now
 
         if (y_val->object.type != TYPE_NUMBER) {
             free(x_data);
@@ -275,22 +276,81 @@ Vec3Value* vec3_plot_functions(Vec3Value** args)
     }
 
     vec3_list* funcs = args[2]->as.list;
-
+    
     // Verify all elements are functions
     vec3_list* current = funcs;
+    size_t func_count = 0;
     while (current != NULL) {
-        if (current->value->object.type != TYPE_FUNCTION) {
+        if (current->value == NULL || current->value->object.type != TYPE_FUNCTION) {
             return vec3_error(vec3_new_string("All elements in list must be functions"));
         }
+        func_count++;
         current = current->next;
     }
 
     const char* title = args[1]->as.string.chars;
     const int num_points = 1000;
-    const int num_funcs = args[2]->as.list->length;
 
+    // Create arrays for each function's y values
+    double* x_data = malloc(num_points * sizeof(double));
+    double** y_data = malloc(func_count * sizeof(double*));
+    for (size_t i = 0; i < func_count; i++) {
+        y_data[i] = malloc(num_points * sizeof(double));
+        if (!y_data[i]) {
+            for (size_t j = 0; j < i; j++) {
+                free(y_data[j]);
+            }
+            free(y_data);
+            free(x_data);
+            return vec3_error(vec3_new_string("Failed to allocate memory"));
+        }
+    }
+
+    // Calculate x values and y values for each function
+    double start = -10.0;
+    double end = 10.0;
+    double step = (end - start) / (num_points - 1);
+
+    for (int i = 0; i < num_points; i++) {
+        x_data[i] = start + i * step;
+        Vec3Value* x_val = vec3_new_number(number_from_float(x_data[i]));
+
+        // Calculate y value for each function at this x
+        current = funcs;
+        size_t func_idx = 0;
+        
+        while (current != NULL) {
+            Vec3Value* func = current->value;
+            Vec3Value* fn_args[] = { func, x_val };
+            Vec3Value* y_val = vec3_call_function(func, fn_args, 2);
+
+            if (y_val == NULL || y_val->object.type != TYPE_NUMBER) {
+                vec3_decref(x_val);
+                if (y_val) vec3_decref(y_val);
+                for (size_t j = 0; j < func_count; j++) {
+                    free(y_data[j]);
+                }
+                free(y_data);
+                free(x_data);
+                return vec3_error(vec3_new_string("Function must return a number"));
+            }
+
+            y_data[func_idx][i] = number_to_double(&y_val->as.number);
+            vec3_decref(y_val);
+            current = current->next;
+            func_idx++;
+        }
+        vec3_decref(x_val);
+    }
+
+    // Plot all functions
     FILE* gnuplotPipe = popen("gnuplot -persist", "w");
     if (gnuplotPipe == NULL) {
+        for (size_t i = 0; i < func_count; i++) {
+            free(y_data[i]);
+        }
+        free(y_data);
+        free(x_data);
         return vec3_error(vec3_new_string("Failed to open gnuplot"));
     }
 
@@ -300,60 +360,30 @@ Vec3Value* vec3_plot_functions(Vec3Value** args)
     fprintf(gnuplotPipe, "set grid\n");
 
     fprintf(gnuplotPipe, "plot ");
-    for (int f = 0; f < num_funcs; f++) {
-        if (f > 0)
-            fprintf(gnuplotPipe, ", ");
-        fprintf(gnuplotPipe, "'-' with lines title 'f%d'", f + 1);
+    for (size_t f = 0; f < func_count; f++) {
+        if (f > 0) fprintf(gnuplotPipe, ", ");
+        fprintf(gnuplotPipe, "'-' with lines title 'f%zu'", f + 1);
     }
     fprintf(gnuplotPipe, "\n");
 
-    while (funcs != NULL) {
-        Vec3Value* func = funcs->value;
-        double* x_data = malloc(num_points * sizeof(double));
-        double* y_data = malloc(num_points * sizeof(double));
-        if (!x_data || !y_data) {
-            free(x_data);
-            free(y_data);
-            pclose(gnuplotPipe);
-            return vec3_error(vec3_new_string("Failed to allocate memory"));
-        }
-
-        double start = -10.0;
-        double end = 10.0;
-        double step = (end - start) / (num_points - 1);
-
+    // Output data for each function
+    for (size_t f = 0; f < func_count; f++) {
         for (int i = 0; i < num_points; i++) {
-            x_data[i] = start + i * step;
-            Vec3Value* x_val = vec3_new_number(number_from_float(x_data[i]));
-            Vec3Value* fn_args[] = { x_val };
-            Vec3Value* y_val = vec3_call_function(func, fn_args, 1);
-
-            if (y_val->object.type != TYPE_NUMBER) {
-                free(x_data);
-                free(y_data);
-                vec3_decref(x_val);
-                vec3_decref(y_val);
-                pclose(gnuplotPipe);
-                return vec3_error(vec3_new_string("Function must return a number"));
-            }
-
-            y_data[i] = number_to_double(&y_val->as.number);
-            vec3_decref(x_val);
-            vec3_decref(y_val);
-        }
-
-        for (int i = 0; i < num_points; i++) {
-            fprintf(gnuplotPipe, "%f %f\n", x_data[i], y_data[i]);
+            fprintf(gnuplotPipe, "%f %f\n", x_data[i], y_data[f][i]);
         }
         fprintf(gnuplotPipe, "e\n");
-
-        free(x_data);
-        free(y_data);
-        funcs = funcs->next;
     }
 
     fflush(gnuplotPipe);
     pclose(gnuplotPipe);
+
+    // Cleanup
+    for (size_t i = 0; i < func_count; i++) {
+        free(y_data[i]);
+    }
+    free(y_data);
+    free(x_data);
+
     return vec3_new_nil();
 }
 Vec3Value* vec3_add(Vec3Value** args)

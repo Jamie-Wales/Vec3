@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.10.8)  12 JAN 2025 17:18
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.10.8)  12 JAN 2025 18:19
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -601,193 +601,7 @@ File: l3backend-pdftex.def 2024-02-20 L3 backend support: PDF output (pdfTeX)
 )
 (/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.aux
 
-/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.aux:154: LaTeX Err
-or: Missing \begin{document}.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.154 <
-       <<<<<< HEAD
-You're in trouble here.  Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-
-LaTeX Warning: Label `subsec:constraints' multiply defined.
-
-
-LaTeX Warning: Label `subsec:vector-length-enc' multiply defined.
-
-
-LaTeX Warning: Label `subsec:function-purity' multiply defined.
-
-
-LaTeX Warning: Label `sec:optimisation' multiply defined.
-
-
-LaTeX Warning: Label `subsec:dead-code-elimination' multiply defined.
-
-
-LaTeX Warning: Label `subsec:constant-folding' multiply defined.
-
-
-LaTeX Warning: Label `sec:initial-design-of-the-bytecode-virtual-machine-and-co
-mpiler' multiply defined.
-
-
-LaTeX Warning: Label `sec:bytecode-compilation' multiply defined.
-
-
-LaTeX Warning: Label `tab:instruction-set' multiply defined.
-
-
-LaTeX Warning: Label `subsec:compilation-output' multiply defined.
-
-
-LaTeX Warning: Label `sec:virtual-machine' multiply defined.
-
-
-LaTeX Warning: Label `sec:prelude' multiply defined.
-
-
 LaTeX Warning: Label `sec:plotting' multiply defined.
-
-
-LaTeX Warning: Label `fig:scatter-plot' multiply defined.
-
-
-LaTeX Warning: Label `fig:bar-plot' multiply defined.
-
-
-LaTeX Warning: Label `fig:polynomial-plot' multiply defined.
-
-
-LaTeX Warning: Label `fig:multiple-plots' multiply defined.
-
-
-LaTeX Warning: Label `fig:plot-input' multiply defined.
-
-
-LaTeX Warning: Label `sec:drawing' multiply defined.
-
-
-LaTeX Warning: Label `fig:draw-circles' multiply defined.
-
-
-LaTeX Warning: Label `sec:transpiler' multiply defined.
-
-
-LaTeX Warning: Label `sec:code-architecture' multiply defined.
-
-
-LaTeX Warning: Label `ch:discussion-conclusion-and-future-work' multiply define
-d.
-
-
-LaTeX Warning: Label `sec:discussion' multiply defined.
-
-
-LaTeX Warning: Label `sec:future-work' multiply defined.
-
-
-LaTeX Warning: Label `ch:contributions' multiply defined.
-
-
-LaTeX Warning: Label `sec:jacob-edwards' multiply defined.
-
-
-LaTeX Warning: Label `sec:jamie-wales' multiply defined.
-
-
-LaTeX Warning: Label `ch:test' multiply defined.
-
-
-LaTeX Warning: Label `sec:arithmetic-expression-testing' multiply defined.
-
-
-LaTeX Warning: Label `sec:lexer-testing' multiply defined.
-
-
-LaTeX Warning: Label `sec:parser-testing' multiply defined.
-
-
-LaTeX Warning: Label `sec:variable-assignment-testing' multiply defined.
-
-
-LaTeX Warning: Label `sec:function-testing' multiply defined.
-
-
-LaTeX Warning: Label `sec:type-inference-testing' multiply defined.
-
-
-LaTeX Warning: Label `sec:compound-data-type-testing' multiply defined.
-
-
-LaTeX Warning: Label `sec:control-flow-testing' multiply defined.
-
-
-LaTeX Warning: Label `sec:gui-testing' multiply defined.
-
-
-LaTeX Warning: Label `sec:plot-testing' multiply defined.
-
-
-LaTeX Warning: Label `tab:table2' multiply defined.
-
-
-LaTeX Warning: Label `tab:variables' multiply defined.
-
-
-LaTeX Warning: Label `tab:functions' multiply defined.
-
-
-LaTeX Warning: Label `tab:type-inference' multiply defined.
-
-
-LaTeX Warning: Label `tab:compound' multiply defined.
-
-
-LaTeX Warning: Label `tab:control' multiply defined.
-
-
-LaTeX Warning: Label `ch:algorithms' multiply defined.
-
-
-LaTeX Warning: Label `sec:root-finding' multiply defined.
-
-
-LaTeX Warning: Label `alg:algorithm2' multiply defined.
-
-
-LaTeX Warning: Label `alg:algorithm3' multiply defined.
-
-
-LaTeX Warning: Label `sec:integration' multiply defined.
-
-
-LaTeX Warning: Label `alg:algorithm4' multiply defined.
-
-
-LaTeX Warning: Label `sec:vector-ops' multiply defined.
-
-
-LaTeX Warning: Label `alg:algorithm6' multiply defined.
-
-
-LaTeX Warning: Label `alg:algorithm7' multiply defined.
-
-
-LaTeX Warning: Label `sec:matrix-ops' multiply defined.
-
-
-LaTeX Warning: Label `alg:algorithm8' multiply defined.
-
-
-LaTeX Warning: Label `alg:algorithm9' multiply defined.
-
-
-LaTeX Warning: Label `alg:algorithm10' multiply defined.
 
 )
 \openout1 = `AP_REPORT_02.aux'.
@@ -858,12 +672,6 @@ Package pdflscape Info: Auto-detected driver: pdftex on input line 81.
 )) [1
 
 {/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
-been already used, duplicate ignored
-<to be read again> 
-                   \relax 
-l.47 \end{titlepage}
-                     [1]
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
 been already used, duplicate ignored
 <to be read again> 
@@ -1062,6 +870,10 @@ Overfull \hbox (98.13058pt too wide) in paragraph at lines 525--525
 r> ":" <type> "," <recordtypelist>[] 
  []
 
+
+LaTeX Warning: Reference `sec:transpiler' on page 13 undefined on input line 53
+8.
+
 ) [13]
 Chapter 4.
 
@@ -1168,23 +980,23 @@ changes paths in ways minted cannot detect,
 or using frozencache with a missing file.
 
 )
-<assets/finalCodeEditor.png, id=490, 1196.47pt x 796.9775pt>
+<assets/finalCodeEditor.png, id=559, 1196.47pt x 796.9775pt>
 File: assets/finalCodeEditor.png Graphic file (type png)
 <use assets/finalCodeEditor.png>
 Package pdftex.def Info: assets/finalCodeEditor.png  used on input line 15.
 (pdftex.def)             Requested size: 340.0013pt x 226.47209pt.
-<assets/finalGuiParserError.png, id=492, 608.2725pt x 275.0275pt>
+<assets/finalGuiParserError.png, id=561, 608.2725pt x 275.0275pt>
 File: assets/finalGuiParserError.png Graphic file (type png)
 <use assets/finalGuiParserError.png>
 Package pdftex.def Info: assets/finalGuiParserError.png  used on input line 16.
 
 (pdftex.def)             Requested size: 340.0013pt x 153.73317pt.
-<assets/finalGuiTypeError.png, id=493, 605.26125pt x 272.01625pt>
+<assets/finalGuiTypeError.png, id=562, 605.26125pt x 272.01625pt>
 File: assets/finalGuiTypeError.png Graphic file (type png)
 <use assets/finalGuiTypeError.png>
 Package pdftex.def Info: assets/finalGuiTypeError.png  used on input line 17.
 (pdftex.def)             Requested size: 340.0013pt x 152.80537pt.
-<assets/finalREPL.png, id=494, 736.7525pt x 78.2925pt>
+<assets/finalREPL.png, id=563, 736.7525pt x 78.2925pt>
 File: assets/finalREPL.png Graphic file (type png)
 <use assets/finalREPL.png>
 Package pdftex.def Info: assets/finalREPL.png  used on input line 18.
@@ -1194,7 +1006,7 @@ or.png> </Users/jamie/Dev/university/year3/F/Vec3/report/assets/finalGuiParserE
 rror.png> </Users/jamie/Dev/university/year3/F/Vec3/report/assets/finalGuiTypeE
 rror.png> </Users/jamie/Dev/university/year3/F/Vec3/report/assets/finalREPL.png
 >]
-<assets/finalNotebook.png, id=515, 1196.47pt x 857.2025pt>
+<assets/finalNotebook.png, id=583, 1196.47pt x 857.2025pt>
 File: assets/finalNotebook.png Graphic file (type png)
 <use assets/finalNotebook.png>
 Package pdftex.def Info: assets/finalNotebook.png  used on input line 39.
@@ -1204,7 +1016,7 @@ Package pdftex.def Info: assets/finalNotebook.png  used on input line 39.
 pdfTeX warning: /Library/TeX/texbin/pdflatex (file /Users/jamie/Dev/university/
 year3/F/Vec3/report/assets/plotPDF.pdf): PDF inclusion: found PDF version <1.7>
 , but at most version <1.5> allowed
-<assets/plotPDF.pdf, id=517, page=1, 597.23125pt x 845.1575pt>
+<assets/plotPDF.pdf, id=585, page=1, 597.23125pt x 845.1575pt>
 File: assets/plotPDF.pdf Graphic file (type pdf)
 <use assets/plotPDF.pdf, page 1>
 Package pdftex.def Info: assets/plotPDF.pdf , page1 used on input line 47.
@@ -1214,7 +1026,7 @@ Package pdftex.def Info: assets/plotPDF.pdf , page1 used on input line 47.
 pdfTeX warning: /Library/TeX/texbin/pdflatex (file /Users/jamie/Dev/university/
 year3/F/Vec3/report/assets/plotPDF.pdf): PDF inclusion: found PDF version <1.7>
 , but at most version <1.5> allowed
-<assets/plotPDF.pdf, id=518, page=2, 597.23125pt x 845.1575pt>
+<assets/plotPDF.pdf, id=586, page=2, 597.23125pt x 845.1575pt>
 File: assets/plotPDF.pdf Graphic file (type pdf)
 <use assets/plotPDF.pdf, page 2>
 Package pdftex.def Info: assets/plotPDF.pdf , page2 used on input line 48.
@@ -1775,6 +1587,11 @@ changes paths in ways minted cannot detect,
 or using frozencache with a missing file.
 
 ) [27]
+
+LaTeX Warning: Reference `sec:transpiler' on page 28 undefined on input line 21
+2.
+
+
 (/Users/jamie/Dev/university/year3/F/Vec3/report/sections/initial-design-of-the
 -bytecode-virtual-machine-and-compiler.tex [28]
 
@@ -2176,13 +1993,13 @@ without setting minted's outputdir, or by using a build tool that
 changes paths in ways minted cannot detect, 
 or using frozencache with a missing file.
 
-<assets/scatterPlot.png, id=720, 794.97pt x 597.23125pt>
+<assets/scatterPlot.png, id=786, 794.97pt x 597.23125pt>
 File: assets/scatterPlot.png Graphic file (type png)
 <use assets/scatterPlot.png>
 Package pdftex.def Info: assets/scatterPlot.png  used on input line 37.
 (pdftex.def)             Requested size: 340.0013pt x 255.43747pt.
 [33]
-<assets/barChart.png, id=730, 800.9925pt x 599.23875pt>
+<assets/barChart.png, id=795, 800.9925pt x 599.23875pt>
 File: assets/barChart.png Graphic file (type png)
 <use assets/barChart.png>
 Package pdftex.def Info: assets/barChart.png  used on input line 50.
@@ -2212,7 +2029,7 @@ without setting minted's outputdir, or by using a build tool that
 changes paths in ways minted cannot detect, 
 or using frozencache with a missing file.
 
-<assets/polynomialPlot.png, id=732, 797.98125pt x 598.235pt>
+<assets/polynomialPlot.png, id=797, 797.98125pt x 598.235pt>
 File: assets/polynomialPlot.png Graphic file (type png)
 <use assets/polynomialPlot.png>
 Package pdftex.def Info: assets/polynomialPlot.png  used on input line 70.
@@ -2244,19 +2061,19 @@ without setting minted's outputdir, or by using a build tool that
 changes paths in ways minted cannot detect, 
 or using frozencache with a missing file.
 
-<assets/multiplePlots.png, id=745, 1257.69875pt x 795.97375pt>
+<assets/multiplePlots.png, id=808, 1257.69875pt x 795.97375pt>
 File: assets/multiplePlots.png Graphic file (type png)
 <use assets/multiplePlots.png>
 Package pdftex.def Info: assets/multiplePlots.png  used on input line 99.
 (pdftex.def)             Requested size: 340.0013pt x 215.17084pt.
 [35 </Users/jamie/Dev/university/year3/F/Vec3/report/assets/polynomialPlot.png>
  </Users/jamie/Dev/university/year3/F/Vec3/report/assets/multiplePlots.png>]
-<assets/plotInput.png, id=757, 787.94376pt x 43.16125pt>
+<assets/plotInput.png, id=820, 787.94376pt x 43.16125pt>
 File: assets/plotInput.png Graphic file (type png)
 <use assets/plotInput.png>
 Package pdftex.def Info: assets/plotInput.png  used on input line 115.
 (pdftex.def)             Requested size: 340.0013pt x 18.62416pt.
-<assets/plotInput2.png, id=758, 789.95125pt x 45.16875pt>
+<assets/plotInput2.png, id=821, 789.95125pt x 45.16875pt>
 File: assets/plotInput2.png Graphic file (type png)
 <use assets/plotInput2.png>
 Package pdftex.def Info: assets/plotInput2.png  used on input line 116.
@@ -2311,7 +2128,7 @@ without setting minted's outputdir, or by using a build tool that
 changes paths in ways minted cannot detect, 
 or using frozencache with a missing file.
 
-<assets/drawImage.png, id=760, 792.9625pt x 594.22pt>
+<assets/drawImage.png, id=823, 792.9625pt x 594.22pt>
 File: assets/drawImage.png Graphic file (type png)
 <use assets/drawImage.png>
 Package pdftex.def Info: assets/drawImage.png  used on input line 295.
@@ -2416,7 +2233,6 @@ without setting minted's outputdir, or by using a build tool that
 changes paths in ways minted cannot detect, 
 or using frozencache with a missing file.
 
-[37]
 \openout3 = `AP_REPORT_02.pyg'.
 
 runsystem(pygmentize -l 'c' -f latex -P commandprefix=PYG -F tokenmerge -P stri
@@ -2424,9 +2240,8 @@ pnl='False' -o _minted-AP_REPORT_02/111C4C9F60653A8307185060FD49556D687AE7006BC
 79266E56ABBE10A3F4D3C.pygtex AP_REPORT_02.pyg)...disabled (restricted).
 
 
-
 /Users/jamie/Dev/university/year3/F/Vec3/report/sections/final-deliverable.tex:
-412: Package minted Error: Missing Pygments output; \inputminted was
+410: Package minted Error: Missing Pygments output; \inputminted was
 probably given a file that does not exist--otherwise, you may need 
 the outputdir package option, or may be using an incompatible build tool,
 or may be using frozencache with a missing file.
@@ -2435,13 +2250,14 @@ See the minted package documentation for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.412 \end{minted}
+l.410 \end{minted}
                   
 This could be caused by using -output-directory or -aux-directory 
 without setting minted's outputdir, or by using a build tool that 
 changes paths in ways minted cannot detect, 
 or using frozencache with a missing file.
 
+[37]
 \openout3 = `AP_REPORT_02.pyg'.
 
 runsystem(pygmentize -l 'c' -f latex -P commandprefix=PYG -F tokenmerge -P stri
@@ -2449,8 +2265,9 @@ pnl='False' -o _minted-AP_REPORT_02/DCB4036E9CB62EFCBFFB6462188B3B40687AE7006BC
 79266E56ABBE10A3F4D3C.pygtex AP_REPORT_02.pyg)...disabled (restricted).
 
 
+
 /Users/jamie/Dev/university/year3/F/Vec3/report/sections/final-deliverable.tex:
-432: Package minted Error: Missing Pygments output; \inputminted was
+430: Package minted Error: Missing Pygments output; \inputminted was
 probably given a file that does not exist--otherwise, you may need 
 the outputdir package option, or may be using an incompatible build tool,
 or may be using frozencache with a missing file.
@@ -2459,7 +2276,7 @@ See the minted package documentation for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.432 \end{minted}
+l.430 \end{minted}
                   
 This could be caused by using -output-directory or -aux-directory 
 without setting minted's outputdir, or by using a build tool that 
@@ -2474,7 +2291,7 @@ pnl='False' -o _minted-AP_REPORT_02/84584A7688D867483CC61F0B000F0ECD687AE7006BC
 
 
 /Users/jamie/Dev/university/year3/F/Vec3/report/sections/final-deliverable.tex:
-451: Package minted Error: Missing Pygments output; \inputminted was
+449: Package minted Error: Missing Pygments output; \inputminted was
 probably given a file that does not exist--otherwise, you may need 
 the outputdir package option, or may be using an incompatible build tool,
 or may be using frozencache with a missing file.
@@ -2483,7 +2300,110 @@ See the minted package documentation for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.451 \end{minted}
+l.449 \end{minted}
+                  
+This could be caused by using -output-directory or -aux-directory 
+without setting minted's outputdir, or by using a build tool that 
+changes paths in ways minted cannot detect, 
+or using frozencache with a missing file.
+
+\openout3 = `AP_REPORT_02.pyg'.
+
+runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
+ stripnl='False' -o _minted-AP_REPORT_02/976B8AFE4C25A33550667193B356F9EEFD688A
+B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
+
+
+/Users/jamie/Dev/university/year3/F/Vec3/report/sections/final-deliverable.tex:
+469: Package minted Error: Missing Pygments output; \inputminted was
+probably given a file that does not exist--otherwise, you may need 
+the outputdir package option, or may be using an incompatible build tool,
+or may be using frozencache with a missing file.
+
+See the minted package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.469 \end{minted}
+                  
+This could be caused by using -output-directory or -aux-directory 
+without setting minted's outputdir, or by using a build tool that 
+changes paths in ways minted cannot detect, 
+or using frozencache with a missing file.
+
+\openout3 = `AP_REPORT_02.pyg'.
+
+runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
+ stripnl='False' -o _minted-AP_REPORT_02/8959404355F893EA928CACF1D9072D9FFD688A
+B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
+
+
+/Users/jamie/Dev/university/year3/F/Vec3/report/sections/final-deliverable.tex:
+475: Package minted Error: Missing Pygments output; \inputminted was
+probably given a file that does not exist--otherwise, you may need 
+the outputdir package option, or may be using an incompatible build tool,
+or may be using frozencache with a missing file.
+
+See the minted package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.475 \end{minted}
+                  
+This could be caused by using -output-directory or -aux-directory 
+without setting minted's outputdir, or by using a build tool that 
+changes paths in ways minted cannot detect, 
+or using frozencache with a missing file.
+
+\openout3 = `AP_REPORT_02.pyg'.
+
+runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
+ stripnl='False' -o _minted-AP_REPORT_02/FF763B426859C5352554EB86293F2C41FD688A
+B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
+
+
+/Users/jamie/Dev/university/year3/F/Vec3/report/sections/final-deliverable.tex:
+481: Package minted Error: Missing Pygments output; \inputminted was
+probably given a file that does not exist--otherwise, you may need 
+the outputdir package option, or may be using an incompatible build tool,
+or may be using frozencache with a missing file.
+
+See the minted package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.481 \end{minted}
+                  
+This could be caused by using -output-directory or -aux-directory 
+without setting minted's outputdir, or by using a build tool that 
+changes paths in ways minted cannot detect, 
+or using frozencache with a missing file.
+
+<assets/gnuplot.png, id=837, 1203.49625pt x 805.0075pt>
+File: assets/gnuplot.png Graphic file (type png)
+<use assets/gnuplot.png>
+Package pdftex.def Info: assets/gnuplot.png  used on input line 485.
+(pdftex.def)             Requested size: 340.0013pt x 227.42732pt.
+[38]
+\openout3 = `AP_REPORT_02.pyg'.
+
+runsystem(pygmentize -l 'fsharp' -f latex -P commandprefix=PYG -F tokenmerge -P
+ stripnl='False' -o _minted-AP_REPORT_02/E32AA04405C9C2280EA730B35821A8E8FD688A
+B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
+
+
+
+/Users/jamie/Dev/university/year3/F/Vec3/report/sections/final-deliverable.tex:
+495: Package minted Error: Missing Pygments output; \inputminted was
+probably given a file that does not exist--otherwise, you may need 
+the outputdir package option, or may be using an incompatible build tool,
+or may be using frozencache with a missing file.
+
+See the minted package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.495 \end{minted}
                   
 This could be caused by using -output-directory or -aux-directory 
 without setting minted's outputdir, or by using a build tool that 
@@ -2498,7 +2418,7 @@ B7A9D535830C57D4F055DA6C4F.pygtex AP_REPORT_02.pyg)...disabled (restricted).
 
 
 /Users/jamie/Dev/university/year3/F/Vec3/report/sections/final-deliverable.tex:
-473: Package minted Error: Missing Pygments output; \inputminted was
+532: Package minted Error: Missing Pygments output; \inputminted was
 probably given a file that does not exist--otherwise, you may need 
 the outputdir package option, or may be using an incompatible build tool,
 or may be using frozencache with a missing file.
@@ -2507,16 +2427,17 @@ See the minted package documentation for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.473 \end{minted}
+l.532 \end{minted}
                   
 This could be caused by using -output-directory or -aux-directory 
 without setting minted's outputdir, or by using a build tool that 
 changes paths in ways minted cannot detect, 
 or using frozencache with a missing file.
 
-[38]) [39] [40]
+[39 </Users/jamie/Dev/university/year3/F/Vec3/report/assets/gnuplot.png>]
+[40]) [41] [42]
 Chapter 5.
-(/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.bbl [41
+(/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.bbl [43
 
 ]
 Underfull \hbox (badness 6808) in paragraph at lines 16--19
@@ -2530,11 +2451,11 @@ Underfull \hbox (badness 2027) in paragraph at lines 21--24
 os.com [Ac-cessed:
  []
 
-[42
-
-]) [43]
-Appendix A.
 [44
+
+]) [45]
+Appendix A.
+[46
 
 ]
 Appendix B.
@@ -2767,14 +2688,11 @@ Underfull \hbox (badness 1817) in paragraph at lines 219--219
 []\OT1/cmr/m/n/10.95 print no else (unit
  []
 
-[45
+[47
 
 ]
 
 LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-LaTeX Warning: Reference `tab:gui' on page 46 undefined on input line 229.
 
 
 Overfull \hbox (1.16759pt too wide) in paragraph at lines 234--234
@@ -2928,10 +2846,6 @@ Underfull \hbox (badness 10000) in paragraph at lines 258--258
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-LaTeX Warning: Reference `tab:plot-tests' on page 46 undefined on input line 26
-5.
 
 
 /Users/jamie/Dev/university/year3/F/Vec3/report/sections/testing.tex:267: Packa
@@ -3159,12 +3073,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 282--282
 []\OT1/cmr/m/n/10.95 No joined asymp-
  []
 
-) [46] [47] [48] [49] [50] [51]
+) [48] [49] [50] [51] [52] [53]
 Appendix C.
 (/Users/jamie/Dev/university/year3/F/Vec3/report/sections/algorithms.tex
-[52
+[54
 
-]) [53] [54]
+]) [55] [56]
 (/Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
@@ -3186,41 +3100,21 @@ Package rerunfilecheck Warning: File `AP_REPORT_02.out' has changed.
 (rerunfilecheck)                or use package `bookmark'.
 
 Package rerunfilecheck Info: Checksums for `AP_REPORT_02.out':
-(rerunfilecheck)             Before: B9499EE121E946E8FF31E08446FC3B2B;13254
-(rerunfilecheck)             After:  A3A42E6D69E2A6C7BA0CA9AA23E99A60;15843.
+(rerunfilecheck)             Before: 5203034DE4940FE89BDD00DAD06472FA;16304
+(rerunfilecheck)             After:  B620437A1E875760C179755D50CD43DA;16166.
 runsystem(rm AP_REPORT_02.pyg)...disabled (restricted).
 
  ) 
 Here is how much of TeX's memory you used:
- 17818 strings out of 474116
- 315875 string characters out of 5743682
+ 17851 strings out of 474116
+ 316945 string characters out of 5743682
  2034187 words of memory out of 5000000
- 39632 multiletter control sequences out of 15000+600000
+ 39665 multiletter control sequences out of 15000+600000
  569039 words of font info for 75 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  77i,12n,79p,685b,631s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-pdfTeX warning (dest): name{table.caption.44} has been referenced but does not 
-exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{table.caption.43} has been referenced but does not 
-exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{figure.caption.37} has been referenced but does not
- exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{figure.caption.32} has been referenced but does not
- exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{figure.caption.31} has been referenced but does not
- exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{subsection.4.10.5} has been referenced but does not
+pdfTeX warning (dest): name{subsection.4.17.3} has been referenced but does not
  exist, replaced by a fixed one
 
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><
@@ -3241,10 +3135,10 @@ ve/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive
 2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2
 024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
 Output written on /Users/jamie/Dev/university/year3/F/Vec3/report/AP_REPORT_02.
-pdf (57 pages, 1682380 bytes).
+pdf (58 pages, 2171371 bytes).
 PDF statistics:
- 1051 PDF objects out of 1200 (max. 8388607)
- 906 compressed objects within 10 object streams
+ 1111 PDF objects out of 1200 (max. 8388607)
+ 963 compressed objects within 10 object streams
  262 named destinations out of 1000 (max. 500000)
- 791 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 940 words of extra memory for PDF output out of 10000 (max. 10000000)
 
