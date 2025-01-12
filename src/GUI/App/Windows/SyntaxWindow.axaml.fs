@@ -40,7 +40,7 @@ let add = (a, b) -> a + b
 let typed_add = (a: int, b: int): int -> a + b
 
 // Block syntax
-rec factorial (n: int) {
+let rec factorial = (n: int) {
     if n <= 1 then
         1
     else
@@ -90,6 +90,28 @@ let newton = (f, x0, tolerance, maxIter) {
             iterate(x - fx/dfx, iter + 1)
     }
     iterate(x0, 0)
+
+// Vector operations
+let v1 = [1, 2, 3]
+let v2 = [4, 5, 6]
+let dotProduct = v1 .* v2
+let crossProduct = v1 X v2
+let sum = v1 + v2
+
+// Matrix operations
+let matrix = [[1, 2], [3, 4]]
+let transpose = transpose(matrix)
+let inverse = inverse(matrix)
+let product = matrix * transpose
+
+// Casting
+
+let x = 5
+let y = x : float
+let z = y : int
+
+let x = [1, 2, 3] : [float] // Cast list to float list
+let y = x : [int] 
 }"""
 
     do

@@ -1,4 +1,4 @@
-\usepackage{minted}Alongside standard arithmetic operations, variable assignment, function definitions, and plotting the language also 
+Alongside standard arithmetic operations, variable assignment, function definitions, and plotting the language also 
 supports the following interesting features:
 
 \paragraph{User defined operators} The user can define their own operators, both unary and binary, with the 
@@ -77,6 +77,8 @@ operations such as addition, subtraction, multiplication and division defined fo
 let v1 = [1.0, 2.0, 3.0]
 let v2 = [4.0, 5.0, 6.0]
 let v3 = v1 + v2
+let dot = v1 .* v2
+let cross = v1 X v2
 
 let m1 = [[1.0, 2.0], [3.0, 4.0]]
 let trans = transpose(m1)
@@ -91,6 +93,37 @@ A useful example of this is casting integer lists to float lists:
 \begin{minted}{fsharp}
 let l = [1..10] : [float]
 \end{minted}
+
+\paragraph{Floats} The language has built-in support for floating point numbers, allowing for the user to perform
+operations on them as desired.
+They can be created either with a decimal point or with scientific notation as follows:
+
+\begin{minted}{fsharp}
+let f1 = 1.0
+let f2 = 1e-3
+\end{minted}
+
+\paragraph{Complex numbers} The language has built-in support for complex numbers, allowing for the user to
+perform operations on them as desired.
+They are created by adding an imaginary unit to a number, as follows:
+
+\begin{minted}{fsharp}
+let c1 = 1 + 2i
+let c2 = 3 - 4i
+let c3 = c1 + c2
+\end{minted}
+
+\paragraph{Rationals} The language has built-in support for rational numbers, allowing for the user to perform
+operations on them as desired, reducing the risk of floating point errors.
+They are created by dividing two integers with no spaces between them, as follows:
+
+\begin{minted}{fsharp}
+let r1 = 1/2
+let r2 = 3/4
+let r3 = r1 + r2
+\end{minted}
+
+
 
 \paragraph{Async functions} The language supports asynchronous functions, allowing for non-blocking operations
 to be performed.

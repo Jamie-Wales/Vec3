@@ -226,4 +226,59 @@ Tests can be found in table~\ref{tab:control}.
 
 \section{GUI testing}\label{sec:gui-testing}
 
+Tests can be found in table~\ref{tab:gui}.
+
+\begin{table}[h]
+    \caption{GUI Tests}
+    \begin{tabular}{|p{1.8in}|p{0.5in}|p{0.4in}|p{0.6in}|p{1.4in}|} \hline
+    Action & ResE & ResA& Pass/Fail & Action/comment \\ \hline \hline
+        Click load code & Run code & Run code & Pass & Load code \\ \hline
+        Click open file & Open file dialog & Open file dialog & Pass & Open file dialog \\ \hline
+        Click open file & & & & \\ 
+        Chose file & Opens file & Opens file & Pass & Open file \\ \hline
+        Click open notebook & New notebook & New notebook & Pass & Open notebook \\ \hline
+        Type in repl & & & & \\
+        Click run & Run code & Run code & Pass & Output result \\ \hline
+        Plot some data & Plot window & Plot window & Pass & Plot data \\ \hline
+        Plot some data & & & & \\
+        Run code & & & & \\
+        Type in plot repl & Display plot & Display plot & Pass & Plot data \\ \hline
+        Open notebook & & & & \\
+        Add code & & & & \\
+        Run code & Output result & Output result & Pass & Output result \\ \hline
+        Open notebook & & & & \\
+        Add code & & & & \\
+        Run code & & & & \\
+        Add code & & & & \\
+        Run code with previous code use & Output result & Output result & Pass & Output result \\ \hline
+        Open notebook & & & & \\
+        Import file & Previous code & Previous code & Pass & Import code \\ \hline
+        Open notebook & & & & \\
+        Add code & & & & \\
+        Save notebook & Save file & Save file & Pass & Save file \\ \hline
+    \end{tabular}
+    \label{tab:gui}
+\end{table}
+
 \section{Plot testing}\label{sec:plot-testing}
+
+Tests can be found in table~\ref{tab:plot-tests}.
+
+\caption{Plot Tests}
+\begin{tabular}{|p{1.8in}|p{0.5in}|p{0.4in}|p{0.6in}|p{1.4in}|} \hline
+Plot & ResE & ResA& Pass/Fail & Action/comment \\ \hline \hline
+$let\ x = [1..10] : [float]$ & & & & \\
+$let\ y = map(x, (x) -> x^2)$ & & & & \\
+$let\ data = \{ title = "Example Plot", x = x, y = y, ptype = "scatter" \}$ & & & & \\
+$plot(data)$ & f(x) = x^2 & f(x) = x^2 & Pass & scatter plot \\ \hline
+$let\ f = (x) -> x^2$ & & & & \\
+$plotFunc("Example Plot", f)$ & f(x) = x^2 & f(x) = x^2 & Pass & plot function \\ \hline
+$let\ f = (x) -> cos(x)$ & & & & \\
+$plotFunc("Example Plot", f)$ & f(x) = cos(x) & f(x) = cos(x) & Pass & plot function \\ \hline
+$plotFunc("Example Plot", cos)$ & f(x) = cos(x) & f(x) = cos(x) & Pass & plot function \\ \hline
+$let\ f = (x) -> tan(x)$ & & & & \\
+$plotFunc("Example Plot", f)$ & f(x) = tan(x) & f(x) = tan(x) & Pass, but not infinite asymptotes & No joined asymptotes \\ \hline
+$let\ f = (x) -> 1 / x$ & & & & \\
+$plotFunc("Example Plot", f)$ & f(x) = 1/x & f(x) = 1/x & Pass, but not infinite asymptotes & No joined asymptotes \\ \hline
+\end{tabular}
+\label{tab:plot-tests}

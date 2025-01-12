@@ -42,66 +42,96 @@
             </ExperimentalAcrylicBorder.Material>
         </ExperimentalAcrylicBorder>
 
-<Grid ColumnDefinitions="0.6*, 0.4*" RowDefinitions="Auto,*, Auto" Margin="10, 30, 10, 10">
-        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
-        <Button Name="TranspileButton"
-                Background="DarkOrange"
-                Foreground="White"
-                HotKey="Ctrl+t">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <PathIcon Data="{StaticResource ArrowExportRegular}" Foreground="White" />
-                <TextBlock Text="Transpile" />
+        <Grid ColumnDefinitions="0.6*, 0.4*" RowDefinitions="Auto,*, Auto" Margin="10, 30, 10, 10">
+            <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+                <Button Name="TranspileButton"
+                        Background="DarkOrange"
+                        Foreground="White"
+                        HotKey="Ctrl+t">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource ArrowExportRegular}" Foreground="White" />
+                        <TextBlock Text="Transpile" />
+                    </StackPanel>
+                    <Button.Transitions>
+                        <Transitions>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
+                        </Transitions>
+                    </Button.Transitions>
+                </Button>
+                
+                <Button Name="OpenFileButton"
+                        Background="DarkGreen"
+                        Foreground="White"
+                        HotKey="Ctrl+o">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource DocumentRegular}" Foreground="White" />
+                        <TextBlock Text="Open File" />
+                    </StackPanel>
+                    <Button.Transitions>
+                        <Transitions>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
+                        </Transitions>
+                    </Button.Transitions>
+                </Button>
+                
+                <Button Name="SaveButton"
+                        Background="DarkBlue"
+                        Foreground="White"
+                        HotKey="Ctrl+s">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource SaveRegular}" Foreground="White" />
+                        <TextBlock Text="Save Code" />
+                    </StackPanel>
+                    <Button.Transitions>
+                        <Transitions>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
+                        </Transitions>
+                    </Button.Transitions>
+                </Button>
+
+                <Button Name="LoadButton"
+                        Background="MidnightBlue"
+                        Foreground="White"
+                        HotKey="Ctrl+l">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource ArrowDownloadRegular}" Foreground="White" />
+                        <TextBlock Text="Load Code" />
+                    </StackPanel>
+                    <Button.Transitions>
+                        <Transitions>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
+                        </Transitions>
+                    </Button.Transitions>
+                </Button>
+                
+                <Button Name="ParseTreeButton"
+                        Background="DarkRed"
+                        Foreground="White">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource CodeRegular}" Foreground="White" />
+                        <TextBlock Text="Parse Tree" />
+                    </StackPanel>
+                    <Button.Transitions>
+                        <Transitions>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
+                        </Transitions>
+                    </Button.Transitions>
+                </Button>
+
+                <Button Name="OpenNotebookButton"
+                        Background="Purple"
+                        Foreground="White">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource BookRegular}" Foreground="White" />
+                        <TextBlock Text="Open Notebook" />
+                    </StackPanel>
+                    <Button.Transitions>
+                        <Transitions>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
+                        </Transitions>
+                    </Button.Transitions>
+                </Button>
             </StackPanel>
-            <Button.Transitions>
-                <Transitions>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
-                </Transitions>
-            </Button.Transitions>
-        </Button>
-            <Button Name="OpenFileButton"
-                    Background="DarkGreen"
-                    Foreground="White"
-                    HotKey="Ctrl+o">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <PathIcon Data="{StaticResource DocumentRegular}" Foreground="White" />
-                    <TextBlock Text="Open File" />
-                </StackPanel>
-                <Button.Transitions>
-                    <Transitions>
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
-                    </Transitions>
-                </Button.Transitions>
-            </Button>
-
-            <Button Name="LoadButton"
-                    Background="MidnightBlue"
-                    Foreground="White"
-                    HotKey="Shift+l">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <PathIcon Data="{StaticResource ArrowDownloadRegular}" Foreground="White" />
-                    <TextBlock Text="Load Code" />
-                </StackPanel>
-                <Button.Transitions>
-                    <Transitions>
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
-                    </Transitions>
-                </Button.Transitions>
-            </Button>
-
-            <Button Name="OpenNotebookButton"
-                    Background="Purple"
-                    Foreground="White">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <PathIcon Data="{StaticResource BookRegular}" Foreground="White" />
-                    <TextBlock Text="Open Notebook" />
-                </StackPanel>
-                <Button.Transitions>
-                    <Transitions>
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0.15" />
-                    </Transitions>
-                </Button.Transitions>
-            </Button>
-        </StackPanel>
 
             <Border Grid.Row="1"
                     Grid.Column="0"

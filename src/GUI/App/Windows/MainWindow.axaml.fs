@@ -35,8 +35,10 @@ type MainWindow() as this =
     let mutable openNotebookButton: Button = null
     let mutable loadButton: Button = null
     let mutable runButton: Button = null
+    let mutable saveButton: Button = null
     let mutable standardOutput: TextBlock = null
     let mutable replState: VM = createNewVM (initFunction "Main")
+    let mutable parseTreeButton: Button = null
 
     let debounceTime = 500
     let mutable debounceTimer = None: Timer option
@@ -183,6 +185,8 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
     member private this.InitializeComponent() =
         textEditor <- this.FindControl<TextEditor>("Editor")
         loadButton <- this.FindControl<Button>("LoadButton")
+        saveButton <- this.FindControl<Button>("SaveButton")
+        parseTreeButton <- this.FindControl<Button>("ParseTreeButton")
         standardOutput <- this.FindControl<TextBlock>("StandardOutput")
         replInput <- this.FindControl<TextEditor>("ReplInput")
         runButton <- this.FindControl<Button>("RunButton")
@@ -192,7 +196,7 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
         standardOutput.Foreground <- SolidColorBrush(Colors.White)
         standardOutput.Text <- welcomeMessage
         transpileButton <- this.FindControl<Button>("TranspileButton")
-        transpileButton.Click.AddHandler(fun _ _ -> this.TranspileCodeAsync())  
+        transpileButton.Click.AddHandler(fun _ _ -> this.TranspileCodeAsync())
 
         let registryOptions = RegistryOptions(ThemeName.QuietLight)
         this.SetupEditor(registryOptions)
@@ -202,6 +206,8 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
         textEditor.TextChanged.AddHandler(fun _ _ -> this.TextChanged())
         runButton.Click.AddHandler(fun _ _ -> this.run ())
         openNotebookButton.Click.AddHandler(fun _ _ -> this.OpenNotebook())
+        saveButton.Click.AddHandler(fun _ _ -> this.SaveFileAsync())
+        parseTreeButton.Click.AddHandler(fun _ _ -> this.ShowParseTree())
         
 
     /// <summary>
@@ -255,6 +261,35 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
                 do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
                     standardOutput.Foreground <- SolidColorBrush(Colors.Red)
                     standardOutput.Text <- $"Error loading file: {ex.Message}")
+        } |> ignore
+        
+        
+    /// <summary>
+    /// Save the current editor content to a file asynchronously.
+    /// </summary>
+    member private this.SaveFileAsync() =
+        task {
+            try
+                let dialog = SaveFileDialog()
+                dialog.Filters.Add(FileDialogFilter(Name = "Vec3 Files", Extensions = ResizeArray["vec3"]))
+                dialog.Filters.Add(FileDialogFilter(Name = "Text Files", Extensions = ResizeArray["txt"]))
+                dialog.Filters.Add(FileDialogFilter(Name = "All Files", Extensions = ResizeArray["*"]))
+                
+                let! result = dialog.ShowAsync(this)
+                match result with
+                | null -> ()  // User cancelled
+                | file ->
+                    do! File.WriteAllTextAsync(file, this.GetEditorText())
+                    
+                    // Update UI on the UI thread
+                    do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                        standardOutput.Foreground <- SolidColorBrush(Colors.White)
+                        standardOutput.Text <- "File saved successfully")
+                    
+            with ex ->
+                do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                    standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                    standardOutput.Text <- $"Error saving file: {ex.Message}")
         } |> ignore
         
     member private this.GenPoints (f: Expression, start: float, end_: float, step: float): (float * float) list =
@@ -398,6 +433,27 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
             | _ -> ()
 
         vm.Plots.Clear()
+    
+    member private this.ShowParseTree() =
+        try
+            let text = this.GetEditorText()
+            match parse text true with
+            | Ok(_, ast) ->
+                match Inference.inferProgram1 ast with
+                | Ok (_, _, _, ast) ->
+                    standardOutput.Foreground <- SolidColorBrush(Colors.White)
+                    standardOutput.Text <- $"Parse tree:\n{ast}"
+                | Error _ ->
+                    standardOutput.Foreground <- SolidColorBrush(Colors.White)
+                    standardOutput.Text <- $"Parse tree:\n{ast}"
+            | Error(err, state) ->
+                standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                standardOutput.Text <- formatParserError err state
+        with ex ->
+            printfn $"Error: {ex}"
+            standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+            standardOutput.Text <- $"Error: %s{ex.Message}"
+            
 
     /// <summary>
     /// Run the code currently in the editor.
