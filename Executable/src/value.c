@@ -8,10 +8,94 @@
 #include <string.h>
 
 #define INITIAL_CAPACITY 16
+void vec3_destroy_thunk(Vec3Thunk* thunk)
+{
+    for (int i = 0; i < thunk->arg_count; i++) {
+        vec3_decref(thunk->args[i]);
+    }
+    free(thunk->args);
+    free(thunk);
+}
+
+
+Vec3TrampolineValue* vec3_new_trampoline_value(Vec3Value* value)
+{
+    Vec3TrampolineValue* tramp = malloc(sizeof(Vec3TrampolineValue));
+    tramp->object.type = TYPE_TRAMPOLINE;
+    tramp->object.ref_count = 1;
+    tramp->object.destructor = vec3_destroy_trampoline;
+    tramp->as.value = value;
+    tramp->is_thunk = false;
+    return tramp;
+}
+
+void vec3_destroy_trampoline(Vec3Object* object)
+{
+    Vec3TrampolineValue* tramp = (Vec3TrampolineValue*)object;
+    if (tramp->is_thunk) {
+        vec3_destroy_thunk(tramp->as.thunk);
+    } else {
+        vec3_decref(tramp->as.value);
+    }
+}
+
+Vec3Thunk* vec3_new_thunk(Vec3Function* func, Vec3Value** args, int arg_count) {
+    Vec3Thunk* thunk = malloc(sizeof(Vec3Thunk));
+    thunk->func = func;
+    thunk->args = malloc(sizeof(Vec3Value*) * arg_count);
+    thunk->arg_count = arg_count;
+
+    // Take ownership of arguments
+    for (int i = 0; i < arg_count; i++) {
+        thunk->args[i] = args[i];
+        vec3_incref(args[i]);
+    }
+
+    return thunk;
+}
+
+// Wrap a thunk in a trampoline value
+Vec3TrampolineValue* vec3_new_trampoline_thunk(Vec3Thunk* thunk) {
+    Vec3TrampolineValue* tramp = malloc(sizeof(Vec3TrampolineValue));
+    tramp->object.type = TYPE_TRAMPOLINE;
+    tramp->object.ref_count = 1;
+    tramp->object.destructor = vec3_destroy_trampoline;
+    tramp->as.thunk = thunk;
+    tramp->is_thunk = true;
+    return tramp;
+}
+
+Vec3Value* vec3_trampoline_eval(Vec3TrampolineValue* tramp) {
+    Vec3Value* result = NULL;
+    Vec3TrampolineValue* current = tramp;
+    
+    while (current != NULL && current->is_thunk) {
+        Vec3Thunk* thunk = current->as.thunk;
+        // Call the function with its own environment from func->env
+        result = thunk->func->fn(thunk->args);
+        
+        // Clean up current thunk unless it's the original
+        if (current != tramp) {
+            vec3_destroy_thunk(current->as.thunk);
+            free(current);
+        }
+        
+        // Check if we got another thunk
+        if (result != NULL && result->object.type == TYPE_TRAMPOLINE) {
+            current = (Vec3TrampolineValue*)result;
+        } else {
+            // We got a final result
+            break;
+        }
+    }
+    
+    return result;
+}
+
 Vec3Value* vec3_concat(Vec3Value** args)
 {
-    Vec3Value* a = args[0];
-    Vec3Value* b = args[1];
+    Vec3Value* a = args[1];
+    Vec3Value* b = args[2];
 
     if (a->object.type != TYPE_STRING || b->object.type != TYPE_STRING) {
         fprintf(stderr, "Concatenate operation requires two strings\n");
@@ -350,12 +434,14 @@ void vec3_print_internal(const Vec3Value* value, bool nl)
 }
 
 Vec3Value* vec3_new_function(const char* name, int arity,
-                            Vec3Value* (*fn)(Vec3Value** args),
-                            struct Vec3Env* env) {
+    Vec3Value* (*fn)(Vec3Value** args),
+    struct Vec3Env* env)
+{
     Vec3Function* function = malloc(sizeof(Vec3Function));
     function->name = strdup(name);
     function->arity = arity;
     function->fn = fn;
+    function->is_recursive = false;
 
     // Create new environment with current env as parent
     function->env = env;
@@ -368,22 +454,52 @@ Vec3Value* vec3_new_function(const char* name, int arity,
 
     return value;
 }
+
+Vec3Value* vec3_call_recursive(Vec3Value* function, Vec3Value** args, int argCount)
+{
+    Vec3Function* fn = function->as.function;
+    Vec3Value* result = NULL;
+    Vec3Value** current_args = args;
+
+    while (1) {
+        // Call the function
+        result = fn->fn(current_args);
+
+        // If result is the function itself, it means another recursive call
+        if (result != NULL && result->object.type == TYPE_FUNCTION && result->as.function == fn) {
+            // Prepare next iteration args here
+            continue;
+        }
+
+        // Got a real result, we're done
+        break;
+    }
+
+    return result;
+}
 Vec3Value* vec3_call_function(Vec3Value* function, Vec3Value** args, int argCount)
 {
-  if (function->object.type != TYPE_FUNCTION) {
+    if (function == NULL || function->object.type != TYPE_FUNCTION) {
         fprintf(stderr, "Can only call functions\n");
         return vec3_new_nil();
     }
 
     Vec3Function* fn = function->as.function;
-    if (fn->arity != argCount - 1) {  
+    if (fn->arity != argCount - 1) {
         fprintf(stderr, "Expected %d arguments but got %d\n", fn->arity, argCount - 1);
         return vec3_new_nil();
     }
 
-    return fn->fn(args);}
+    // Route recursive calls to special handler
+    if (fn->is_recursive) {
+        return vec3_call_recursive(function, args, argCount);
+    }
 
-void vec3_destroy_function(Vec3Object* object) {
+    // Normal function call
+    return fn->fn(args);
+}
+void vec3_destroy_function(Vec3Object* object)
+{
     Vec3Value* value = (Vec3Value*)object;
     Vec3Function* function = value->as.function;
     free(function->name);
@@ -393,11 +509,10 @@ void vec3_destroy_function(Vec3Object* object) {
     free(function);
 }
 
-
 Vec3Value* vec3_equal(Vec3Value** args)
 {
-    Vec3Value* a = args[0];
-    Vec3Value* b = args[1];
+    Vec3Value* a = args[1];
+    Vec3Value* b = args[2];
     vec3_incref(a);
     vec3_incref(b);
 
@@ -455,8 +570,8 @@ Vec3Value* vec3_not_equal(Vec3Value** args)
 
 Vec3Value* vec3_less(Vec3Value** args)
 {
-    Vec3Value* a = args[0];
-    Vec3Value* b = args[1];
+    Vec3Value* a = args[1];
+    Vec3Value* b = args[2];
     vec3_incref(a);
     vec3_incref(b);
 
@@ -520,8 +635,8 @@ Vec3Value* vec3_less_equal(Vec3Value** args)
 
 Vec3Value* vec3_greater(Vec3Value** args)
 {
-    Vec3Value* b = args[0];
-    Vec3Value* a = args[1];
+    Vec3Value* b = args[1];
+    Vec3Value* a = args[2];
     return vec3_less(&b);
 }
 
@@ -535,8 +650,8 @@ Vec3Value* vec3_greater_equal(Vec3Value** args)
 
 Vec3Value* vec3_and(Vec3Value** args)
 {
-    Vec3Value* a = args[0];
-    Vec3Value* b = args[1];
+    Vec3Value* a = args[1];
+    Vec3Value* b = args[2];
     vec3_incref(a);
     vec3_incref(b);
 
@@ -550,8 +665,8 @@ Vec3Value* vec3_and(Vec3Value** args)
 
 Vec3Value* vec3_or(Vec3Value** args)
 {
-    Vec3Value* a = args[0];
-    Vec3Value* b = args[1];
+    Vec3Value* a = args[1];
+    Vec3Value* b = args[2];
     vec3_incref(a);
     vec3_incref(b);
 
@@ -565,7 +680,7 @@ Vec3Value* vec3_or(Vec3Value** args)
 
 Vec3Value* vec3_not(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_incref(value);
     bool result = !vec3_is_truthy(value);
     vec3_decref(value);
@@ -607,7 +722,7 @@ Vec3Value* vec3_to_number(Vec3Value** args)
 
 Vec3Value* vec3_to_bool(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_incref(value);
     bool result = vec3_is_truthy(value);
     vec3_decref(value);

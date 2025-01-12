@@ -5,36 +5,43 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char* plot_type_to_string(PlotType type) {
-    switch(type) {
-        case PLOT_SCATTER: return "points";
-        case PLOT_LINE: return "lines";
-        case PLOT_BAR: return "boxes";
-        case PLOT_SIGNAL: return "steps";
-        default: return "points";
+const char* plot_type_to_string(PlotType type)
+{
+    switch (type) {
+    case PLOT_SCATTER:
+        return "points";
+    case PLOT_LINE:
+        return "lines";
+    case PLOT_BAR:
+        return "boxes";
+    case PLOT_SIGNAL:
+        return "steps";
+    default:
+        return "points";
     }
 }
 
-PlotType parse_plot_type(const char* type_str) {
-    if (strcmp(type_str, "scatter") == 0) return PLOT_SCATTER;
-    if (strcmp(type_str, "line") == 0) return PLOT_LINE;
-    if (strcmp(type_str, "bar") == 0) return PLOT_BAR;
-    if (strcmp(type_str, "signal") == 0) return PLOT_SIGNAL;
-    return PLOT_SCATTER;  // default
+PlotType parse_plot_type(const char* type_str)
+{
+    if (strcmp(type_str, "scatter") == 0)
+        return PLOT_SCATTER;
+    if (strcmp(type_str, "line") == 0)
+        return PLOT_LINE;
+    if (strcmp(type_str, "bar") == 0)
+        return PLOT_BAR;
+    if (strcmp(type_str, "signal") == 0)
+        return PLOT_SIGNAL;
+    return PLOT_SCATTER; // default
 }
 
-Vec3Value* get_config_value(Vec3Value* config, const char* key, Vec3Value* default_value) {
+Vec3Value* get_config_value(Vec3Value* config, const char* key, Vec3Value* default_value)
+{
     vec3_list* current = config->as.list;
     while (current != NULL) {
-        if (current->value != NULL && 
-            current->value->object.type == TYPE_LIST &&
-            current->value->as.list != NULL &&
-            current->value->as.list->value != NULL &&
-            current->value->as.list->value->object.type == TYPE_STRING) {
-            
+        if (current->value != NULL && current->value->object.type == TYPE_LIST && current->value->as.list != NULL && current->value->as.list->value != NULL && current->value->as.list->value->object.type == TYPE_STRING) {
+
             Vec3Value* key_value = current->value->as.list->value;
-            if (strcmp(key_value->as.string.chars, key) == 0 &&
-                current->value->as.list->next != NULL) {
+            if (strcmp(key_value->as.string.chars, key) == 0 && current->value->as.list->next != NULL) {
                 return current->value->as.list->next->value;
             }
         }
@@ -43,8 +50,9 @@ Vec3Value* get_config_value(Vec3Value* config, const char* key, Vec3Value* defau
     return default_value;
 }
 
-Vec3Value* vec3_plot(Vec3Value** args) {
-    if (args[0]->object.type != TYPE_LIST) {
+Vec3Value* vec3_plot(Vec3Value** args)
+{
+    if (args[1]->object.type != TYPE_LIST) {
         return vec3_error(vec3_new_string("plot: expected configuration list"));
     }
 
@@ -54,10 +62,10 @@ Vec3Value* vec3_plot(Vec3Value** args) {
     Vec3Value* default_empty_list = vec3_new_list(0);
 
     // Extract configuration
-    Vec3Value* title = get_config_value(args[0], "title", default_title);
-    Vec3Value* plot_type_val = get_config_value(args[0], "ptype", default_type);
-    Vec3Value* x_vals = get_config_value(args[0], "x", default_empty_list);
-    Vec3Value* y_vals = get_config_value(args[0], "y", default_empty_list);
+    Vec3Value* title = get_config_value(args[1], "title", default_title);
+    Vec3Value* plot_type_val = get_config_value(args[1], "ptype", default_type);
+    Vec3Value* x_vals = get_config_value(args[1], "x", default_empty_list);
+    Vec3Value* y_vals = get_config_value(args[1], "y", default_empty_list);
 
     if (x_vals->object.type != TYPE_LIST || y_vals->object.type != TYPE_LIST) {
         vec3_decref(default_title);
@@ -84,8 +92,7 @@ Vec3Value* vec3_plot(Vec3Value** args) {
     vec3_list* y_node = y_vals->as.list;
 
     for (size_t i = 0; i < x_len; i++) {
-        if (x_node->value->object.type != TYPE_NUMBER ||
-            y_node->value->object.type != TYPE_NUMBER) {
+        if (x_node->value->object.type != TYPE_NUMBER || y_node->value->object.type != TYPE_NUMBER) {
             free(x_data);
             free(y_data);
             vec3_decref(default_title);
@@ -121,7 +128,7 @@ Vec3Value* vec3_plot(Vec3Value** args) {
     fprintf(gnuplotPipe, "set ylabel 'Y'\n");
     fprintf(gnuplotPipe, "set grid\n");
     fprintf(gnuplotPipe, "set style fill solid 0.5\n");
-    
+
     // Special handling for bar plots
     if (type == PLOT_BAR) {
         fprintf(gnuplotPipe, "set boxwidth 0.8\n");
@@ -129,8 +136,8 @@ Vec3Value* vec3_plot(Vec3Value** args) {
     }
 
     // Plot data
-    fprintf(gnuplotPipe, "plot '-' with %s title '%s'\n", 
-            plot_style, title->as.string.chars);
+    fprintf(gnuplotPipe, "plot '-' with %s title '%s'\n",
+        plot_style, title->as.string.chars);
 
     for (size_t i = 0; i < x_len; i++) {
         fprintf(gnuplotPipe, "%f %f\n", x_data[i], y_data[i]);
@@ -151,8 +158,8 @@ Vec3Value* vec3_plot(Vec3Value** args) {
 }
 Vec3Value* vec3_sub(Vec3Value** args)
 {
-    Vec3Value* a = args[0];
-    Vec3Value* b = args[1];
+    Vec3Value* a = args[1];
+    Vec3Value* b = args[2];
     vec3_incref(a);
     vec3_incref(b);
 
@@ -174,8 +181,7 @@ Vec3Value* vec3_sub(Vec3Value** args)
             break;
         case NUMBER_RATIONAL:
             if (b->as.number.type == NUMBER_RATIONAL) {
-                int64_t num = a->as.number.as.rational.num * b->as.number.as.rational.denom -
-                             b->as.number.as.rational.num * a->as.number.as.rational.denom;
+                int64_t num = a->as.number.as.rational.num * b->as.number.as.rational.denom - b->as.number.as.rational.num * a->as.number.as.rational.denom;
                 int64_t denom = a->as.number.as.rational.denom * b->as.number.as.rational.denom;
                 result = vec3_new_number(number_from_rational(num, denom));
             }
@@ -195,13 +201,14 @@ Vec3Value* vec3_sub(Vec3Value** args)
     return result ? result : vec3_new_nil();
 }
 
-Vec3Value* vec3_plot_function(Vec3Value** args) {
-    if (args[0]->object.type != TYPE_STRING || args[1]->object.type != TYPE_FUNCTION) {
+Vec3Value* vec3_plot_function(Vec3Value** args)
+{
+    if (args[1]->object.type != TYPE_STRING || args[2]->object.type != TYPE_FUNCTION) {
         return vec3_error(vec3_new_string("plotFunc: expected (string, function) arguments"));
     }
 
-    const char* title = args[0]->as.string.chars;
-    Vec3Value* func = args[1];
+    const char* title = args[1]->as.string.chars;
+    Vec3Value* func = args[2];
 
     const int num_points = 1000;
     double* x_data = malloc(num_points * sizeof(double));
@@ -215,14 +222,14 @@ Vec3Value* vec3_plot_function(Vec3Value** args) {
     double start = -10.0;
     double end = 10.0;
     double step = (end - start) / (num_points - 1);
-    
+
     for (int i = 0; i < num_points; i++) {
         x_data[i] = start + i * step;
-        
+
         Vec3Value* x_val = vec3_new_number(number_from_float(x_data[i]));
-        Vec3Value* fn_args[] = {x_val};
+        Vec3Value* fn_args[] = { x_val };
         Vec3Value* y_val = vec3_call_function(func, fn_args, 1);
-        
+
         if (y_val->object.type != TYPE_NUMBER) {
             free(x_data);
             free(y_data);
@@ -230,7 +237,7 @@ Vec3Value* vec3_plot_function(Vec3Value** args) {
             vec3_decref(y_val);
             return vec3_error(vec3_new_string("Function must return a number"));
         }
-        
+
         y_data[i] = number_to_double(&y_val->as.number);
         vec3_decref(x_val);
         vec3_decref(y_val);
@@ -261,13 +268,14 @@ Vec3Value* vec3_plot_function(Vec3Value** args) {
     return vec3_new_nil();
 }
 
-Vec3Value* vec3_plot_functions(Vec3Value** args) {
-    if (args[0]->object.type != TYPE_STRING || args[1]->object.type != TYPE_LIST) {
+Vec3Value* vec3_plot_functions(Vec3Value** args)
+{
+    if (args[1]->object.type != TYPE_STRING || args[2]->object.type != TYPE_LIST) {
         return vec3_error(vec3_new_string("plotFuncs: expected (string, [functions]) arguments"));
     }
 
-    vec3_list* funcs = args[1]->as.list;
-    
+    vec3_list* funcs = args[2]->as.list;
+
     // Verify all elements are functions
     vec3_list* current = funcs;
     while (current != NULL) {
@@ -277,10 +285,10 @@ Vec3Value* vec3_plot_functions(Vec3Value** args) {
         current = current->next;
     }
 
-    const char* title = args[0]->as.string.chars;
+    const char* title = args[1]->as.string.chars;
     const int num_points = 1000;
-    const int num_funcs = args[1]->as.list->length;
-    
+    const int num_funcs = args[2]->as.list->length;
+
     FILE* gnuplotPipe = popen("gnuplot -persist", "w");
     if (gnuplotPipe == NULL) {
         return vec3_error(vec3_new_string("Failed to open gnuplot"));
@@ -290,10 +298,11 @@ Vec3Value* vec3_plot_functions(Vec3Value** args) {
     fprintf(gnuplotPipe, "set xlabel 'X'\n");
     fprintf(gnuplotPipe, "set ylabel 'Y'\n");
     fprintf(gnuplotPipe, "set grid\n");
-    
+
     fprintf(gnuplotPipe, "plot ");
     for (int f = 0; f < num_funcs; f++) {
-        if (f > 0) fprintf(gnuplotPipe, ", ");
+        if (f > 0)
+            fprintf(gnuplotPipe, ", ");
         fprintf(gnuplotPipe, "'-' with lines title 'f%d'", f + 1);
     }
     fprintf(gnuplotPipe, "\n");
@@ -316,9 +325,9 @@ Vec3Value* vec3_plot_functions(Vec3Value** args) {
         for (int i = 0; i < num_points; i++) {
             x_data[i] = start + i * step;
             Vec3Value* x_val = vec3_new_number(number_from_float(x_data[i]));
-            Vec3Value* fn_args[] = {x_val};
+            Vec3Value* fn_args[] = { x_val };
             Vec3Value* y_val = vec3_call_function(func, fn_args, 1);
-            
+
             if (y_val->object.type != TYPE_NUMBER) {
                 free(x_data);
                 free(y_data);
@@ -327,7 +336,7 @@ Vec3Value* vec3_plot_functions(Vec3Value** args) {
                 pclose(gnuplotPipe);
                 return vec3_error(vec3_new_string("Function must return a number"));
             }
-            
+
             y_data[i] = number_to_double(&y_val->as.number);
             vec3_decref(x_val);
             vec3_decref(y_val);
@@ -349,8 +358,8 @@ Vec3Value* vec3_plot_functions(Vec3Value** args) {
 }
 Vec3Value* vec3_add(Vec3Value** args)
 {
-    Vec3Value* a = args[0];
-    Vec3Value* b = args[1];
+    Vec3Value* a = args[1];
+    Vec3Value* b = args[2];
     vec3_incref(a);
     vec3_incref(b);
 
@@ -395,11 +404,10 @@ Vec3Value* vec3_add(Vec3Value** args)
     return result ? result : vec3_new_nil();
 }
 
-
 Vec3Value* vec3_multiply(Vec3Value** args)
 {
-    Vec3Value* a = args[0];
-    Vec3Value* b = args[1];
+    Vec3Value* a = args[1];
+    Vec3Value* b = args[2];
     vec3_incref(a);
     vec3_incref(b);
 
@@ -447,8 +455,8 @@ Vec3Value* vec3_multiply(Vec3Value** args)
 
 Vec3Value* vec3_power(Vec3Value** args)
 {
-    Vec3Value* base = args[0];
-    Vec3Value* exp = args[1];
+    Vec3Value* base = args[1];
+    Vec3Value* exp = args[2];
     vec3_incref(base);
     vec3_incref(exp);
     Vec3Value* result = NULL;
@@ -496,7 +504,7 @@ Vec3Value* vec3_power(Vec3Value** args)
 
 Vec3Value* vec3_sqrt(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_incref(value);
     Vec3Value* result = NULL;
 
@@ -525,7 +533,7 @@ Vec3Value* vec3_sqrt(Vec3Value** args)
 
 Vec3Value* vec3_abs(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_incref(value);
     Vec3Value* result = NULL;
 
@@ -560,7 +568,7 @@ Vec3Value* vec3_abs(Vec3Value** args)
 
 Vec3Value* vec3_floor(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_incref(value);
     Vec3Value* result = NULL;
 
@@ -589,7 +597,7 @@ Vec3Value* vec3_floor(Vec3Value** args)
 
 Vec3Value* vec3_cos(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_incref(value);
     Vec3Value* result = NULL;
 
@@ -618,7 +626,7 @@ Vec3Value* vec3_cos(Vec3Value** args)
 
 Vec3Value* vec3_sin(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_incref(value);
     Vec3Value* result = NULL;
 
@@ -647,7 +655,7 @@ Vec3Value* vec3_sin(Vec3Value** args)
 
 Vec3Value* vec3_tan(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_incref(value);
     Vec3Value* result = NULL;
 
@@ -676,7 +684,7 @@ Vec3Value* vec3_tan(Vec3Value** args)
 
 Vec3Value* vec3_acos(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_incref(value);
     Vec3Value* result = NULL;
 
@@ -705,7 +713,7 @@ Vec3Value* vec3_acos(Vec3Value** args)
 
 Vec3Value* vec3_asin(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_incref(value);
     Vec3Value* result = NULL;
 
@@ -733,7 +741,7 @@ Vec3Value* vec3_asin(Vec3Value** args)
 }
 Vec3Value* vec3_atan(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_incref(value);
     Vec3Value* result = NULL;
 
@@ -762,7 +770,7 @@ Vec3Value* vec3_atan(Vec3Value** args)
 
 Vec3Value* vec3_exp(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_incref(value);
     Vec3Value* result = NULL;
 
@@ -791,8 +799,8 @@ Vec3Value* vec3_exp(Vec3Value** args)
 
 Vec3Value* vec3_log(Vec3Value** args)
 {
-    Vec3Value* base = args[0];
-    Vec3Value* value = args[1];
+    Vec3Value* base = args[1];
+    Vec3Value* value = args[2];
     vec3_incref(base);
     vec3_incref(value);
     Vec3Value* result = NULL;
@@ -844,7 +852,7 @@ Vec3Value* vec3_log(Vec3Value** args)
 
 Vec3Value* vec3_log10(Vec3Value** args)
 {
-    Vec3Value* value = args[0];
+    Vec3Value* value = args[1];
     vec3_incref(value);
     Vec3Value* result = NULL;
 
@@ -873,8 +881,8 @@ Vec3Value* vec3_log10(Vec3Value** args)
 
 Vec3Value* vec3_dot_product(Vec3Value** args)
 {
-    Vec3Value* a = args[0];
-    Vec3Value* b = args[1];
+    Vec3Value* a = args[1];
+    Vec3Value* b = args[2];
 
     // Check if both arguments are lists
     if (a->object.type != TYPE_LIST || b->object.type != TYPE_LIST) {
@@ -940,8 +948,8 @@ Vec3Value* vec3_dot_product(Vec3Value** args)
 
 Vec3Value* vec3_cross_product(Vec3Value** args)
 {
-    Vec3Value* a = args[0];
-    Vec3Value* b = args[1];
+    Vec3Value* a = args[1];
+    Vec3Value* b = args[2];
 
     if (a->object.type != TYPE_LIST || b->object.type != TYPE_LIST || a->as.list->length != 3 || b->as.list->length != 3) {
         return vec3_new_nil();
