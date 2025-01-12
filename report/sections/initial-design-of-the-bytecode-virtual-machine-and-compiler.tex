@@ -1,22 +1,26 @@
 \section{Bytecode Compilation}
 \label{sec:bytecode-compilation}
 
-This section details the design and implementation of the bytecode compiler for the new stack-based virtual machine. The compiler translates Vec3 source code, represented as an Abstract Syntax Tree (AST), into a sequence of bytecode instructions optimized for execution on the VM.
+This section details the design and implementation of the bytecode compiler for the new stack-based virtual machine.
+The compiler translates Vec3 source code, represented as an Abstract Syntax Tree (AST), into a sequence of bytecode instructions optimized for execution on the VM\@.
 
-\subsection{Design Principles}
+\subsection{Design Principles}\label{subsec:design-principles}
 
 The bytecode and compiler are designed with the following principles in mind:
 
 \begin{itemize}
-    \item \textbf{Compactness:} A compact instruction set minimizes code size, leading to faster loading and execution. This is achieved by representing many operations, such as mathematical expressions, as function calls, reducing the need for a large number of specialized opcodes.
+    \item \textbf{Compactness:} A compact instruction set minimizes code size, leading to faster loading and execution.
+    This is achieved by representing many operations, such as mathematical expressions, as function calls, reducing the need for a large number of specialized opcodes.
     \item \textbf{Efficiency:} The stack-based nature of the VM lends itself to efficient execution of common operations, particularly arithmetic and logical expressions.
-    \item \textbf{Modularity:} Bytecode is organized into \textit{chunks}, self-contained units that include code, a constant pool, and line number information. This promotes modularity and simplifies debugging.
+    \item \textbf{Modularity:} Bytecode is organized into \textit{chunks}, self-contained units that include code, a constant pool, and line number information.
+    This promotes modularity and simplifies debugging.
     \item \textbf{Tail Call Optimization:} The instruction set and compiler are designed to support tail call optimization, allowing for efficient execution of recursive functions without the risk of stack overflow.
 \end{itemize}
 
-\subsection{Bytecode Architecture}
+\subsection{Bytecode Architecture}\label{subsec:bytecode-architecture}
 
-The bytecode consists of a sequence of instructions, each composed of an \textit{opcode} (operation code) followed by zero or more \textit{operands}. The instruction set is designed for a stack machine, with most instructions operating on values stored on an operand stack.
+The bytecode consists of a sequence of instructions, each composed of an \textit{opcode} (operation code) followed by zero or more \textit{operands}.
+The instruction set is designed for a stack machine, with most instructions operating on values stored on an operand stack.
 
 \subsubsection{Instruction Set}
 
@@ -27,66 +31,63 @@ The bytecode consists of a sequence of instructions, each composed of an \textit
 \toprule
 Opcode & Operands & Description & Stack Effect \\ 
 \midrule
-CONSTANT & index (byte) & Load constant from pool & $... \rightarrow ..., val$ \\
-CONSTANT_LONG & index (3 bytes) & Load constant (long index) & $... \rightarrow ..., val$ \\
-POP & --- & Remove top value & $..., val \rightarrow ...$ \\
-NIL & --- & Push nil & $... \rightarrow ..., nil$ \\
-TRUE & --- & Push true & $... \rightarrow ..., true$ \\
-FALSE & --- & Push false & $... \rightarrow ..., false$ \\
-GET_LOCAL & index (byte) & Load local variable & $... \rightarrow ..., val$ \\
-SET_LOCAL & index (byte) & Store to local variable & $..., val \rightarrow ...$ \\
-GET_GLOBAL & index (byte) & Load global variable & $... \rightarrow ..., val$ \\
-SET_GLOBAL & index (byte) & Store to global variable & $..., val \rightarrow ...$ \\
-DEFINE_GLOBAL & index (byte) & Define global variable & $..., val \rightarrow ...$ \\
-GET_UPVALUE & index (byte) & Load upvalue & $... \rightarrow ..., val$ \\
-SET_UPVALUE & index (byte) & Store to upvalue & $..., val \rightarrow ...$ \\
-JUMP & offset (2 bytes) & Jump forward & $... \rightarrow ...$ \\
-JUMP_IF_FALSE & offset (2 bytes) & Jump if false & $..., val \rightarrow ...$ \\
-LOOP & offset (2 bytes) & Jump backward & $... \rightarrow ...$ \\
-CALL & count, r (bytes) & Call function with args & $..., fn, a_1, ..., a_n \rightarrow ..., ret$ \\
-RETURN & b (byte) & Return from function & $..., val \rightarrow ...$ \\
-CLOSURE & index (byte) & Create closure & $... \rightarrow ..., closure$ \\
-CLOSE_UPVALUE & --- & Close upvalue & $..., upvalue \rightarrow ...$ \\
-COMPOUND_CREATE & --- & Create compound value & $... \rightarrow ..., compound$ \\
+CONSTANT & index (byte) & Load constant from pool & $\dots \rightarrow \dots, val$ \\
+CONSTANT\_LONG & index (3 bytes) & Load constant (long index) & $\dots \rightarrow \dots, val$ \\
+POP & --- & Remove top value & $\dots, val \rightarrow \dots$ \\
+NIL & --- & Push nil & $\dots \rightarrow \dots, nil$ \\
+TRUE & --- & Push true & $\dots \rightarrow \dots, true$ \\
+FALSE & --- & Push false & $\dots \rightarrow \dots, false$ \\
+GET\_LOCAL & index (byte) & Load local variable & $\dots \rightarrow \dots, val$ \\
+SET\_LOCAL & index (byte) & Store to local variable & $\dots, val \rightarrow \dots$ \\
+GET\_GLOBAL & index (byte) & Load global variable & $\dots \rightarrow \dots, val$ \\
+SET\_GLOBAL & index (byte) & Store to global variable & $\dots, val \rightarrow \dots$ \\
+DEFINE\_GLOBAL & index (byte) & Define global variable & $\dots, val \rightarrow \dots$ \\
+GET\_UPVALUE & index (byte) & Load upvalue & $\dots \rightarrow \dots, val$ \\
+SET\_UPVALUE & index (byte) & Store to upvalue & $\dots, val \rightarrow \dots$ \\
+JUMP & offset (2 bytes) & Jump forward & $\dots \rightarrow \dots$ \\
+JUMP\_IF\_FALSE & offset (2 bytes) & Jump if false & $\dots, val \rightarrow \dots$ \\
+LOOP & offset (2 bytes) & Jump backward & $\dots \rightarrow \dots$ \\
+CALL & count, r (bytes) & Call function with args & $\dots, fn, a_1, \dots, a_n \rightarrow \dots, ret$ \\
+RETURN & b (byte) & Return from function & $\dots, val \rightarrow \dots$ \\
+CLOSURE & index (byte) & Create closure & $\dots \rightarrow \dots, closure$ \\
+CLOSE\_UPVALUE & --- & Close upvalue & $\dots, upvalue \rightarrow \dots$ \\
+COMPOUND\_CREATE & --- & Create compound value & $\dots \rightarrow \dots, compound$ \\
 \bottomrule
 \end{tabular}
 \end{table}
-\textit{Note:} Stack effects are depicted from left to right, with `...` representing the remaining stack contents.
+\textit{Note:} Stack effects are depicted from left to right, with `\ldots` representing the remaining stack contents.
 
-### \subsubsection{Chunk Structure}
+\subsubsection{Chunk Structure}
 
-Bytecode is organized into \textit{chunks}. Each chunk, represented by the \texttt{Chunk} data structure in the F\# code, encapsulates the following:
+Bytecode is organized into \textit{chunks}.
+Each chunk, represented by the \texttt{Chunk} data structure in the F\# code, encapsulates the following:
 
 \begin{itemize}
     \item \textbf{Code}: A \texttt{ResizeArray<byte>} containing the sequence of bytecode instructions.
-    \item \textbf{Constant Pool}: A \texttt{ResizeArray<Value>} storing constants used within the chunk, such as numbers, strings, and function references. This allows for constant deduplication and efficient storage.
-    \item \textbf{Line Numbers}: A \texttt{ResizeArray<int>} that maps bytecode instruction offsets to their corresponding line numbers in the original source code. This mapping is crucial for debugging and generating informative error messages.
+    \item \textbf{Constant Pool}: A \texttt{ResizeArray<Value>} storing constants used within the chunk, such as numbers, strings, and function references.
+    This allows for constant deduplication and efficient storage.
+    \item \textbf{Line Numbers}: A \texttt{ResizeArray<int>} that maps bytecode instruction offsets to their corresponding line numbers in the original source code.
+    This mapping is crucial for debugging and generating informative error messages.
 \end{itemize}
 
 Functions are represented by the \texttt{Function} type, which includes the function's arity, name, its associated chunk, and a list of locals.
 
-\subsection{Compiler Implementation}
+\subsection{Compiler Implementation}\label{subsec:compiler-implementation}
 
-The compiler, implemented in F#, performs a recursive descent traversal of the AST, generating bytecode instructions corresponding to each node.
-
-\subsubsection{Compiler State}
-
-The compiler maintains state throughout the compilation process using the \texttt{CompilerState} record:
-
-\subsection{Compiler Implementation}
-
-The compiler, implemented in F#, performs a recursive descent traversal of the AST, generating bytecode instructions corresponding to each node.
+The compiler, implemented in F\#, performs a recursive descent traversal of the AST, generating bytecode 
+instructions corresponding to each node.
 
 \subsubsection{Compiler State}
 
 The compiler maintains state throughout the compilation process using the \texttt{CompilerState} record:
-F#
 
+\begin{minted}{fsharp}
 type CompilerState =
     { CurrentFunction: Closure
       CurrentLine: int
       ScopeDepth: int
       LocalCount: int }
+\end{minted}
 
 \begin{itemize}
 \item \texttt{CurrentFunction}:  Represents the function currently being compiled.
@@ -95,45 +96,73 @@ type CompilerState =
 \item \texttt{LocalCount}: Keeps track of the number of local variables within the current scope.
 \end{itemize}
 
-The compiler uses a monadic approach, threading the CompilerState through the compilation process. The CompilerResult type, defined as a Result type, is used to handle potential errors during compilation. The use of a monadic approach with CompilerResult offers several advantages. Firstly, it avoids mutable state variables, making the compiler more modular and easier to reason about. Secondly, it enhances testability by explicitly passing the state as an argument. Finally, it provides type-safe error handling.
+The compiler uses a monadic approach, threading the CompilerState through the compilation process.
+The CompilerResult type, defined as a specialisation of the F\# Result type, is used to handle potential errors during 
+compilation.
+The use of a monadic approach with CompilerResult offers several advantages.
+Firstly, it avoids mutable state variables, making the compiler more modular and easier to reason about.
+Secondly, it enhances testability by explicitly passing the state as an argument.
+Finally, it provides type-safe error handling.
+
 \subsubsection{Expression Compilation}
 
-The \texttt{compileExpr} function recursively compiles expressions into bytecode. Here are a few examples:
+The \texttt{compileExpr} function recursively compiles expressions into bytecode.
+Here are a few examples:
 
-    Literals: Literal values (numbers, strings, booleans) are added to the chunk's constant pool, and a \texttt{CONSTANT} or \texttt{CONSTANT_LONG} instruction is emitted to push the constant onto the stack.
-    Identifiers: Variable references are compiled into \texttt{GET_LOCAL}, \texttt{GET_GLOBAL}, or \texttt{GET_UPVALUE} instructions, depending on the variable's scope.
-    Function Calls: Function calls are compiled into a sequence of instructions that push the function and its arguments onto the stack, followed by a \texttt{CALL} instruction.
-    Lambda Expressions: Compiling a lambda expression involves creating a new \texttt{Function} object for the lambda, compiling its body into the new chunk, and then emitting a \texttt{CLOSURE} instruction to create a closure object at runtime. The \texttt{CLOSURE} instruction also captures any upvalues (variables from enclosing scopes).
-    Lists and Tuples: Lists and tuples are created by first pushing each element of the list or tuple onto the stack in order, then pushing the length of the list or tuple, then pushing an empty list or tuple onto the stack, and finally executing the \texttt{COMPOUND_CREATE} instruction to create the data structure.
+Literals: Literal values (numbers, strings, booleans) are added to the chunk's constant pool, and a \texttt{CONSTANT} or \texttt{CONSTANT\_LONG} instruction is emitted to push the constant onto the stack.
+Identifiers: Variable references are compiled into \texttt{GET\_LOCAL}, \texttt{GET\_GLOBAL}, or 
+\texttt{GET\_UPVALUE} instructions, depending on the variable's scope.
+Function Calls: Function calls are compiled into a sequence of instructions that push the function and its arguments onto the stack, followed by a \texttt{CALL} instruction.
+Lambda Expressions: Compiling a lambda expression involves creating a new \texttt{Function} object for the lambda, compiling its body into the new chunk, and then emitting a \texttt{CLOSURE} instruction to create a closure object at runtime.
+The \texttt{CLOSURE} instruction also captures any upvalues (variables from enclosing scopes).
+Lists and Tuples: Lists and tuples are created by first pushing each element of the list or tuple onto the stack in 
+order, then pushing the length of the list or tuple, then pushing an empty list or tuple onto the stack, and finally executing the \texttt{COMPOUND\_CREATE} instruction to create the data structure.
 
 \subsubsection{Statement Compilation}
 
 The \texttt{compileStmt} function handles the compilation of statements.
 
-    Variable Declarations: Variable declarations are compiled into \texttt{DEFINE_GLOBAL} instructions for global variables or by allocating a slot on the stack for local variables.
-    Expression Statements: Expression statements are compiled by first compiling the expression and then emitting a \texttt{POP} instruction to discard the result if it's not used.
-    Control Flow: if and while statements are compiled using \texttt{JUMP_IF_FALSE} and \texttt{JUMP} instructions to control the flow of execution.
+Variable Declarations: Variable declarations are compiled into \texttt{DEFINE\_GLOBAL} instructions for global 
+variables or by allocating a slot on the stack for local variables.
+Expression Statements: Expression statements are compiled by first compiling the expression and then emitting a \texttt{POP} instruction to discard the result if it's not used.
+Control Flow: if and while statements are compiled using \texttt{JUMP\_IF\_FALSE} and \texttt{JUMP} instructions 
+to control the flow of execution.
 
 \subsection{Compilation Output: The Function Object}
 \label{subsec:compilation-output}
-The compilation process culminates in the creation of a \texttt{Function} object. This object serves as a self-contained executable unit, encapsulating the generated bytecode along with essential metadata. The structure of the \texttt{Function} object is as follows:
+
+The compilation process culminates in the creation of a \texttt{Function} object.
+This object serves as a self-contained executable unit, encapsulating the generated bytecode along with essential metadata.
+The structure of the \texttt{Function} object is as follows:
 \begin{enumerate}
     \item \textbf{Arity}: An integer specifying the number of arguments expected by the function.
-    \item \textbf{Chunk}: This component, detailed in Section \ref{sec:bytecode-compilation}, houses the compiled bytecode instructions, the constant pool, and line number information crucial for debugging.
-    \item \textbf{Name}: A string holding the function's name. While not used during execution, it aids in debugging and provides context when examining compiled code.
+    \item \textbf{Chunk}: This component, detailed in Section~\ref{sec:bytecode-compilation}, houses the compiled bytecode instructions, the constant pool, and line number information crucial for debugging.
+    \item \textbf{Name}: A string holding the function's name.
+    While not used during execution, it aids in debugging and provides context when examining compiled code.
     \item \textbf{Locals}: A list of the function's local variables, primarily for debugging purposes.
 \end{enumerate}
 The \texttt{Function} object effectively represents the entry point for execution within the VM. The VM can readily load this object, instantiate a new \texttt{Closure} (a wrapper around the \texttt{Function} that also holds references to any necessary upvalues), and subsequently initialize a \texttt{CallFrame} to commence execution.
-The `compileProgram` function is the main driver of the compilation pipeline. It accepts the root of the AST as input and orchestrates the generation of the final `Function` object. The process can be summarized as follows:
+The `compileProgram` function is the main driver of the compilation pipeline.
+It accepts the root of the AST as input and orchestrates the generation of the final \textttt{Function} object.
+The process can be summarized as follows:
 \begin{enumerate}
-    \item \textbf{Initialization}: A new, empty \texttt{Function} object is created. A default name, such as "REPL\_Input", is typically assigned to this top-level function. An initial \texttt{CompilerState} is also created to track the compilation context.
-    \item \textbf{Recursive Compilation}: The compiler recursively traverses the AST. For each statement encountered, the `compileStmt` function is invoked, which, in turn, may call `compileExpr` for expressions. This recursive process generates bytecode instructions that are sequentially added to the \texttt{Chunk} within the \texttt{Function} object.
-    \item \textbf{Finalization}: Upon completing the AST traversal, a \texttt{RETURN} instruction is appended to the bytecode sequence, ensuring proper function termination. The completed \texttt{Function} object is then returned as the result of the compilation process.
+    \item \textbf{Initialization}: A new, empty \texttt{Function} object is created.
+    A default name, such as \textit{REPL\_Input}, is typically assigned to this top-level function.
+    An initial \texttt{CompilerState} is also created to track the compilation context.
+    \item \textbf{Recursive Compilation}: The compiler recursively traverses the AST. For each statement 
+    encountered, the \textit{compileStmt} function is invoked, which, in turn, may call \textit{compileExpr} for expressions. 
+    This recursive process generates bytecode instructions that are sequentially added to the \texttt{Chunk} within the \texttt{Function} object.
+    \item \textbf{Finalization}: Upon completing the AST traversal, a \texttt{RETURN} instruction is appended to the bytecode sequence, ensuring proper function termination.
+    The completed \texttt{Function} object is then returned as the result of the compilation process.
 \end{enumerate}
-Once the \texttt{Function} object is generated, it can be seamlessly loaded into the VM for execution. The VM provides a dedicated `loadFunction` function to facilitate this. This function performs the following actions:
+Once the \texttt{Function} object is generated, it can be seamlessly loaded into the VM for execution.
+The VM provides a dedicated \textit{loadFunction} function to facilitate this.
+This function performs the following actions:
 \begin{enumerate}
     \item \textbf{Closure Creation}: A new \texttt{Closure} object is created based on the provided \texttt{Function}.
-    \item \textbf{Call Frame Initialization}: A new \texttt{CallFrame} is initialized. The instruction pointer (\texttt{IP}) is set to 0, pointing to the beginning of the function's bytecode. The \texttt{StackBase} is set to the current top of the operand stack, providing the function with its own dedicated stack space.
+    \item \textbf{Call Frame Initialization}: A new \texttt{CallFrame} is initialized.
+    The instruction pointer (\texttt{IP}) is set to 0, pointing to the beginning of the function's bytecode.
+    The \texttt{StackBase} is set to the current top of the operand stack, providing the function with its own dedicated stack space.
     \item \textbf{Stack Push}: The newly created \texttt{CallFrame} is pushed onto the VM's call stack, making it the active frame.
 \end{enumerate}
 Following these steps, the VM can initiate execution by invoking the `runLoop` function.
@@ -141,19 +170,24 @@ This method of packaging compiled code into \texttt{Function} objects offers sev
 
 \begin{enumerate}
     \item \textbf{Modularity}: The compiled code is encapsulated within a well-defined structure, clearly separated from the internal workings of the compiler.
-    \item \textbf{Flexibility}: The VM is designed to load and execute any valid \texttt{Function} object, irrespective of its origin. This opens up possibilities for features such as dynamic code loading and separate compilation.
+    \item \textbf{Flexibility}: The VM is designed to load and execute any valid \texttt{Function} object, irrespective of its origin.
+    This opens up possibilities for features such as dynamic code loading and separate compilation.
     \item \textbf{Simplicity}: The process of loading and executing compiled code within the VM is streamlined and straightforward.
 \end{enumerate}
-In essence, this mechanism allows the Vec3 interpreter to treat compiled code as first-class executable units, enabling dynamic loading and execution of Vec3 programs within a running VM instance. This capability is fundamental to providing a flexible and interactive development environment.
+In essence, this mechanism allows the Vec3 interpreter to treat compiled code as first-class executable units, enabling dynamic loading and execution of Vec3 programs within a running VM instance.
+This capability is fundamental to providing a flexible and interactive development environment.
 
 \section{Virtual Machine Implementation}
 \label{sec:virtual-machine}
 
-The Vec3 virtual machine executes bytecode through a straightforward execution model centered around a stack and call frames. At its heart is a simple loop that fetches, decodes, and executes instructions one at a time, maintaining program state through a carefully designed stack structure.
+The Vec3 virtual machine executes bytecode through a straightforward execution model centered around a stack and call frames.
+At its heart is a simple loop that fetches, decodes, and executes instructions one at a time, maintaining program state through a carefully designed stack structure.
 
-\subsection{Core Execution Loop}
+\subsection{Core Execution Loop}\label{subsec:core-execution-loop}
 
-The VM's main execution loop operates on a series of call frames. Each frame represents a function call and contains its own instruction pointer and stack base. The loop continually fetches the next instruction from the current frame, executes it, and updates the VM state accordingly:
+The VM's main execution loop operates on a series of call frames.
+Each frame represents a function call and contains its own instruction pointer and stack base.
+The loop continually fetches the next instruction from the current frame, executes it, and updates the VM state accordingly:
 
 \begin{minted}{fsharp}
 let rec runLoop (vm: VM) =
@@ -169,7 +203,9 @@ let rec runLoop (vm: VM) =
         continue vm
 \end{minted}
 
-The simplicity of our main execution loop isn't just about clean code - it directly impacts the VM's performance. Since this loop executes for every single instruction in our program, its efficiency is crucial. Each extra check or operation in this loop would be multiplied across millions of instruction executions.
+The simplicity of our main execution loop isn't just about clean code - it directly impacts the VM's performance.
+Since this loop executes for every single instruction in our program, its efficiency is crucial.
+Each extra check or operation in this loop would be multiplied across millions of instruction executions.
 Consider what happens when the VM executes a simple addition operation:
 \begin{minted}{fsharp}
 let rec runLoop (vm: VM) =
@@ -185,24 +221,36 @@ callValue vm args recursive |> continue
 continue vm
 \end{minted}
 
-Each instruction follows this exact path: read a byte, convert it to an opcode (a constant time array lookup), and dispatch to the specific handler. No extra checks, no special cases, no branching logic. This matters because modern CPUs can efficiently predict and pipeline these consistent operations.
-This is why we implement operations like addition as function calls rather than dedicated instructions. While it might seem counterintuitive to turn a simple addition into a function call, this tradeoff means our main execution loop stays fast for all instructions. The small performance cost of occasional function calls is more than offset by the efficiency gained in the core loop that handles every single instruction.
-The real elegance here is how this design cascades into other benefits. A simple execution loop means fewer places for bugs to hide, easier performance profiling, and more predictable behavior under different workloads. Sometimes the fastest solution is also the simplest one.
+Each instruction follows this exact path: read a byte, convert it to an opcode (a constant time array lookup), and dispatch to the specific handler.
+No extra checks, no special cases, no branching logic.
+This matters because modern CPUs can efficiently predict and pipeline these consistent operations.
+This is why we implement operations like addition as function calls rather than dedicated instructions.
+While it might seem counterintuitive to turn a simple addition into a function call, this tradeoff means our main execution loop stays fast for all instructions.
+The small performance cost of occasional function calls is more than offset by the efficiency gained in the core loop that handles every single instruction.
+The real elegance here is how this design cascades into other benefits.
+A simple execution loop means fewer places for bugs to hide, easier performance profiling, and more predictable behavior under different workloads.
+Sometimes the fastest solution is also the simplest one.
 
-\subsection{Stack Management}
+\subsection{Stack Management}\label{subsec:stack-management}
 
-The stack serves two purposes: storing temporary values during expression evaluation and holding local variables for function calls. Each function call creates a new frame that marks where its locals begin on the stack. This unified approach means accessing both temporary values and local variables is just array indexing - there's no need for separate variable storage or complex lookup mechanisms.
-Local variables are accessed through offsets from the frame's base pointer. When executing code like:
+The stack serves two purposes: storing temporary values during expression evaluation and holding local variables for function calls.
+Each function call creates a new frame that marks where its locals begin on the stack.
+This unified approach means accessing both temporary values and local variables is just array indexing - there's no need for separate variable storage or complex lookup mechanisms.
+Local variables are accessed through offsets from the frame's base pointer.
+When executing code like:
 
 \begin{minted}{fsharp}
 let x = 10
 let y = x + 5
 \end{minted}
-The VM pushes 10 onto the stack and stores its position as variable 'x'. When later accessing 'x', it simply reads from that stack position using the frame's base pointer plus the variable's index.
+The VM pushes 10 onto the stack and stores its position as variable $x$.
+When later accessing $x$, it simply reads 
+from that stack position using the frame's base pointer plus the variable's index.
 
-\subsection{Function Calls and Returns}
+\subsection{Function Calls and Returns}\label{subsec:function-calls-and-returns}
 
-Function calls demonstrate how all parts of the VM work together. When making a call, the VM:
+Function calls demonstrate how all parts of the VM work together.
+When making a call, the VM:
 
 \begin{minted}{fsharp}
 let callValue vm argCount recursive =
@@ -216,12 +264,15 @@ let callValue vm argCount recursive =
     vm.Frames.Add(frame)
 \end{minted}
 
-The new frame's stack base points just past the arguments, setting up the local variable area for the called function. This frame structure means each function has its own view of the stack, with its arguments and locals neatly organized.
-When a function returns, the VM pops off its frame and any temporary values, preserving only the return value for the caller. This disciplined stack management ensures memory usage stays predictable and bounded.
+The new frame's stack base points just past the arguments, setting up the local variable area for the called function.
+This frame structure means each function has its own view of the stack, with its arguments and locals neatly organized.
+When a function returns, the VM pops off its frame and any temporary values, preserving only the return value for the caller.
+This disciplined stack management ensures memory usage stays predictable and bounded.
 
-\subsection{Tail Call Support}
+\subsection{Tail Call Support}\label{subsec:tail-call-support}
 
-The VM handles tail calls by reusing stack frames rather than allocating new ones. When the compiler identifies a tail call, it sets a flag that tells the VM to reuse the current frame:
+The VM handles tail calls by reusing stack frames rather than allocating new ones.
+When the compiler identifies a tail call, it sets a flag that tells the VM to reuse the current frame:
 
 \begin{minted}{fsharp}
 | Call(args, true) ->  // Tail call
@@ -232,14 +283,27 @@ The VM handles tail calls by reusing stack frames rather than allocating new one
 \end{minted}
 This means deeply recursive code runs in constant stack space, enabling functional programming patterns without risk of stack overflow.
 
-\subsection{Closures and Upvalues}
-To support lexical scoping with nested functions, the Vec3 VM implements closures using a mechanism similar to Lua. A \textit{closure} is a combination of a function and its surrounding environment, captured at the time of the function's definition. This environment is represented by \textit{upvalues}.
-When a function is defined within another function, and it references variables from the enclosing function's scope, those variables become upvalues for the inner function.  The compiler identifies these upvalues and generates appropriate bytecode instructions (`GET_UPVALUE`, `SET_UPVALUE`, `CLOSURE`, `CLOSE_UPVALUE`) to manage them.
-When a closure is created at runtime (via the `CLOSURE` instruction), the VM creates `UpValue` objects that point to the relevant variables on the stack. If the enclosing function returns, and the upvalues are no longer on the stack, the `CLOSE_UPVALUE` instruction is executed, which moves the upvalue's value to the heap, ensuring the closure still has access to its environment even after the outer function has completed.
-This upvalue mechanism allows inner functions to retain access to the variables of their enclosing scope, even after the outer function has returned. This is essential for implementing higher-order functions and other functional programming paradigms. The use of upvalues and closures adds a layer of complexity to the VM, but it significantly enhances the expressive power of the Vec3 language. By carefully managing the lifetime and accessibility of upvalues, the VM ensures that closures behave correctly and maintain the integrity of lexical scoping.
+\subsection{Closures and Upvalues}\label{subsec:closures-and-upvalues}
+To support lexical scoping with nested functions, the Vec3 VM implements closures using a mechanism similar to Lua.
+A \textit{closure} is a combination of a function and its surrounding environment, captured at the time of the function's definition.
+This environment is represented by \textit{upvalues}.
+When a function is defined within another function, and it references variables from the enclosing function's scope, those variables become upvalues for the inner function.
+ The compiler identifies these upvalues and generates appropriate bytecode instructions (\textit{GET\_UPVALUE}, 
+\textit{SET\_UPVALUE}, \textit{CLOSURE}, \textit{CLOSE\_UPVALUE}) to manage them.
+When a closure is created at runtime (via the \textit{CLOSURE} instruction), the VM creates \textit{UpValue} objects 
+that point to the relevant variables on the stack.
+If the enclosing function returns, and the upvalues are no longer on the stack, the \textit{CLOSE\_UPVALUE} 
+instruction is executed, which moves the upvalue's value to the heap, ensuring the closure still has access to its environment even after the outer function has completed.
+This upvalue mechanism allows inner functions to retain access to the variables of their enclosing scope, even after the outer function has returned.
+This is essential for implementing higher-order functions and other functional programming paradigms.
+The use of upvalues and closures adds a layer of complexity to the VM, but it significantly enhances the expressive power of the Vec3 language.
+By carefully managing the lifetime and accessibility of upvalues, the VM ensures that closures behave correctly and maintain the integrity of lexical scoping.
 
-\subsection{Built-in Functions}
-The VM integrates built-in functions through a special value type that can directly manipulate VM state. This enables powerful features like symbolic differentiation and plotting while maintaining a clean interface. Built-ins can access the stack and VM state but must follow the same calling conventions as normal functions:
+\subsection{Built-in Functions}\label{subsec:built-in-functions}
+The VM integrates built-in functions through a special value type that can directly manipulate VM state.
+This enables powerful features like symbolic differentiation and plotting while maintaining a clean interface.
+Built-ins can access the stack and VM state but must follow the same calling conventions as normal functions:
+
 \begin{minted}{fsharp}
 VBuiltin(fun args ->
     match args with
@@ -250,5 +314,8 @@ VBuiltin(fun args ->
     | _ -> raise "Type error")
 \end{minted}
 The VM executes built-ins directly rather than creating a new frame, but their results flow through the same stack mechanism as regular functions.
-\section{Conclusion}
-The Vec3 VM achieves its goals through careful attention to fundamentals: a clean execution loop, unified stack management, and consistent handling of function calls. By keeping each component focused and well-defined, we create a VM that's both efficient and maintainable. The design proves that a straightforward approach, well-executed, can handle sophisticated language features without undue complexity.
+
+\section{Conclusion}\label{sec:conclusion}
+The Vec3 VM achieves its goals through careful attention to fundamentals: a clean execution loop, unified stack management, and consistent handling of function calls.
+By keeping each component focused and well-defined, we create a VM that's both efficient and maintainable.
+The design proves that a straightforward approach, well-executed, can handle sophisticated language features without undue complexity.

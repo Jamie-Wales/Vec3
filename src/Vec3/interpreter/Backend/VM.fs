@@ -443,10 +443,8 @@ and executeOpcodeImpl (vm: VM) (opcode: OP_CODE) : VM =
 
             let upvalues = Array.append prevUpvals upvalues
 
-
-            // how do i set the upvalues ?
-            // where do i get the upvalues from ?
-            // answer: from the stack
+            // printfn $"Upvalues: {upvalues}"
+            // printfn $"Vals: {vals}"
 
             let closure =
                 VClosure(
