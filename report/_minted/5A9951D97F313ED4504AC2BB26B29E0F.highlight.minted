@@ -1,8 +1,0 @@
-\begin{MintedVerbatim}[commandchars=\\\{\}]
-\PYG{n}{import}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{file.vec3}\PYG{l+s}{\PYGZdq{}}
-\PYG{n}{import}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{list}\PYG{l+s}{\PYGZdq{}}
-
-\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{f}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{(}\PYG{n}{x}\PYG{o}{)}\PYG{+w}{ }\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{n}{func}\PYG{o}{(}\PYG{n}{x}\PYG{o}{)}\PYG{+w}{ }\PYG{c+c1}{// func defined in file.vec3}
-\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{l}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{[}\PYG{l+m+mi}{1}\PYG{o}{,}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{o}{,}\PYG{+w}{ }\PYG{l+m+mi}{3}\PYG{o}{]}
-\PYG{k}{let}\PYG{+w}{ }\PYG{n+nv}{l1}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{head}\PYG{o}{(}\PYG{n}{l}\PYG{o}{)}\PYG{+w}{ }\PYG{c+c1}{// head defined in list}
-\end{MintedVerbatim}

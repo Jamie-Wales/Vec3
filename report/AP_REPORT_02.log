@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  12 JAN 2025 18:27
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  12 JAN 2025 21:56
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -897,11 +897,11 @@ r> ":" <type> "," <recordtypelist>[]
 \pydata@fh@_E017103BDF0CAED79F13B8F548EAF24E.data.minted=\write5
 \openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
 
-runsystem(latexminted config  --timestamp 20250112182718Z E017103BDF0CAED79F13B
+runsystem(latexminted config  --timestamp 20250112215658Z E017103BDF0CAED79F13B
 8F548EAF24E)...executed safely (allowed).
 
 (./_E017103BDF0CAED79F13B8F548EAF24E.config.minted)
-runsystem(latexminted cleanconfig  --timestamp 20250112182718Z E017103BDF0CAED7
+runsystem(latexminted cleanconfig  --timestamp 20250112215658Z E017103BDF0CAED7
 9F13B8F548EAF24E)...executed safely (allowed).
 
 
@@ -912,28 +912,28 @@ LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <10.95> not available
 
 
 [16]))
-<assets/finalCodeEditor.png, id=556, 1197.47375pt x 799.98875pt>
+<assets/finalCodeEditor.png, id=564, 1197.47375pt x 799.98875pt>
 File: assets/finalCodeEditor.png Graphic file (type png)
 <use assets/finalCodeEditor.png>
 Package pdftex.def Info: assets/finalCodeEditor.png  used on input line 16.
 (pdftex.def)             Requested size: 340.0013pt x 227.13248pt.
-<assets/finalGuiParserError.png, id=558, 910.40125pt x 242.9075pt>
+<assets/finalGuiParserError.png, id=566, 910.40125pt x 242.9075pt>
 File: assets/finalGuiParserError.png Graphic file (type png)
 <use assets/finalGuiParserError.png>
 Package pdftex.def Info: assets/finalGuiParserError.png  used on input line 17.
 
 (pdftex.def)             Requested size: 340.0013pt x 90.71573pt.
-<assets/finalGuiTypeError.png, id=559, 912.40875pt x 239.89626pt>
+<assets/finalGuiTypeError.png, id=567, 912.40875pt x 239.89626pt>
 File: assets/finalGuiTypeError.png Graphic file (type png)
 <use assets/finalGuiTypeError.png>
 Package pdftex.def Info: assets/finalGuiTypeError.png  used on input line 18.
 (pdftex.def)             Requested size: 340.0013pt x 89.39348pt.
-<assets/finalGuiParseTree.png, id=560, 883.3pt x 324.21124pt>
+<assets/finalGuiParseTree.png, id=568, 883.3pt x 324.21124pt>
 File: assets/finalGuiParseTree.png Graphic file (type png)
 <use assets/finalGuiParseTree.png>
 Package pdftex.def Info: assets/finalGuiParseTree.png  used on input line 19.
 (pdftex.def)             Requested size: 340.0013pt x 124.7945pt.
-<assets/finalREPL.png, id=561, 736.7525pt x 78.2925pt>
+<assets/finalREPL.png, id=569, 736.7525pt x 78.2925pt>
 File: assets/finalREPL.png Graphic file (type png)
 <use assets/finalREPL.png>
 Package pdftex.def Info: assets/finalREPL.png  used on input line 20.
@@ -945,7 +945,7 @@ Package pdftex.def Info: assets/finalREPL.png  used on input line 20.
 [18 <./assets/finalCodeEditor.png> <./assets/finalGuiParserError.png> <./assets
 /finalGuiTypeError.png> <./assets/finalGuiParseTree.png> <./assets/finalREPL.pn
 g>]
-<assets/finalNotebook.png, id=581, 1196.47pt x 857.2025pt>
+<assets/finalNotebook.png, id=589, 1196.47pt x 857.2025pt>
 File: assets/finalNotebook.png Graphic file (type png)
 <use assets/finalNotebook.png>
 Package pdftex.def Info: assets/finalNotebook.png  used on input line 43.
@@ -954,7 +954,7 @@ Package pdftex.def Info: assets/finalNotebook.png  used on input line 43.
 
 pdfTeX warning: pdflatex (file ./assets/plotPDF.pdf): PDF inclusion: found PDF 
 version <1.7>, but at most version <1.5> allowed
-<assets/plotPDF.pdf, id=583, page=1, 597.23125pt x 845.1575pt>
+<assets/plotPDF.pdf, id=591, page=1, 597.23125pt x 845.1575pt>
 File: assets/plotPDF.pdf Graphic file (type pdf)
 <use assets/plotPDF.pdf, page 1>
 Package pdftex.def Info: assets/plotPDF.pdf , page1 used on input line 51.
@@ -963,7 +963,7 @@ Package pdftex.def Info: assets/plotPDF.pdf , page1 used on input line 51.
 
 pdfTeX warning: pdflatex (file ./assets/plotPDF.pdf): PDF inclusion: found PDF 
 version <1.7>, but at most version <1.5> allowed
-<assets/plotPDF.pdf, id=584, page=2, 597.23125pt x 845.1575pt>
+<assets/plotPDF.pdf, id=592, page=2, 597.23125pt x 845.1575pt>
 File: assets/plotPDF.pdf Graphic file (type pdf)
 <use assets/plotPDF.pdf, page 2>
 Package pdftex.def Info: assets/plotPDF.pdf , page2 used on input line 52.
@@ -981,16 +981,16 @@ Overfull \vbox (236.90312pt too high) has occurred while \output is active []
 (./_minted/9884AC93B8992C9C059DD0D2A9E487BA.highlight.minted)
 (./_minted/7B293B2FFC7057B786CBB1CC553B17FF.highlight.minted)
 
-[21] (./_minted/5A9951D97F313ED4504AC2BB26B29E0F.highlight.minted)
+[21] (./_minted/8CC21B9097D9017D30AA321782065B13.highlight.minted)
 (./_minted/775BC357FA9549A79F0F780EA6C272A5.highlight.minted)
 (./_minted/EAB81081B9AA1ED6965DC7DAEE03FD8E.highlight.minted)
 (./_minted/7C17EAC074E1B8CF21BBC64CDE11CF50.highlight.minted)
 (./_minted/7E4128AEF66516C43820ED0F6D3603F4.highlight.minted)
 (./_minted/9E5A726B54724F342641B3DA318F9763.highlight.minted)
-(./_minted/EA4343125E374CE74E14CB188C9D5A89.highlight.minted
 
-[22]) (./_minted/DE0C297A9503104137791AE924F69895.highlight.minted)
-(./_minted/26A858ACD3E5527240FEAE15EA4BE4CA.highlight.minted)
+[22] (./_minted/EA4343125E374CE74E14CB188C9D5A89.highlight.minted)
+(./_minted/DE0C297A9503104137791AE924F69895.highlight.minted)
+(./_minted/449206F91BE512FC97A794EFA476E124.highlight.minted)
 (./_minted/AE5E64C937F5E8B4F080AB36E0BA22D7.highlight.minted))
 
 [23]
@@ -1101,12 +1101,12 @@ T1/cmtt/m/n/10.95 Function\OT1/cmr/m/n/10.95 .
 (./_minted/F0FF2752D3712A4EF3EA4D2472A73BBD.highlight.minted
 
 [37])
-<assets/scatterPlot.png, id=809, 794.97pt x 597.23125pt>
+<assets/scatterPlot.png, id=817, 794.97pt x 597.23125pt>
 File: assets/scatterPlot.png Graphic file (type png)
 <use assets/scatterPlot.png>
 Package pdftex.def Info: assets/scatterPlot.png  used on input line 37.
 (pdftex.def)             Requested size: 340.0013pt x 255.43747pt.
-<assets/barChart.png, id=811, 800.9925pt x 599.23875pt>
+<assets/barChart.png, id=819, 800.9925pt x 599.23875pt>
 File: assets/barChart.png Graphic file (type png)
 <use assets/barChart.png>
 Package pdftex.def Info: assets/barChart.png  used on input line 50.
@@ -1115,14 +1115,14 @@ Package pdftex.def Info: assets/barChart.png  used on input line 50.
 
 [38 <./assets/scatterPlot.png> <./assets/barChart.png>]
 (./_minted/496284844B6A45E1BB99A6B6443B29E7.highlight.minted)
-<assets/polynomialPlot.png, id=821, 797.98125pt x 598.235pt>
+<assets/polynomialPlot.png, id=829, 797.98125pt x 598.235pt>
 File: assets/polynomialPlot.png Graphic file (type png)
 <use assets/polynomialPlot.png>
 Package pdftex.def Info: assets/polynomialPlot.png  used on input line 70.
 (pdftex.def)             Requested size: 340.0013pt x 254.89006pt.
 
 (./_minted/FCBAB69BF9AD898EBBAAEEACFDFE8786.highlight.minted)
-<assets/multiplePlots.png, id=823, 1257.69875pt x 795.97375pt>
+<assets/multiplePlots.png, id=831, 1257.69875pt x 795.97375pt>
 File: assets/multiplePlots.png Graphic file (type png)
 <use assets/multiplePlots.png>
 Package pdftex.def Info: assets/multiplePlots.png  used on input line 98.
@@ -1130,12 +1130,12 @@ Package pdftex.def Info: assets/multiplePlots.png  used on input line 98.
 
 
 [39 <./assets/polynomialPlot.png>]
-<assets/plotInput.png, id=834, 787.94376pt x 43.16125pt>
+<assets/plotInput.png, id=842, 787.94376pt x 43.16125pt>
 File: assets/plotInput.png Graphic file (type png)
 <use assets/plotInput.png>
 Package pdftex.def Info: assets/plotInput.png  used on input line 114.
 (pdftex.def)             Requested size: 340.0013pt x 18.62416pt.
-<assets/plotInput2.png, id=835, 789.95125pt x 45.16875pt>
+<assets/plotInput2.png, id=843, 789.95125pt x 45.16875pt>
 File: assets/plotInput2.png Graphic file (type png)
 <use assets/plotInput2.png>
 Package pdftex.def Info: assets/plotInput2.png  used on input line 115.
@@ -1146,15 +1146,15 @@ Package pdftex.def Info: assets/plotInput2.png  used on input line 115.
 
 [40 <./assets/multiplePlots.png> <./assets/plotInput.png> <./assets/plotInput2.
 png>])
-<assets/drawImage.png, id=845, 792.9625pt x 594.22pt>
+<assets/drawImage.png, id=853, 792.9625pt x 594.22pt>
 File: assets/drawImage.png Graphic file (type png)
 <use assets/drawImage.png>
-Package pdftex.def Info: assets/drawImage.png  used on input line 299.
+Package pdftex.def Info: assets/drawImage.png  used on input line 300.
 (pdftex.def)             Requested size: 340.0013pt x 254.78426pt.
  (./_minted/E6C392DADA90F89F225476F1CE2866E4.highlight.minted)
 
 [41 <./assets/drawImage.png>]
-(./_minted/0124B75CC56E784B750200062843F3AB.highlight.minted)
+(./_minted/ADA95D50DDB8FC1A0543EDFBBAA99987.highlight.minted)
 (./_minted/579FC51703BEDA276A00FA1691DFA09A.highlight.minted
 
 [42]) (./_minted/862063E9F66C5CDD5F5D0AE2D0220F6B.highlight.minted)
@@ -1164,15 +1164,24 @@ Package pdftex.def Info: assets/drawImage.png  used on input line 299.
 (./_minted/F364099169EEC4D162B6625B438A2C3D.highlight.minted)
 (./_minted/5A61EB77AA48CB8C58E2F26587518FDD.highlight.minted
 
-[44]) (./_minted/C839D6F0E3BBCE497E7286D90E6097EC.highlight.minted)
+[44])
+<assets/gnuplot.png, id=876, 1203.49625pt x 805.0075pt>
+File: assets/gnuplot.png Graphic file (type png)
+<use assets/gnuplot.png>
+Package pdftex.def Info: assets/gnuplot.png  used on input line 525.
+(pdftex.def)             Requested size: 340.0013pt x 227.42732pt.
+ (./_minted/25092370BAC397E65B03A4D6225A7DBD.highlight.minted)
 
-[45])
+[45 <./assets/gnuplot.png>]
+(./_minted/C839D6F0E3BBCE497E7286D90E6097EC.highlight.minted)
 
-[46]
+[46])
+
+[47]
 Chapter 5.
 (./AP_REPORT_02.bbl
 
-[47
+[48
 
 ]
 Underfull \hbox (badness 6808) in paragraph at lines 16--19
@@ -1188,15 +1197,15 @@ os.com [Ac-cessed:
 
 
 
-[48
+[49
 
 ])
 
-[49]
+[50]
 Appendix A.
 
 
-[50
+[51
 
 ]
 Appendix B.
@@ -1283,7 +1292,7 @@ Overfull \hbox (1.16759pt too wide) in paragraph at lines 118--118
 
 
 
-[51
+[52
 
 ]
 
@@ -1677,8 +1686,6 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 )
 
-[52]
-
 [53]
 
 [54]
@@ -1690,16 +1697,18 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 [57]
 
 [58]
+
+[59]
 Appendix C.
 (./sections/algorithms.tex
 
-[59
+[60
 
 ])
 
-[60]
+[61]
 
-[61] (./AP_REPORT_02.aux)
+[62] (./AP_REPORT_02.aux)
  ***********
 LaTeX2e <2024-11-01>
 L3 programming layer <2024-11-02>
@@ -1709,13 +1718,13 @@ L3 programming layer <2024-11-02>
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 Package rerunfilecheck Info: File `AP_REPORT_02.out' has not changed.
-(rerunfilecheck)             Checksum: AC6E77690AE3034286844EF456631178;16011.
+(rerunfilecheck)             Checksum: 4DB7A743B9116930D2B2D5BEB833F7E8;16286.
  ) 
 Here is how much of TeX's memory you used:
- 19854 strings out of 473362
- 383302 string characters out of 5720983
- 956968 words of memory out of 5000000
- 42261 multiletter control sequences out of 15000+600000
+ 19885 strings out of 473362
+ 384157 string characters out of 5720983
+ 957167 words of memory out of 5000000
+ 42284 multiletter control sequences out of 15000+600000
  569039 words of font info for 75 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  85i,12n,93p,792b,940s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -1736,10 +1745,10 @@ live/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texli
 ve/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texliv
 e/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive
 /2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on AP_REPORT_02.pdf (63 pages, 1848023 bytes).
+Output written on AP_REPORT_02.pdf (64 pages, 2336717 bytes).
 PDF statistics:
- 1128 PDF objects out of 1200 (max. 8388607)
- 975 compressed objects within 10 object streams
- 265 named destinations out of 1000 (max. 500000)
- 924 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1149 PDF objects out of 1200 (max. 8388607)
+ 993 compressed objects within 10 object streams
+ 270 named destinations out of 1000 (max. 500000)
+ 945 words of extra memory for PDF output out of 10000 (max. 10000000)
 

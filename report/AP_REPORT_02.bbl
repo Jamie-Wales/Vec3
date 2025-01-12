@@ -33,6 +33,11 @@ Garcia, R., Clark, A.~M., and Tanter, {\'E}. (2016).
 \newblock Abstracting gradual typing.
 \newblock {\em ACM SIGPLAN Notices}, 51(1):429--442.
 
+\bibitem[{GNU}, 2024]{gnuPlot}
+{GNU} (2024).
+\newblock Gnu plot.
+\newblock \url{http://www.gnuplot.info/}.
+
 \bibitem[{Haskell}, 2024a]{haskell}
 {Haskell} (2024a).
 \newblock Haskell.

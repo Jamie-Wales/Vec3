@@ -40,11 +40,12 @@ let r1 = r.x
 
 \paragraph{Imports} The language supports importing other files, allowing for code to be split across multiple
 files, improving code organisation and reusability.
-As well as this, a small standard library has been written that can be imported as desired.
+As well as this, a small standard library has been written that can be imported as desired as a normal import, but 
+without quotes around the file name to distinguish it from a user-defined import.
 
 \begin{minted}{fsharp}
 import "file.vec3"
-import "list"
+import list
 
 let f = (x) -> func(x) // func defined in file.vec3
 let l = [1, 2, 3]
@@ -132,7 +133,7 @@ This is useful is a long calculation is to be performed, as the function will ru
 
 \begin{minted}{fsharp}
 let async longCalc = sum([1..1000000])
-
+...
 let result = await(longCalc)
 \end{minted}
 
