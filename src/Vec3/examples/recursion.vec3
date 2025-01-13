@@ -1,5 +1,5 @@
 // simple recursive function to calculate factorial of a number
-let rec fact = (n) -> if n < 1 then 1 else n * fact(n - 1)
+let rec fact = (n) -> if n < 1 then 1 else n + fact(n - 1)
 
 // calculate factorial of 5
 let x = fact(5)
@@ -8,6 +8,6 @@ print(x)
 
 // each call doesn't create a new stack frame
 // as such, the following will not cause a stack overflow
-let y = fact(1000000)
+let y = fact(10000)
 
 print(y)

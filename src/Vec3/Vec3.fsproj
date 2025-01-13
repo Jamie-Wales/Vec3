@@ -69,5 +69,6 @@
         <Content Include="examples\INT3.vec3" />
         <Content Include="examples\INT4.vec3" />
         <Content Include="examples\imports.vec3" />
+        <Content Include="examples\transpilerPlot.vec3" />
     </ItemGroup>
 </Project>

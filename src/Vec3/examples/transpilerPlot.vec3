@@ -1,0 +1,4 @@
+// Vec3 Editor Example
+let f = (x) -> x^2.0 - 2.0
+let z = (x) -> x^2.0 + 5.0
+plotFuncs("Example", [f, z])

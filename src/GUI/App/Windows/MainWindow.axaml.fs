@@ -2,6 +2,7 @@ namespace GUI.App.Windows
 
 open System
 open System.IO
+open System.Text
 open Avalonia.Controls
 open Avalonia.Markup.Xaml
 open AvaloniaEdit
@@ -550,46 +551,6 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
         debounceTimer <- Some(new Timer(callback, null, debounceTime, Timeout.Infinite))
 
     /// <summary>
-    /// Transpile the code in the editor to C.
-    /// </summary>
-    member private this.TranspileCodeAsync() =
-        task {
-            try
-                let dialog = OpenFolderDialog()
-                dialog.Title <- "Select Output Directory"
-                
-                let! result = dialog.ShowAsync(this)
-                match result with
-                | null -> ()  // User cancelled
-                | outputDir ->
-                    let config = createConfig (Some outputDir)
-                    
-                    // Create temporary file for the current editor content
-                    let tempFile = Path.Combine(Path.GetTempPath(), "temp.vec3")
-                    File.WriteAllText(tempFile, this.GetEditorText())
-                    
-                    match transpile tempFile config with
-                    | Ok exePath -> 
-                        let mainCPath = Path.Combine(outputDir, "vec3_program/src", "main.c")
-                        let! mainCContent = Task.Run(fun () -> File.ReadAllText(mainCPath))
-                        do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
-                            standardOutput.Foreground <- SolidColorBrush(Colors.White)
-                            standardOutput.Text <- $"Transpilation successful!\nOutput Directory: {outputDir}\nExecutable: {exePath}\n\nGenerated main.c in {mainCPath}:\n{mainCContent}")
-                    | Error err ->
-                        do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
-                            standardOutput.Foreground <- SolidColorBrush(Colors.Red)
-                            standardOutput.Text <- $"Transpilation error: {err}")
-                    
-                    // Clean up temporary file
-                    File.Delete(tempFile)
-                    
-            with ex ->
-                do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
-                    standardOutput.Foreground <- SolidColorBrush(Colors.Red)
-                    standardOutput.Text <- $"Transpilation error: {ex.Message}")
-        } |> ignore
-    
-    /// <summary>
     /// Initializes the color scheme of the editor.
     /// </summary>
     member private this.ApplyColorScheme() =
@@ -677,3 +638,77 @@ on(id, Keys.Up, (state) -> { x = state.x, y = state.y - 20.0 })
     member this.SetEditorText(text: string) =
         if textEditor <> null then
             textEditor.Text <- text
+
+
+
+
+/// <summary>
+/// Transpile the code in the editor to C and execute it.
+/// </summary>
+    member private this.TranspileCodeAsync() =
+        task {
+            try
+                let dialog = OpenFolderDialog()
+                dialog.Title <- "Select Output Directory"
+                
+                let! result = dialog.ShowAsync(this)
+                match result with
+                | null -> ()  // User cancelled
+                | outputDir ->
+                    let config = createConfig (Some outputDir)
+                    
+                    // Create temporary file for the current editor content
+                    let tempFile = Path.Combine(Path.GetTempPath(), "temp.vec3")
+                    File.WriteAllText(tempFile, this.GetEditorText())
+                    
+                    match transpile tempFile config with
+                    | Ok exePath -> 
+                        let mainCPath = Path.Combine(outputDir, "vec3_program/src", "main.c")
+                        let! mainCContent = Task.Run(fun () -> File.ReadAllText(mainCPath))
+                        
+                        // Execute the compiled program
+                        match! Task.Run(fun () -> executeProgram exePath) with
+                        | Ok executionResult ->
+                            do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                                let outputText = StringBuilder()
+                                outputText.AppendLine("Transpilation and execution successful!") |> ignore
+                                outputText.AppendLine($"Output Directory: {outputDir}") |> ignore
+                                outputText.AppendLine($"Executable: {exePath}") |> ignore
+                                outputText.AppendLine($"\nGenerated main.c in {mainCPath}:") |> ignore
+                                outputText.AppendLine(mainCContent) |> ignore
+                                
+                                if not (String.IsNullOrEmpty(executionResult.StdOut)) then
+                                    outputText.AppendLine("\nProgram Output:") |> ignore
+                                    outputText.AppendLine(executionResult.StdOut) |> ignore
+                                
+                                if not (String.IsNullOrEmpty(executionResult.StdErr)) then
+                                    outputText.AppendLine("\nProgram Errors:") |> ignore
+                                    outputText.AppendLine(executionResult.StdErr) |> ignore
+                                    
+                                outputText.AppendLine($"\nExit Code: {executionResult.ExitCode}") |> ignore
+                                
+                                standardOutput.Foreground <- 
+                                    if executionResult.ExitCode = 0 then 
+                                        SolidColorBrush(Colors.White)
+                                    else 
+                                        SolidColorBrush(Colors.Red)
+                                        
+                                standardOutput.Text <- outputText.ToString())
+                        | Error execError ->
+                            do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                                standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                                standardOutput.Text <- $"Execution error: {execError}")
+                                
+                    | Error err ->
+                        do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                            standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                            standardOutput.Text <- $"Transpilation error: {formatError err}")
+                    
+                    // Clean up temporary file
+                    File.Delete(tempFile)
+                    
+            with ex ->
+                do! Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () ->
+                    standardOutput.Foreground <- SolidColorBrush(Colors.Red)
+                    standardOutput.Text <- $"Error: {ex.Message}")
+        } |> ignore

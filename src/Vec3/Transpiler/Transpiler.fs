@@ -2,6 +2,8 @@ module Vec3.Transpiler.Transpiler
 
 open System
 open System.IO
+open System.Text
+open System.Diagnostics
 open Vec3.Interpreter.Parser
 open Vec3.Interpreter.Typing
 open Vec3.Interpreter.SyntaxAnalysis.TailAnalyser
@@ -262,3 +264,57 @@ let createConfig (outputDir: string option) =
     match outputDir with
     | Some dir -> { defaultConfig with OutputDir = dir }
     | None -> defaultConfig
+    
+/// <summary>
+/// Result type for program execution containing stdout, stderr, and exit code
+/// </summary>
+type ExecutionResult = {
+    StdOut: string
+    StdErr: string
+    ExitCode: int
+}
+
+/// <summary>
+/// Executes a compiled program and captures its output
+/// </summary>
+/// <param name="exePath">Path to the executable</param>
+/// <returns>Result containing program output and exit code</returns>
+let executeProgram (exePath: string) : Result<ExecutionResult, string> =
+    try
+        use proc = new Process()
+        
+        proc.StartInfo.FileName <- exePath
+        proc.StartInfo.UseShellExecute <- false
+        proc.StartInfo.RedirectStandardOutput <- true
+        proc.StartInfo.RedirectStandardError <- true
+        proc.StartInfo.CreateNoWindow <- true
+
+        let output = StringBuilder()
+        let error = StringBuilder()
+
+        // Add event handlers using F# event syntax
+        proc.OutputDataReceived.Add(fun args ->
+            if not (isNull args.Data) then 
+                output.AppendLine(args.Data) |> ignore
+        )
+
+        proc.ErrorDataReceived.Add(fun args ->
+            if not (isNull args.Data) then
+                error.AppendLine(args.Data) |> ignore
+        )
+
+        if proc.Start() then
+            proc.BeginOutputReadLine()
+            proc.BeginErrorReadLine()
+            proc.WaitForExit()
+
+            let result = {
+                StdOut = output.ToString().TrimEnd()
+                StdErr = error.ToString().TrimEnd()
+                ExitCode = proc.ExitCode
+            }
+            Ok result
+        else
+            Error "Failed to start process"
+    with ex ->
+        Error $"Execution error: {ex.Message}"
