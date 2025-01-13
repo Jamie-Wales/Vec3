@@ -2,19 +2,23 @@
 \label{sec:bytecode-compilation}
 
 This section details the design and implementation of the bytecode compiler for the new stack-based virtual machine.
-The compiler translates Vec3 source code, represented as an Abstract Syntax Tree (AST), into a sequence of bytecode instructions optimized for execution on the VM\@.
+The compiler translates Vec3 source code, represented as an Abstract Syntax Tree (AST), into a sequence of bytecode 
+instructions optimised for execution on the VM\@.
 
 \subsection{Design Principles}\label{subsec:design-principles}
 
 The bytecode and compiler are designed with the following principles in mind:
 
 \begin{itemize}
-    \item \textbf{Compactness:} A compact instruction set minimizes code size, leading to faster loading and execution.
-    This is achieved by representing many operations, such as mathematical expressions, as function calls, reducing the need for a large number of specialized opcodes.
+    \item \textbf{Compactness:} A compact instruction set minimises code size, leading to faster loading and execution.
+    This is achieved by representing many operations, such as mathematical expressions, as function calls, reducing 
+    the need for a large number of specialised opcodes.
     \item \textbf{Efficiency:} The stack-based nature of the VM lends itself to efficient execution of common operations, particularly arithmetic and logical expressions.
-    \item \textbf{Modularity:} Bytecode is organized into \textit{chunks}, self-contained units that include code, a constant pool, and line number information.
-    This promotes modularity and simplifies debugging.
-    \item \textbf{Tail Call Optimization:} The instruction set and compiler are designed to support tail call optimization, allowing for efficient execution of recursive functions without the risk of stack overflow.
+    \item \textbf{Modularity:} Bytecode is organised into \textit{chunks}, self-contained units that include code, a 
+    constant pool, and line number information. 
+    \item This promotes modularity and simplifies debugging.
+    \item \textbf{Tail Call Optimisation:} The instruction set and compiler are designed to support tail call 
+    optimisation, allowing for efficient execution of recursive functions without the risk of stack overflow.
 \end{itemize}
 
 \subsection{Bytecode Architecture}\label{subsec:bytecode-architecture}
@@ -82,7 +86,7 @@ Table~\ref{tab:instruction-set} provides an overview of the instruction set, inc
 
 \subsubsection{Chunk Structure}
 
-Bytecode is organized into \textit{chunks}.
+Bytecode is organised into \textit{chunks}.
 Each chunk, represented by the \texttt{Chunk} data structure in the F\# code, encapsulates the following:
 
 \begin{itemize}
@@ -178,7 +182,8 @@ The process can be summarised as follows:
     \item \textbf{Recursive Compilation}: The compiler recursively traverses the AST. For each statement 
     encountered, the \textit{compileStmt} function is invoked, which, in turn, may call \textit{compileExpr} for expressions. 
     This recursive process generates bytecode instructions that are sequentially added to the \texttt{Chunk} within the \texttt{Function} object.
-    \item \textbf{Finalization}: Upon completing the AST traversal, a \texttt{RETURN} instruction is appended to the bytecode sequence, ensuring proper function termination.
+    \item \textbf{Finalisation}: Upon completing the AST traversal, a \texttt{RETURN} instruction is appended to the 
+    bytecode sequence, ensuring proper function termination.
     The completed \texttt{Function} object is then returned as the result of the compilation process.
 \end{enumerate}
 
@@ -269,7 +274,7 @@ from that stack position using the frame's base pointer plus the variable's inde
 
 Function calls demonstrate how all parts of the VM work together.
 The new frame's stack base points just past the arguments, setting up the local variable area for the called function. 
-This frame structure means each function has its own view of the stack, with its arguments and locals neatly organized.
+This frame structure means each function has its own view of the stack, with its arguments and locals neatly organised.
 When a function returns, the VM pops off its frame and any temporary values, preserving only the return value for the caller.
 This disciplined stack management ensures memory usage stays predictable and bounded.
 

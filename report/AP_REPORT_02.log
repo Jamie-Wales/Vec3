@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  13 JAN 2025 11:59
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  13 JAN 2025 12:08
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -897,11 +897,11 @@ r> ":" <type> "," <recordtypelist>[]
 \pydata@fh@_E017103BDF0CAED79F13B8F548EAF24E.data.minted=\write5
 \openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
 
-runsystem(latexminted config  --timestamp 20250113115952Z E017103BDF0CAED79F13B
+runsystem(latexminted config  --timestamp 20250113120804Z E017103BDF0CAED79F13B
 8F548EAF24E)...executed safely (allowed).
 
 (./_E017103BDF0CAED79F13B8F548EAF24E.config.minted)
-runsystem(latexminted cleanconfig  --timestamp 20250113115952Z E017103BDF0CAED7
+runsystem(latexminted cleanconfig  --timestamp 20250113120804Z E017103BDF0CAED7
 9F13B8F548EAF24E)...executed safely (allowed).
 
 
@@ -1025,44 +1025,44 @@ rtsArithmetic\OT1/cmr/m/n/10.95 )  \OMS/cmtt/m/n/10.95 !
 (./sections/initial-design-of-the-bytecode-virtual-machine-and-compiler.tex
 
 [31]
-Overfull \hbox (8.34975pt too wide) in paragraph at lines 78--78
+Overfull \hbox (8.34975pt too wide) in paragraph at lines 82--82
 []|\OT1/cmr/m/n/10.95 CONSTANT[]LONG| 
  []
 
 
-Underfull \hbox (badness 3872) in paragraph at lines 78--78
+Underfull \hbox (badness 3872) in paragraph at lines 82--82
 []|\OT1/cmr/m/n/10.95 Load global vari-
  []
 
 
-Overfull \hbox (3.4831pt too wide) in paragraph at lines 78--78
+Overfull \hbox (3.4831pt too wide) in paragraph at lines 82--82
 []|\OT1/cmr/m/n/10.95 DEFINE[]GLOBAL| 
  []
 
 
-Overfull \hbox (4.00383pt too wide) in paragraph at lines 78--78
+Overfull \hbox (4.00383pt too wide) in paragraph at lines 82--82
 []|$[] \OML/cmm/m/it/10.95 ; fn; a[]; [] ; a[] \OMS/cmtt/m/n/10.95 !
  []
 
 
-Overfull \hbox (4.31952pt too wide) in paragraph at lines 78--78
+Overfull \hbox (4.31952pt too wide) in paragraph at lines 82--82
 []|\OT1/cmr/m/n/10.95 CLOSE[]UPVALUE| 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 78--78
+Underfull \hbox (badness 10000) in paragraph at lines 82--82
 []|\OT1/cmr/m/n/10.95 Create com-pound
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 78--78
+Underfull \hbox (badness 10000) in paragraph at lines 82--82
 []|$[] \OMS/cmtt/m/n/10.95 !
  []
 
 
 
 [32]
-Overfull \hbox (2.96216pt too wide) in paragraph at lines 105--106
+Overfull \hbox (2.96216pt too wide) in paragraph at lines 109--110
 \OT1/cmr/m/n/10.95 The com-piler main-tains state through-out the com-pi-la-tio
 n pro-cess us-ing the \OT1/cmtt/m/n/10.95 CompilerState
  []
@@ -1070,13 +1070,13 @@ n pro-cess us-ing the \OT1/cmtt/m/n/10.95 CompilerState
 (./_minted/505426202A946AAB9D11D5DDCA9A8D8B.highlight.minted)
 
 [33]
-Overfull \hbox (10.18102pt too wide) in paragraph at lines 175--178
+Overfull \hbox (10.18102pt too wide) in paragraph at lines 179--182
 \OT1/cmr/m/it/10.95 REPL[]Input\OT1/cmr/m/n/10.95 , is typ-i-cally as-signed to
  this top-level func-tion. An ini-tial \OT1/cmtt/m/n/10.95 CompilerState
  []
 
 
-Overfull \hbox (9.5316pt too wide) in paragraph at lines 190--191
+Overfull \hbox (9.5316pt too wide) in paragraph at lines 195--196
 []\OT1/cmr/bx/n/10.95 Closure Cre-ation\OT1/cmr/m/n/10.95 : A new \OT1/cmtt/m/n
 /10.95 Closure \OT1/cmr/m/n/10.95 ob-ject is cre-ated based on the pro-vided \O
 T1/cmtt/m/n/10.95 Function\OT1/cmr/m/n/10.95 . 
@@ -1727,7 +1727,7 @@ live/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texli
 ve/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texliv
 e/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive
 /2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on AP_REPORT_02.pdf (64 pages, 2336650 bytes).
+Output written on AP_REPORT_02.pdf (64 pages, 2336512 bytes).
 PDF statistics:
  1155 PDF objects out of 1200 (max. 8388607)
  999 compressed objects within 10 object streams
