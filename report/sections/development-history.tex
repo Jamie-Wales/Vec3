@@ -80,11 +80,10 @@ In this sprint we added the ability to define and call functions, with a simple 
 Call by value semantics were used, with a new environment created for each function call, consisting of the arguments
 bound to the parameter names and the parent environment.
 
-We also added an \textit{assert} statement, allowing for simple tests to be written in the language and support for 
-rational numbers was added.
+We also added an \textit{assert} statement, allowing for simple tests to be written in the language.
 
-Rational numbers are in the form \texttt{1/2} (note the lack of spaces around the \texttt{/}), and allowed for more 
-precision in arithmetic operations, compared to floating point numbers.
+Rational numbers were added and are in the form \texttt{1/2} (note the lack of spaces around the \texttt{/}), and 
+allowed for more precision in arithmetic operations, compared to floating point numbers.
 
 \subsection{Grammar in BNF}\label{subsec:grammar-in-bnf4}
 
@@ -138,9 +137,7 @@ precision in arithmetic operations, compared to floating point numbers.
 
 In this sprint we added static type checking to the language, with a simple type inference system based on 
 Hindley-Milner.
-
 We go over this system in more detail in section~\ref{sec:type-inference}.
-
 The concept of types was introduced, with the types \texttt{Int}, \texttt{Float}, \texttt{Bool}, \texttt{Function} and
 \texttt{Never}.
 
@@ -325,7 +322,7 @@ Other compound data types such as tuples and records were also added, with the s
 \section{Sprint 9: Maths Functions}\label{sec:maths-funcs}
 
 In this sprint we added a number of maths functions to the language, including \texttt{sin}, \texttt{cos}, \texttt{tan},
-\texttt{asin}, \texttt{acos} and other, including vector operations, and added the ability to plot functions, both 
+\texttt{asin}, \texttt{acos} and others, and added the ability to plot functions, both 
 built in and user defined.
 Support for complex numbers was also added in the form \texttt{1+2i}.
 Due to the complication of parsing complex numbers, the type system was relaxed to allow integers to unify with any 
@@ -427,7 +424,7 @@ If statements were in the form \texttt{if \textit{expr} then \textit{expr} else 
 the condition be a boolean and each branch be of the same type. 
 The \textit{else} branch can be omitted if the \textit{then} is of type \texttt{Unit}, allowing for simple if
 expressions such as \texttt{if x > 0 then print(x)}.
-Additionally, if expressions are expressions, meaning they return a value, allowing for more concise code.
+Additionally, \textit{if} expressions are expressions, meaning they return a value, allowing for more concise code.
 They are compiled as jump instructions in the bytecode compiler.
 
 Recursive bindings were implemented using a technique called \textit{trampolining}, where a function is defined

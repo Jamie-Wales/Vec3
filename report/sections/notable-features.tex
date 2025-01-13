@@ -1,4 +1,4 @@
-Alongside standard arithmetic operations, variable assignment, function definitions, and plotting the language also 
+Alongside standard arithmetic operations, variable assignment, function definitions and plotting the language also 
 supports the following interesting features:
 
 \paragraph{User defined operators} The user can define their own operators, both unary and binary, with the 
@@ -58,7 +58,10 @@ As the language is immutable, this is done through recursion and higher order fu
 managed through if expressions.
 
 \begin{minted}{fsharp}
-let rec map = (list, f) -> if len(list) == 0 then [] else f(head(list)) :: map(tail(list), f)
+let rec map = (list, f) -> 
+    if len(list) == 0 then 
+        [] 
+    else f(head(list)) :: map(tail(list), f)
 \end{minted}
 
 \paragraph{Calculus} The language has built-in functions for finding the integral function, derivative function
@@ -76,16 +79,16 @@ let findIntegral = (f, a, b) {
 operations such as addition, subtraction, multiplication and division defined for them, and functions such as \textit{transpose} and \textit{determinant} defined for matrices.
 
 \begin{minted}{fsharp}
-let v1 = [1.0, 2.0, 3.0]
-let v2 = [4.0, 5.0, 6.0]
-let v3 = v1 + v2
-let dot = v1 .* v2
-let cross = v1 X v2
+let v1 = [1, 2, 3]
+let v2 = [4, 5, 6]
+let v3 = v1 + v2 // [5, 7, 9]
+let dot = v1 .* v2 // 32
+let cross = v1 X v2 // [-3, 6, -3]
 
 let m1 = [[1.0, 2.0], [3.0, 4.0]]
-let trans = transpose(m1)
-let det = determinate(m1)
-let inv = inverse(m1)
+let trans = transpose(m1) // [[1.0, 3.0], [2.0, 4.0]]
+let det = determinate(m1) // -2.0
+let inv = inverse(m1) // [[-2.0, 1.0], [1.5, -0.5]]
 \end{minted}
 
 \paragraph{Casting} The language has first class support for casting between types, allowing for the user to
@@ -93,7 +96,7 @@ explicitly cast between types as desired.
 A useful example of this is casting integer lists to float lists:
 
 \begin{minted}{fsharp}
-let l = [1..10] : [float]
+let l = [1..10] : [float] // [1.0, 2.0, 3.0, 4.0...]
 \end{minted}
 
 \paragraph{Floats} The language has built-in support for floating point numbers, allowing for the user to perform
@@ -148,9 +151,9 @@ let l2 = l[1..] // Extracts the sublist [2, 3, 4, 5, 6, 7, 8, 9]
 let l3 = l[..5] // Extracts the sublist [1, 2, 3, 4, 5]
 \end{minted}
 
-\paragraph{Function Plotting} The language has built-in functions for plotting functions, allowing for easy
-visualisation of functions.
-This is done through the \textit{plotFunc} function, which takes in a function and plots it on a graph.
+\paragraph{Function Plotting} The language has built-in functions for plotting, allowing for easy
+visualisation.
+This is done through the \textit{plotFunc} function, which takes in a user-defined function and plots it on a graph.
 
 \paragraph{Interactive Plotting} The plot windows are interactive, with the user being able to zoom in and out,
 move around and adjust the axes as desired, as well as inputting functions to be plotted on command.

@@ -73,7 +73,7 @@ Table~\ref{tab:instruction-set} provides an overview of the instruction set, inc
         \hline
         CLOSE\_UPVALUE & --- & Close upvalue & $\dots, upvalue \rightarrow \dots$ \\
         \hline
-        COMPOUND\_CREATE & --- & Create compound value & $\dots \rightarrow \dots, compound$ \\
+        COMPOUND & --- & Create compound value & $\dots \rightarrow \dots, compound$ \\
         \hline
     \end{tabularx}
     \label{tab:instruction-set}
@@ -148,7 +148,7 @@ The \texttt{compileStmt} function handles the compilation of statements.
 Variable Declarations: Variable declarations are compiled into \texttt{DEFINE\_GLOBAL} instructions for global 
 variables or by allocating a slot on the stack for local variables.
 Expression Statements: Expression statements are compiled by first compiling the expression and then emitting a \texttt{POP} instruction to discard the result if it's not used.
-Control Flow: if and while statements are compiled using \texttt{JUMP\_IF\_FALSE} and \texttt{JUMP} instructions 
+Control Flow: if expressions are compiled using \texttt{JUMP\_IF\_FALSE} and \texttt{JUMP} instructions 
 to control the flow of execution.
 
 \subsection{Compilation Output: The Function Object}
@@ -163,15 +163,16 @@ The structure of the \texttt{Function} object is as follows:
     \item \textbf{Chunk}: This component, detailed in Section~\ref{sec:bytecode-compilation}, houses the compiled bytecode instructions, the constant pool, and line number information crucial for debugging.
     \item \textbf{Name}: A string holding the function's name.
     While not used during execution, it aids in debugging and provides context when examining compiled code.
-    \item \textbf{Locals}: A list of the function's local variables, primarily for debugging purposes.
+    \item \textbf{Locals}: A list of the function's local variables.
 \end{enumerate}
-The \texttt{Function} object effectively represents the entry point for execution within the VM. The VM can readily load this object, instantiate a new \texttt{Closure} (a wrapper around the \texttt{Function} that also holds references to any necessary upvalues), and subsequently initialize a \texttt{CallFrame} to commence execution.
+The \texttt{Function} object effectively represents the entry point for execution within the VM. The VM can readily 
+load this object, instantiate a new \texttt{Closure} (a wrapper around the \texttt{Function} that also holds references to any necessary upvalues), and subsequently initialise a \texttt{CallFrame} to commence execution.
 The \textit{compileProgram} function is the main driver of the compilation pipeline.
 It accepts the root of the AST as input and orchestrates the generation of the final \texttt{Function} object.
-The process can be summarized as follows:
+The process can be summarised as follows:
 
 \begin{enumerate}
-    \item \textbf{Initialization}: A new, empty \texttt{Function} object is created.
+    \item \textbf{Initialisation}: A new, empty \texttt{Function} object is created.
     A default name, such as \textit{REPL\_Input}, is typically assigned to this top-level function.
     An initial \texttt{CompilerState} is also created to track the compilation context.
     \item \textbf{Recursive Compilation}: The compiler recursively traverses the AST. For each statement 
@@ -187,13 +188,13 @@ This function performs the following actions:
 
 \begin{enumerate}
     \item \textbf{Closure Creation}: A new \texttt{Closure} object is created based on the provided \texttt{Function}.
-    \item \textbf{Call Frame Initialization}: A new \texttt{CallFrame} is initialized.
+    \item \textbf{Call Frame Initialisation}: A new \texttt{CallFrame} is initialised.
     The instruction pointer (\texttt{IP}) is set to 0, pointing to the beginning of the function's bytecode.
     The \texttt{StackBase} is set to the current top of the operand stack, providing the function with its own dedicated stack space.
     \item \textbf{Stack Push}: The newly created \texttt{CallFrame} is pushed onto the VM's call stack, making it the active frame.
 \end{enumerate}
 
-Following these steps, the VM can initiate execution by invoking the `runLoop` function.
+Following these steps, the VM can initiate execution by invoking the \textit{runLoop} function.
 This method of packaging compiled code into \texttt{Function} objects offers several advantages:
 
 \begin{enumerate}
@@ -208,8 +209,9 @@ This capability is fundamental to providing a flexible and interactive developme
 \section{Virtual Machine Implementation}
 \label{sec:virtual-machine}
 
-The Vec3 virtual machine executes bytecode through a straightforward execution model centered around a stack and call frames. 
-At its heart is a simple loop that fetches, decodes, and executes instructions one at a time, maintaining program state through a carefully designed stack structure.
+The Vec3 virtual machine executes bytecode through a straightforward execution model centered around a stack and call frames.
+At its heart is a simple loop that fetches, decodes, and executes instructions one at a time, maintaining program 
+state through a carefully designed stack structure\citet{Nystrom:2021}.
 
 \subsection{Core Execution Loop}\label{subsec:core-execution-loop}
 
@@ -233,11 +235,11 @@ let rec runLoop (vm: VM) =
 
 The simplicity of our main execution loop isn't just about clean code - it directly impacts the VM's performance.
 Since this loop executes for every single instruction in our program, its efficiency is crucial.
-Each extra check or operation in this loop would be multiplied across millions of instruction executions.
+Each extra check or operation in this loop would be multiplied across potentially millions of instruction executions.
 
 Each instruction follows this exact path: read a byte, convert it to an opcode (a constant time array lookup), and dispatch to the specific handler.
 No extra checks, no special cases, no branching logic.
-This matters because modern CPUs can efficiently predict and pipeline these consistent operations.
+This matters because modern CPUs can efficiently predict and pipeline these consistent operations\citet{7569243}.
 This is why we implement operations like addition as function calls rather than dedicated instructions.
 While it might seem counterintuitive to turn a simple addition into a function call, this tradeoff means our main execution loop stays fast for all instructions.
 The small performance cost of occasional function calls is more than offset by the efficiency gained in the core loop that handles every single instruction.
@@ -249,7 +251,8 @@ Sometimes the fastest solution is also the simplest one.
 
 The stack serves two purposes: storing temporary values during expression evaluation and holding local variables for function calls.
 Each function call creates a new frame that marks where its locals begin on the stack.
-This unified approach means accessing both temporary values and local variables is just array indexing - there's no need for separate variable storage or complex lookup mechanisms.
+This unified approach means accessing both temporary values and local variables is just array indexing - there's no 
+need for separate variable storage or complex lookup mechanisms.
 Local variables are accessed through offsets from the frame's base pointer.
 When executing code like:
 
@@ -285,19 +288,13 @@ When the compiler identifies a tail call, it sets a flag that tells the VM to re
 This means deeply recursive code runs in constant stack space, enabling functional programming patterns without risk of stack overflow.
 
 \subsection{Closures and Upvalues}\label{subsec:closures-and-upvalues}
-To support lexical scoping with nested functions, the Vec3 VM implements closures using a mechanism similar to Lua.
+To support lexical scoping with nested functions, the Vec3 VM implements closures using a mechanism similar to Lua\citet{lua}.
 A \textit{closure} is a combination of a function and its surrounding environment, captured at the time of the function's definition.
 This environment is represented by \textit{upvalues}.
 When a function is defined within another function, and it references variables from the enclosing function's scope, those variables become upvalues for the inner function.
- The compiler identifies these upvalues and generates appropriate bytecode instructions (\textit{GET\_UPVALUE}, 
-\textit{SET\_UPVALUE}, \textit{CLOSURE}, \textit{CLOSE\_UPVALUE}) to manage them.
+ The compiler identifies these upvalues and generates appropriate bytecode instructions (\textit{GET\_UPVALUE} and \textit{CLOSURE}) to manage them.
 
 %% redo this cunt
-When a closure is created at runtime (via the `CLOSURE` instruction), the VM creates \textit{UpValue} objects that 
-point to the relevant variables on the stack.
-If the enclosing function returns, and the upvalues are no longer on the stack, the \textit{CLOSE\_UPVALUE} 
-instruction is 
-executed, which moves the upvalue's value to the heap, ensuring the closure still has access to its environment even after the outer function has completed.
 This upvalue mechanism allows inner functions to retain access to the variables of their enclosing scope, even after the outer function has returned.
 This is essential for implementing higher-order functions and other functional programming paradigms.
 The use of upvalues and closures adds a layer of complexity to the VM, but it significantly enhances the expressive power of the Vec3 language.
@@ -317,9 +314,10 @@ VBuiltin(fun args ->
         compiledAndRun expr
     | _ -> raise "Type error")
 \end{minted}
+
 The VM executes built-ins directly rather than creating a new frame, but their results flow through the same stack mechanism as regular functions.
 
-\section{Conclusion}\label{sec:conclusion}
+\subsection{Conclusion}\label{subsec:conclusion}
 The Vec3 VM achieves its goals through careful attention to fundamentals: a clean execution loop, unified stack management, and consistent handling of function calls.
 By keeping each component focused and well-defined, we create a VM that's both efficient and maintainable.
 The design proves that a straightforward approach, well-executed, can handle sophisticated language features without undue complexity.

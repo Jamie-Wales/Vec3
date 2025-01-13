@@ -17,6 +17,11 @@ Bierman, G., Abadi, M., and Torgersen, M. (2014).
 \newblock Symbolic calculus in f\#.
 \newblock \url{https://bmitc.me/articles/symbolic-expressions-in-fsharp}.
 
+\bibitem[Christopher, 1984]{christopher1984reference}
+Christopher, T.~W. (1984).
+\newblock Reference count garbage collection.
+\newblock {\em Software: Practice and Experience}, 14(6):503--507.
+
 \bibitem[{Desmos Studio PBC}, 2023]{Desmos:2023}
 {Desmos Studio PBC} (2023).
 \newblock Desmos website.
@@ -48,6 +53,18 @@ Garcia, R., Clark, A.~M., and Tanter, {\'E}. (2016).
 \newblock Haskell documentation.
 \newblock \url{https://www.haskell.org/documentation/}.
 
+\bibitem[Kumar and Singh, 2016]{7569243}
+Kumar, S. and Singh, P.~K. (2016).
+\newblock An overview of modern cache memory and performance analysis of
+  replacement policies.
+\newblock In {\em 2016 IEEE International Conference on Engineering and
+  Technology (ICETECH)}, pages 210--214.
+
+\bibitem[{Lua}, 2024]{lua}
+{Lua} (2024).
+\newblock Lua.
+\newblock \url{https://www.lua.org/}.
+
 \bibitem[{MathWorks}, 2024]{matlab}
 {MathWorks} (2024).
 \newblock Matlab.
@@ -73,6 +90,11 @@ Nonsense, A. (2013).
 \newblock Symbolic calculus in haskell.
 \newblock
   \url{http://5outh.blogspot.com/2013/05/symbolic-calculus-in-haskell.html}.
+
+\bibitem[Nystrom, 2021]{Nystrom:2021}
+Nystrom, R. (2021).
+\newblock {\em Crafting Interpreters}.
+\newblock Genever Benning, Great Brittain.
 
 \bibitem[{OCaml}, 2024]{ocamlDocs}
 {OCaml} (2024).

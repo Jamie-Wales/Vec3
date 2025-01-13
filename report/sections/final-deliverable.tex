@@ -62,7 +62,7 @@ Images and further details are given in section~\ref{sec:plotting}.
 
 \subsection{REPL}\label{subsec:repl}
 
-The main view also includes a REPL input at hte bottom, allowing the user to interact with the program in a more
+The main view also includes a REPL input at the bottom, allowing the user to interact with the program in a more
 interactive way.
 After running the code, the user can type expressions in the REPL and have them evaluated, with the result being
 displayed on the right.
@@ -87,7 +87,7 @@ functional approach using pattern matching on the input string.
 The reason for this change was that the regular expression based lexer was difficult to extend and maintain due to 
 the lack of type safety.
 For example if we had a more general regex called before a more specific one, the more general one would always match
-first, even if the more specific one should have matched.
+first, even if the more specific one was intended.
 
 This was solved by using a more functional approach, where the type system of F\# would inform us if a case would 
 never be matched due to the order of the cases or otherwise, preventing a class of easily overlooked errors during development.
@@ -184,8 +184,7 @@ Dead code elimination is performed on the AST by removing any statements that ar
 For example, if a variable is declared but never used, the variable declaration is removed or if an expression is
 written but never used, the expression is removed.
 
-This is accomplished by through static analysis of the AST, where the following process is repeated until no more dead
-code can be removed:
+This is achieved using a simple algorithm that traverses the AST and removes any nodes that are not used.
 
 \begin{algorithmic}
     \While{Dead code can be removed}
@@ -223,14 +222,13 @@ This is accomplished using the initial interpreter implementation, which recursi
 constant expressions with their evaluated value.
 Only constants are evaluated, and thus no variable resolution is performed due to the cost of this operation.
 
-\section{Initial Design of the Bytecode Virtual Machine and Compiler}\label{sec:initial-design-of-the-bytecode-virtual-machine-and-compiler}
+\section{Bytecode Virtual Machine and Compiler}\label{sec:initial-design-of-the-bytecode-virtual-machine-and-compiler}
 
 \input{sections/initial-design-of-the-bytecode-virtual-machine-and-compiler}
 
-
 \section{Prelude}\label{sec:prelude}
 
-A prelude is implicitly included in every program, which contains some useful functions defined in the language, as 
+A prelude is implicitly imported into every program, which contains some useful functions defined in the language, as 
 well as wrappers for the built-in functions of the Virtual Machine, such as \textit{cos}, \textit{log}, etc.
 
 Notable functions include:
@@ -350,7 +348,8 @@ The transpiler generates C code that relies on a custom runtime library implemen
 \section{Memory Management and Garbage Collection}
 \label{sec:memory-management}
 
-The Vec3 runtime implements a deterministic memory management system through reference counting, offering predictable cleanup behavior while avoiding the complexity of tracing garbage collection.
+The Vec3 runtime implements a deterministic memory management system through reference counting\citet{christopher1984reference}, offering 
+predictable cleanup behavior while avoiding the complexity of tracing garbage collection.
 This approach particularly suits Vec3's transpiled nature, as it maps cleanly to C's manual memory management while providing automated cleanup semantics.
 
 \subsection{Reference Counting Implementation}\label{subsec:reference-counting-implementation}
@@ -411,10 +410,6 @@ void vec3_destroy_list(Vec3Object* object) {
     }
 }
 \end{minted}
-
-\subsection{Cycle Handling}\label{subsec:cycle-handling}
-While reference counting normally cannot handle cyclic references, Vec3's type system and standard library are designed to minimize the creation of reference cycles.
-The few cases where cycles could occur are handled through weak references or explicit cleanup operations.
 
 \section{Generic Value Representation}\label{sec:generic-value}
 
@@ -535,24 +530,6 @@ plotFuncs("Functions", [f, d])
 The purple line shows $f(x) = x^2 - 2$, while the green line shows $d(x) = -x^2 + 2$.
 This example demonstrates the system's ability to handle multiple functions and generate clear, distinguishable plots.
 
-\subsection{Implementation Details}\label{subsec:plotting-implementation}
-
-The plotting system communicates with GnuPlot through pipes, sending commands and data for real-time plot generation.
-The implementation handles memory management, data conversion, and proper cleanup of GnuPlot processes.
-Error handling ensures robust operation, with clear error messages for common issues like invalid function inputs or plotting errors.
-GnuPlot's native features are exposed through the Vec3 interface, including:
-
-\begin{itemize}
-    \item Interactive zooming and panning
-    \item Configurable plot styles and colors
-    \item Automatic axis scaling
-    \item Grid lines and legends
-    \item Multiple plot types
-\end{itemize}
-
-The system automatically handles data conversion between Vec3's number types and GnuPlot's expected formats, 
-ensuring accurate plotting.
-
 \subsection{Error Handling}\label{subsec:error-handling}
 
 The transpiler implements comprehensive error handling throughout the generation process. 
@@ -592,7 +569,6 @@ While the current transpiler implementation successfully handles the core Vec3 l
 \begin{itemize}[nolistsep]
 \item Optimisation of generated code patterns
 \item Improved debug information generation
-\item Integration with profile-guided optimisation techniques
 \item Enhanced cross-platform compatibility
 \item Expanded runtime library capabilities
 \end{itemize}
@@ -601,16 +577,19 @@ The modular design of the transpiler makes it well-suited for such future expans
 
 \section{Code architecture}\label{sec:code-architecture}
 The solution is split into 3 separate projects: the GUI, Tests and the main interpreter / compiler project.
+
 \paragraph{The GUI} is where the project runs from, and is a standard Avalonia project, with a main window (the code editor), 
-and then some other windows for the plots, drawing and notebook view, as well as some non-UI files such as the a helper 
+and then some other windows for the plots, drawing and notebook view, as well as some non-UI files such as a helper 
 module for PDF exports.
 It also contains a directory containing the prelude and standard library of the language, which are then imported as 
 desired (except the prelude, which is always implicitly imported).
 The frameworks are libraries used in the GUI project include AvaloniaUI, AvaloniaEdit, FSharp.Core, ScottPlot, 
 TextMate and QuestPDF\@. 
+
 \paragraph{The Tests} project mirrors the main project, with a similar structure and file naming for clear and sensible
 organisation.
 It uses the NUnit framework for testing, and tests the lexer, parser, compiler and type inference.
+
 \paragraph{The main project} is where the main interpreter and compiler are implemented, and is split into the following
 submodules:
 \begin{itemize}
@@ -618,11 +597,14 @@ submodules:
     \item \textit{Type Analysis} contains the type inference engine.
     \item \textit{Backend} contains the compiler and virtual machine.
     \item \textit{Optimisation} contains the optimisation passes (dead code elimination and constant folding).
+    \item \textit{Transpiler} contains the transpiler and runtime library.
 \end{itemize}
 A couple more files, such as the REPL, which contains helper functions for compilation and running of code, and the
 Symbolic Expression modules, which contain helper functions for maths operations such as simplification of formulas 
 and calculation of derivatives, are also present.
 No external libraries are used in the main project, as it is a standalone F\# project.
+
+The \textit{Executable} directory is also present in the root of the project, which contains the transpiler's runtime.
 
 We felt this structure was sensible, as it allowed for clear separation of concerns and easy navigation of the codebase.
 

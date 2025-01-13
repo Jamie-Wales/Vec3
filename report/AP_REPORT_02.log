@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  13 JAN 2025 10:57
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.22)  13 JAN 2025 11:59
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -723,13 +723,13 @@ u" | "v" | "w" | "x" | "y" | "z"[]
 
 
 [5]
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 135--135
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 134--134
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 135--135
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 134--134
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
@@ -737,13 +737,13 @@ u" | "v" | "w" | "x" | "y" | "z"[]
 
 
 [6]
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 205--205
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 202--202
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 205--205
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 202--202
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
@@ -752,36 +752,36 @@ u" | "v" | "w" | "x" | "y" | "z"[]
 
 [7]
 LaTeX Font Info:    Trying to load font information for OMS+cmtt on input line 
-238.
-LaTeX Font Info:    No file OMScmtt.fd. on input line 238.
+235.
+LaTeX Font Info:    No file OMScmtt.fd. on input line 235.
 
 
 LaTeX Font Warning: Font shape `OMS/cmtt/m/n' undefined
 (Font)              using `OMS/cmsy/m/n' instead
-(Font)              for symbol `textbraceleft' on input line 238.
+(Font)              for symbol `textbraceleft' on input line 235.
 
 
 
 [8]
-Overfull \hbox (178.61221pt too wide) in paragraph at lines 323--323
+Overfull \hbox (178.61221pt too wide) in paragraph at lines 320--320
 []\OT1/cmtt/m/n/10.95 <literal> ::= <number> | <identifier> | <bool> | <list> |
  <lambda> | <string> | "()" | <tuple> | <record>[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 323--323
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 320--320
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 323--323
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 320--320
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
 
 
-Overfull \hbox (98.13058pt too wide) in paragraph at lines 323--323
+Overfull \hbox (98.13058pt too wide) in paragraph at lines 320--320
 []\OT1/cmtt/m/n/10.95 <recordtypelist> ::= <identifier> ":" <type> | <identifie
 r> ":" <type> "," <recordtypelist>[] 
  []
@@ -789,7 +789,7 @@ r> ":" <type> "," <recordtypelist>[]
 
 
 [9]
-Overfull \hbox (178.61221pt too wide) in paragraph at lines 421--421
+Overfull \hbox (178.61221pt too wide) in paragraph at lines 418--418
 []\OT1/cmtt/m/n/10.95 <literal> ::= <number> | <identifier> | <bool> | <list> |
  <lambda> | <string> | "()" | <tuple> | <record>[] 
  []
@@ -797,25 +797,25 @@ Overfull \hbox (178.61221pt too wide) in paragraph at lines 421--421
 
 
 [10]
-Overfull \hbox (17.64896pt too wide) in paragraph at lines 421--421
+Overfull \hbox (17.64896pt too wide) in paragraph at lines 418--418
 []\OT1/cmtt/m/n/10.95 <complex> ::= <float> "+" <float> "i" | <float> "-" <floa
 t> "i" | <float> "i"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 421--421
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 418--418
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 421--421
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 418--418
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
 
 
-Overfull \hbox (98.13058pt too wide) in paragraph at lines 421--421
+Overfull \hbox (98.13058pt too wide) in paragraph at lines 418--418
 []\OT1/cmtt/m/n/10.95 <recordtypelist> ::= <identifier> ":" <type> | <identifie
 r> ":" <type> "," <recordtypelist>[] 
  []
@@ -823,7 +823,7 @@ r> ":" <type> "," <recordtypelist>[]
 
 
 [11]
-Overfull \hbox (178.61221pt too wide) in paragraph at lines 525--525
+Overfull \hbox (178.61221pt too wide) in paragraph at lines 522--522
 []\OT1/cmtt/m/n/10.95 <literal> ::= <number> | <identifier> | <bool> | <list> |
  <lambda> | <string> | "()" | <tuple> | <record>[] 
  []
@@ -831,25 +831,25 @@ Overfull \hbox (178.61221pt too wide) in paragraph at lines 525--525
 
 
 [12]
-Overfull \hbox (17.64896pt too wide) in paragraph at lines 525--525
+Overfull \hbox (17.64896pt too wide) in paragraph at lines 522--522
 []\OT1/cmtt/m/n/10.95 <complex> ::= <float> "+" <float> "i" | <float> "-" <floa
 t> "i" | <float> "i"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 525--525
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 522--522
 []\OT1/cmtt/m/n/10.95 <letter> ::=  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "
 h" | "i" | "j" | "k" | "l" | "m"[] 
  []
 
 
-Overfull \hbox (86.63321pt too wide) in paragraph at lines 525--525
+Overfull \hbox (86.63321pt too wide) in paragraph at lines 522--522
 []            \OT1/cmtt/m/n/10.95 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "
 u" | "v" | "w" | "x" | "y" | "z"[] 
  []
 
 
-Overfull \hbox (98.13058pt too wide) in paragraph at lines 525--525
+Overfull \hbox (98.13058pt too wide) in paragraph at lines 522--522
 []\OT1/cmtt/m/n/10.95 <recordtypelist> ::= <identifier> ":" <type> | <identifie
 r> ":" <type> "," <recordtypelist>[] 
  []
@@ -897,11 +897,11 @@ r> ":" <type> "," <recordtypelist>[]
 \pydata@fh@_E017103BDF0CAED79F13B8F548EAF24E.data.minted=\write5
 \openout5 = `_E017103BDF0CAED79F13B8F548EAF24E.data.minted'.
 
-runsystem(latexminted config  --timestamp 20250113105733Z E017103BDF0CAED79F13B
+runsystem(latexminted config  --timestamp 20250113115952Z E017103BDF0CAED79F13B
 8F548EAF24E)...executed safely (allowed).
 
 (./_E017103BDF0CAED79F13B8F548EAF24E.config.minted)
-runsystem(latexminted cleanconfig  --timestamp 20250113105733Z E017103BDF0CAED7
+runsystem(latexminted cleanconfig  --timestamp 20250113115952Z E017103BDF0CAED7
 9F13B8F548EAF24E)...executed safely (allowed).
 
 
@@ -912,28 +912,28 @@ LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <10.95> not available
 
 
 [16]))
-<assets/finalCodeEditor.png, id=564, 1197.47375pt x 799.98875pt>
+<assets/finalCodeEditor.png, id=556, 1197.47375pt x 799.98875pt>
 File: assets/finalCodeEditor.png Graphic file (type png)
 <use assets/finalCodeEditor.png>
 Package pdftex.def Info: assets/finalCodeEditor.png  used on input line 16.
 (pdftex.def)             Requested size: 340.0013pt x 227.13248pt.
-<assets/finalGuiParserError.png, id=566, 910.40125pt x 242.9075pt>
+<assets/finalGuiParserError.png, id=558, 910.40125pt x 242.9075pt>
 File: assets/finalGuiParserError.png Graphic file (type png)
 <use assets/finalGuiParserError.png>
 Package pdftex.def Info: assets/finalGuiParserError.png  used on input line 17.
 
 (pdftex.def)             Requested size: 340.0013pt x 90.71573pt.
-<assets/finalGuiTypeError.png, id=567, 912.40875pt x 239.89626pt>
+<assets/finalGuiTypeError.png, id=559, 912.40875pt x 239.89626pt>
 File: assets/finalGuiTypeError.png Graphic file (type png)
 <use assets/finalGuiTypeError.png>
 Package pdftex.def Info: assets/finalGuiTypeError.png  used on input line 18.
 (pdftex.def)             Requested size: 340.0013pt x 89.39348pt.
-<assets/finalGuiParseTree.png, id=568, 883.3pt x 324.21124pt>
+<assets/finalGuiParseTree.png, id=560, 883.3pt x 324.21124pt>
 File: assets/finalGuiParseTree.png Graphic file (type png)
 <use assets/finalGuiParseTree.png>
 Package pdftex.def Info: assets/finalGuiParseTree.png  used on input line 19.
 (pdftex.def)             Requested size: 340.0013pt x 124.7945pt.
-<assets/finalREPL.png, id=569, 736.7525pt x 78.2925pt>
+<assets/finalREPL.png, id=561, 736.7525pt x 78.2925pt>
 File: assets/finalREPL.png Graphic file (type png)
 <use assets/finalREPL.png>
 Package pdftex.def Info: assets/finalREPL.png  used on input line 20.
@@ -945,7 +945,7 @@ Package pdftex.def Info: assets/finalREPL.png  used on input line 20.
 [18 <./assets/finalCodeEditor.png> <./assets/finalGuiParserError.png> <./assets
 /finalGuiTypeError.png> <./assets/finalGuiParseTree.png> <./assets/finalREPL.pn
 g>]
-<assets/finalNotebook.png, id=589, 1196.47pt x 857.2025pt>
+<assets/finalNotebook.png, id=581, 1196.47pt x 857.2025pt>
 File: assets/finalNotebook.png Graphic file (type png)
 <use assets/finalNotebook.png>
 Package pdftex.def Info: assets/finalNotebook.png  used on input line 43.
@@ -954,7 +954,7 @@ Package pdftex.def Info: assets/finalNotebook.png  used on input line 43.
 
 pdfTeX warning: pdflatex (file ./assets/plotPDF.pdf): PDF inclusion: found PDF 
 version <1.7>, but at most version <1.5> allowed
-<assets/plotPDF.pdf, id=591, page=1, 597.23125pt x 845.1575pt>
+<assets/plotPDF.pdf, id=583, page=1, 597.23125pt x 845.1575pt>
 File: assets/plotPDF.pdf Graphic file (type pdf)
 <use assets/plotPDF.pdf, page 1>
 Package pdftex.def Info: assets/plotPDF.pdf , page1 used on input line 51.
@@ -963,7 +963,7 @@ Package pdftex.def Info: assets/plotPDF.pdf , page1 used on input line 51.
 
 pdfTeX warning: pdflatex (file ./assets/plotPDF.pdf): PDF inclusion: found PDF 
 version <1.7>, but at most version <1.5> allowed
-<assets/plotPDF.pdf, id=592, page=2, 597.23125pt x 845.1575pt>
+<assets/plotPDF.pdf, id=584, page=2, 597.23125pt x 845.1575pt>
 File: assets/plotPDF.pdf Graphic file (type pdf)
 <use assets/plotPDF.pdf, page 2>
 Package pdftex.def Info: assets/plotPDF.pdf , page2 used on input line 52.
@@ -982,13 +982,13 @@ Overfull \vbox (236.90312pt too high) has occurred while \output is active []
 (./_minted/7B293B2FFC7057B786CBB1CC553B17FF.highlight.minted)
 
 [21] (./_minted/8CC21B9097D9017D30AA321782065B13.highlight.minted)
-(./_minted/775BC357FA9549A79F0F780EA6C272A5.highlight.minted)
+(./_minted/235671DAC693D8453B6FF4D4F09CE919.highlight.minted)
 (./_minted/EAB81081B9AA1ED6965DC7DAEE03FD8E.highlight.minted)
-(./_minted/7C17EAC074E1B8CF21BBC64CDE11CF50.highlight.minted)
-(./_minted/7E4128AEF66516C43820ED0F6D3603F4.highlight.minted)
-(./_minted/9E5A726B54724F342641B3DA318F9763.highlight.minted)
+(./_minted/27E2E58FC43B3A87553A64216B075063.highlight.minted)
+(./_minted/7C114EFAF7C6F44C2B0ED1BBC9DACCCF.highlight.minted)
+(./_minted/9E5A726B54724F342641B3DA318F9763.highlight.minted
 
-[22] (./_minted/EA4343125E374CE74E14CB188C9D5A89.highlight.minted)
+[22]) (./_minted/EA4343125E374CE74E14CB188C9D5A89.highlight.minted)
 (./_minted/DE0C297A9503104137791AE924F69895.highlight.minted)
 (./_minted/449206F91BE512FC97A794EFA476E124.highlight.minted)
 (./_minted/AE5E64C937F5E8B4F080AB36E0BA22D7.highlight.minted))
@@ -1000,14 +1000,13 @@ Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 42.
 
 
-[25]
-
-[26] (./_minted/F40D6D54477465BCEECC8B6E7E04BEDD.highlight.minted)
+[25] (./_minted/F40D6D54477465BCEECC8B6E7E04BEDD.highlight.minted)
 (./_minted/076F0DA663A8573A8B256E046112D377.highlight.minted)
-(./_minted/AC0986121432020082BA3A06BCD36FF6.highlight.minted)
-(./_minted/AC94E63AF40D12F1A6580BD8F2133C69.highlight.minted
+(./_minted/AC0986121432020082BA3A06BCD36FF6.highlight.minted
 
-[27])
+[26]
+
+[27]) (./_minted/AC94E63AF40D12F1A6580BD8F2133C69.highlight.minted)
 
 [28] (./_minted/34D0082645AAFF1AED91CC877C506064.highlight.minted)
 (./_minted/10150E2A538D7F776F7D32D6B708C9CC.highlight.minted)
@@ -1051,11 +1050,6 @@ Overfull \hbox (4.31952pt too wide) in paragraph at lines 78--78
  []
 
 
-Overfull \hbox (27.4362pt too wide) in paragraph at lines 78--78
-[]|\OT1/cmr/m/n/10.95 COMPOUND[]CREATE| 
- []
-
-
 Underfull \hbox (badness 10000) in paragraph at lines 78--78
 []|\OT1/cmr/m/n/10.95 Create com-pound
  []
@@ -1076,13 +1070,13 @@ n pro-cess us-ing the \OT1/cmtt/m/n/10.95 CompilerState
 (./_minted/505426202A946AAB9D11D5DDCA9A8D8B.highlight.minted)
 
 [33]
-Overfull \hbox (10.18102pt too wide) in paragraph at lines 174--177
+Overfull \hbox (10.18102pt too wide) in paragraph at lines 175--178
 \OT1/cmr/m/it/10.95 REPL[]Input\OT1/cmr/m/n/10.95 , is typ-i-cally as-signed to
  this top-level func-tion. An ini-tial \OT1/cmtt/m/n/10.95 CompilerState
  []
 
 
-Overfull \hbox (9.5316pt too wide) in paragraph at lines 189--190
+Overfull \hbox (9.5316pt too wide) in paragraph at lines 190--191
 []\OT1/cmr/bx/n/10.95 Closure Cre-ation\OT1/cmr/m/n/10.95 : A new \OT1/cmtt/m/n
 /10.95 Closure \OT1/cmr/m/n/10.95 ob-ject is cre-ated based on the pro-vided \O
 T1/cmtt/m/n/10.95 Function\OT1/cmr/m/n/10.95 . 
@@ -1094,51 +1088,51 @@ T1/cmtt/m/n/10.95 Function\OT1/cmr/m/n/10.95 .
 (./_minted/34BB49B70A04F49F416F82A4F8BF6E57.highlight.minted)
 
 [35] (./_minted/317DF2EFEB79756CADC898F9CC8B4681.highlight.minted)
-(./_minted/83BD23C1A8C7B7DF835AB01B44ED66A0.highlight.minted
+(./_minted/83BD23C1A8C7B7DF835AB01B44ED66A0.highlight.minted))
 
-[36])) (./sections/plotting.tex
+[36] (./sections/plotting.tex
 (./_minted/F660FE74DC6363BFEC4729AEFBC55AF5.highlight.minted)
-(./_minted/F0FF2752D3712A4EF3EA4D2472A73BBD.highlight.minted
-
-[37])
-<assets/scatterPlot.png, id=817, 794.97pt x 597.23125pt>
+(./_minted/F0FF2752D3712A4EF3EA4D2472A73BBD.highlight.minted)
+<assets/scatterPlot.png, id=812, 794.97pt x 597.23125pt>
 File: assets/scatterPlot.png Graphic file (type png)
 <use assets/scatterPlot.png>
 Package pdftex.def Info: assets/scatterPlot.png  used on input line 37.
 (pdftex.def)             Requested size: 340.0013pt x 255.43747pt.
-<assets/barChart.png, id=819, 800.9925pt x 599.23875pt>
+
+
+[37]
+<assets/barChart.png, id=821, 800.9925pt x 599.23875pt>
 File: assets/barChart.png Graphic file (type png)
 <use assets/barChart.png>
-Package pdftex.def Info: assets/barChart.png  used on input line 50.
+Package pdftex.def Info: assets/barChart.png  used on input line 48.
 (pdftex.def)             Requested size: 340.0013pt x 254.36679pt.
+ (./_minted/496284844B6A45E1BB99A6B6443B29E7.highlight.minted)
+<assets/polynomialPlot.png, id=823, 797.98125pt x 598.235pt>
+File: assets/polynomialPlot.png Graphic file (type png)
+<use assets/polynomialPlot.png>
+Package pdftex.def Info: assets/polynomialPlot.png  used on input line 68.
+(pdftex.def)             Requested size: 340.0013pt x 254.89006pt.
 
 
 [38 <./assets/scatterPlot.png> <./assets/barChart.png>]
-(./_minted/496284844B6A45E1BB99A6B6443B29E7.highlight.minted)
-<assets/polynomialPlot.png, id=829, 797.98125pt x 598.235pt>
-File: assets/polynomialPlot.png Graphic file (type png)
-<use assets/polynomialPlot.png>
-Package pdftex.def Info: assets/polynomialPlot.png  used on input line 70.
-(pdftex.def)             Requested size: 340.0013pt x 254.89006pt.
-
 (./_minted/FCBAB69BF9AD898EBBAAEEACFDFE8786.highlight.minted)
-<assets/multiplePlots.png, id=831, 1257.69875pt x 795.97375pt>
+<assets/multiplePlots.png, id=833, 1257.69875pt x 795.97375pt>
 File: assets/multiplePlots.png Graphic file (type png)
 <use assets/multiplePlots.png>
-Package pdftex.def Info: assets/multiplePlots.png  used on input line 98.
+Package pdftex.def Info: assets/multiplePlots.png  used on input line 96.
 (pdftex.def)             Requested size: 340.0013pt x 215.17084pt.
 
 
 [39 <./assets/polynomialPlot.png>]
-<assets/plotInput.png, id=842, 787.94376pt x 43.16125pt>
+<assets/plotInput.png, id=843, 787.94376pt x 43.16125pt>
 File: assets/plotInput.png Graphic file (type png)
 <use assets/plotInput.png>
-Package pdftex.def Info: assets/plotInput.png  used on input line 114.
+Package pdftex.def Info: assets/plotInput.png  used on input line 112.
 (pdftex.def)             Requested size: 340.0013pt x 18.62416pt.
-<assets/plotInput2.png, id=843, 789.95125pt x 45.16875pt>
+<assets/plotInput2.png, id=844, 789.95125pt x 45.16875pt>
 File: assets/plotInput2.png Graphic file (type png)
 <use assets/plotInput2.png>
-Package pdftex.def Info: assets/plotInput2.png  used on input line 115.
+Package pdftex.def Info: assets/plotInput2.png  used on input line 113.
 (pdftex.def)             Requested size: 340.0013pt x 19.44078pt.
 )
 (./_minted/CB3B4529D532F8DD9E96112D36DB8CB4.highlight.minted)
@@ -1146,10 +1140,10 @@ Package pdftex.def Info: assets/plotInput2.png  used on input line 115.
 
 [40 <./assets/multiplePlots.png> <./assets/plotInput.png> <./assets/plotInput2.
 png>])
-<assets/drawImage.png, id=853, 792.9625pt x 594.22pt>
+<assets/drawImage.png, id=854, 792.9625pt x 594.22pt>
 File: assets/drawImage.png Graphic file (type png)
 <use assets/drawImage.png>
-Package pdftex.def Info: assets/drawImage.png  used on input line 300.
+Package pdftex.def Info: assets/drawImage.png  used on input line 298.
 (pdftex.def)             Requested size: 340.0013pt x 254.78426pt.
  (./_minted/E6C392DADA90F89F225476F1CE2866E4.highlight.minted)
 
@@ -1158,22 +1152,22 @@ Package pdftex.def Info: assets/drawImage.png  used on input line 300.
 (./_minted/579FC51703BEDA276A00FA1691DFA09A.highlight.minted
 
 [42]) (./_minted/862063E9F66C5CDD5F5D0AE2D0220F6B.highlight.minted)
-(./_minted/BBF2537DFD026200B325C8BC7755A126.highlight.minted
+(./_minted/BBF2537DFD026200B325C8BC7755A126.highlight.minted)
 
-[43]) (./_minted/AD447A6C3B7663E11C2A6F98041DE23F.highlight.minted)
+[43] (./_minted/AD447A6C3B7663E11C2A6F98041DE23F.highlight.minted)
 (./_minted/F364099169EEC4D162B6625B438A2C3D.highlight.minted)
 (./_minted/5A61EB77AA48CB8C58E2F26587518FDD.highlight.minted
 
 [44])
-<assets/gnuplot.png, id=876, 1203.49625pt x 805.0075pt>
+<assets/gnuplot.png, id=881, 1203.49625pt x 805.0075pt>
 File: assets/gnuplot.png Graphic file (type png)
 <use assets/gnuplot.png>
-Package pdftex.def Info: assets/gnuplot.png  used on input line 523.
+Package pdftex.def Info: assets/gnuplot.png  used on input line 518.
 (pdftex.def)             Requested size: 340.0013pt x 227.42732pt.
  (./_minted/25092370BAC397E65B03A4D6225A7DBD.highlight.minted)
+(./_minted/C839D6F0E3BBCE497E7286D90E6097EC.highlight.minted
 
-[45 <./assets/gnuplot.png>]
-(./_minted/C839D6F0E3BBCE497E7286D90E6097EC.highlight.minted)
+[45 <./assets/gnuplot.png>])
 
 [46])
 
@@ -1190,7 +1184,7 @@ Underfull \hbox (badness 6808) in paragraph at lines 16--19
  []
 
 
-Underfull \hbox (badness 2027) in paragraph at lines 21--24
+Underfull \hbox (badness 2027) in paragraph at lines 26--29
 []\OT1/cmr/m/n/10.95 Desmos Stu-dio PBC (2023).  Desmos web-site.  https://desm
 os.com [Ac-cessed:
  []
@@ -1603,81 +1597,69 @@ Overfull \hbox (0.52821pt too wide) in paragraph at lines 279--279
  []
 
 
-Overfull \hbox (10.94347pt too wide) in paragraph at lines 281--281
-[]|$\OML/cmm/m/it/10.95 plotFunc\OT1/cmr/m/n/10.95 ("\OML/cmm/m/it/10.95 Exampl
-ePlot\OT1/cmr/m/n/10.95 "\OML/cmm/m/it/10.95 ; f\OT1/cmr/m/n/10.95 )$| 
- []
-
-
-Overfull \hbox (3.96529pt too wide) in paragraph at lines 281--281
+Overfull \hbox (3.96529pt too wide) in paragraph at lines 282--282
 []|$\OML/cmm/m/it/10.95 f\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95 x\OT1/cmr/m/n/
 10.95 ) =
  []
 
 
-Overfull \hbox (1.68407pt too wide) in paragraph at lines 281--281
+Overfull \hbox (1.68407pt too wide) in paragraph at lines 282--282
 []\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95 x\OT1/cmr/m/n/10.95 )$| 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 281--281
+Underfull \hbox (badness 10000) in paragraph at lines 282--282
 []|\OT1/cmr/m/n/10.95 Pass,
  []
 
 
-Underfull \hbox (badness 6842) in paragraph at lines 281--281
+Underfull \hbox (badness 6842) in paragraph at lines 282--282
 \OT1/cmr/m/n/10.95 but not
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 281--281
+Underfull \hbox (badness 10000) in paragraph at lines 282--282
 \OT1/cmr/m/n/10.95 in-fi-nite
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 281--281
+Underfull \hbox (badness 10000) in paragraph at lines 282--282
 \OT1/cmr/m/n/10.95 asymp-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 281--281
+Underfull \hbox (badness 10000) in paragraph at lines 282--282
 []|\OT1/cmr/m/n/10.95 No joined asymp-
  []
 
 
-Overfull \hbox (10.94347pt too wide) in paragraph at lines 283--283
-[]|$\OML/cmm/m/it/10.95 plotFunc\OT1/cmr/m/n/10.95 ("\OML/cmm/m/it/10.95 Exampl
-ePlot\OT1/cmr/m/n/10.95 "\OML/cmm/m/it/10.95 ; f\OT1/cmr/m/n/10.95 )$| 
- []
-
-
-Overfull \hbox (3.96529pt too wide) in paragraph at lines 283--283
+Overfull \hbox (3.96529pt too wide) in paragraph at lines 285--285
 []|$\OML/cmm/m/it/10.95 f\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95 x\OT1/cmr/m/n/
 10.95 ) =
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 283--283
+Underfull \hbox (badness 10000) in paragraph at lines 285--285
 []|\OT1/cmr/m/n/10.95 Pass,
  []
 
 
-Underfull \hbox (badness 6842) in paragraph at lines 283--283
+Underfull \hbox (badness 6842) in paragraph at lines 285--285
 \OT1/cmr/m/n/10.95 but not
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 283--283
+Underfull \hbox (badness 10000) in paragraph at lines 285--285
 \OT1/cmr/m/n/10.95 in-fi-nite
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 283--283
+Underfull \hbox (badness 10000) in paragraph at lines 285--285
 \OT1/cmr/m/n/10.95 asymp-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 283--283
+Underfull \hbox (badness 10000) in paragraph at lines 285--285
 []|\OT1/cmr/m/n/10.95 No joined asymp-
  []
 
@@ -1718,13 +1700,13 @@ L3 programming layer <2024-11-02>
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 Package rerunfilecheck Info: File `AP_REPORT_02.out' has not changed.
-(rerunfilecheck)             Checksum: 4DB7A743B9116930D2B2D5BEB833F7E8;16286.
+(rerunfilecheck)             Checksum: 75C5D4BEA636930AA1CB3E176CDC1A6E;15856.
  ) 
 Here is how much of TeX's memory you used:
- 19885 strings out of 473362
- 384157 string characters out of 5720983
- 957167 words of memory out of 5000000
- 42284 multiletter control sequences out of 15000+600000
+ 19895 strings out of 473362
+ 384343 string characters out of 5720983
+ 958158 words of memory out of 5000000
+ 42292 multiletter control sequences out of 15000+600000
  569039 words of font info for 75 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  85i,12n,93p,792b,940s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -1745,10 +1727,10 @@ live/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texli
 ve/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texliv
 e/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive
 /2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on AP_REPORT_02.pdf (64 pages, 2336510 bytes).
+Output written on AP_REPORT_02.pdf (64 pages, 2336650 bytes).
 PDF statistics:
- 1149 PDF objects out of 1200 (max. 8388607)
- 993 compressed objects within 10 object streams
- 270 named destinations out of 1000 (max. 500000)
- 945 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1155 PDF objects out of 1200 (max. 8388607)
+ 999 compressed objects within 10 object streams
+ 272 named destinations out of 1000 (max. 500000)
+ 929 words of extra memory for PDF output out of 10000 (max. 10000000)
 
