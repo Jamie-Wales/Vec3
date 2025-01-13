@@ -76,8 +76,6 @@ and findTokenInExpressions exprs =
         | None -> findTokenInExpressions exprs
     
 
-// TODO: ALSO PROBLEM WITH INFERRING RECORD ARGS ??
-
 /// <summary>
 /// The default type environment containing all built-in functions and constants.
 /// </summary>
@@ -852,18 +850,6 @@ let rec infer (aliases: AliasMap) (env: TypeEnv) (expr: Expr) : (TType * Substit
             return (returnType, sub, EIndexRange(expr, expr', expr'', Some returnType))
         }
 
-
-    // lot of this doesnt work,
-
-    // fails on the following:
-    // let x = (x) -> x.a + 4
-    // let y = { a = 4.0 }
-    // x(y), doesnt infer that a must be an int, so fials on +
-    // annoying error stupid hard to fix
-    // above is fixed, new issue:
-    // let x = (x) -> x.a + 4
-    // let y = { a = 4, b = 4 }
-    // fails
     | ERecordEmpty _ -> Ok(TRecord(TRowEmpty), Map.empty, ERecordEmpty(TRecord(TRowEmpty)))
     | ERecordExtend((name, value, _), record, _) ->
         let valueResult = infer aliases env value
@@ -1042,7 +1028,7 @@ and inferStmt (aliases: AliasMap) (env: TypeEnv) (stmt: Stmt) : (TypeEnv * Alias
             return (env, aliases, sub, stmt)
         }
 
-    | SRecFunc(name, parameters, body, returnT) -> // TODO, this is probably wrong
+    | SRecFunc(name, parameters, body, returnT) ->
         let paramTypes = List.map snd parameters
         let paramList = List.map fst parameters
 

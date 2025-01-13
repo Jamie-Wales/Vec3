@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Internal helper functions - keep original signatures
 vec3_list* create_new_list(Vec3Value* value)
 {
     vec3_list* list = malloc(sizeof(vec3_list));
@@ -111,7 +110,6 @@ void vec3_list_set(Vec3Value* list_value, size_t index, Vec3Value* value)
     vec3_decref(va);
 }
 
-// Public functions with new Vec3Value** args signature
 Vec3Value* vec3_cons(Vec3Value** args)
 {
     Vec3Value* value = args[1];

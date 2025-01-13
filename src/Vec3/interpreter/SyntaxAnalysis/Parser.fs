@@ -10,6 +10,9 @@ open Grammar
 open Scanner
 open Vec3.Interpreter.SyntaxAnalysis.TailAnalyser
 
+/// <summary>
+/// Find the default value for a given type.
+/// </summary>
 let rec getDefault =
     function
     | TBool -> Some(ELiteral(LBool true, TBool))

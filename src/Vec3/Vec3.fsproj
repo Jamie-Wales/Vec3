@@ -43,7 +43,6 @@
         <Content Include="grammar/vec3.tmLanguage.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-        <Compile Include="Transpiler\Transpiler.fs"/>
     </ItemGroup>
     <ItemGroup>
         <Content Include="stdlib\Prelude.vec3" />
