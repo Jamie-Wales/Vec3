@@ -678,7 +678,7 @@ let builtins =
               | [ VNumber(VInteger a); VNumber(VInteger b) ] -> VNumber(VInteger(a % b))
               | [ VNumber(a); VNumber(b) ] ->
                   if floatValue b = 0.0 then
-                      raise <| InvalidProgramException "Division by zero"
+                      raise <| InvalidProgramException "Modulus by zero"
                   else
                       VNumber(VFloat(floatValue a % floatValue b))
               | _ -> raise <| InvalidProgramException "Expected two integers or floats for %"),

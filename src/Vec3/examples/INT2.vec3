@@ -5,12 +5,16 @@ let x = 1
 assert x == 1, "Assignment failed"
 assert x^2 == 1, "Assignment with expression failed"
 assert x + 1 == 2, "Addition failed for variable"
+print("x =")
+print(x)
 
 // Floats
 let x = 1.0
 assert x == 1.0, "Assignment failed"
 assert x^2 == 1.0, "Assignment with expression failed"
 assert x + 1.0 == 2.0, "Addition failed for variable"
+print("x =")
+print(x)
 
 // Static typing
 let x: int = 1
@@ -21,6 +25,8 @@ let x: float = 1.0
 // an int will coerce to a float (or any number type)
 let y = x + 1
 assert y == 2, "Assignment failed"
+print("y =")
+print(y)
 
 // but won't coerce to a string for example
 // let z = "1" + x // Type error
@@ -42,6 +48,14 @@ let f = (x) -> x^2 + 2*x + 1
 print(f)
 print("f(1) =")
 print(f(2))
+
+let numberCasting = (5 * 4^3) : float
+print("numberCasting =")
+print(numberCasting)
+
+let listCasting = [1,2,3] : [float]
+print("listCasting =")
+print(listCasting)
 
 print("All assertions passed")
 

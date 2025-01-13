@@ -1,5 +1,0 @@
-let numberCasting = (5 * 4^3) : float
-print(numberCasting)
-
-let listCasting = [1,2,3] : [float]
-print(listCasting)
